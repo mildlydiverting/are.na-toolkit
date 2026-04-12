@@ -1,0 +1,9 @@
+# Credentials
+arena-config.js
+shared/arena-config.js
+
+# Build artefacts — dist is committed, but not credentials
+dist/*.html.bak
+
+# macOS
+.DS_Store
