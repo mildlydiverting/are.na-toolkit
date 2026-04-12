@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Are.na Palette</title>
 <!--
-  arena-palette v1.9
+  arena-palette v1.10
   ──────────────────────────────────────────────────────────────────
   Are.na colour palette extractor tool
   Fetches images from up to 4 Are.na channels, extracts a 7-colour
@@ -36,12 +36,16 @@
                          Muted, DarkMuted, LightMuted. Displayed as a proportional
                          colour bar (widths from nearest palette colour proportion)
                          with a hex legend below. Click any legend item to copy hex.
-    v1.7 (2026-04-07) - Add full-width proportion bar, 1% floor to show colours. Share
-                         applyFloor helper
-    v1.8 (2026-04-12) — Typography: Karla (sans) + Courier Prime (mono). Increased
-                         base font size to 16px. Darkened --text and --muted for legibility.
+    v1.10 (2026-04-13) — Mid-grey colour scheme (#808080 base) for neutral colour
+                         judgement. Remapped all surfaces to subtle grey tones.
+                         Font pass: Karla for all UI text; Courier Prime kept only
+                         for hex/code output (tooltips, legend values).
     v1.9 (2026-04-12) — Full CSS unit pass: 62.5% root font-size trick, all font
                          sizes and spacing converted to rem throughout.
+    v1.8 (2026-04-12) — Typography: Karla (sans) + Courier Prime (mono). Increased
+                         base font size to 16px. Darkened --text and --muted for legibility.
+    v1.7 (2026-04-07) - Add full-width proportion bar, 1% floor to show colours. Share
+                         applyFloor helper
                          
   API: Are.na REST API v3 — https://www.are.na/developers/explore
   Base URL: https://api.are.na
@@ -58,21 +62,20 @@
 <script src="https://unpkg.com/colorthief@3/dist/umd/color-thief.global.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
-  /* ── v1.9 ── */
+  /* ── v1.10 ── */
   /* Base font trick: 1rem = 10px (62.5% of browser default 16px).
      All font-size and spacing values use rem throughout. */
   :root {
     font-size: 62.5%;
-    --bg: #808080;
-    --surface: #ffffff;
-    --surface2: #f0ede8;
-    --border: #e0dbd3;
-    --text: #0f0d0b;
-    --muted: #5a5550;
-    --accent: #2d2926;
-    --tag-bg: #e8e4de;
+    --bg:        #808080;
+    --surface:   #8a8a8a;
+    --surface2:  #747474;
+    --border:    #666666;
+    --text:      #efefef;
+    --muted:     #b8b8b8;
+    --accent:    #2a2a2a;
     --radius: 0.6rem;
-    --font: 'Karla', monospace;
+    --font:      'Courier Prime', 'Courier New', monospace;
     --font-sans: 'Karla', system-ui, sans-serif;
   }
   @import url('https://fonts.googleapis.com/css2?family=Karla:wght@300;400;500;700&family=Courier+Prime:wght@400;700&display=swap');
@@ -95,10 +98,10 @@
     gap: 1rem;
   }
   header h1 {
-    font-family: var(--font);
+    font-family: var(--font-sans);
     font-size: 1.5rem;
-    font-weight: 500;
-    letter-spacing: 0.05em;
+    font-weight: 600;
+    letter-spacing: 0.02em;
   }
   header span {
     font-size: 1.2rem;
@@ -123,10 +126,10 @@
   }
 
   .sidebar h2 {
-    font-family: var(--font);
+    font-family: var(--font-sans);
     font-size: 1.1rem;
-    font-weight: 500;
-    letter-spacing: 0.1em;
+    font-weight: 600;
+    letter-spacing: 0.08em;
     color: var(--muted);
     text-transform: uppercase;
   }
@@ -150,7 +153,7 @@
     border-radius: var(--radius);
     background: var(--bg);
     color: var(--text);
-    font-family: var(--font);
+    font-family: var(--font-sans);
     font-size: 1.2rem;
     outline: none;
     transition: border-color 0.15s;
@@ -177,7 +180,7 @@
   .btn-icon:hover { background: var(--surface2); color: var(--text); border-color: var(--accent); }
 
   .btn-add {
-    font-family: var(--font);
+    font-family: var(--font-sans);
     font-size: 1.1rem;
     color: var(--muted);
     background: none;
@@ -197,7 +200,7 @@
     gap: 0.4rem;
   }
   .token-row label {
-    font-family: var(--font);
+    font-family: var(--font-sans);
     font-size: 1.1rem;
     color: var(--muted);
     letter-spacing: 0.05em;
@@ -208,7 +211,7 @@
     border-radius: var(--radius);
     background: var(--bg);
     color: var(--text);
-    font-family: var(--font);
+    font-family: var(--font-sans);
     font-size: 1.2rem;
     outline: none;
     width: 100%;
@@ -217,13 +220,13 @@
 
   .btn-fetch {
     background: var(--accent);
-    color: #f5f3ef;
+    color: var(--text);
     border: none;
     border-radius: var(--radius);
     padding: 0.9rem 1.4rem;
-    font-family: var(--font);
+    font-family: var(--font-sans);
     font-size: 1.2rem;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     letter-spacing: 0.04em;
     transition: opacity 0.15s;
@@ -233,7 +236,7 @@
   .btn-fetch:disabled { opacity: 0.4; cursor: not-allowed; }
 
   .status-msg {
-    font-family: var(--font);
+    font-family: var(--font-sans);
     font-size: 1.1rem;
     color: var(--muted);
     min-height: 1.6rem;
@@ -252,10 +255,10 @@
   }
 
   .grid-section h2 {
-    font-family: var(--font);
+    font-family: var(--font-sans);
     font-size: 1.1rem;
-    font-weight: 500;
-    letter-spacing: 0.1em;
+    font-weight: 600;
+    letter-spacing: 0.08em;
     color: var(--muted);
     text-transform: uppercase;
     margin-bottom: 1rem;
@@ -289,7 +292,7 @@
     bottom: 0.4rem; left: 0.4rem;
     background: rgba(0,0,0,0.55);
     color: #fff;
-    font-family: var(--font);
+    font-family: var(--font-sans);
     font-size: 0.9rem;
     padding: 0.2rem 0.5rem;
     border-radius: 0.3rem;
@@ -315,10 +318,10 @@
   }
 
   .analysis-section h2 {
-    font-family: var(--font);
+    font-family: var(--font-sans);
     font-size: 1.1rem;
-    font-weight: 500;
-    letter-spacing: 0.1em;
+    font-weight: 600;
+    letter-spacing: 0.08em;
     color: var(--muted);
     text-transform: uppercase;
     margin-bottom: 1rem;
@@ -362,7 +365,7 @@
   }
 
   .colour-label {
-    font-family: var(--font);
+    font-family: var(--font-sans);
     font-size: 1rem;
     color: var(--muted);
     margin-bottom: 0.2rem;
@@ -375,7 +378,7 @@
     border-top: 1px solid var(--border);
   }
   .semantic-label {
-    font-family: var(--font);
+    font-family: var(--font-sans);
     font-size: 1rem;
     color: var(--muted);
     letter-spacing: 0.06em;
@@ -399,7 +402,7 @@
     transition: flex 0.3s ease;
   }
   .semantic-segment-label {
-    font-family: var(--font);
+    font-family: var(--font-sans);
     font-size: 0.9rem;
     white-space: nowrap;
     overflow: hidden;
@@ -416,7 +419,7 @@
     display: flex;
     align-items: center;
     gap: 0.4rem;
-    font-family: var(--font);
+    font-family: var(--font-sans);
     font-size: 1rem;
     color: var(--muted);
     cursor: pointer;
@@ -451,7 +454,7 @@
     left: 50%;
     transform: translateX(-50%);
     background: var(--accent);
-    color: #f5f3ef;
+    color: var(--text);
     font-family: var(--font);
     font-size: 1rem;
     padding: 0.3rem 0.6rem;
@@ -473,7 +476,7 @@
   }
 
   .btn-export {
-    font-family: var(--font);
+    font-family: var(--font-sans);
     font-size: 1.1rem;
     padding: 0.5rem 1rem;
     border: 1px solid var(--border);
@@ -484,7 +487,7 @@
     transition: all 0.15s;
     letter-spacing: 0.03em;
   }
-  .btn-export:hover { background: var(--accent); color: #f5f3ef; border-color: var(--accent); }
+  .btn-export:hover { background: var(--accent); color: var(--text); border-color: var(--accent); }
   .btn-export:disabled { opacity: 0.35; cursor: not-allowed; }
 
   .empty-analysis {
@@ -493,7 +496,7 @@
     justify-content: center;
     height: 20rem;
     color: var(--muted);
-    font-family: var(--font);
+    font-family: var(--font-sans);
     font-size: 1.2rem;
     border: 1px dashed var(--border);
     border-radius: var(--radius);
@@ -527,7 +530,7 @@
     background: var(--surface2);
     border: none;
     cursor: pointer;
-    font-family: var(--font);
+    font-family: var(--font-sans);
     font-size: 1.1rem;
     color: var(--muted);
     letter-spacing: 0.06em;
@@ -551,14 +554,14 @@
     gap: 0.3rem;
   }
   .setting-row label {
-    font-family: var(--font);
+    font-family: var(--font-sans);
     font-size: 1rem;
     color: var(--muted);
     letter-spacing: 0.05em;
   }
   .setting-row select,
   .setting-row input[type=range] {
-    font-family: var(--font);
+    font-family: var(--font-sans);
     font-size: 1.1rem;
     width: 100%;
   }
@@ -576,14 +579,14 @@
     gap: 0.6rem;
   }
   .setting-toggle-row label {
-    font-family: var(--font);
+    font-family: var(--font-sans);
     font-size: 1rem;
     color: var(--muted);
     letter-spacing: 0.05em;
     cursor: pointer;
   }
   .setting-val {
-    font-family: var(--font);
+    font-family: var(--font-sans);
     font-size: 1rem;
     color: var(--muted);
     text-align: right;
@@ -594,7 +597,7 @@
 
 <header>
   <h1>are.na palette</h1>
-  <span>v1.9</span>
+  <span>v1.10</span>
 </header>
 
 <div class="layout">
