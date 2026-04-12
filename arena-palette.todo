@@ -1,0 +1,40 @@
+arena-palette todos:
+
+    Immediate - do first:
+        - Set up git repository for arena-palette @priority(1)
+        - Write concat build script (Python or shell, no npm) to assemble HTML from separate CSS/JS/HTML source files @priority(1)
+        - Decide on source file structure (e.g. src/style.css, src/main.js, src/index.html) @priority(1)
+
+    Layout and design:
+        - Review overall layout — Kim to share screenshots with annotations @priority(2)
+        - Design tweaks to palette panel (spacing, typography, swatch sizing) @priority(2)
+        - Consider whether settings panel should be collapsed by default permanently or remember open/closed state @priority(3)
+        - overlay hex on to swatches
+        - make swatches square
+        - tweak size of text and make it darker
+        - mid grey for background, like a palette?
+        - general - CSS kit for standard styling of my stuff
+
+    Colour picking and editing:
+        - Draggable colour pickers on the image (circles on canvas, repositionable) — new chat @priority(2)
+            Note: Color Thief does not return pixel positions, so initial circle placement will be approximate
+            - On drag release, sample pixel colour at new position and re-run extraction from that point
+        - Integrate RampenSau hue-shifted tints/shades as an alternative to plain HSL scaling — new chat @priority(2)
+            - Prototype exists — needs real image testing before committing
+            - Key parameter: hCycles controls hue drift across the ramp
+
+    Grid and image handling:
+        - Add per-slot refresh button (re-fetch a single grid image without clearing all 9) @priority(2)
+        - Add per-slot lock (preserve an image across re-fetches, like arena-picks) @priority(2)
+        - Auto-strip full Are.na URLs pasted as channel slugs (e.g. are.na/kim/my-channel → my-channel) @priority(2)
+        - Cache fetched images by URL to avoid re-fetching on repeated thumbnail clicks @priority(3)
+
+    Export:
+        - Include semantic palette colours in hex/CSS/SCP exports @priority(3)
+        - Add copy-all button for semantic palette hex values @priority(3)
+        - Review export PNG layout @priority(3)
+
+    Future - arena tools suite:
+        - Consider shared arena-config.js pattern across arena-palette and arena-picks @priority(4)
+        - Shared fetch utilities (fetchChannelMeta, fetchBlockAtPage) as a common module @priority(4)
+        - Shared UI patterns (channel slug inputs, token field, grid) @priority(4)

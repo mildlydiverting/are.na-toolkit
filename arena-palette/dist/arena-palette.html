@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Are.na Palette</title>
 <!--
-  arena-palette v1.7
+  arena-palette v1.9
   ──────────────────────────────────────────────────────────────────
   Are.na colour palette extractor tool
   Fetches images from up to 4 Are.na channels, extracts a 7-colour
@@ -36,7 +36,13 @@
                          Muted, DarkMuted, LightMuted. Displayed as a proportional
                          colour bar (widths from nearest palette colour proportion)
                          with a hex legend below. Click any legend item to copy hex.
-
+    v1.7 (2026-04-07) - Add full-width proportion bar, 1% floor to show colours. Share
+                         applyFloor helper
+    v1.8 (2026-04-12) — Typography: Karla (sans) + Courier Prime (mono). Increased
+                         base font size to 16px. Darkened --text and --muted for legibility.
+    v1.9 (2026-04-12) — Full CSS unit pass: 62.5% root font-size trick, all font
+                         sizes and spacing converted to rem throughout.
+                         
   API: Are.na REST API v3 — https://www.are.na/developers/explore
   Base URL: https://api.are.na
   Endpoints used:
@@ -52,21 +58,24 @@
 <script src="https://unpkg.com/colorthief@3/dist/umd/color-thief.global.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
-  /* ── v1.7 ── */
+  /* ── v1.9 ── */
+  /* Base font trick: 1rem = 10px (62.5% of browser default 16px).
+     All font-size and spacing values use rem throughout. */
   :root {
-    --bg: #f5f3ef;
+    font-size: 62.5%;
+    --bg: #808080;
     --surface: #ffffff;
     --surface2: #f0ede8;
     --border: #e0dbd3;
-    --text: #1a1814;
-    --muted: #7a7570;
+    --text: #0f0d0b;
+    --muted: #5a5550;
     --accent: #2d2926;
     --tag-bg: #e8e4de;
-    --radius: 6px;
-    --font: 'DM Mono', 'Courier New', monospace;
-    --font-sans: 'DM Sans', system-ui, sans-serif;
+    --radius: 0.6rem;
+    --font: 'Karla', monospace;
+    --font-sans: 'Karla', system-ui, sans-serif;
   }
-  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Karla:wght@300;400;500;700&family=Courier+Prime:wght@400;700&display=swap');
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -74,7 +83,7 @@
     background: var(--bg);
     color: var(--text);
     font-family: var(--font-sans);
-    font-size: 14px;
+    font-size: 1.6rem;
     min-height: 100vh;
   }
 
@@ -87,20 +96,20 @@
   }
   header h1 {
     font-family: var(--font);
-    font-size: 15px;
+    font-size: 1.5rem;
     font-weight: 500;
     letter-spacing: 0.05em;
   }
   header span {
-    font-size: 12px;
+    font-size: 1.2rem;
     color: var(--muted);
     font-family: var(--font);
   }
 
   .layout {
     display: grid;
-    grid-template-columns: 260px 1fr;
-    min-height: calc(100vh - 56px);
+    grid-template-columns: 26rem 1fr;
+    min-height: calc(100vh - 5.6rem);
   }
 
   /* ── SIDEBAR ── */
@@ -115,7 +124,7 @@
 
   .sidebar h2 {
     font-family: var(--font);
-    font-size: 11px;
+    font-size: 1.1rem;
     font-weight: 500;
     letter-spacing: 0.1em;
     color: var(--muted);
@@ -125,24 +134,24 @@
   .channel-list {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 0.6rem;
   }
 
   .channel-row {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 0.6rem;
   }
 
   .channel-row input[type="text"] {
     flex: 1;
-    padding: 6px 8px;
+    padding: 0.6rem 0.8rem;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     background: var(--bg);
     color: var(--text);
     font-family: var(--font);
-    font-size: 12px;
+    font-size: 1.2rem;
     outline: none;
     transition: border-color 0.15s;
   }
@@ -154,14 +163,14 @@
   }
 
   .btn-icon {
-    width: 26px; height: 26px;
+    width: 2.6rem; height: 2.6rem;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     background: var(--bg);
     color: var(--muted);
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    font-size: 14px;
+    font-size: 1.4rem;
     transition: all 0.15s;
     flex-shrink: 0;
   }
@@ -169,12 +178,12 @@
 
   .btn-add {
     font-family: var(--font);
-    font-size: 11px;
+    font-size: 1.1rem;
     color: var(--muted);
     background: none;
     border: 1px dashed var(--border);
     border-radius: var(--radius);
-    padding: 6px 10px;
+    padding: 0.6rem 1rem;
     cursor: pointer;
     width: 100%;
     text-align: left;
@@ -185,22 +194,22 @@
   .token-row {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 0.4rem;
   }
   .token-row label {
     font-family: var(--font);
-    font-size: 11px;
+    font-size: 1.1rem;
     color: var(--muted);
     letter-spacing: 0.05em;
   }
   .token-row input {
-    padding: 6px 8px;
+    padding: 0.6rem 0.8rem;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     background: var(--bg);
     color: var(--text);
     font-family: var(--font);
-    font-size: 12px;
+    font-size: 1.2rem;
     outline: none;
     width: 100%;
   }
@@ -211,9 +220,9 @@
     color: #f5f3ef;
     border: none;
     border-radius: var(--radius);
-    padding: 9px 14px;
+    padding: 0.9rem 1.4rem;
     font-family: var(--font);
-    font-size: 12px;
+    font-size: 1.2rem;
     font-weight: 500;
     cursor: pointer;
     letter-spacing: 0.04em;
@@ -225,9 +234,9 @@
 
   .status-msg {
     font-family: var(--font);
-    font-size: 11px;
+    font-size: 1.1rem;
     color: var(--muted);
-    min-height: 16px;
+    min-height: 1.6rem;
   }
   .status-msg.error { color: #c0392b; }
 
@@ -244,7 +253,7 @@
 
   .grid-section h2 {
     font-family: var(--font);
-    font-size: 11px;
+    font-size: 1.1rem;
     font-weight: 500;
     letter-spacing: 0.1em;
     color: var(--muted);
@@ -254,8 +263,8 @@
 
   .image-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+    gap: 0.8rem;
   }
 
   .thumb {
@@ -277,20 +286,20 @@
   }
   .thumb .channel-tag {
     position: absolute;
-    bottom: 4px; left: 4px;
+    bottom: 0.4rem; left: 0.4rem;
     background: rgba(0,0,0,0.55);
     color: #fff;
     font-family: var(--font);
-    font-size: 9px;
-    padding: 2px 5px;
-    border-radius: 3px;
+    font-size: 0.9rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.3rem;
     pointer-events: none;
   }
 
   .placeholder-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+    gap: 0.8rem;
   }
   .placeholder-cell {
     aspect-ratio: 1;
@@ -307,7 +316,7 @@
 
   .analysis-section h2 {
     font-family: var(--font);
-    font-size: 11px;
+    font-size: 1.1rem;
     font-weight: 500;
     letter-spacing: 0.1em;
     color: var(--muted);
@@ -343,23 +352,21 @@
   .colour-rows {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 0.4rem;
   }
 
   .colour-block {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 0.2rem;
   }
 
   .colour-label {
     font-family: var(--font);
-    font-size: 10px;
+    font-size: 1rem;
     color: var(--muted);
-    margin-bottom: 2px;
+    margin-bottom: 0.2rem;
   }
-
-
 
   /* ── SEMANTIC BAR ── */
   .semantic-section {
@@ -369,15 +376,15 @@
   }
   .semantic-label {
     font-family: var(--font);
-    font-size: 10px;
+    font-size: 1rem;
     color: var(--muted);
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    margin-bottom: 6px;
+    margin-bottom: 0.6rem;
   }
   .semantic-bar {
     display: flex;
-    height: 32px;
+    height: 3.2rem;
     border-radius: var(--radius);
     overflow: hidden;
     gap: 2px;
@@ -393,31 +400,31 @@
   }
   .semantic-segment-label {
     font-family: var(--font);
-    font-size: 9px;
+    font-size: 0.9rem;
     white-space: nowrap;
     overflow: hidden;
-    padding: 0 4px;
+    padding: 0 0.4rem;
     pointer-events: none;
   }
   .semantic-legend {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px 12px;
-    margin-top: 6px;
+    gap: 0.6rem 1.2rem;
+    margin-top: 0.6rem;
   }
   .semantic-legend-item {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 0.4rem;
     font-family: var(--font);
-    font-size: 10px;
+    font-size: 1rem;
     color: var(--muted);
     cursor: pointer;
   }
   .semantic-legend-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 2px;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 0.2rem;
     flex-shrink: 0;
   }
 
@@ -427,28 +434,28 @@
   }
 
   .swatch {
-    height: 28px;
+    height: 2.8rem;
     flex: 1;
-    border-radius: 3px;
+    border-radius: 0.3rem;
     cursor: pointer;
     transition: transform 0.1s;
     position: relative;
   }
   .swatch:hover { transform: scaleY(1.15); z-index: 1; }
-  .swatch.base { height: 36px; border-radius: 4px; flex: 1.4; }
+  .swatch.base { height: 3.6rem; border-radius: 0.4rem; flex: 1.4; }
 
   .swatch-tooltip {
     display: none;
     position: absolute;
-    bottom: calc(100% + 4px);
+    bottom: calc(100% + 0.4rem);
     left: 50%;
     transform: translateX(-50%);
     background: var(--accent);
     color: #f5f3ef;
     font-family: var(--font);
-    font-size: 10px;
-    padding: 3px 6px;
-    border-radius: 3px;
+    font-size: 1rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 0.3rem;
     white-space: nowrap;
     pointer-events: none;
     z-index: 10;
@@ -459,7 +466,7 @@
   .export-bar {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 0.6rem;
     padding-top: 0.5rem;
     border-top: 1px solid var(--border);
     margin-top: 0.5rem;
@@ -467,8 +474,8 @@
 
   .btn-export {
     font-family: var(--font);
-    font-size: 11px;
-    padding: 5px 10px;
+    font-size: 1.1rem;
+    padding: 0.5rem 1rem;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     background: var(--bg);
@@ -484,22 +491,22 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 200px;
+    height: 20rem;
     color: var(--muted);
     font-family: var(--font);
-    font-size: 12px;
+    font-size: 1.2rem;
     border: 1px dashed var(--border);
     border-radius: var(--radius);
   }
 
   .analyse-spinner {
     display: inline-block;
-    width: 12px; height: 12px;
+    width: 1.2rem; height: 1.2rem;
     border: 2px solid var(--border);
     border-top-color: var(--accent);
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
-    margin-right: 6px;
+    margin-right: 0.6rem;
     vertical-align: middle;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -516,12 +523,12 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 7px 10px;
+    padding: 0.7rem 1rem;
     background: var(--surface2);
     border: none;
     cursor: pointer;
     font-family: var(--font);
-    font-size: 11px;
+    font-size: 1.1rem;
     color: var(--muted);
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -531,32 +538,32 @@
   .settings-toggle.open .caret { transform: rotate(180deg); }
   .settings-body {
     display: none;
-    padding: 10px;
+    padding: 1rem;
     border-top: 1px solid var(--border);
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8px 16px;
+    gap: 0.8rem 1.6rem;
   }
   .settings-body.hidden { display: none; }
   .setting-row {
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 0.3rem;
   }
   .setting-row label {
     font-family: var(--font);
-    font-size: 10px;
+    font-size: 1rem;
     color: var(--muted);
     letter-spacing: 0.05em;
   }
   .setting-row select,
   .setting-row input[type=range] {
     font-family: var(--font);
-    font-size: 11px;
+    font-size: 1.1rem;
     width: 100%;
   }
   .setting-row select {
-    padding: 3px 5px;
+    padding: 0.3rem 0.5rem;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     background: var(--bg);
@@ -566,18 +573,18 @@
   .setting-toggle-row {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 0.6rem;
   }
   .setting-toggle-row label {
     font-family: var(--font);
-    font-size: 10px;
+    font-size: 1rem;
     color: var(--muted);
     letter-spacing: 0.05em;
     cursor: pointer;
   }
   .setting-val {
     font-family: var(--font);
-    font-size: 10px;
+    font-size: 1rem;
     color: var(--muted);
     text-align: right;
   }
@@ -587,7 +594,7 @@
 
 <header>
   <h1>are.na palette</h1>
-  <span>v1.7</span>
+  <span>v1.9</span>
 </header>
 
 <div class="layout">
