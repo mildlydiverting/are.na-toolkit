@@ -62,14 +62,17 @@ v1.8–v1.19 were all done in one session. Key changes in order:
 - **v1.15–v1.18:** Responsive layout fixes (multiple iterations)
 - **v1.19:** Clean layout rewrite — flexbox structure, removed aspect-ratio, overflow-x fix
 
+## Done in Claude Code session (2026-04-13)
+
+- The git repo (`are.na-toolkit`) initialised locally and pushed to GitHub
+- The build system (Python concat script to assemble from `src/` files) written and working
+- Source file split (into `src/style.css`, `src/main.js`, `src/index.html` etc.) 
+
 ---
 
 ## Known issues / next steps
 
 - Some minor spacing "funkiness" at certain breakpoints — not yet investigated
-- The git repo (`are.na-toolkit`) has been initialised locally but not yet pushed to GitHub
-- The build system (Python concat script to assemble from `src/` files) has not been written yet
-- Source file split (into `src/style.css`, `src/main.js`, `src/index.html` etc.) not yet done
 - RampenSau integration for hue-shifted tints/shades: prototyped previously but set aside — may revisit
 - `shared/arena-api.js` not yet extracted from the monolith
 
@@ -77,8 +80,12 @@ v1.8–v1.19 were all done in one session. Key changes in order:
 
 Kim prefers:
 - Iterative, targeted changes — not large rewrites unless necessary
-- Version comments and changelogs in file headers
+- Version note in file header
+- changelog stored as a seperate changelog.md file
 - Screenshots to communicate layout issues
 - Understanding the root cause alongside any fix
+- Learning as she goes along
+- clean, modular, semantic code, accessible with progressive enhancement, CSS CUBE https://cube.fyi , component libraries and design systems https://atomicdesign.bradfrost.com/table-of-contents/ building to style guides
+- eleventy https://www.11ty.dev  hugo https://gohugo.io/documentation/ as ssgs if needed
 - Uploading the current HTML file to the chat to share it (GitHub raw URL fetch also works once the repo is public)
 - British English
