@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Are.na Palette</title>
 <!--
-  arena-palette v1.19
+  arena-palette v1.20
   ──────────────────────────────────────────────────────────────────
   Are.na colour palette extractor tool
   Fetches images from up to 4 Are.na channels, extracts a 7-colour
@@ -14,6 +14,17 @@
 
   Changelog:
 
+    v1.20 (2026-04-13) — Colour naming via api.color.pizza (meodai/color-name-api).
+                         Main palette colours named automatically after extraction
+                         in a single batch API call. Names shown in colour row labels
+                         as "01 · #3a2f1e · Walnut Brown · 12%". Loading state shows
+                         "…" while API call is in flight; no layout shift. Name
+                         vocabulary selectable in extraction settings: bestOf (default),
+                         japaneseTraditional, sanzoWadaI, wikipedia, werner, ridgway,
+                         nbsIscc, thesaurus. Changing vocabulary clears cache and
+                         refetches. Names included in all exports: hex, rgb+hsl, css
+                         vars (as comment on base var), .color-palette JSON, and png
+                         (name shown on base swatch where it fits).
     v1.19 (2026-04-13) — Clean layout rewrite. Flexbox page structure (sidebar fixed
                          width, main flex:1 min-width:0). Removed aspect-ratio from
                          image container — scales naturally (width:100%, height:auto,
@@ -89,10 +100,14 @@
     GET /v3/channels/{slug}           — channel metadata (total count)
     GET /v3/channels/{slug}/contents  — paginated blocks (per=1 for random page)
 
+  Colour naming: api.color.pizza v1 — https://github.com/meodai/color-name-api
+  Endpoint used:
+    GET /v1/?values={hex,...}&list={listKey}
+
   Dependencies:
     Color Thief 3.x (unpkg) — MMCQ palette extraction, v3 API
     JSZip 3.10.1 (cdnjs) — used in export functions
-    DM Mono + DM Sans (Google Fonts)
+    Karla + Courier Prime (Google Fonts)
   ──────────────────────────────────────────────────────────────────
 -->
 <script src="https://unpkg.com/colorthief@3/dist/umd/color-thief.global.js"></script>
@@ -103,7 +118,7 @@
 
 <header>
   <h1>are.na palette</h1>
-  <span>v1.19</span>
+  <span>v1.20</span>
 </header>
 
 <div class="layout">

@@ -1,4 +1,4 @@
-  /* ── v1.10 ── */
+  /* ── v1.20 ── */
   /* Base font trick: 1rem = 10px (62.5% of browser default 16px).
      All font-size and spacing values use rem throughout. */
   :root {
@@ -387,6 +387,19 @@
     font-size: 1rem;
     color: var(--muted);
     margin-bottom: 0.2rem;
+  }
+
+  /* ── COLOUR NAME STATES ── */
+  .colour-hex {
+    font-family: var(--font-mono);
+  }
+  .colour-name {
+    color: var(--text);
+    font-style: italic;
+  }
+  .colour-name-loading {
+    opacity: 0.4;
+    font-style: italic;
   }
 
   /* ── SEMANTIC BAR ── */
