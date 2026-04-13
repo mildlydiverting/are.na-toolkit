@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Are.na Palette</title>
 <!--
-  arena-palette v1.16
+  arena-palette v1.19
   ──────────────────────────────────────────────────────────────────
   Are.na colour palette extractor tool
   Fetches images from up to 4 Are.na channels, extracts a 7-colour
@@ -36,6 +36,19 @@
                          Muted, DarkMuted, LightMuted. Displayed as a proportional
                          colour bar (widths from nearest palette colour proportion)
                          with a hex legend below. Click any legend item to copy hex.
+    v1.19 (2026-04-13) — Clean layout rewrite. Flexbox page structure (sidebar fixed
+                         width, main flex:1 min-width:0). Removed aspect-ratio from
+                         image container — scales naturally (width:100%, height:auto,
+                         max-height:70vh). overflow-x:hidden on body. min-width:0 on
+                         all flex/grid children.
+    v1.18 (2026-04-13) — Fixed palette panel overflow at mid widths: raised desktop
+                         breakpoint to 1200px, added min-width:0 to image-figure and
+                         palette-panel so grid children cannot overflow their cells.
+    v1.17 (2026-04-13) — Three-breakpoint responsive system. Desktop (>1100px):
+                         sidebar | image | palettes side by side. Tablet (600–1100px):
+                         sidebar + single-column main (image above palette). Mobile
+                         (<600px): full stack, thumbs in 3-column grid, channel tags
+                         hidden on thumbs.
     v1.16 (2026-04-13) — Fixed responsive layout: analysis-layout now uses
                          auto-fit minmax(28rem, 1fr) so columns scale smoothly and
                          wrap naturally without a hard media query snap. Thumbnail
@@ -130,19 +143,31 @@
     font-family: var(--font);
   }
 
+  /* ── PAGE STRUCTURE ─────────────────────────────────────────────────────── */
+
+  body {
+    overflow-x: hidden;
+  }
+
   .layout {
-    display: grid;
-    grid-template-columns: 22rem 1fr;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    min-height: calc(100vh - 5.6rem);
   }
 
   /* ── SIDEBAR ── */
   .sidebar {
+    width: 22rem;
+    min-width: 0;
+    flex-shrink: 0;
     border-right: 1px solid var(--border);
     padding: 1.5rem;
     background: var(--surface);
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    box-sizing: border-box;
   }
 
   .sidebar h2 {
@@ -224,6 +249,8 @@
 
   /* ── MAIN ── */
   .main {
+    flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     padding: 1.5rem;
@@ -238,27 +265,53 @@
     color: var(--muted);
     text-transform: uppercase;
     margin: 0;
+    flex-shrink: 0;
   }
 
-  /* ── ANALYSIS SECTION ── */
+  /* ── ANALYSIS ── */
   .analysis-section {
     flex: 1;
+    min-width: 0;
   }
 
   .analysis-layout {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(28rem, 1fr));
+    grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
     align-items: start;
   }
 
-  @media (max-width: 900px) {
-    .layout {
+  .image-figure,
+  .palette-panel {
+    min-width: 0;
+  }
+
+  /* ── RESPONSIVE ─────────────────────────────────────────────────────────── */
+
+  /* TABLET: sidebar stays, analysis stacks */
+  @media (max-width: 1200px) {
+    .analysis-layout {
       grid-template-columns: 1fr;
     }
+  }
+
+  /* MOBILE: everything stacks vertically */
+  @media (max-width: 600px) {
+    .layout {
+      flex-direction: column;
+    }
     .sidebar {
+      width: 100%;
       border-right: none;
       border-bottom: 1px solid var(--border);
+    }
+    .image-grid,
+    .placeholder-grid {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.4rem;
+    }
+    .thumb .channel-tag {
+      display: none;
     }
   }
 
@@ -364,11 +417,12 @@
     border-radius: var(--radius);
     overflow: hidden;
     background: var(--surface2);
-    aspect-ratio: 4/3;
+    width: 100%;
   }
   .selected-image-wrap img {
     width: 100%;
-    height: 100%;
+    height: auto;
+    max-height: 70vh;
     object-fit: contain;
     display: block;
   }
@@ -376,6 +430,7 @@
     display: flex;
     flex-direction: column;
     gap: 0;
+    min-width: 0;
   }
   .image-caption {
     padding: 0.6rem 0;
@@ -409,6 +464,7 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    min-width: 0;
   }
 
   .colour-rows {
@@ -645,7 +701,7 @@
 
 <header>
   <h1>are.na palette</h1>
-  <span>v1.16</span>
+  <span>v1.19</span>
 </header>
 
 <div class="layout">
