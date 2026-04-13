@@ -21,6 +21,9 @@ arena-palette todos:
         - Naming - fetch colour names from API, and allow choices
         - pull down titles and details of image from arena
         - redo output stuff - all colours, make it square
+        - work out what would need to change to publish this online
+            - auth?
+            - secret keys?
 
     Colour picking and editing:
         - Draggable colour pickers on the image (circles on canvas, repositionable) — new chat @priority(2)

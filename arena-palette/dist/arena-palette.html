@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Are.na Palette</title>
 <!--
-  arena-palette v1.12
+  arena-palette v1.13
   ──────────────────────────────────────────────────────────────────
   Are.na colour palette extractor tool
   Fetches images from up to 4 Are.na channels, extracts a 7-colour
@@ -36,6 +36,9 @@
                          Muted, DarkMuted, LightMuted. Displayed as a proportional
                          colour bar (widths from nearest palette colour proportion)
                          with a hex legend below. Click any legend item to copy hex.
+    v1.13 (2026-04-13) — Image caption below selected image: block title (if set)
+                         and "view on are.na ↗" link to the block page. blockUrl
+                         added to image data object using are.na/block/{id} pattern.
     v1.12 (2026-04-13) — Replaced swatch tooltip with inline hex reveal. Hex text
                          hidden at rest (colour matches swatch bg), revealed on
                          hover/focus. Click still copies to clipboard.
@@ -345,12 +348,45 @@
     overflow: hidden;
     background: var(--surface2);
     aspect-ratio: 4/3;
+    display: flex;
+    flex-direction: column;
   }
   .selected-image-wrap img {
-    width: 100%; height: 100%;
+    width: 100%; 
+    flex: 1;
+    min-height: 0;
     object-fit: contain;
     display: block;
   }
+  .image-caption {
+    padding: 0.5rem 0.8rem;
+    background: var(--surface2);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+  }
+  .image-title {
+    font-family: var(--font-sans);
+    font-size: 1.1rem;
+    color: var(--text);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .image-link {
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    color: var(--muted);
+    text-decoration: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: color 0.15s;
+  }
+  .image-link:hover { color: var(--text); }
 
   .palette-panel {
     display: flex;
@@ -592,7 +628,7 @@
 
 <header>
   <h1>are.na palette</h1>
-  <span>v1.12</span>
+  <span>v1.13</span>
 </header>
 
 <div class="layout">
@@ -824,7 +860,8 @@ async function fetchChannelImages(slug, token, slotsNeeded) {
           original: block.image.src,
           title:    block.title || '',
           channel:  slug,
-          id:       block.id
+          id:       block.id,
+          blockUrl: `https://www.are.na/block/${block.id}`
         });
         break;
       }
@@ -1140,9 +1177,15 @@ function renderAnalysis(imgEl, paletteData, swatchMap) {
   const s = extractionSettings;
   analysisArea.innerHTML = `
     <div class="analysis-layout">
-      <div class="selected-image-wrap">
-        <img src="${imgEl.src}" alt="" crossorigin="anonymous" />
-      </div>
+      <figure class="selected-image-wrap">
+        <img src="${imgEl.src}" alt="${currentImageObj?.title || ''}" crossorigin="anonymous" />
+        <figcaption class="image-caption">
+          ${currentImageObj?.title ? `<span class="image-title">${currentImageObj.title}</span>` : ''}
+          <a class="image-link" href="${currentImageObj?.blockUrl || '#'}" target="_blank" rel="noopener">
+            view on are.na ↗
+          </a>
+        </figcaption>
+      </figure>
       <div class="palette-panel">
 
         <div class="settings-panel">
