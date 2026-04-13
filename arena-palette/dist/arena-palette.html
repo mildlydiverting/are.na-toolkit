@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Are.na Palette</title>
 <!--
-  arena-palette v1.13
+  arena-palette v1.16
   ──────────────────────────────────────────────────────────────────
   Are.na colour palette extractor tool
   Fetches images from up to 4 Are.na channels, extracts a 7-colour
@@ -36,6 +36,18 @@
                          Muted, DarkMuted, LightMuted. Displayed as a proportional
                          colour bar (widths from nearest palette colour proportion)
                          with a hex legend below. Click any legend item to copy hex.
+    v1.16 (2026-04-13) — Fixed responsive layout: analysis-layout now uses
+                         auto-fit minmax(28rem, 1fr) so columns scale smoothly and
+                         wrap naturally without a hard media query snap. Thumbnail
+                         grid restored at all widths.
+    v1.15 (2026-04-13) — Fixed responsive stacking: removed duplicate .analysis-layout
+                         definition that was overriding the media query. Added page-level
+                         breakpoint at 900px: sidebar goes full-width, thumbnail grid
+                         hidden, sidebar border flips to bottom.
+    v1.14 (2026-04-13) — Layout restructure: thumbnails moved to sidebar.
+                         grid. Main area is image + palette side by side, stacking to
+                         single column below 900px. Caption moved outside aspect-ratio
+                         container using image-figure wrapper. Page scrolls as whole.
     v1.13 (2026-04-13) — Image caption below selected image: block title (if set)
                          and "view on are.na ↗" link to the block page. blockUrl
                          added to image data object using are.na/block/{id} pattern.
@@ -120,8 +132,7 @@
 
   .layout {
     display: grid;
-    grid-template-columns: 26rem 1fr;
-    min-height: calc(100vh - 5.6rem);
+    grid-template-columns: 22rem 1fr;
   }
 
   /* ── SIDEBAR ── */
@@ -143,6 +154,15 @@
     text-transform: uppercase;
   }
 
+  .sidebar-images {
+    border-top: 1px solid var(--border);
+    padding-top: 1.5rem;
+  }
+
+  .sidebar-images h2 {
+    margin-bottom: 1rem;
+  }
+
   .channel-list {
     display: flex;
     flex-direction: column;
@@ -153,6 +173,93 @@
     display: flex;
     align-items: center;
     gap: 0.6rem;
+  }
+
+  .image-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.6rem;
+  }
+
+  .thumb {
+    aspect-ratio: 1;
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: border-color 0.15s, transform 0.1s;
+    background: var(--surface2);
+    position: relative;
+  }
+  .thumb:hover { border-color: var(--accent); transform: scale(1.02); }
+  .thumb.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+  .thumb img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .thumb .channel-tag {
+    position: absolute;
+    bottom: 0.4rem; left: 0.4rem;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.3rem;
+    pointer-events: none;
+  }
+
+  .placeholder-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.6rem;
+  }
+  .placeholder-cell {
+    aspect-ratio: 1;
+    border-radius: var(--radius);
+    background: var(--surface2);
+    border: 1px dashed var(--border);
+  }
+
+  /* ── MAIN ── */
+  .main {
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    gap: 1.5rem;
+  }
+
+  .main > h2 {
+    font-family: var(--font-sans);
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin: 0;
+  }
+
+  /* ── ANALYSIS SECTION ── */
+  .analysis-section {
+    flex: 1;
+  }
+
+  .analysis-layout {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(28rem, 1fr));
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  @media (max-width: 900px) {
+    .layout {
+      grid-template-columns: 1fr;
+    }
+    .sidebar {
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+    }
   }
 
   .channel-row input[type="text"] {
@@ -252,116 +359,26 @@
   }
   .status-msg.error { color: #c0392b; }
 
-  /* ── MAIN ── */
-  .main {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .grid-section {
-    padding: 1.5rem;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .grid-section h2 {
-    font-family: var(--font-sans);
-    font-size: 1.1rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    color: var(--muted);
-    text-transform: uppercase;
-    margin-bottom: 1rem;
-  }
-
-  .image-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
-    gap: 0.8rem;
-  }
-
-  .thumb {
-    aspect-ratio: 1;
-    border-radius: var(--radius);
-    overflow: hidden;
-    cursor: pointer;
-    border: 2px solid transparent;
-    transition: border-color 0.15s, transform 0.1s;
-    background: var(--surface2);
-    position: relative;
-  }
-  .thumb:hover { border-color: var(--accent); transform: scale(1.02); }
-  .thumb.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
-  .thumb img {
-    width: 100%; height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-  .thumb .channel-tag {
-    position: absolute;
-    bottom: 0.4rem; left: 0.4rem;
-    background: rgba(0,0,0,0.55);
-    color: #fff;
-    font-family: var(--font-sans);
-    font-size: 0.9rem;
-    padding: 0.2rem 0.5rem;
-    border-radius: 0.3rem;
-    pointer-events: none;
-  }
-
-  .placeholder-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
-    gap: 0.8rem;
-  }
-  .placeholder-cell {
-    aspect-ratio: 1;
-    border-radius: var(--radius);
-    background: var(--surface2);
-    border: 1px dashed var(--border);
-  }
-
   /* ── ANALYSIS SECTION ── */
-  .analysis-section {
-    padding: 1.5rem;
-    flex: 1;
-  }
-
-  .analysis-section h2 {
-    font-family: var(--font-sans);
-    font-size: 1.1rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    color: var(--muted);
-    text-transform: uppercase;
-    margin-bottom: 1rem;
-  }
-
-  .analysis-layout {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-    align-items: start;
-  }
-
   .selected-image-wrap {
     border-radius: var(--radius);
     overflow: hidden;
     background: var(--surface2);
     aspect-ratio: 4/3;
-    display: flex;
-    flex-direction: column;
   }
   .selected-image-wrap img {
-    width: 100%; 
-    flex: 1;
-    min-height: 0;
+    width: 100%;
+    height: 100%;
     object-fit: contain;
     display: block;
   }
+  .image-figure {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
   .image-caption {
-    padding: 0.5rem 0.8rem;
-    background: var(--surface2);
-    border-top: 1px solid var(--border);
+    padding: 0.6rem 0;
     display: flex;
     align-items: baseline;
     gap: 0.8rem;
@@ -628,7 +645,7 @@
 
 <header>
   <h1>are.na palette</h1>
-  <span>v1.13</span>
+  <span>v1.16</span>
 </header>
 
 <div class="layout">
@@ -652,11 +669,8 @@
       <div style="height:8px"></div>
       <div class="status-msg" id="statusMsg"></div>
     </div>
-  </aside>
 
-  <!-- MAIN -->
-  <main class="main">
-    <div class="grid-section">
+    <div class="sidebar-images">
       <h2>Images</h2>
       <div class="placeholder-grid" id="imageGrid">
         <div class="placeholder-cell"></div>
@@ -670,12 +684,13 @@
         <div class="placeholder-cell"></div>
       </div>
     </div>
+  </aside>
 
-    <div class="analysis-section">
-      <h2>Palette analysis</h2>
-      <div id="analysisArea">
-        <div class="empty-analysis">← select an image to extract its palette</div>
-      </div>
+  <!-- MAIN -->
+  <main class="main">
+    <h2>Palette analysis</h2>
+    <div id="analysisArea">
+      <div class="empty-analysis">← select an image to extract its palette</div>
     </div>
   </main>
 </div>
@@ -1177,8 +1192,10 @@ function renderAnalysis(imgEl, paletteData, swatchMap) {
   const s = extractionSettings;
   analysisArea.innerHTML = `
     <div class="analysis-layout">
-      <figure class="selected-image-wrap">
-        <img src="${imgEl.src}" alt="${currentImageObj?.title || ''}" crossorigin="anonymous" />
+      <figure class="image-figure">
+        <div class="selected-image-wrap">
+          <img src="${imgEl.src}" alt="${currentImageObj?.title || ''}" crossorigin="anonymous" />
+        </div>
         <figcaption class="image-caption">
           ${currentImageObj?.title ? `<span class="image-title">${currentImageObj.title}</span>` : ''}
           <a class="image-link" href="${currentImageObj?.blockUrl || '#'}" target="_blank" rel="noopener">
