@@ -14,6 +14,13 @@ arena-palette todos:
         - tweak size of text and make it darker
         - mid grey for background, like a palette?
         - general - CSS kit for standard styling of my stuff
+        - sort out the form field backgrounds
+        - sort out typography - it's still illegible
+        - three column? or move image thumbs to under the fetch thingy?
+        - move to claude code
+        - Naming - fetch colour names from API, and allow choices
+        - pull down titles and details of image from arena
+        - redo output stuff - all colours, make it square
 
     Colour picking and editing:
         - Draggable colour pickers on the image (circles on canvas, repositionable) — new chat @priority(2)

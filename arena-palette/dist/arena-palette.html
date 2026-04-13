@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Are.na Palette</title>
 <!--
-  arena-palette v1.10
+  arena-palette v1.12
   ──────────────────────────────────────────────────────────────────
   Are.na colour palette extractor tool
   Fetches images from up to 4 Are.na channels, extracts a 7-colour
@@ -36,6 +36,12 @@
                          Muted, DarkMuted, LightMuted. Displayed as a proportional
                          colour bar (widths from nearest palette colour proportion)
                          with a hex legend below. Click any legend item to copy hex.
+    v1.12 (2026-04-13) — Replaced swatch tooltip with inline hex reveal. Hex text
+                         hidden at rest (colour matches swatch bg), revealed on
+                         hover/focus. Click still copies to clipboard.
+    v1.11 (2026-04-13) — Added "tints & shades" section heading with rule above
+                         colour rows, matching semantic palette heading style.
+                         Fixed swatch tooltip centering: fixed width + translateX(-50%).
     v1.10 (2026-04-13) — Mid-grey colour scheme (#808080 base) for neutral colour
                          judgement. Remapped all surfaces to subtle grey tones.
                          Font pass: Karla for all UI text; Courier Prime kept only
@@ -441,29 +447,18 @@
     flex: 1;
     border-radius: 0.3rem;
     cursor: pointer;
-    transition: transform 0.1s;
-    position: relative;
-  }
-  .swatch:hover { transform: scaleY(1.15); z-index: 1; }
-  .swatch.base { height: 3.6rem; border-radius: 0.4rem; flex: 1.4; }
-
-  .swatch-tooltip {
-    display: none;
-    position: absolute;
-    bottom: calc(100% + 0.4rem);
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--accent);
-    color: var(--text);
+    transition: color 0.15s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-family: var(--font);
-    font-size: 1rem;
-    padding: 0.3rem 0.6rem;
-    border-radius: 0.3rem;
-    white-space: nowrap;
-    pointer-events: none;
-    z-index: 10;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    user-select: none;
   }
-  .swatch:hover .swatch-tooltip { display: block; }
+  .swatch:hover { transform: scaleY(1.1); z-index: 1; }
+  .swatch.base { height: 3.6rem; border-radius: 0.4rem; flex: 1.4; font-size: 1.3rem; }
 
   /* ── EXPORT ── */
   .export-bar {
@@ -597,7 +592,7 @@
 
 <header>
   <h1>are.na palette</h1>
-  <span>v1.10</span>
+  <span>v1.12</span>
 </header>
 
 <div class="layout">
@@ -1130,11 +1125,10 @@ function renderAnalysis(imgEl, paletteData, swatchMap) {
       const isBase = si === TINT_STEPS;
       const tc = textColour(c);
       return `<div class="swatch${isBase ? ' base' : ''}"
-        style="background:${ch}"
+        style="background:${ch};color:${ch}"
         data-hex="${ch}"
-        title="${ch}">
-        <span class="swatch-tooltip" style="background:${ch};color:${tc}">${ch}</span>
-      </div>`;
+        data-tc="${tc}"
+        tabindex="0">${ch}</div>`;
     }).join('');
 
     return `<div class="colour-block">
@@ -1190,6 +1184,9 @@ function renderAnalysis(imgEl, paletteData, swatchMap) {
         </div>
 
         ${mainPropBar}
+        <div class="semantic-section" style="margin-top:0">
+          <div class="semantic-label">tints &amp; shades</div>
+        </div>
         <div class="colour-rows">${rows}</div>
         ${semanticBarHtml}
         <div class="export-bar">
@@ -1204,6 +1201,12 @@ function renderAnalysis(imgEl, paletteData, swatchMap) {
   `;
 
   document.querySelectorAll('.swatch').forEach(sw => {
+    const reveal  = () => sw.style.color = sw.dataset.tc;
+    const conceal = () => sw.style.color = sw.dataset.hex;
+    sw.addEventListener('mouseenter', reveal);
+    sw.addEventListener('mouseleave', conceal);
+    sw.addEventListener('focus',      reveal);
+    sw.addEventListener('blur',       conceal);
     sw.addEventListener('click', () => {
       navigator.clipboard.writeText(sw.dataset.hex).catch(() => {});
     });
