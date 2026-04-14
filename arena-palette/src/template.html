@@ -5,56 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Are.na Palette</title>
 <!--
-  arena-palette v1.22
+  arena-palette v1.23
   ──────────────────────────────────────────────────────────────────
-  Are.na colour palette extractor tool
-  Fetches images from up to 4 Are.na channels, extracts a 7-colour
-  k-means palette from a selected image, generates tints/shades, and
-  exports in multiple formats.
-
   Changelog:
 
-    v1.22 (2026-04-14) — Remove all inline styles and spacer divs from template.
-                         Spacing now handled in CSS: gap on .channels-section,
-                         margin-top on .status-msg, #tokenHint rule in stylesheet.
-                         In main.js: proportion bar wrapper gets .prop-bar class,
-                         full-span setting rows get .setting-row--full class,
-                         tints & shades heading gets .section-heading--flush class.
-    v1.21a (2026-04-13) — Colour token correction. --bg #8e8e8e, --surface #686868,
-                         --surface2 #5a5a5a. --surface-text #e8e8e8 / --surface-muted
-                         #b0b0b0 for text on dark surfaces. .visually-hidden class.
-    v1.21 (2026-04-13) — Accessibility and contrast pass. Dark text on mid-grey.
-                         Light input field backgrounds. Min 14px font size.
-                         Button hierarchy. Proper labels and aria throughout.
+    v1.23 (2026-04-14) — Three-column layout. No top header bar. h1 branding
+                         moves to sidebar top on dark bg. Channels section
+                         collapsible (open by default, auto-closes when images
+                         load). Image column: h2 "Select an image" transitions
+                         to block title on selection. Metadata below image:
+                         title, are.na link, via user, source+date, description
+                         with show more toggle. Block data extended to include
+                         description, source, user, created_at.
+                         Responsive: ≤1100px sidebar + stacked cols; ≤600px
+                         full stack.
+    v1.22 (2026-04-14) — Remove all inline styles and spacer divs.
+    v1.21a (2026-04-13) — Colour token correction.
+    v1.21 (2026-04-13) — Accessibility and contrast pass.
     v1.20 (2026-04-13) — Colour naming via api.color.pizza.
     v1.19 (2026-04-13) — Clean layout rewrite.
-    v1.18 (2026-04-13) — Fixed palette panel overflow at mid widths.
-    v1.17 (2026-04-13) — Three-breakpoint responsive system.
-    v1.16 (2026-04-13) — Fixed responsive layout.
-    v1.15 (2026-04-13) — Fixed responsive stacking.
-    v1.14 (2026-04-13) — Layout restructure: thumbnails moved to sidebar.
-    v1.13 (2026-04-13) — Image caption below selected image.
-    v1.12 (2026-04-13) — Replaced swatch tooltip with inline hex reveal.
-    v1.11 (2026-04-13) — Added "tints & shades" section heading.
-    v1.10 (2026-04-13) — Mid-grey colour scheme (#808080 base).
-    v1.9  (2026-04-12) — Full CSS unit pass.
-    v1.8  (2026-04-12) — Typography: Karla + Courier Prime.
-    v1.7  (2026-04-07) — Full-width proportion bar.
-    v1.6  (2026-04-07) — Semantic palette section.
-    v1.5  (2026-04-07) — Extraction settings panel. localStorage persistence.
-    v1.4  (2026-04-07) — Color Thief v3.
-    v1.3  (2026-04-07) — Color Thief v2 (MMCQ).
-    v1.2  (2026-04-07) — Fixed v3 image URL fields. Two-step random-page fetch.
-    v1.1  (2026-04-07) — Migrated to Are.na v3 API.
-    v1.0  (2026-04-07) — Initial release.
 
   API: Are.na REST API v3 — https://www.are.na/developers/explore
   Colour naming: api.color.pizza v1 — https://github.com/meodai/color-name-api
-
-  Dependencies:
-    Color Thief 3.x (unpkg) — MMCQ palette extraction, v3 API
-    JSZip 3.10.1 (cdnjs) — used in export functions
-    Karla + Courier Prime (Google Fonts)
+  Dependencies: Color Thief 3.x, JSZip 3.10.1, Karla + Courier Prime
   ──────────────────────────────────────────────────────────────────
 -->
 <script src="https://unpkg.com/colorthief@3/dist/umd/color-thief.global.js"></script>
@@ -63,41 +36,52 @@
 </head>
 <body>
 
-<header>
-  <h1>are.na palette</h1>
-  <span aria-label="Version 1.22">v1.22</span>
-</header>
-
 <div class="layout">
-  <!-- SIDEBAR -->
+
+  <!-- COLUMN 1: SIDEBAR -->
   <aside class="sidebar" aria-label="Channels and images">
 
+    <div class="sidebar-branding">
+      <h1>are.na palette</h1>
+      <span class="version" aria-label="Version 1.23">v1.23</span>
+    </div>
+
+    <!-- Channels — collapsible, open by default, auto-closes on image load -->
     <section class="channels-section" aria-labelledby="channels-heading">
-      <h2 id="channels-heading">Channels</h2>
-      <div class="channel-list" id="channelList" role="list"></div>
-      <button class="btn-add" id="btnAddChannel" aria-label="Add another channel">
-        + add channel
+      <button
+        class="section-toggle"
+        id="channelsToggle"
+        aria-expanded="true"
+        aria-controls="channelsBody"
+      >
+        <h2 id="channels-heading">Channels</h2>
+        <span class="caret" aria-hidden="true">&#x25BE;</span>
       </button>
+      <div class="section-body" id="channelsBody">
+        <div class="token-row">
+          <label for="tokenInput">Access token</label>
+          <input
+            type="password"
+            id="tokenInput"
+            name="arena-token"
+            placeholder="leave blank for public channels"
+            autocomplete="off"
+            aria-describedby="tokenHint"
+          />
+          <span id="tokenHint">Only needed for private channels</span>
+        </div>
+        <div class="channel-list" id="channelList" role="list"></div>
+        <button class="btn-add" id="btnAddChannel" aria-label="Add another channel">
+          + add channel
+        </button>
+        <div class="fetch-row">
+          <button class="btn-fetch" id="btnFetch">fetch images</button>
+          <div class="status-msg" id="statusMsg" role="status" aria-live="polite"></div>
+        </div>
+      </div>
     </section>
 
-    <div class="token-row">
-      <label for="tokenInput">Access token (optional)</label>
-      <input
-        type="password"
-        id="tokenInput"
-        name="arena-token"
-        placeholder="leave blank for public channels"
-        autocomplete="off"
-        aria-describedby="tokenHint"
-      />
-      <span id="tokenHint">Only needed for private channels</span>
-    </div>
-
-    <div class="fetch-row">
-      <button class="btn-fetch" id="btnFetch">fetch images</button>
-      <div class="status-msg" id="statusMsg" role="status" aria-live="polite"></div>
-    </div>
-
+    <!-- Image thumbnails -->
     <section class="sidebar-images" aria-labelledby="images-heading">
       <h2 id="images-heading">Images</h2>
       <div
@@ -120,15 +104,22 @@
 
   </aside>
 
-  <!-- MAIN -->
-  <main class="main" aria-label="Palette analysis">
-    <h2>Palette analysis</h2>
-    <div id="analysisArea">
-      <div class="empty-analysis" role="status">
-        ← select an image to extract its palette
-      </div>
+  <!-- COLUMN 2: IMAGE -->
+  <section class="image-col" aria-labelledby="image-col-heading">
+    <h2 class="col-heading" id="image-col-heading">Select an image</h2>
+    <div id="imageArea">
+      <div class="empty-image" role="status">← select a thumbnail to view</div>
     </div>
-  </main>
+  </section>
+
+  <!-- COLUMN 3: PALETTE -->
+  <section class="palette-col" aria-labelledby="palette-col-heading">
+    <h2 class="col-heading" id="palette-col-heading">Palette analysis</h2>
+    <div id="analysisArea">
+      <div class="empty-analysis" role="status">← select an image to extract its palette</div>
+    </div>
+  </section>
+
 </div>
 
 <!-- Hidden canvas for colour extraction — display:none is functional, not presentational -->

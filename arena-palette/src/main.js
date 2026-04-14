@@ -2,7 +2,6 @@
 const STORAGE_KEY = 'arena-palette-v1';
 const DEFAULT_CHANNELS = ['', '', ''];
 const MAX_CHANNELS = 4;
-const IMAGES_PER_CHANNEL = 3;
 const TINT_STEPS = 3;
 const SHADE_STEPS = 3;
 
@@ -11,7 +10,6 @@ const API_BASE = 'https://api.are.na/v3';
 const MAX_RETRIES = 12;
 
 // ── COLOUR NAME API ───────────────────────────────────────────────────────────
-// https://api.color.pizza/v1/ — meodai/color-name-api
 const COLOR_NAME_API = 'https://api.color.pizza/v1/';
 
 const NAME_LISTS = {
@@ -69,15 +67,26 @@ function saveState(channels, token) {
 }
 
 // ── DOM REFS ──────────────────────────────────────────────────────────────────
-const channelListEl = document.getElementById('channelList');
-const btnAddChannel = document.getElementById('btnAddChannel');
-const tokenInput    = document.getElementById('tokenInput');
-const btnFetch      = document.getElementById('btnFetch');
-const statusMsg     = document.getElementById('statusMsg');
-const imageGrid     = document.getElementById('imageGrid');
-const analysisArea  = document.getElementById('analysisArea');
-const scratch       = document.getElementById('scratchCanvas');
-const ctx           = scratch.getContext('2d', { willReadFrequently: true });
+const channelListEl  = document.getElementById('channelList');
+const btnAddChannel  = document.getElementById('btnAddChannel');
+const tokenInput     = document.getElementById('tokenInput');
+const btnFetch       = document.getElementById('btnFetch');
+const statusMsg      = document.getElementById('statusMsg');
+const imageGrid      = document.getElementById('imageGrid');
+const imageArea      = document.getElementById('imageArea');
+const analysisArea   = document.getElementById('analysisArea');
+const imageColHeading = document.getElementById('image-col-heading');
+const channelsToggle = document.getElementById('channelsToggle');
+const channelsBody   = document.getElementById('channelsBody');
+const scratch        = document.getElementById('scratchCanvas');
+const ctx            = scratch.getContext('2d', { willReadFrequently: true });
+
+// ── CHANNELS TOGGLE ───────────────────────────────────────────────────────────
+channelsToggle.addEventListener('click', () => {
+  const isOpen = channelsToggle.getAttribute('aria-expanded') === 'true';
+  channelsToggle.setAttribute('aria-expanded', String(!isOpen));
+  channelsBody.classList.toggle('hidden', isOpen);
+});
 
 // ── CHANNEL MANAGEMENT ────────────────────────────────────────────────────────
 let channels = [];
@@ -135,7 +144,6 @@ btnAddChannel.addEventListener('click', () => {
   if (channels.length < MAX_CHANNELS) {
     channels.push('');
     renderChannels();
-    // Focus the new input
     const inputs = channelListEl.querySelectorAll('input[type="text"]');
     if (inputs.length) inputs[inputs.length - 1].focus();
   }
@@ -199,12 +207,21 @@ async function fetchChannelImages(slug, token, slotsNeeded) {
       const block = await fetchBlockAtPage(slug, page, headers);
       if (block && block.type === 'Image' && block.image) {
         results.push({
-          url:      block.image.small?.src || block.image.src,
-          original: block.image.src,
-          title:    block.title || '',
-          channel:  slug,
-          id:       block.id,
-          blockUrl: `https://www.are.na/block/${block.id}`
+          url:         block.image.small?.src || block.image.src,
+          original:    block.image.src,
+          title:       block.title || '',
+          description: block.description?.plain || block.description?.markdown || (typeof block.description === 'string' ? block.description : '') || '',
+          channel:     slug,
+          id:          block.id,
+          blockUrl:    `https://www.are.na/block/${block.id}`,
+          // Source info
+          sourceUrl:   block.source?.url   || '',
+          sourceTitle: block.source?.title || '',
+          // User who added the block
+          userName:    block.user?.full_name || block.user?.slug || '',
+          userSlug:    block.user?.slug      || '',
+          // Date
+          createdAt:   block.created_at || '',
         });
         break;
       }
@@ -265,20 +282,22 @@ function renderImageGrid(images) {
   imageGrid.className = 'image-grid';
   imageGrid.innerHTML = '';
 
+  // Auto-close channels section now thumbnails are rendered
+  channelsToggle.setAttribute('aria-expanded', 'false');
+  channelsBody.classList.add('hidden');
+
   images.forEach((img, i) => {
     const thumb = document.createElement('div');
     thumb.className = 'thumb';
     thumb.dataset.idx = i;
-    thumb.setAttribute('role', 'listitem');
+    thumb.setAttribute('role', 'button');
+    thumb.setAttribute('tabindex', '0');
+    thumb.setAttribute('aria-label', `Extract palette from ${img.title || 'image'} (${img.channel})`);
     thumb.innerHTML = `
       <img src="${img.url}" crossorigin="anonymous" loading="lazy"
         alt="${img.title ? img.title + ' from ' + img.channel : 'Image from ' + img.channel}" />
       <span class="channel-tag" aria-hidden="true">${img.channel}</span>
     `;
-    // Make thumb keyboard-accessible
-    thumb.setAttribute('tabindex', '0');
-    thumb.setAttribute('role', 'button');
-    thumb.setAttribute('aria-label', `Extract palette from ${img.title || 'image'} (${img.channel})`);
     thumb.addEventListener('click', () => selectImage(i));
     thumb.addEventListener('keydown', e => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectImage(i); }
@@ -306,18 +325,116 @@ function selectImage(idx) {
   }
 
   currentImageObj = loadedImages[idx];
+
+  // Update image column heading — fade via class swap
+  updateImageHeading(currentImageObj.title || 'Untitled');
+
+  // Show loading state in image area
+  imageArea.innerHTML = `<div class="empty-image" role="status"><span class="analyse-spinner" aria-hidden="true"></span>loading…</div>`;
   analysisArea.innerHTML = `<div class="empty-analysis" role="status"><span class="analyse-spinner" aria-hidden="true"></span>extracting palette…</div>`;
 
   const img = new Image();
   img.crossOrigin = 'anonymous';
   img.onload = () => {
     currentImageEl = img;
+    renderImagePanel(currentImageObj);
     runExtraction();
   };
   img.onerror = () => {
-    analysisArea.innerHTML = `<div class="empty-analysis" role="alert">could not load image for analysis (CORS)</div>`;
+    imageArea.innerHTML = `<div class="empty-image" role="alert">could not load image (CORS)</div>`;
   };
   img.src = currentImageObj.original + '?t=' + Date.now();
+}
+
+// Update the image column h2 with a graceful opacity transition
+function updateImageHeading(title) {
+  imageColHeading.style.opacity = '0';
+  setTimeout(() => {
+    imageColHeading.textContent = title;
+    imageColHeading.classList.remove('col-heading--placeholder');
+    imageColHeading.style.opacity = '1';
+  }, 150);
+}
+
+// ── RENDER IMAGE PANEL ────────────────────────────────────────────────────────
+function renderImagePanel(imgObj) {
+  const desc        = typeof imgObj.description === 'string' ? imgObj.description : imgObj.description?.plain || '';
+  const hasDescription = desc.trim().length > 0;
+  const hasSource      = imgObj.sourceUrl && imgObj.sourceTitle;
+  const hasUser        = imgObj.userName && imgObj.userSlug;
+  const createdDate    = imgObj.createdAt
+    ? new Date(imgObj.createdAt).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })
+    : '';
+
+  const descHtml = hasDescription ? `
+    <div class="image-description">
+      <p class="image-description-text" id="imgDescText">${escapeHtml(desc)}</p>
+      <button class="btn-show-more" id="btnShowMore" aria-expanded="false" aria-controls="imgDescText">
+        show more ↓
+      </button>
+    </div>
+  ` : '';
+
+  const sourceHtml = hasSource ? `
+    <div class="image-meta-row">
+      <span class="image-meta-label">via</span>
+      <a href="${imgObj.sourceUrl}" target="_blank" rel="noopener">${escapeHtml(imgObj.sourceTitle)}</a>
+      ${createdDate ? `<span class="image-meta-label">accessed ${createdDate}</span>` : ''}
+    </div>
+  ` : createdDate ? `
+    <div class="image-meta-row">
+      <span class="image-meta-label">accessed</span>
+      <span>${createdDate}</span>
+    </div>
+  ` : '';
+
+  imageArea.innerHTML = `
+    <figure class="image-figure">
+      <div class="selected-image-wrap">
+        <img src="${currentImageEl.src}"
+          alt="${imgObj.title ? escapeHtml(imgObj.title) : 'Selected image'}"
+          crossorigin="anonymous" />
+      </div>
+      <figcaption class="image-meta">
+        ${imgObj.title ? `<div class="image-meta-row"><strong>${escapeHtml(imgObj.title)}</strong></div>` : ''}
+        <div class="image-meta-row">
+          <a href="${imgObj.blockUrl}" target="_blank" rel="noopener"
+            aria-label="View ${imgObj.title ? escapeHtml(imgObj.title) : 'this image'} on Are.na (opens in new tab)">
+            view on are.na ↗
+          </a>
+          ${hasUser ? `
+            <span class="image-meta-label">via</span>
+            <a href="https://www.are.na/${imgObj.userSlug}" target="_blank" rel="noopener"
+              aria-label="View ${escapeHtml(imgObj.userName)}'s Are.na profile">
+              ${escapeHtml(imgObj.userName)}
+            </a>
+          ` : ''}
+        </div>
+        ${sourceHtml}
+        ${descHtml}
+      </figcaption>
+    </figure>
+  `;
+
+  // Show more / show less toggle
+  if (hasDescription) {
+    const btnShowMore  = document.getElementById('btnShowMore');
+    const descText     = document.getElementById('imgDescText');
+    btnShowMore.addEventListener('click', () => {
+      const isExpanded = btnShowMore.getAttribute('aria-expanded') === 'true';
+      descText.classList.toggle('expanded', !isExpanded);
+      btnShowMore.setAttribute('aria-expanded', String(!isExpanded));
+      btnShowMore.textContent = isExpanded ? 'show more ↓' : 'show less ↑';
+    });
+  }
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 // ── EXTRACTION ────────────────────────────────────────────────────────────────
@@ -327,7 +444,7 @@ async function runExtraction() {
   const swatches    = extractSwatches(currentImageEl);
   currentPalette = paletteData;
 
-  renderAnalysis(currentImageEl, paletteData, swatches, currentColorNames);
+  renderAnalysis(paletteData, swatches, currentColorNames);
 
   const hexes  = paletteData.map(d => rgbToHex(d.rgb));
   const hexKey = hexes.join(',') + '|' + extractionSettings.nameList;
@@ -354,7 +471,6 @@ async function fetchColorNames(hexArray, list) {
     if (!res.ok) return {};
     const data = await res.json();
     const map = {};
-    // Use requestedHex (exact input hex) not hex (nearest match hex)
     (data.colors || []).forEach(c => {
       if (c.requestedHex && c.name) map[c.requestedHex.toLowerCase()] = c.name;
     });
@@ -454,14 +570,6 @@ function rgbToHex([r,g,b]) {
   return '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
 }
 
-function hexToRgb(hex) {
-  return [
-    parseInt(hex.slice(1,3),16),
-    parseInt(hex.slice(3,5),16),
-    parseInt(hex.slice(5,7),16)
-  ];
-}
-
 function rgbToHsl([r,g,b]) {
   r /= 255; g /= 255; b /= 255;
   const max = Math.max(r,g,b), min = Math.min(r,g,b);
@@ -508,7 +616,7 @@ function textColour(rgb) {
 }
 
 // ── RENDER ANALYSIS ───────────────────────────────────────────────────────────
-function renderAnalysis(imgEl, paletteData, swatchMap, nameMap) {
+function renderAnalysis(paletteData, swatchMap, nameMap) {
   const palette = paletteData.map(d => d.rgb);
 
   // Semantic bar
@@ -597,100 +705,80 @@ function renderAnalysis(imgEl, paletteData, swatchMap, nameMap) {
   ).join('');
 
   analysisArea.innerHTML = `
-    <div class="analysis-layout">
-      <figure class="image-figure">
-        <div class="selected-image-wrap">
-          <img src="${imgEl.src}" alt="${currentImageObj?.title || 'Selected image'}" crossorigin="anonymous" />
-        </div>
-        <figcaption class="image-caption">
-          ${currentImageObj?.title ? `<span class="image-title">${currentImageObj.title}</span>` : ''}
-          <a class="image-link"
-            href="${currentImageObj?.blockUrl || '#'}"
-            target="_blank"
-            rel="noopener"
-            aria-label="View ${currentImageObj?.title || 'this image'} on Are.na (opens in new tab)">
-            view on are.na ↗
-          </a>
-        </figcaption>
-      </figure>
+    <div class="palette-panel">
 
-      <div class="palette-panel">
-
-        <div class="settings-panel">
-          <button
-            class="settings-toggle"
-            id="settingsToggle"
-            aria-expanded="false"
-            aria-controls="settingsBody"
-          >
-            extraction settings
-            <span class="caret" aria-hidden="true">&#x25BE;</span>
-          </button>
-          <div class="settings-body hidden" id="settingsBody" role="group" aria-label="Extraction settings">
-            <div class="setting-row">
-              <label for="sColorCount">
-                colours
-                <span class="setting-val" id="colorCountVal" aria-live="polite">${s.colorCount}</span>
-              </label>
-              <input type="range" id="sColorCount" name="colorCount"
-                min="4" max="12" step="1" value="${s.colorCount}"
-                aria-valuemin="4" aria-valuemax="12" aria-valuenow="${s.colorCount}"
-                aria-label="Number of colours to extract">
-            </div>
-            <div class="setting-row">
-              <label for="sQuality">quality</label>
-              <select id="sQuality" name="quality" aria-label="Extraction quality">
-                <option value="hi"  ${s.quality==='hi' ?'selected':''}>high (slow)</option>
-                <option value="med" ${s.quality==='med'?'selected':''}>medium</option>
-                <option value="lo"  ${s.quality==='lo' ?'selected':''}>low (fast)</option>
-              </select>
-            </div>
-            <div class="setting-row">
-              <label for="sColorSpace">colour space</label>
-              <select id="sColorSpace" name="colorSpace" aria-label="Colour space for extraction">
-                <option value="oklch" ${s.colorSpace==='oklch'?'selected':''}>oklch (perceptual)</option>
-                <option value="rgb"   ${s.colorSpace==='rgb'  ?'selected':''}>rgb</option>
-              </select>
-            </div>
-            <div class="setting-row">
-              <label for="sMinSat">
-                min saturation
-                <span class="setting-val" id="minSatVal" aria-live="polite">${s.minSaturation.toFixed(2)}</span>
-              </label>
-              <input type="range" id="sMinSat" name="minSaturation"
-                min="0" max="0.5" step="0.05" value="${s.minSaturation}"
-                aria-valuemin="0" aria-valuemax="0.5" aria-valuenow="${s.minSaturation}"
-                aria-label="Minimum saturation threshold">
-            </div>
-            <div class="setting-row setting-row--full">
-              <div class="setting-toggle-row">
-                <input type="checkbox" id="sIgnoreWhite" name="ignoreWhite" ${s.ignoreWhite?'checked':''}>
-                <label for="sIgnoreWhite">ignore white / near-white pixels</label>
-              </div>
-            </div>
-            <div class="setting-row setting-row--full">
-              <label for="sNameList">colour name vocabulary</label>
-              <select id="sNameList" name="nameList" aria-label="Colour name vocabulary">
-                ${nameListOptions}
-              </select>
+      <div class="settings-panel">
+        <button
+          class="settings-toggle"
+          id="settingsToggle"
+          aria-expanded="false"
+          aria-controls="settingsBody"
+        >
+          extraction settings
+          <span class="caret" aria-hidden="true">&#x25BE;</span>
+        </button>
+        <div class="settings-body hidden" id="settingsBody" role="group" aria-label="Extraction settings">
+          <div class="setting-row">
+            <label for="sColorCount">
+              colours
+              <span class="setting-val" id="colorCountVal" aria-live="polite">${s.colorCount}</span>
+            </label>
+            <input type="range" id="sColorCount" name="colorCount"
+              min="4" max="12" step="1" value="${s.colorCount}"
+              aria-valuemin="4" aria-valuemax="12" aria-valuenow="${s.colorCount}"
+              aria-label="Number of colours to extract">
+          </div>
+          <div class="setting-row">
+            <label for="sQuality">quality</label>
+            <select id="sQuality" name="quality">
+              <option value="hi"  ${s.quality==='hi' ?'selected':''}>high (slow)</option>
+              <option value="med" ${s.quality==='med'?'selected':''}>medium</option>
+              <option value="lo"  ${s.quality==='lo' ?'selected':''}>low (fast)</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <label for="sColorSpace">colour space</label>
+            <select id="sColorSpace" name="colorSpace">
+              <option value="oklch" ${s.colorSpace==='oklch'?'selected':''}>oklch (perceptual)</option>
+              <option value="rgb"   ${s.colorSpace==='rgb'  ?'selected':''}>rgb</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <label for="sMinSat">
+              min saturation
+              <span class="setting-val" id="minSatVal" aria-live="polite">${s.minSaturation.toFixed(2)}</span>
+            </label>
+            <input type="range" id="sMinSat" name="minSaturation"
+              min="0" max="0.5" step="0.05" value="${s.minSaturation}"
+              aria-valuemin="0" aria-valuemax="0.5" aria-valuenow="${s.minSaturation}"
+              aria-label="Minimum saturation threshold">
+          </div>
+          <div class="setting-row setting-row--full">
+            <div class="setting-toggle-row">
+              <input type="checkbox" id="sIgnoreWhite" name="ignoreWhite" ${s.ignoreWhite?'checked':''}>
+              <label for="sIgnoreWhite">ignore white / near-white pixels</label>
             </div>
           </div>
+          <div class="setting-row setting-row--full">
+            <label for="sNameList">colour name vocabulary</label>
+            <select id="sNameList" name="nameList">${nameListOptions}</select>
+          </div>
         </div>
+      </div>
 
-        ${mainPropBar}
-        <div class="semantic-section semantic-section--flush">
-          <div class="semantic-label">tints &amp; shades</div>
-        </div>
-        <div class="colour-rows" role="list" aria-label="Extracted colours with tints and shades">${rows}</div>
-        ${semanticBarHtml}
+      ${mainPropBar}
+      <div class="semantic-section semantic-section--flush">
+        <div class="semantic-label">tints &amp; shades</div>
+      </div>
+      <div class="colour-rows" role="list" aria-label="Extracted colours with tints and shades">${rows}</div>
+      ${semanticBarHtml}
 
-        <div class="export-bar" role="toolbar" aria-label="Export palette">
-          <button class="btn-export" id="expHex"    aria-label="Export hex values as text file">export hex</button>
-          <button class="btn-export" id="expRgbHsl" aria-label="Export RGB and HSL values as text file">export rgb + hsl</button>
-          <button class="btn-export" id="expCss"    aria-label="Export CSS custom properties">export css vars</button>
-          <button class="btn-export" id="expScp"    aria-label="Export Simple Color Palette file">export .color-palette</button>
-          <button class="btn-export" id="expPng"    aria-label="Export palette as PNG image">export png</button>
-        </div>
+      <div class="export-bar" role="toolbar" aria-label="Export palette">
+        <button class="btn-export" id="expHex"    aria-label="Export hex values as text file">export hex</button>
+        <button class="btn-export" id="expRgbHsl" aria-label="Export RGB and HSL values as text file">export rgb + hsl</button>
+        <button class="btn-export" id="expCss"    aria-label="Export CSS custom properties">export css vars</button>
+        <button class="btn-export" id="expScp"    aria-label="Export Simple Color Palette file">export .color-palette</button>
+        <button class="btn-export" id="expPng"    aria-label="Export palette as PNG image">export png</button>
       </div>
     </div>
   `;
@@ -714,12 +802,12 @@ function renderAnalysis(imgEl, paletteData, swatchMap, nameMap) {
     });
   });
 
-  // Settings toggle — uses aria-expanded
+  // Settings toggle
   document.getElementById('settingsToggle').addEventListener('click', () => {
-    const body    = document.getElementById('settingsBody');
-    const btn     = document.getElementById('settingsToggle');
-    const isOpen  = !body.classList.contains('hidden');
-    body.classList.toggle('hidden');
+    const body   = document.getElementById('settingsBody');
+    const btn    = document.getElementById('settingsToggle');
+    const isOpen = btn.getAttribute('aria-expanded') === 'true';
+    body.classList.toggle('hidden', isOpen);
     btn.setAttribute('aria-expanded', String(!isOpen));
   });
 
@@ -737,8 +825,7 @@ function renderAnalysis(imgEl, paletteData, swatchMap, nameMap) {
 
   document.getElementById('sColorCount').addEventListener('input', e => {
     extractionSettings.colorCount = parseInt(e.target.value);
-    const val = document.getElementById('colorCountVal');
-    val.textContent = extractionSettings.colorCount;
+    document.getElementById('colorCountVal').textContent = extractionSettings.colorCount;
     e.target.setAttribute('aria-valuenow', extractionSettings.colorCount);
     reExtract(true);
   });
@@ -752,8 +839,7 @@ function renderAnalysis(imgEl, paletteData, swatchMap, nameMap) {
   });
   document.getElementById('sMinSat').addEventListener('input', e => {
     extractionSettings.minSaturation = parseFloat(e.target.value);
-    const val = document.getElementById('minSatVal');
-    val.textContent = extractionSettings.minSaturation.toFixed(2);
+    document.getElementById('minSatVal').textContent = extractionSettings.minSaturation.toFixed(2);
     e.target.setAttribute('aria-valuenow', extractionSettings.minSaturation);
     reExtract(true);
   });
@@ -771,7 +857,7 @@ function renderAnalysis(imgEl, paletteData, swatchMap, nameMap) {
   document.getElementById('expRgbHsl').addEventListener('click', () => exportRgbHsl(palette));
   document.getElementById('expCss').addEventListener('click',    () => exportCss(palette));
   document.getElementById('expScp').addEventListener('click',    () => exportScp(palette));
-  document.getElementById('expPng').addEventListener('click',    () => exportPng(imgEl, palette));
+  document.getElementById('expPng').addEventListener('click',    () => exportPng(currentImageEl, palette));
 }
 
 // ── EXPORTS ───────────────────────────────────────────────────────────────────
