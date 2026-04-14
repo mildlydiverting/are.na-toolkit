@@ -248,7 +248,7 @@ btnFetch.addEventListener('click', async () => {
   let allImages = [];
   const errors = [];
 
-  const GRID_SIZE = 9;
+  const GRID_SIZE = 12;
   const baseSlots = Math.floor(GRID_SIZE / slugs.length);
   const extraSlots = GRID_SIZE % slugs.length;
 
