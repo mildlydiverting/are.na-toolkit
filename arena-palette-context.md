@@ -1,91 +1,204 @@
-# arena-palette — context note for new chat
+# arena-palette — handoff note
+## Current version: v1.23
 
-## What we're working on
+---
 
-`arena-palette` is a local single-file HTML tool that fetches images from up to 4 Are.na channels, extracts a colour palette from a selected image, and displays tints/shades plus a semantic palette. It's part of a planned suite of local Are.na browser tools called `are.na-toolkit`, which lives at `~/Development/are.na-toolkit/`.
+## What this tool is
 
-The current file is `arena-palette.html` (v1.19), located at:
+A local single-file HTML tool that fetches images from up to 4 Are.na channels, extracts a colour palette from a selected image, and displays tints/shades, a semantic palette, and colour proportions. Exports in multiple formats. No server, no build step to run it — just open the HTML file in a browser.
+
+The tool lives at:
 `~/Development/are.na-toolkit/arena-palette/dist/arena-palette.html`
 
-Companion project: `are.na-picks` (separate public repo, already on GitHub), which shares the same two-step API fetch pattern.
+Source files are split and built with a Python script:
+```
+arena-palette/
+  src/
+    template.html   ← HTML shell with <!-- INJECT:CSS --> and <!-- INJECT:JS --> markers
+    style.css       ← all styles
+    main.js         ← all JavaScript
+  dist/
+    arena-palette.html  ← built output (do not edit directly)
+  build.py          ← concatenation script
+```
+
+To rebuild after editing src files:
+```zsh
+cd ~/Development/are.na-toolkit
+python3 arena-palette/build.py
+```
+
+GitHub repo: https://github.com/mildlydiverting/are.na-toolkit
 
 ---
 
-## Current file state (v1.19)
+## Architecture — must preserve
 
-**Key dependencies:**
-- Color Thief v3 (unpkg CDN) — MMCQ palette + swatch extraction
-- JSZip 3.10.1 (cdnjs) — zip export
-- Karla + Courier Prime (Google Fonts)
-
-**Architecture — must preserve:**
-- Are.na API v3 (`https://api.are.na/v3`). Never v2.
+### Are.na API
+- Always use `https://api.are.na/v3` — never v2
 - Image URLs: `image.src` (original), `image.small.src` (thumbnail)
-- Two-step random fetch: channel meta for total count → `per=1&page={random}` with up to 12 retries to land on an Image block
-- `currentImageEl` caches the loaded `HTMLImageElement` — settings changes call `runExtraction()` directly, never `selectImage()`, so no unnecessary API hits
-- Color Thief v3: use `c.array()` for `[r,g,b]`, not `.rgb` or `._r._g._b`
-- `applyFloor(items, minProp)` shared helper normalises proportions (1% floor for main bar, 5% for semantic bar)
+- Two-step random fetch: channel metadata for total count → `per=1&page={random}` with up to 12 retries to land on an Image block
+- Block data captured per image: `title`, `description` (object with `.plain`/`.html`/`.markdown` — extract `.plain`), `source.url`, `source.title`, `user.full_name` (falls back to `user.slug`), `created_at`, `id`, `blockUrl`
 
-**Layout (v1.19 — clean rewrite):**
-- Outer layout: flexbox row. Sidebar fixed `22rem`, main `flex:1 min-width:0`
-- Responsive: desktop (>1200px) image | palettes side by side; tablet (600–1200px) stacked; mobile (<600px) full stack, sidebar full width, thumbs 3-column
-- Image container: no `aspect-ratio` — scales with `width:100%; height:auto; max-height:70vh`
-- `overflow-x:hidden` on body; `min-width:0` on all flex/grid children that need to shrink
+### Color Thief v3 (unpkg CDN, UMD build)
+- `c.array()` returns `[r,g,b]` — the correct public API
+- `.rgb` returns a CSS string, `._r/_g/_b` are private — don't use either
+- `ColorThief.getPaletteSync(imgEl, options)` for palette
+- `ColorThief.getSwatchesSync(imgEl)` for semantic swatches
 
-**CSS system:**
-- `font-size: 62.5%` on `:root` so `1rem = 10px`. All sizing in rem.
-- Colours: mid-grey palette (`--bg: #808080`, `--surface: #8a8a8a`, `--surface2: #747474`, `--border: #666666`, `--text: #efefef`, `--muted: #b8b8b8`, `--accent: #2a2a2a`)
-- Fonts: Karla (`--font-sans`) for all UI text; Courier Prime (`--font`) for hex/code output only (swatch hex reveal, version badge)
+### Colour naming — api.color.pizza
+- Endpoint: `https://api.color.pizza/v1/?values={hex,...}&list={listKey}`
+- Send hex values without `#`, comma-separated
+- Response: `colors[].requestedHex` (exact input hex) and `colors[].name` — use `requestedHex` as the map key, NOT `colors[].hex` (which is the nearest match, not the input)
+- Called as a single batch after palette extraction; result cached in `currentColorNames` (hex → name map)
+- Re-fetches only when palette hexes or name list changes (fingerprinted in `lastNamedHexKey`)
+- Never throws — returns empty map on failure
 
-**Swatch hex reveal:**
-- Hex text sits inside each swatch, coloured to match the swatch background (invisible at rest)
-- On hover/focus, `color` switches to the appropriate light/dark text colour via JS event listeners
-- Click copies hex to clipboard
-- No tooltip overlay — removed in v1.12
+### Image/extraction separation
+- `selectImage(idx)` loads the image and calls `runExtraction()`
+- `runExtraction()` is `async` — extracts palette, renders immediately with `…` name placeholders, then patches names in via `patchColorLabels()` once API responds
+- Settings changes call `runExtraction()` directly (reuses `currentImageEl`) — never re-fetch from Are.na
+- `currentImageEl` is cached; `currentColorNames` and `lastNamedHexKey` track naming state
 
-**Image caption:**
-- Below the selected image (outside the image container), inside `.image-figure`
-- Shows block title (if set) and "view on are.na ↗" link to `https://www.are.na/block/{id}`
+### `applyFloor` helper
+- Shared between proportion bar (1% floor) and semantic bar (5% floor)
+- Normalises proportions so no segment falls below the minimum
 
----
-
-## What was done this session (2026-04-13)
-
-v1.8–v1.19 were all done in one session. Key changes in order:
-
-- **v1.8–v1.9:** Typography update (Karla + Courier Prime), rem unit pass, base font size 16px
-- **v1.10:** Mid-grey colour scheme, font pass (Karla for UI, Courier Prime for hex only)
-- **v1.11:** "Tints & shades" section heading with rule, matching semantic palette style
-- **v1.12:** Replaced swatch tooltip with inline hex reveal
-- **v1.13:** Image caption with block title + are.na link
-- **v1.14:** Layout restructure — thumbnails to sidebar (2-col grid), main is just image + palette
-- **v1.15–v1.18:** Responsive layout fixes (multiple iterations)
-- **v1.19:** Clean layout rewrite — flexbox structure, removed aspect-ratio, overflow-x fix
-
-## Done in Claude Code session (2026-04-13)
-
-- The git repo (`are.na-toolkit`) initialised locally and pushed to GitHub
-- The build system (Python concat script to assemble from `src/` files) written and working
-- Source file split (into `src/style.css`, `src/main.js`, `src/index.html` etc.) 
+### localStorage keys
+- Channel config: `arena-palette-v1`
+- Extraction settings: `arena-palette-settings-v1`
 
 ---
 
-## Known issues / next steps
+## Layout — three columns
 
-- Some minor spacing "funkiness" at certain breakpoints — not yet investigated
-- RampenSau integration for hue-shifted tints/shades: prototyped previously but set aside — may revisit
-- `shared/arena-api.js` not yet extracted from the monolith
+```
+| col 1: sidebar (24rem fixed) | col 2: image (1fr) | col 3: palette (1fr) |
+```
+
+- CSS grid: `grid-template-columns: 24rem 1fr 1fr`
+- No top header bar — `h1` branding lives at top of sidebar on dark background
+- `h1` (sidebar): `font-size: 1.8rem`, `font-weight: 700`, `color: var(--surface-text)`
+- `h2` (col headings): `font-size: 1.8rem`, `font-weight: 300`, `text-transform: uppercase`, truncated to single line with ellipsis
+- Image col `h2` starts as "Select an image", fades (150ms opacity transition) to block title on selection
+- Responsive: ≤1100px → sidebar + stacked cols (image then palette); ≤600px → full stack
+
+### Sidebar
+- `h1` + version number at top
+- Channels section: collapsible (`aria-expanded`), open by default, auto-closes when `renderImageGrid()` fires
+- Below channels: thumbnail grid (12 images, distributed evenly across channels)
+
+### Image column (`#imageArea`)
+- `padding: 1.5rem`, `overflow-y: auto`
+- Image fills width, `max-height: 60vh`
+- Metadata below image: title (bold), are.na link + "via [userName]", source title + accessed date, description (3-line clamp, show more/less toggle)
+- `description` field from API is an object — always extract `.plain` first
+
+### Palette column (`#analysisArea`)
+- `padding: 1.5rem`, `overflow-y: auto`
+- Contains: extraction settings panel (collapsible), proportion bar, tints & shades rows, semantic palette, export bar
+
+---
+
+## Colour system
+
+```css
+--bg:            #8e8e8e;   /* page background — black text, 5.74:1 AA */
+--surface:       #686868;   /* sidebar — light text, 4.54:1 AA */
+--surface2:      #5a5a5a;   /* settings body — light text, 5.36:1 AA */
+--border:        #4a4a4a;   /* borders on interactive elements only */
+--text:          #000000;   /* primary text on bg */
+--muted:         #1a1a1a;   /* secondary text on bg */
+--surface-text:  #e8e8e8;   /* text on dark surfaces */
+--surface-muted: #b0b0b0;   /* secondary text on dark surfaces */
+--input-bg:      #e8e8e8;   /* form field backgrounds */
+--input-text:    #000000;   /* text in fields */
+--accent:        #000000;   /* primary button background */
+--accent-text:   #f0f0f0;   /* primary button text */
+```
+
+**Important:** borders are only used on interactive elements (inputs, buttons, settings panels, thumbnail selection ring, placeholder cells). No borders between page sections/columns.
+
+---
+
+## Button hierarchy
+
+- **Primary** (`.btn-fetch`): dark fill, light text, bold — fetch images only
+- **Secondary** (`.btn-export`, `.btn-icon`): transparent, dark border, dark text; hover → dark fill
+- **Ghost** (`.btn-add`): dashed border — add channel (optional/additive action)
+
+---
+
+## Extraction settings (persisted to localStorage)
+
+| Setting | Default | Notes |
+|---|---|---|
+| `colorCount` | 7 | 4–12 |
+| `quality` | `'med'` | `'hi'`=1, `'med'`=10, `'lo'`=30 (passed to Color Thief) |
+| `colorSpace` | `'oklch'` | `'oklch'` or `'rgb'` |
+| `ignoreWhite` | `true` | |
+| `minSaturation` | `0` | 0–0.5 |
+| `nameList` | `'bestOf'` | See NAME_LISTS below |
+
+### Name lists available
+`bestOf`, `japaneseTraditional`, `sanzoWadaI`, `wikipedia`, `werner`, `ridgway`, `nbsIscc`, `thesaurus`
+
+---
+
+## Colour row label format
+
+```
+01 · #3a2f1e · Walnut Brown · 12%
+```
+
+- Number padded to 2 digits
+- Hex in `.colour-hex` (monospace)
+- Name in `.colour-name` (font-weight: 500, no italic)
+- Loading state: `.colour-name-loading` (opacity 0.4)
+- Labels have `id="colour-label-{i}"` so `patchColorLabels()` can update them in place without full re-render
+
+---
+
+## Exports (all include colour name where available)
+
+Format: `Colour N — #hex — Name` (falls back to `Colour N — #hex` if name not loaded)
+
+- **export hex** → `.txt` — hex values for all tints/shades, name in comment header
+- **export rgb + hsl** → `.txt` — full values per step, name in section header
+- **export css vars** → `.css` — `:root {}` block, name as comment on base var
+- **export .color-palette** → JSON (Simple Color Palette format), name in `name` field
+- **export png** → canvas render of image + swatch rows; base swatch shows name if available
+
+---
+
+## Known deferred work / TODOs
+
+- **`?t=` cache-bust fix**: repeated clicks on the same thumbnail add a new timestamp to the URL each time, causing unnecessary re-fetches from Are.na. Flagged but not yet fixed.
+- **Light/dark mode toggle**: colour system is designed to support this but toggle not yet implemented. The grey bg is intentional — neutral ground for colour judgement.
+- **RampenSau integration**: prototyped, set aside. It's a hue-cycling ramp generator, not a tints/shades-of-exact-colour tool — results weren't satisfactory.
+- **PNG export redesign**: currently functional but basic. Worth revisiting once light/dark modes are in place.
+
+---
+
+## Dependencies (all CDN, no npm)
+
+```html
+<script src="https://unpkg.com/colorthief@3/dist/umd/color-thief.global.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<!-- Google Fonts: Karla (UI) + Courier Prime (mono/hex output) -->
+```
+
+---
 
 ## Working approach
 
-Kim prefers:
-- Iterative, targeted changes — not large rewrites unless necessary
-- Version note in file header
-- changelog stored as a seperate changelog.md file
-- Screenshots to communicate layout issues
-- Understanding the root cause alongside any fix
-- Learning as she goes along
-- clean, modular, semantic code, accessible with progressive enhancement, CSS CUBE https://cube.fyi , component libraries and design systems https://atomicdesign.bradfrost.com/table-of-contents/ building to style guides
-- eleventy https://www.11ty.dev  hugo https://gohugo.io/documentation/ as ssgs if needed
-- Uploading the current HTML file to the chat to share it (GitHub raw URL fetch also works once the repo is public)
-- British English
+- Kim prefers targeted changes over large rewrites — always make the minimum change needed
+- Always explain root cause alongside any fix
+- Version comments in file headers; changelog entries in `template.html`
+- Bump version in both `template.html` comment block AND the `<span class="version">` in the HTML body
+- No inline styles in HTML or JS except for dynamic computed values (`flex`, `background`, `color` from palette data) — these must remain inline
+- CSS classes for all layout/spacing/typography concerns
+- `style.css` uses `/* ── v1.xx ── */` version comment at top
+- `font-size: 62.5%` on `:root` so `1rem = 10px` throughout
+- Minimum font size: `1.4rem` (14px) everywhere
+- Test cautiously — Kim will build and test before confirming changes work
