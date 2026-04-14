@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Are.na Palette</title>
 <!--
-  arena-palette v1.20
+  arena-palette v1.22
   ──────────────────────────────────────────────────────────────────
   Are.na colour palette extractor tool
   Fetches images from up to 4 Are.na channels, extracts a 7-colour
@@ -14,95 +14,42 @@
 
   Changelog:
 
-    v1.20 (2026-04-13) — Colour naming via api.color.pizza (meodai/color-name-api).
-                         Main palette colours named automatically after extraction
-                         in a single batch API call. Names shown in colour row labels
-                         as "01 · #3a2f1e · Walnut Brown · 12%". Loading state shows
-                         "…" while API call is in flight; no layout shift. Name
-                         vocabulary selectable in extraction settings: bestOf (default),
-                         japaneseTraditional, sanzoWadaI, wikipedia, werner, ridgway,
-                         nbsIscc, thesaurus. Changing vocabulary clears cache and
-                         refetches. Names included in all exports: hex, rgb+hsl, css
-                         vars (as comment on base var), .color-palette JSON, and png
-                         (name shown on base swatch where it fits).
-    v1.19 (2026-04-13) — Clean layout rewrite. Flexbox page structure (sidebar fixed
-                         width, main flex:1 min-width:0). Removed aspect-ratio from
-                         image container — scales naturally (width:100%, height:auto,
-                         max-height:70vh). overflow-x:hidden on body. min-width:0 on
-                         all flex/grid children.
-    v1.18 (2026-04-13) — Fixed palette panel overflow at mid widths: raised desktop
-                         breakpoint to 1200px, added min-width:0 to image-figure and
-                         palette-panel so grid children cannot overflow their cells.
-    v1.17 (2026-04-13) — Three-breakpoint responsive system. Desktop (>1100px):
-                         sidebar | image | palettes side by side. Tablet (600–1100px):
-                         sidebar + single-column main (image above palette). Mobile
-                         (<600px): full stack, thumbs in 3-column grid, channel tags
-                         hidden on thumbs.
-    v1.16 (2026-04-13) — Fixed responsive layout: analysis-layout now uses
-                         auto-fit minmax(28rem, 1fr) so columns scale smoothly and
-                         wrap naturally without a hard media query snap. Thumbnail
-                         grid restored at all widths.
-    v1.15 (2026-04-13) — Fixed responsive stacking: removed duplicate .analysis-layout
-                         definition that was overriding the media query. Added page-level
-                         breakpoint at 900px: sidebar goes full-width, thumbnail grid
-                         hidden, sidebar border flips to bottom.
+    v1.22 (2026-04-14) — Remove all inline styles and spacer divs from template.
+                         Spacing now handled in CSS: gap on .channels-section,
+                         margin-top on .status-msg, #tokenHint rule in stylesheet.
+                         In main.js: proportion bar wrapper gets .prop-bar class,
+                         full-span setting rows get .setting-row--full class,
+                         tints & shades heading gets .section-heading--flush class.
+    v1.21a (2026-04-13) — Colour token correction. --bg #8e8e8e, --surface #686868,
+                         --surface2 #5a5a5a. --surface-text #e8e8e8 / --surface-muted
+                         #b0b0b0 for text on dark surfaces. .visually-hidden class.
+    v1.21 (2026-04-13) — Accessibility and contrast pass. Dark text on mid-grey.
+                         Light input field backgrounds. Min 14px font size.
+                         Button hierarchy. Proper labels and aria throughout.
+    v1.20 (2026-04-13) — Colour naming via api.color.pizza.
+    v1.19 (2026-04-13) — Clean layout rewrite.
+    v1.18 (2026-04-13) — Fixed palette panel overflow at mid widths.
+    v1.17 (2026-04-13) — Three-breakpoint responsive system.
+    v1.16 (2026-04-13) — Fixed responsive layout.
+    v1.15 (2026-04-13) — Fixed responsive stacking.
     v1.14 (2026-04-13) — Layout restructure: thumbnails moved to sidebar.
-                         grid. Main area is image + palette side by side, stacking to
-                         single column below 900px. Caption moved outside aspect-ratio
-                         container using image-figure wrapper. Page scrolls as whole.
-    v1.13 (2026-04-13) — Image caption below selected image: block title (if set)
-                         and "view on are.na ↗" link to the block page. blockUrl
-                         added to image data object using are.na/block/{id} pattern.
-    v1.12 (2026-04-13) — Replaced swatch tooltip with inline hex reveal. Hex text
-                         hidden at rest (colour matches swatch bg), revealed on
-                         hover/focus. Click still copies to clipboard.
-    v1.11 (2026-04-13) — Added "tints & shades" section heading with rule above
-                         colour rows, matching semantic palette heading style.
-                         Fixed swatch tooltip centering: fixed width + translateX(-50%).
-    v1.10 (2026-04-13) — Mid-grey colour scheme (#808080 base) for neutral colour
-                         judgement. Remapped all surfaces to subtle grey tones.
-                         Font pass: Karla for all UI text; Courier Prime kept only
-                         for hex/code output (tooltips, legend values).
-    v1.9 (2026-04-12) — Full CSS unit pass: 62.5% root font-size trick, all font
-                         sizes and spacing converted to rem throughout.
-    v1.8 (2026-04-12) — Typography: Karla (sans) + Courier Prime (mono). Increased
-                         base font size to 16px. Darkened --text and --muted for legibility.
-    v1.7 (2026-04-07) - Add full-width proportion bar, 1% floor to show colours. Share
-                         applyFloor helper
-    v1.6 (2026-04-07) — Added semantic palette section below tint/shade rows.
-                         getSwatchesSync extracts Vibrant, DarkVibrant, LightVibrant,
-                         Muted, DarkMuted, LightMuted. Displayed as a proportional
-                         colour bar (widths from nearest palette colour proportion)
-                         with a hex legend below. Click any legend item to copy hex.
-    v1.5 (2026-04-07) — Fixed Color object access to use c.array() (public API).
-                         Added extraction settings panel: colorCount, quality,
-                         colorSpace, ignoreWhite, minSaturation. All persisted to
-                         localStorage. Cached loaded HTMLImageElement so settings
-                         changes re-run extraction locally with no Are.na API hit.
-    v1.4 (2026-04-07) — Upgraded to Color Thief v3 (unpkg). v3 Color objects expose
-                         .population directly, removing the manual pixel-count loop.
-    v1.3 (2026-04-07) — Replaced k-means with Color Thief v2 (MMCQ). Added
-                         manual pixel-count second pass for proportions. Proportion
-                         bar displayed above each swatch row.
-    v1.2 (2026-04-07) — Fixed v3 image URL fields (image.src / image.small.src).
-                         Single channel now fills all 9 grid slots; multiple channels
-                         distribute slots evenly (e.g. 2 channels = 5+4, 3 = 3+3+3).
-                         Two-step random-page fetch: channel meta for total count,
-                         then per=1 at random page offsets with retry loop.
-    v1.1 (2026-04-07) — Migrated to Are.na v3 API.
-    v1.0 (2026-04-07) — Initial release. Are.na v2 API, fixed pool of
-                         40 images per channel. Hand-rolled k-means extraction.
-
+    v1.13 (2026-04-13) — Image caption below selected image.
+    v1.12 (2026-04-13) — Replaced swatch tooltip with inline hex reveal.
+    v1.11 (2026-04-13) — Added "tints & shades" section heading.
+    v1.10 (2026-04-13) — Mid-grey colour scheme (#808080 base).
+    v1.9  (2026-04-12) — Full CSS unit pass.
+    v1.8  (2026-04-12) — Typography: Karla + Courier Prime.
+    v1.7  (2026-04-07) — Full-width proportion bar.
+    v1.6  (2026-04-07) — Semantic palette section.
+    v1.5  (2026-04-07) — Extraction settings panel. localStorage persistence.
+    v1.4  (2026-04-07) — Color Thief v3.
+    v1.3  (2026-04-07) — Color Thief v2 (MMCQ).
+    v1.2  (2026-04-07) — Fixed v3 image URL fields. Two-step random-page fetch.
+    v1.1  (2026-04-07) — Migrated to Are.na v3 API.
+    v1.0  (2026-04-07) — Initial release.
 
   API: Are.na REST API v3 — https://www.are.na/developers/explore
-  Base URL: https://api.are.na
-  Endpoints used:
-    GET /v3/channels/{slug}           — channel metadata (total count)
-    GET /v3/channels/{slug}/contents  — paginated blocks (per=1 for random page)
-
   Colour naming: api.color.pizza v1 — https://github.com/meodai/color-name-api
-  Endpoint used:
-    GET /v1/?values={hex,...}&list={listKey}
 
   Dependencies:
     Color Thief 3.x (unpkg) — MMCQ palette extraction, v3 API
@@ -113,619 +60,689 @@
 <script src="https://unpkg.com/colorthief@3/dist/umd/color-thief.global.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
-  /* ── v1.20 ── */
-  /* Base font trick: 1rem = 10px (62.5% of browser default 16px).
-     All font-size and spacing values use rem throughout. */
-  :root {
-    font-size: 62.5%;
-    --bg:        #808080;
-    --surface:   #727272;
-    --surface2:  #656565;
-    --border:    #606060;
-    --text:      #efefef;
-    --muted:     #cfcfcf;
-    --accent:    #2a2a2a;
-    --radius:    0.2rem;
-    --font:      'Karla', system-ui, sans-serif;
-    --font-sans: var(--font);
-    --font-mono: 'Courier Prime', 'Courier New', monospace;
-  }
-  @import url('https://fonts.googleapis.com/css2?family=Karla:wght@300;400;500;700&family=Courier+Prime:wght@400;700&display=swap');
+/* ── v1.22 ── */
+/* Base font trick: 1rem = 10px (62.5% of browser default 16px).
+   All font-size and spacing values use rem throughout.
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+   Colour system:
+     Page bg:       #8e8e8e  — black text (#000), 5.74:1 ✓ AA
+     Sidebar:       #686868  — light text (#e8e8e8), 4.54:1 ✓ AA
+     Settings body: #5a5a5a  — light text (#e8e8e8), 5.36:1 ✓ AA
+     Input fields:  #e8e8e8  — black text, clearly visible against all surfaces
+*/
+:root {
+  font-size: 62.5%;
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font);
-    font-size: 1.6rem;
-    min-height: 100vh;
-  }
+  /* Surfaces */
+  --bg:           #8e8e8e;
+  --surface:      #686868;
+  --surface2:     #5a5a5a;
+  --border:       #4a4a4a;
 
-  header {
-    padding: 1.5rem 2rem 1rem;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: baseline;
-    gap: 1rem;
-  }
-  header h1 {
-    font-family: var(--font);
-    font-size: 1.5rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-  }
-  header span {
-    font-size: 1.2rem;
-    color: var(--muted);
-    font-family: var(--font-mono);
-  }
+  /* Text on page bg (#8e8e8e) */
+  --text:         #000000;
+  --muted:        #1a1a1a;
 
-  /* ── PAGE STRUCTURE ─────────────────────────────────────────────────────── */
+  /* Text on dark surfaces (#686868 / #5a5a5a) */
+  --surface-text:  #e8e8e8;
+  --surface-muted: #cfcfcf;
 
-  body {
-    overflow-x: hidden;
-  }
+  /* Form inputs */
+  --input-bg:     #e8e8e8;
+  --input-text:   #000000;
 
-  .layout {
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
-    min-height: calc(100vh - 5.6rem);
-  }
+  /* Primary button */
+  --accent:       #000000;
+  --accent-text:  #f0f0f0;
 
-  /* ── SIDEBAR ── */
+  --radius: 0.2rem;
+  --font:      'Karla', system-ui, sans-serif;
+  --font-sans: var(--font);
+  --font-mono: 'Courier Prime', 'Courier New', monospace;
+}
+@import url('https://fonts.googleapis.com/css2?family=Karla:wght@300;400;500;700&family=Courier+Prime:wght@400;700&display=swap');
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── UTILITIES ── */
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── BASE ── */
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 1.6rem;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── HEADER ── */
+header {
+  padding: 1.5rem 2rem 1rem;
+  /* border-bottom: 1px solid var(--border); */
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  background: var(--bg);
+}
+header h1 {
+  font-size: 1.6rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+header span {
+  font-size: 1.4rem;
+  color: var(--muted);
+  font-family: var(--font-mono);
+}
+
+/* ── PAGE STRUCTURE ── */
+.layout {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  min-height: calc(100vh - 5.6rem);
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 24rem;
+  min-width: 0;
+  flex-shrink: 0;
+  /*border-right: 1px solid var(--border);*/
+  padding: 1.5rem;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  box-sizing: border-box;
+  color: var(--surface-text);
+}
+
+.sidebar h2 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--surface-text);
+  text-transform: uppercase;
+}
+
+/* Channels section: gap handles spacing between h2, list, and add button */
+.channels-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+/* Fetch row: button + status stacked, status gets top margin */
+.fetch-row {
+  display: flex;
+  flex-direction: column;
+}
+.status-msg {
+  font-size: 1.4rem;
+  color: var(--surface-muted);
+  min-height: 1.8rem;
+  margin-top: 0.8rem;
+}
+.status-msg.error { color: #ffaaaa; font-weight: 600; }
+
+/* Token hint */
+#tokenHint {
+  font-size: 1.4rem;
+  color: var(--surface-muted);
+}
+
+.sidebar-images {
+  /*border-top: 1px solid var(--border);*/
+  padding-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ── CHANNEL LIST ── */
+.channel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.channel-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* ── IMAGE GRID ── */
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.6rem;
+}
+
+.thumb {
+  aspect-ratio: 1;
+  border-radius: var(--radius);
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.15s, transform 0.1s;
+  background: var(--surface2);
+  position: relative;
+}
+.thumb:hover  { border-color: var(--accent-text); transform: scale(1.02); }
+.thumb.selected { border-color: var(--accent-text); box-shadow: 0 0 0 2px var(--accent-text); }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb .channel-tag {
+  position: absolute;
+  bottom: 0.4rem; left: 0.4rem;
+  background: rgba(0,0,0,0.65);
+  color: #f0f0f0;
+  font-size: 1.4rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius);
+  pointer-events: none;
+}
+
+.placeholder-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.6rem;
+}
+.placeholder-cell {
+  aspect-ratio: 1;
+  border-radius: var(--radius);
+  background: var(--surface2);
+  border: 1px dashed var(--border);
+}
+
+/* ── MAIN ── */
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  gap: 1.5rem;
+}
+
+.main > h2 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--text);
+  text-transform: uppercase;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+/* ── ANALYSIS LAYOUT ── */
+.analysis-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.image-figure,
+.palette-panel { min-width: 0; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1200px) {
+  .analysis-layout { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .layout { flex-direction: column; }
   .sidebar {
-    width: 22rem;
-    min-width: 0;
-    flex-shrink: 0;
-    border-right: 1px solid var(--border);
-    padding: 1.5rem;
-    background: var(--surface);
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    box-sizing: border-box;
+    width: 100%;
+    border-right: none;
+    /*border-bottom: 1px solid var(--border);*/
   }
-
-  .sidebar h2 {
-    font-family: var(--font);
-    font-size: 1.1rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    color: var(--muted);
-    text-transform: uppercase;
-  }
-
-  .sidebar-images {
-    border-top: 1px solid var(--border);
-    padding-top: 1.5rem;
-  }
-
-  .sidebar-images h2 {
-    margin-bottom: 1rem;
-  }
-
-  .channel-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.6rem;
-  }
-
-  .channel-row {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-  }
-
-  .image-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.6rem;
-  }
-
-  .thumb {
-    aspect-ratio: 1;
-    border-radius: var(--radius);
-    overflow: hidden;
-    cursor: pointer;
-    border: 2px solid transparent;
-    transition: border-color 0.15s, transform 0.1s;
-    background: var(--surface2);
-    position: relative;
-  }
-  .thumb:hover { border-color: var(--accent); transform: scale(1.02); }
-  .thumb.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
-  .thumb img {
-    width: 100%; height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-  .thumb .channel-tag {
-    position: absolute;
-    bottom: 0.4rem; left: 0.4rem;
-    background: rgba(0,0,0,0.55);
-    color: #fff;
-    font-family: var(--font);
-    font-size: 0.9rem;
-    padding: 0.2rem 0.5rem;
-    border-radius: var(--radius);
-    pointer-events: none;
-  }
-
+  .image-grid,
   .placeholder-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.6rem;
-  }
-  .placeholder-cell {
-    aspect-ratio: 1;
-    border-radius: var(--radius);
-    background: var(--surface2);
-    border: 1px dashed var(--border);
-  }
-
-  /* ── MAIN ── */
-  .main {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    padding: 1.5rem;
-    gap: 1.5rem;
-  }
-
-  .main > h2 {
-    font-family: var(--font);
-    font-size: 1.1rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    color: var(--muted);
-    text-transform: uppercase;
-    margin: 0;
-    flex-shrink: 0;
-  }
-
-  /* ── ANALYSIS ── */
-  .analysis-section {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .analysis-layout {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-    align-items: start;
-  }
-
-  .image-figure,
-  .palette-panel {
-    min-width: 0;
-  }
-
-  /* ── RESPONSIVE ─────────────────────────────────────────────────────────── */
-
-  /* TABLET: sidebar stays, analysis stacks */
-  @media (max-width: 1200px) {
-    .analysis-layout {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  /* MOBILE: everything stacks vertically */
-  @media (max-width: 600px) {
-    .layout {
-      flex-direction: column;
-    }
-    .sidebar {
-      width: 100%;
-      border-right: none;
-      border-bottom: 1px solid var(--border);
-    }
-    .image-grid,
-    .placeholder-grid {
-      grid-template-columns: repeat(3, 1fr);
-      gap: 0.4rem;
-    }
-    .thumb .channel-tag {
-      display: none;
-    }
-  }
-
-  .channel-row input[type="text"] {
-    flex: 1;
-    padding: 0.6rem 0.8rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font);
-    font-size: 1.2rem;
-    outline: none;
-    transition: border-color 0.15s;
-  }
-  .channel-row input[type="text"]:focus {
-    border-color: var(--accent);
-  }
-  .channel-row input[type="text"]::placeholder {
-    color: var(--muted);
-  }
-
-  .btn-icon {
-    width: 2.6rem; height: 2.6rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--bg);
-    color: var(--muted);
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.4rem;
-    transition: all 0.15s;
-    flex-shrink: 0;
-  }
-  .btn-icon:hover { background: var(--surface2); color: var(--text); border-color: var(--accent); }
-
-  .btn-add {
-    font-family: var(--font);
-    font-size: 1.1rem;
-    color: var(--muted);
-    background: none;
-    border: 1px dashed var(--border);
-    border-radius: var(--radius);
-    padding: 0.6rem 1rem;
-    cursor: pointer;
-    width: 100%;
-    text-align: left;
-    transition: all 0.15s;
-  }
-  .btn-add:hover { border-color: var(--accent); color: var(--text); }
-
-  .token-row {
-    display: flex;
-    flex-direction: column;
+    grid-template-columns: repeat(3, 1fr);
     gap: 0.4rem;
   }
-  .token-row label {
-    font-family: var(--font);
-    font-size: 1.1rem;
-    color: var(--muted);
-    letter-spacing: 0.05em;
-  }
-  .token-row input {
-    padding: 0.6rem 0.8rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font);
-    font-size: 1.2rem;
-    outline: none;
-    width: 100%;
-  }
-  .token-row input:focus { border-color: var(--accent); }
+  .thumb .channel-tag { display: none; }
+}
 
-  .btn-fetch {
-    background: var(--accent);
-    color: var(--text);
-    border: none;
-    border-radius: var(--radius);
-    padding: 0.9rem 1.4rem;
-    font-family: var(--font);
-    font-size: 1.2rem;
-    font-weight: 600;
-    cursor: pointer;
-    letter-spacing: 0.04em;
-    transition: opacity 0.15s;
-    width: 100%;
-  }
-  .btn-fetch:hover { opacity: 0.85; }
-  .btn-fetch:disabled { opacity: 0.4; cursor: not-allowed; }
+/* ── FORM INPUTS ── */
+.channel-row input[type="text"] {
+  flex: 1;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--input-bg);
+  color: var(--input-text);
+  font-family: var(--font);
+  font-size: 1.4rem;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.channel-row input[type="text"]:focus {
+  border-color: var(--surface-text);
+  box-shadow: 0 0 0 2px rgba(232,232,232,0.35);
+}
+.channel-row input[type="text"]::placeholder { color: #666; }
 
-  .status-msg {
-    font-family: var(--font);
-    font-size: 1.1rem;
-    color: var(--muted);
-    min-height: 1.6rem;
-  }
-  .status-msg.error { color: #c0392b; }
+.token-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.token-row label {
+  font-size: 1.4rem;
+  color: var(--surface-text);
+  letter-spacing: 0.03em;
+}
+.token-row input {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--input-bg);
+  color: var(--input-text);
+  font-family: var(--font);
+  font-size: 1.4rem;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.token-row input:focus {
+  border-color: var(--surface-text);
+  box-shadow: 0 0 0 2px rgba(232,232,232,0.35);
+}
 
-  /* ── ANALYSIS SECTION ── */
-  .selected-image-wrap {
-    border-radius: var(--radius);
-    overflow: hidden;
-    background: var(--bg);
-    width: 100%;
-  }
-  .selected-image-wrap img {
-    width: 100%;
-    height: auto;
-    max-height: 70vh;
-    object-fit: contain;
-    display: block;
-  }
-  .image-figure {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    min-width: 0;
-  }
-  .image-caption {
-    padding: 0.6rem 0;
-    display: flex;
-    align-items: baseline;
-    gap: 0.8rem;
-    flex-wrap: wrap;
-  }
-  .image-title {
-    font-family: var(--font);
-    font-size: 1.1rem;
-    color: var(--muted);
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .image-link {
-    font-family: var(--font);
-    font-size: 1rem;
-    color: var(--muted);
-    text-decoration: none;
-    white-space: nowrap;
-    flex-shrink: 0;
-    transition: color 0.15s;
-  }
-  .image-link:hover { color: var(--text); }
+/* ── BUTTONS ── */
 
-  .palette-panel {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    min-width: 0;
-  }
+/* Primary — fetch images */
+.btn-fetch {
+  background: var(--accent);
+  color: var(--accent-text);
+  border: 2px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 0.9rem 1.4rem;
+  font-family: var(--font);
+  font-size: 1.4rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: opacity 0.15s;
+  width: 100%;
+}
+.btn-fetch:hover { opacity: 0.8; }
+.btn-fetch:disabled { opacity: 0.35; cursor: not-allowed; }
 
-  .colour-rows {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-  }
+/* Secondary icon — × remove channel */
+.btn-icon {
+  width: 2.8rem; height: 2.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--surface-muted);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.6rem;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.btn-icon:hover {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: var(--accent);
+}
 
-  .colour-block {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-  }
+/* Ghost — + add channel */
+.btn-add {
+  font-family: var(--font);
+  font-size: 1.4rem;
+  color: var(--surface-muted);
+  background: none;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: all 0.15s;
+}
+.btn-add:hover {
+  border-style: solid;
+  border-color: var(--surface-text);
+  color: var(--surface-text);
+}
 
-  .colour-label {
-    font-family: var(--font);
-    font-size: 1rem;
-    color: var(--muted);
-    margin-bottom: 0.2rem;
-  }
+/* Secondary — export buttons (on page bg) */
+.btn-export {
+  font-family: var(--font);
+  font-size: 1.4rem;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.02em;
+}
+.btn-export:hover {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: var(--accent);
+}
+.btn-export:disabled { opacity: 0.35; cursor: not-allowed; }
 
-  /* ── COLOUR NAME STATES ── */
-  .colour-hex {
-    font-family: var(--font-mono);
-  }
-  .colour-name {
-    color: var(--text);
-    font-style: italic;
-  }
-  .colour-name-loading {
-    opacity: 0.4;
-    font-style: italic;
-  }
+/* ── IMAGE & CAPTION ── */
+.selected-image-wrap {
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg);
+  width: 100%;
+}
+.selected-image-wrap img {
+  width: 100%;
+  height: auto;
+  max-height: 70vh;
+  object-fit: contain;
+  display: block;
+}
+.image-figure {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+.image-caption {
+  padding: 0.6rem 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+.image-title {
+  font-size: 1.4rem;
+  color: var(--muted);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.image-link {
+  font-size: 1.4rem;
+  color: var(--muted);
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.image-link:hover { color: var(--text); }
 
-  /* ── SEMANTIC BAR ── */
-  .semantic-section {
-    margin-top: 1rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid var(--border);
-  }
-  .semantic-label {
-    font-family: var(--font);
-    font-size: 1rem;
-    color: var(--muted);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    margin-bottom: 0.6rem;
-  }
-  .semantic-bar {
-    display: flex;
-    height: 3.2rem;
-    border-radius: var(--radius);
-    overflow: hidden;
-    gap: 2px;
-  }
-  .semantic-segment {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 2px;
-    cursor: default;
-    transition: flex 0.3s ease;
-  }
-  .semantic-segment-label {
-    font-family: var(--font);
-    font-size: 0.9rem;
-    white-space: nowrap;
-    overflow: hidden;
-    padding: 0 0.4rem;
-    pointer-events: none;
-  }
-  .semantic-legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.6rem 1.2rem;
-    margin-top: 0.6rem;
-  }
-  .semantic-legend-item {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-family: var(--font);
-    font-size: 1rem;
-    color: var(--muted);
-    cursor: pointer;
-  }
-  .semantic-legend-dot {
-    width: 1rem;
-    height: 1rem;
-    border-radius: var(--radius);
-    flex-shrink: 0;
-  }
+/* ── PALETTE PANEL ── */
+.palette-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
 
-  .swatch-row {
-    display: flex;
-    gap: 2px;
-  }
+.colour-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
 
-  .swatch {
-    height: 2.8rem;
-    flex: 1;
-    border-radius: var(--radius);
-    cursor: pointer;
-    transition: color 0.15s, transform 0.1s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-mono);
-    font-size: 1.2rem;
-    font-weight: 700;
-    letter-spacing: 0.03em;
-    user-select: none;
-  }
-  .swatch:hover { transform: scaleY(1.1); z-index: 1; }
-  .swatch.base { height: 3.8rem; border-radius: var(--radius); flex: 1.4; font-size: 1.3rem; }
+.colour-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
 
-  /* ── EXPORT ── */
-  .export-bar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.6rem;
-    padding-top: 0.5rem;
-    border-top: 1px solid var(--border);
-    margin-top: 0.5rem;
-  }
+.colour-label {
+  font-size: 1.4rem;
+  color: var(--text);
+  margin-bottom: 0.2rem;
+}
 
-  .btn-export {
-    font-family: var(--font);
-    font-size: 1.1rem;
-    padding: 0.5rem 1rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--bg);
-    color: var(--text);
-    cursor: pointer;
-    transition: all 0.15s;
-    letter-spacing: 0.03em;
-  }
-  .btn-export:hover { background: var(--accent); color: var(--text); border-color: var(--accent); }
-  .btn-export:disabled { opacity: 0.35; cursor: not-allowed; }
+/* Colour name states */
+.colour-hex  { font-family: var(--font-mono); }
+.colour-name { font-style: italic; font-weight: 500; color: var(--text); }
+.colour-name-loading { opacity: 0.4; font-style: italic; }
 
-  .empty-analysis {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 20rem;
-    color: var(--muted);
-    font-family: var(--font);
-    font-size: 1.2rem;
-    border: 1px dashed var(--border);
-    border-radius: var(--radius);
-  }
+/* ── SEMANTIC BAR ── */
+.semantic-section {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  /*border-top: 1px solid var(--border);*/
+}
 
-  .analyse-spinner {
-    display: inline-block;
-    width: 1.2rem; height: 1.2rem;
-    border: 2px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    margin-right: 0.6rem;
-    vertical-align: middle;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
+/* Proportion bar: no top border or margin — sits flush above tints & shades */
+.semantic-section--prop-bar {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+  margin-bottom: 0.75rem;
+}
 
-  /* ── EXTRACTION SETTINGS ── */
-  .settings-panel {
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    margin-bottom: 1rem;
-    overflow: hidden;
-  }
-  .settings-toggle {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.7rem 1rem;
-    background: var(--surface);
-    border: none;
-    cursor: pointer;
-    font-family: var(--font);
-    font-size: 1.1rem;
-    color: var(--muted);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }
-  .settings-toggle:hover { color: var(--text); }
-  .settings-toggle .caret { transition: transform 0.2s;  font-size: 1.5rem; font-style: normal; }
-  .settings-toggle.open .caret { transform: rotate(180deg); }
-  .settings-body {
-    display: none;
-    padding: 1rem;
-    border-top: 1px solid var(--border);
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.8rem 1.6rem;
-  }
-  .settings-body.hidden { display: none; }
-  .setting-row {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-  }
-  .setting-row label {
-    font-family: var(--font);
-    font-size: 1rem;
-    color: var(--muted);
-    letter-spacing: 0.05em;
-  }
-  .setting-row select,
-  .setting-row input[type=range] {
-    font-family: var(--font);
-    font-size: 1.1rem;
-    width: 100%;
-  }
-  .setting-row select {
-    padding: 0.3rem 0.5rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--bg);
-    color: var(--text);
-    cursor: pointer;
-  }
-  .setting-toggle-row {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-  }
-  .setting-toggle-row label {
-    font-family: var(--font);
-    font-size: 1rem;
-    color: var(--muted);
-    letter-spacing: 0.05em;
-    cursor: pointer;
-  }
-  .setting-val {
-    font-family: var(--font);
-    font-size: 1rem;
-    color: var(--muted);
-    text-align: right;
-  }
+/* Tints & shades heading: no top margin — immediately follows prop bar */
+.semantic-section--flush {
+  margin-top: 0;
+}
+
+.semantic-label {
+  font-size: 1.4rem;
+  color: var(--text);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+.semantic-bar {
+  display: flex;
+  height: 3.2rem;
+  border-radius: var(--radius);
+  overflow: hidden;
+  gap: 2px;
+}
+.semantic-segment {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2px;
+  cursor: default;
+  transition: flex 0.3s ease;
+}
+.semantic-segment-label {
+  font-size: 1.4rem;
+  white-space: nowrap;
+  overflow: hidden;
+  padding: 0 0.4rem;
+  pointer-events: none;
+}
+.semantic-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.2rem;
+  margin-top: 0.6rem;
+}
+.semantic-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.4rem;
+  color: var(--text);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font);
+}
+.semantic-legend-item:hover { text-decoration: underline; }
+.semantic-legend-dot {
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: var(--radius);
+  flex-shrink: 0;
+  border: 1px solid rgba(0,0,0,0.2);
+}
+
+/* ── SWATCHES ── */
+.swatch-row { display: flex; gap: 2px; }
+
+.swatch {
+  height: 2.8rem;
+  flex: 1;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: color 0.15s, transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  user-select: none;
+}
+.swatch:hover { transform: scaleY(1.1); z-index: 1; }
+.swatch.base { height: 3.8rem; flex: 1.4; }
+
+/* ── EXPORT BAR ── */
+.export-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  padding-top: 0.75rem;
+  /*border-top: 1px solid var(--border);*/
+  margin-top: 0.5rem;
+}
+
+/* ── EMPTY STATE ── */
+.empty-analysis {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 20rem;
+  color: var(--text);
+  font-size: 1.6rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+}
+
+/* ── SPINNER ── */
+.analyse-spinner {
+  display: inline-block;
+  width: 1.4rem; height: 1.4rem;
+  border: 2px solid var(--border);
+  border-top-color: var(--text);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin-right: 0.6rem;
+  vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── EXTRACTION SETTINGS ── */
+.settings-panel {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+.settings-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8rem 1rem;
+  background: var(--surface);
+  border: none;
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 1.4rem;
+  color: var(--surface-text);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.settings-toggle:hover { background: var(--surface2); }
+.settings-toggle .caret {
+  transition: transform 0.2s;
+  font-size: 1.6rem;
+  font-style: normal;
+  color: var(--surface-muted);
+}
+.settings-toggle[aria-expanded="true"] .caret { transform: rotate(180deg); }
+
+.settings-body {
+  padding: 1rem;
+  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem 1.6rem;
+  background: var(--surface2);
+}
+.settings-body.hidden { display: none; }
+
+.setting-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* Full-width setting rows (ignore white, name list) */
+.setting-row--full {
+  grid-column: 1 / -1;
+}
+
+.setting-row label {
+  font-size: 1.4rem;
+  color: var(--surface-text);
+  letter-spacing: 0.03em;
+}
+.setting-row select,
+.setting-row input[type=range] {
+  font-family: var(--font);
+  font-size: 1.4rem;
+  width: 100%;
+}
+.setting-row select {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--input-bg);
+  color: var(--input-text);
+  cursor: pointer;
+}
+.setting-row select:focus {
+  outline: 2px solid var(--surface-text);
+  outline-offset: 1px;
+}
+.setting-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.setting-toggle-row label {
+  font-size: 1.4rem;
+  color: var(--surface-text);
+  cursor: pointer;
+}
+.setting-val {
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+  color: var(--surface-muted);
+}
 
 </style>
 </head>
@@ -733,58 +750,74 @@
 
 <header>
   <h1>are.na palette</h1>
-  <span>v1.20</span>
+  <span aria-label="Version 1.22">v1.22</span>
 </header>
 
 <div class="layout">
   <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div>
-      <h2>Channels</h2>
-      <div style="height:10px"></div>
-      <div class="channel-list" id="channelList"></div>
-      <div style="height:8px"></div>
-      <button class="btn-add" id="btnAddChannel">+ add channel</button>
-    </div>
+  <aside class="sidebar" aria-label="Channels and images">
+
+    <section class="channels-section" aria-labelledby="channels-heading">
+      <h2 id="channels-heading">Channels</h2>
+      <div class="channel-list" id="channelList" role="list"></div>
+      <button class="btn-add" id="btnAddChannel" aria-label="Add another channel">
+        + add channel
+      </button>
+    </section>
 
     <div class="token-row">
-      <label>Access token (optional)</label>
-      <input type="password" id="tokenInput" placeholder="leave blank for public channels" />
+      <label for="tokenInput">Access token (optional)</label>
+      <input
+        type="password"
+        id="tokenInput"
+        name="arena-token"
+        placeholder="leave blank for public channels"
+        autocomplete="off"
+        aria-describedby="tokenHint"
+      />
+      <span id="tokenHint">Only needed for private channels</span>
     </div>
 
-    <div>
+    <div class="fetch-row">
       <button class="btn-fetch" id="btnFetch">fetch images</button>
-      <div style="height:8px"></div>
-      <div class="status-msg" id="statusMsg"></div>
+      <div class="status-msg" id="statusMsg" role="status" aria-live="polite"></div>
     </div>
 
-    <div class="sidebar-images">
-      <h2>Images</h2>
-      <div class="placeholder-grid" id="imageGrid">
-        <div class="placeholder-cell"></div>
-        <div class="placeholder-cell"></div>
-        <div class="placeholder-cell"></div>
-        <div class="placeholder-cell"></div>
-        <div class="placeholder-cell"></div>
-        <div class="placeholder-cell"></div>
-        <div class="placeholder-cell"></div>
-        <div class="placeholder-cell"></div>
-        <div class="placeholder-cell"></div>
+    <section class="sidebar-images" aria-labelledby="images-heading">
+      <h2 id="images-heading">Images</h2>
+      <div
+        class="placeholder-grid"
+        id="imageGrid"
+        role="list"
+        aria-label="Fetched images — click to extract palette"
+      >
+        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
+        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
+        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
+        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
+        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
+        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
+        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
+        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
+        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
       </div>
-    </div>
+    </section>
+
   </aside>
 
   <!-- MAIN -->
-  <main class="main">
+  <main class="main" aria-label="Palette analysis">
     <h2>Palette analysis</h2>
     <div id="analysisArea">
-      <div class="empty-analysis">← select an image to extract its palette</div>
+      <div class="empty-analysis" role="status">
+        ← select an image to extract its palette
+      </div>
     </div>
   </main>
 </div>
 
-<!-- Hidden canvas for colour extraction -->
-<canvas id="scratchCanvas" style="display:none"></canvas>
+<!-- Hidden canvas for colour extraction — display:none is functional, not presentational -->
+<canvas id="scratchCanvas" style="display:none" aria-hidden="true"></canvas>
 
 <script>
 // ── CONFIG & STORAGE ──────────────────────────────────────────────────────────
@@ -792,21 +825,17 @@ const STORAGE_KEY = 'arena-palette-v1';
 const DEFAULT_CHANNELS = ['', '', ''];
 const MAX_CHANNELS = 4;
 const IMAGES_PER_CHANNEL = 3;
-// NUM_COLORS is now dynamic — see extractionSettings
 const TINT_STEPS = 3;
 const SHADE_STEPS = 3;
 
 // Are.na API v3 — https://www.are.na/developers/explore
 const API_BASE = 'https://api.are.na/v3';
-const MAX_RETRIES = 12; // max attempts per image slot to land on an Image block
+const MAX_RETRIES = 12;
 
 // ── COLOUR NAME API ───────────────────────────────────────────────────────────
 // https://api.color.pizza/v1/ — meodai/color-name-api
-// Single batch call: ?values=FF0000,00FF00&list=bestOf
 const COLOR_NAME_API = 'https://api.color.pizza/v1/';
 
-// Available name lists. Key = API list param, value = display label.
-// 'bestOf' is the API's curated default (goodnamesonly=true equivalent).
 const NAME_LISTS = {
   bestOf:              'best of',
   japaneseTraditional: 'Japanese traditional',
@@ -822,11 +851,11 @@ const NAME_LISTS = {
 const SETTINGS_KEY = 'arena-palette-settings-v1';
 const DEFAULT_SETTINGS = {
   colorCount:    7,
-  quality:      'med',    // 'hi' | 'med' | 'lo'
-  colorSpace:   'oklch',  // 'oklch' | 'rgb'
+  quality:      'med',
+  colorSpace:   'oklch',
   ignoreWhite:   true,
   minSaturation: 0,
-  nameList:     'bestOf', // key from NAME_LISTS
+  nameList:     'bestOf',
 };
 
 function qualityValue(q) {
@@ -878,11 +907,29 @@ let channels = [];
 function renderChannels() {
   channelListEl.innerHTML = '';
   channels.forEach((slug, i) => {
+    const humanN = i + 1;
     const row = document.createElement('div');
     row.className = 'channel-row';
+    row.setAttribute('role', 'listitem');
     row.innerHTML = `
-      <input type="text" placeholder="channel-slug" value="${slug}" data-idx="${i}" />
-      <button class="btn-icon" data-remove="${i}" title="remove">×</button>
+      <label for="channel-input-${i}" class="visually-hidden">Channel ${humanN} slug</label>
+      <input
+        type="text"
+        id="channel-input-${i}"
+        name="channel-${i}"
+        placeholder="channel-slug"
+        value="${slug}"
+        data-idx="${i}"
+        aria-label="Channel ${humanN} slug"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <button
+        class="btn-icon"
+        data-remove="${i}"
+        aria-label="Remove channel ${humanN}"
+        title="Remove channel ${humanN}"
+      >×</button>
     `;
     channelListEl.appendChild(row);
   });
@@ -910,6 +957,9 @@ btnAddChannel.addEventListener('click', () => {
   if (channels.length < MAX_CHANNELS) {
     channels.push('');
     renderChannels();
+    // Focus the new input
+    const inputs = channelListEl.querySelectorAll('input[type="text"]');
+    if (inputs.length) inputs[inputs.length - 1].focus();
   }
 });
 
@@ -929,7 +979,6 @@ tokenInput.addEventListener('input', persistState);
 })();
 
 // ── ARE.NA API v3 ─────────────────────────────────────────────────────────────
-// Step 1: fetch channel metadata to get total block count
 async function fetchChannelMeta(slug, headers) {
   const res = await fetch(`${API_BASE}/channels/${encodeURIComponent(slug)}`, { headers });
   if (!res.ok) {
@@ -939,7 +988,6 @@ async function fetchChannelMeta(slug, headers) {
   return res.json();
 }
 
-// Step 2: fetch a single block at a random page offset (per=1 means page = position)
 async function fetchBlockAtPage(slug, page, headers) {
   const res = await fetch(
     `${API_BASE}/channels/${encodeURIComponent(slug)}/contents?per=1&page=${page}`,
@@ -947,11 +995,9 @@ async function fetchBlockAtPage(slug, page, headers) {
   );
   if (!res.ok) throw new Error(`Fetch failed for "${slug}" page ${page} (${res.status})`);
   const data = await res.json();
-  return data.data?.[0] || null; // v3 wraps blocks in data[]
+  return data.data?.[0] || null;
 }
 
-// Fetch slotsNeeded random image blocks from a channel.
-// Retries up to MAX_RETRIES times per slot to land on an Image block.
 async function fetchChannelImages(slug, token, slotsNeeded) {
   const headers = {};
   if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -1000,7 +1046,7 @@ btnFetch.addEventListener('click', async () => {
   }
 
   btnFetch.disabled = true;
-  setStatus('<span class="analyse-spinner"></span>fetching…');
+  setStatus('<span class="analyse-spinner" aria-hidden="true"></span>fetching…');
   persistState();
 
   const token = tokenInput.value.trim();
@@ -1045,29 +1091,44 @@ function renderImageGrid(images) {
     const thumb = document.createElement('div');
     thumb.className = 'thumb';
     thumb.dataset.idx = i;
+    thumb.setAttribute('role', 'listitem');
     thumb.innerHTML = `
-      <img src="${img.url}" crossorigin="anonymous" loading="lazy" alt="${img.title}" />
-      <span class="channel-tag">${img.channel}</span>
+      <img src="${img.url}" crossorigin="anonymous" loading="lazy"
+        alt="${img.title ? img.title + ' from ' + img.channel : 'Image from ' + img.channel}" />
+      <span class="channel-tag" aria-hidden="true">${img.channel}</span>
     `;
+    // Make thumb keyboard-accessible
+    thumb.setAttribute('tabindex', '0');
+    thumb.setAttribute('role', 'button');
+    thumb.setAttribute('aria-label', `Extract palette from ${img.title || 'image'} (${img.channel})`);
     thumb.addEventListener('click', () => selectImage(i));
+    thumb.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectImage(i); }
+    });
     imageGrid.appendChild(thumb);
   });
 }
 
 // ── IMAGE SELECTION ───────────────────────────────────────────────────────────
-let currentPalette   = null;
-let currentImageObj  = null;
-let currentImageEl   = null; // cached HTMLImageElement — reused on settings change
-let currentColorNames = {};  // hex (lowercase, with #) → name string
-let lastNamedHexKey  = '';   // fingerprint to avoid redundant API calls
+let currentPalette    = null;
+let currentImageObj   = null;
+let currentImageEl    = null;
+let currentColorNames = {};
+let lastNamedHexKey   = '';
 
 function selectImage(idx) {
-  document.querySelectorAll('.thumb').forEach(t => t.classList.remove('selected'));
+  document.querySelectorAll('.thumb').forEach(t => {
+    t.classList.remove('selected');
+    t.setAttribute('aria-pressed', 'false');
+  });
   const thumb = document.querySelector(`.thumb[data-idx="${idx}"]`);
-  if (thumb) thumb.classList.add('selected');
+  if (thumb) {
+    thumb.classList.add('selected');
+    thumb.setAttribute('aria-pressed', 'true');
+  }
 
   currentImageObj = loadedImages[idx];
-  analysisArea.innerHTML = `<div class="empty-analysis"><span class="analyse-spinner"></span>extracting palette…</div>`;
+  analysisArea.innerHTML = `<div class="empty-analysis" role="status"><span class="analyse-spinner" aria-hidden="true"></span>extracting palette…</div>`;
 
   const img = new Image();
   img.crossOrigin = 'anonymous';
@@ -1076,34 +1137,29 @@ function selectImage(idx) {
     runExtraction();
   };
   img.onerror = () => {
-    analysisArea.innerHTML = `<div class="empty-analysis">could not load image for analysis (CORS)</div>`;
+    analysisArea.innerHTML = `<div class="empty-analysis" role="alert">could not load image for analysis (CORS)</div>`;
   };
   img.src = currentImageObj.original + '?t=' + Date.now();
 }
 
-// Run extraction on the cached image — called on first load and on settings change.
-// Renders immediately with name placeholders, then patches in names when API responds.
+// ── EXTRACTION ────────────────────────────────────────────────────────────────
 async function runExtraction() {
   if (!currentImageEl) return;
   const paletteData = extractPalette(currentImageEl);
   const swatches    = extractSwatches(currentImageEl);
   currentPalette = paletteData;
 
-  // Render straight away with loading placeholders for names
   renderAnalysis(currentImageEl, paletteData, swatches, currentColorNames);
 
-  // Build a fingerprint of the current palette hexes + chosen list
-  const hexes   = paletteData.map(d => rgbToHex(d.rgb));
-  const hexKey  = hexes.join(',') + '|' + extractionSettings.nameList;
+  const hexes  = paletteData.map(d => rgbToHex(d.rgb));
+  const hexKey = hexes.join(',') + '|' + extractionSettings.nameList;
 
-  // Only hit the API if palette or list has changed
   if (hexKey !== lastNamedHexKey) {
-    lastNamedHexKey  = hexKey;
-    currentColorNames = {}; // clear stale names while loading
-    patchColorLabels(paletteData, currentColorNames); // show … placeholders
+    lastNamedHexKey   = hexKey;
+    currentColorNames = {};
+    patchColorLabels(paletteData, currentColorNames);
 
     const names = await fetchColorNames(hexes, extractionSettings.nameList);
-    // Guard: another extraction may have fired while we were waiting
     if (hexKey === lastNamedHexKey) {
       currentColorNames = names;
       patchColorLabels(paletteData, currentColorNames);
@@ -1112,20 +1168,15 @@ async function runExtraction() {
 }
 
 // ── COLOUR NAME API ───────────────────────────────────────────────────────────
-// Batch-fetch names for an array of hex strings from api.color.pizza.
-// Returns a map of lowercase hex-with-# → name string.
-// Never throws — returns empty map on any failure.
 async function fetchColorNames(hexArray, list) {
   try {
-    // API expects hex values without '#', comma-separated
     const values = hexArray.map(h => h.replace('#', '')).join(',');
     const params = new URLSearchParams({ values, list });
     const res = await fetch(`${COLOR_NAME_API}?${params}`);
     if (!res.ok) return {};
     const data = await res.json();
-    // Response: { colors: [{ hex: '#3a2f1e', name: 'Walnut Brown', ... }, ...] }
-    // The API returns one entry per input colour, in order.
     const map = {};
+    // Use requestedHex (exact input hex) not hex (nearest match hex)
     (data.colors || []).forEach(c => {
       if (c.requestedHex && c.name) map[c.requestedHex.toLowerCase()] = c.name;
     });
@@ -1135,8 +1186,6 @@ async function fetchColorNames(hexArray, list) {
   }
 }
 
-// Patch just the colour label elements in place — no full re-render needed.
-// Called twice: once with empty map (shows …) and once with names.
 function patchColorLabels(paletteData, nameMap) {
   paletteData.forEach((d, i) => {
     const el = document.getElementById(`colour-label-${i}`);
@@ -1148,19 +1197,17 @@ function patchColorLabels(paletteData, nameMap) {
   });
 }
 
-// Build the inner HTML for a colour label.
-// name = undefined → loading state; name = '' → not found; name = string → show it.
 function buildLabelHtml(index, hex, pct, name) {
-  const num  = String(index + 1).padStart(2, '0');
+  const num      = String(index + 1).padStart(2, '0');
   const namePart = name === undefined
-    ? `<span class="colour-name-loading">…</span>`
+    ? `<span class="colour-name-loading" aria-label="loading colour name">…</span>`
     : name
       ? `<span class="colour-name">${name}</span>`
       : '';
   return `${num} · <span class="colour-hex">${hex}</span>${namePart ? ' · ' + namePart : ''} · ${pct}%`;
 }
 
-// ── COLOUR EXTRACTION (Color Thief v3 — MMCQ) ───────────────────────────────
+// ── COLOUR EXTRACTION ────────────────────────────────────────────────────────
 function extractPalette(imgEl) {
   const s = extractionSettings;
   const colors = ColorThief.getPaletteSync(imgEl, {
@@ -1210,7 +1257,6 @@ function swatchProportions(swatchMap, paletteData) {
   return applyFloor(result, 0.05);
 }
 
-// ── FLOOR HELPER ─────────────────────────────────────────────────────────────
 function applyFloor(items, minProp) {
   const raw = items.reduce((s, r) => s + r.proportion, 0) || 1;
   items.forEach(r => r.proportion = r.proportion / raw);
@@ -1231,10 +1277,11 @@ function rgbToHex([r,g,b]) {
 }
 
 function hexToRgb(hex) {
-  const r = parseInt(hex.slice(1,3),16);
-  const g = parseInt(hex.slice(3,5),16);
-  const b = parseInt(hex.slice(5,7),16);
-  return [r,g,b];
+  return [
+    parseInt(hex.slice(1,3),16),
+    parseInt(hex.slice(3,5),16),
+    parseInt(hex.slice(5,7),16)
+  ];
 }
 
 function rgbToHsl([r,g,b]) {
@@ -1283,7 +1330,6 @@ function textColour(rgb) {
 }
 
 // ── RENDER ANALYSIS ───────────────────────────────────────────────────────────
-// nameMap may be empty on first call (names still loading) — labels show … until patched.
 function renderAnalysis(imgEl, paletteData, swatchMap, nameMap) {
   const palette = paletteData.map(d => d.rgb);
 
@@ -1294,20 +1340,23 @@ function renderAnalysis(imgEl, paletteData, swatchMap, nameMap) {
       const pct = Math.round(proportion * 100);
       return `<div class="semantic-segment"
         style="flex:${proportion};background:${hex}"
-        title="${role} · ${hex} · ${pct}%">
-        <span class="semantic-segment-label" style="color:${tc}">${pct > 8 ? role : ''}</span>
+        title="${role} · ${hex} · ${pct}%"
+        aria-label="${role}: ${hex}, ${pct}%">
+        <span class="semantic-segment-label" style="color:${tc}" aria-hidden="true">${pct > 8 ? role : ''}</span>
       </div>`;
     }).join('');
     const legend = swatchData.map(({ role, hex }) =>
-      `<div class="semantic-legend-item" onclick="navigator.clipboard.writeText('${hex}').catch(()=>{})">
-        <div class="semantic-legend-dot" style="background:${hex}"></div>
+      `<button class="semantic-legend-item"
+        onclick="navigator.clipboard.writeText('${hex}').catch(()=>{})"
+        aria-label="Copy ${role} colour ${hex} to clipboard">
+        <span class="semantic-legend-dot" style="background:${hex}" aria-hidden="true"></span>
         <span>${role} · ${hex}</span>
-      </div>`
+      </button>`
     ).join('');
     return `<div class="semantic-section">
-      <div class="semantic-label">semantic palette</div>
-      <div class="semantic-bar">${segments}</div>
-      <div class="semantic-legend">${legend}</div>
+      <div class="semantic-label" id="semantic-label">semantic palette</div>
+      <div class="semantic-bar" role="img" aria-labelledby="semantic-label">${segments}</div>
+      <div class="semantic-legend" role="list">${legend}</div>
     </div>`;
   })() : '';
 
@@ -1316,48 +1365,55 @@ function renderAnalysis(imgEl, paletteData, swatchMap, nameMap) {
     paletteData.map(({ rgb, proportion }) => ({ hex: rgbToHex(rgb), tc: textColour(rgb), proportion })),
     0.01
   );
-  const mainPropBar = `<div class="semantic-section" style="margin-top:0;padding-top:0;border-top:none;margin-bottom:0.75rem">
-    <div class="semantic-label">colour proportions</div>
-    <div class="semantic-bar">${
+  const mainPropBar = `<div class="semantic-section semantic-section--prop-bar">
+    <div class="semantic-label" id="prop-bar-label">colour proportions</div>
+    <div class="semantic-bar" role="img" aria-labelledby="prop-bar-label">${
       propBarItems.map(({ hex, tc, proportion }) => {
         const pct = Math.round(proportion * 100);
         return `<div class="semantic-segment"
           style="flex:${proportion};background:${hex}"
-          title="${hex} · ${pct}%">
-          <span class="semantic-segment-label" style="color:${tc}">${pct > 6 ? pct + '%' : ''}</span>
+          title="${hex} · ${pct}%"
+          aria-label="${hex}: ${pct}%">
+          <span class="semantic-segment-label" style="color:${tc}" aria-hidden="true">${pct > 6 ? pct + '%' : ''}</span>
         </div>`;
       }).join('')
     }</div>
   </div>`;
 
-  // Colour rows — label gets an id so patchColorLabels can update it without re-render
+  // Colour rows
   const rows = paletteData.map(({ rgb, proportion }, i) => {
     const { tints, shades } = makeTintsShades(rgb);
     const allSwatches = [...tints, rgb, ...shades];
-    const pct = Math.round(proportion * 100);
-    const hex = rgbToHex(rgb);
+    const pct  = Math.round(proportion * 100);
+    const hex  = rgbToHex(rgb);
     const name = nameMap[hex.toLowerCase()];
 
     const swatchHtml = allSwatches.map((c, si) => {
-      const ch = rgbToHex(c);
+      const ch     = rgbToHex(c);
       const isBase = si === TINT_STEPS;
-      const tc = textColour(c);
+      const tc     = textColour(c);
+      const label  = si < TINT_STEPS
+        ? `Tint ${TINT_STEPS - si} of colour ${i+1}: ${ch}`
+        : isBase
+          ? `Base colour ${i+1}: ${ch}${name ? ' (' + name + ')' : ''}`
+          : `Shade ${si - TINT_STEPS} of colour ${i+1}: ${ch}`;
       return `<div class="swatch${isBase ? ' base' : ''}"
         style="background:${ch};color:${ch}"
         data-hex="${ch}"
         data-tc="${tc}"
-        tabindex="0">${ch}</div>`;
+        tabindex="0"
+        role="button"
+        aria-label="${label} — click to copy">${ch}</div>`;
     }).join('');
 
     return `<div class="colour-block">
       <div class="colour-label" id="colour-label-${i}">${buildLabelHtml(i, hex, pct, name)}</div>
-      <div class="swatch-row">${swatchHtml}</div>
+      <div class="swatch-row" role="list" aria-label="Tints and shades of colour ${i+1}">${swatchHtml}</div>
     </div>`;
   }).join('');
 
   const s = extractionSettings;
 
-  // Build name list options
   const nameListOptions = Object.entries(NAME_LISTS).map(([key, label]) =>
     `<option value="${key}" ${s.nameList === key ? 'selected' : ''}>${label}</option>`
   ).join('');
@@ -1366,71 +1422,96 @@ function renderAnalysis(imgEl, paletteData, swatchMap, nameMap) {
     <div class="analysis-layout">
       <figure class="image-figure">
         <div class="selected-image-wrap">
-          <img src="${imgEl.src}" alt="${currentImageObj?.title || ''}" crossorigin="anonymous" />
+          <img src="${imgEl.src}" alt="${currentImageObj?.title || 'Selected image'}" crossorigin="anonymous" />
         </div>
         <figcaption class="image-caption">
           ${currentImageObj?.title ? `<span class="image-title">${currentImageObj.title}</span>` : ''}
-          <a class="image-link" href="${currentImageObj?.blockUrl || '#'}" target="_blank" rel="noopener">
+          <a class="image-link"
+            href="${currentImageObj?.blockUrl || '#'}"
+            target="_blank"
+            rel="noopener"
+            aria-label="View ${currentImageObj?.title || 'this image'} on Are.na (opens in new tab)">
             view on are.na ↗
           </a>
         </figcaption>
       </figure>
+
       <div class="palette-panel">
 
         <div class="settings-panel">
-          <button class="settings-toggle" id="settingsToggle">
+          <button
+            class="settings-toggle"
+            id="settingsToggle"
+            aria-expanded="false"
+            aria-controls="settingsBody"
+          >
             extraction settings
-            <span class="caret">&#x25BE;</span>
+            <span class="caret" aria-hidden="true">&#x25BE;</span>
           </button>
-          <div class="settings-body hidden" id="settingsBody">
+          <div class="settings-body hidden" id="settingsBody" role="group" aria-label="Extraction settings">
             <div class="setting-row">
-              <label>colours <span class="setting-val" id="colorCountVal">${s.colorCount}</span></label>
-              <input type="range" id="sColorCount" min="4" max="12" step="1" value="${s.colorCount}">
+              <label for="sColorCount">
+                colours
+                <span class="setting-val" id="colorCountVal" aria-live="polite">${s.colorCount}</span>
+              </label>
+              <input type="range" id="sColorCount" name="colorCount"
+                min="4" max="12" step="1" value="${s.colorCount}"
+                aria-valuemin="4" aria-valuemax="12" aria-valuenow="${s.colorCount}"
+                aria-label="Number of colours to extract">
             </div>
             <div class="setting-row">
-              <label>quality</label>
-              <select id="sQuality">
-                <option value="hi" ${s.quality==='hi'?'selected':''}>high (slow)</option>
+              <label for="sQuality">quality</label>
+              <select id="sQuality" name="quality" aria-label="Extraction quality">
+                <option value="hi"  ${s.quality==='hi' ?'selected':''}>high (slow)</option>
                 <option value="med" ${s.quality==='med'?'selected':''}>medium</option>
-                <option value="lo" ${s.quality==='lo'?'selected':''}>low (fast)</option>
+                <option value="lo"  ${s.quality==='lo' ?'selected':''}>low (fast)</option>
               </select>
             </div>
             <div class="setting-row">
-              <label>colour space</label>
-              <select id="sColorSpace">
+              <label for="sColorSpace">colour space</label>
+              <select id="sColorSpace" name="colorSpace" aria-label="Colour space for extraction">
                 <option value="oklch" ${s.colorSpace==='oklch'?'selected':''}>oklch (perceptual)</option>
-                <option value="rgb" ${s.colorSpace==='rgb'?'selected':''}>rgb</option>
+                <option value="rgb"   ${s.colorSpace==='rgb'  ?'selected':''}>rgb</option>
               </select>
             </div>
             <div class="setting-row">
-              <label>min saturation <span class="setting-val" id="minSatVal">${s.minSaturation.toFixed(2)}</span></label>
-              <input type="range" id="sMinSat" min="0" max="0.5" step="0.05" value="${s.minSaturation}">
+              <label for="sMinSat">
+                min saturation
+                <span class="setting-val" id="minSatVal" aria-live="polite">${s.minSaturation.toFixed(2)}</span>
+              </label>
+              <input type="range" id="sMinSat" name="minSaturation"
+                min="0" max="0.5" step="0.05" value="${s.minSaturation}"
+                aria-valuemin="0" aria-valuemax="0.5" aria-valuenow="${s.minSaturation}"
+                aria-label="Minimum saturation threshold">
             </div>
-            <div class="setting-row" style="grid-column:1/-1">
+            <div class="setting-row setting-row--full">
               <div class="setting-toggle-row">
-                <input type="checkbox" id="sIgnoreWhite" ${s.ignoreWhite?'checked':''}>
+                <input type="checkbox" id="sIgnoreWhite" name="ignoreWhite" ${s.ignoreWhite?'checked':''}>
                 <label for="sIgnoreWhite">ignore white / near-white pixels</label>
               </div>
             </div>
-            <div class="setting-row" style="grid-column:1/-1">
-              <label>colour name vocabulary</label>
-              <select id="sNameList">${nameListOptions}</select>
+            <div class="setting-row setting-row--full">
+              <label for="sNameList">colour name vocabulary</label>
+              <select id="sNameList" name="nameList" aria-label="Colour name vocabulary">
+                ${nameListOptions}
+              </select>
             </div>
           </div>
         </div>
 
         ${mainPropBar}
-        <div class="semantic-section" style="margin-top:0">
+        <div class="semantic-section semantic-section--flush">
           <div class="semantic-label">tints &amp; shades</div>
         </div>
-        <div class="colour-rows">${rows}</div>
+        <div class="colour-rows" role="list" aria-label="Extracted colours with tints and shades">${rows}</div>
         ${semanticBarHtml}
-        <div class="export-bar">
-          <button class="btn-export" id="expHex">export hex</button>
-          <button class="btn-export" id="expRgbHsl">export rgb + hsl</button>
-          <button class="btn-export" id="expCss">export css vars</button>
-          <button class="btn-export" id="expScp">export .color-palette</button>
-          <button class="btn-export" id="expPng">export png</button>
+
+        <div class="export-bar" role="toolbar" aria-label="Export palette">
+          <button class="btn-export" id="expHex"    aria-label="Export hex values as text file">export hex</button>
+          <button class="btn-export" id="expRgbHsl" aria-label="Export RGB and HSL values as text file">export rgb + hsl</button>
+          <button class="btn-export" id="expCss"    aria-label="Export CSS custom properties">export css vars</button>
+          <button class="btn-export" id="expScp"    aria-label="Export Simple Color Palette file">export .color-palette</button>
+          <button class="btn-export" id="expPng"    aria-label="Export palette as PNG image">export png</button>
         </div>
       </div>
     </div>
@@ -1447,14 +1528,21 @@ function renderAnalysis(imgEl, paletteData, swatchMap, nameMap) {
     sw.addEventListener('click', () => {
       navigator.clipboard.writeText(sw.dataset.hex).catch(() => {});
     });
+    sw.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        navigator.clipboard.writeText(sw.dataset.hex).catch(() => {});
+      }
+    });
   });
 
-  // Settings toggle
+  // Settings toggle — uses aria-expanded
   document.getElementById('settingsToggle').addEventListener('click', () => {
-    const body = document.getElementById('settingsBody');
-    const btn  = document.getElementById('settingsToggle');
+    const body    = document.getElementById('settingsBody');
+    const btn     = document.getElementById('settingsToggle');
+    const isOpen  = !body.classList.contains('hidden');
     body.classList.toggle('hidden');
-    btn.classList.toggle('open');
+    btn.setAttribute('aria-expanded', String(!isOpen));
   });
 
   // Settings controls
@@ -1471,7 +1559,9 @@ function renderAnalysis(imgEl, paletteData, swatchMap, nameMap) {
 
   document.getElementById('sColorCount').addEventListener('input', e => {
     extractionSettings.colorCount = parseInt(e.target.value);
-    document.getElementById('colorCountVal').textContent = extractionSettings.colorCount;
+    const val = document.getElementById('colorCountVal');
+    val.textContent = extractionSettings.colorCount;
+    e.target.setAttribute('aria-valuenow', extractionSettings.colorCount);
     reExtract(true);
   });
   document.getElementById('sQuality').addEventListener('change', e => {
@@ -1484,45 +1574,29 @@ function renderAnalysis(imgEl, paletteData, swatchMap, nameMap) {
   });
   document.getElementById('sMinSat').addEventListener('input', e => {
     extractionSettings.minSaturation = parseFloat(e.target.value);
-    document.getElementById('minSatVal').textContent = extractionSettings.minSaturation.toFixed(2);
+    const val = document.getElementById('minSatVal');
+    val.textContent = extractionSettings.minSaturation.toFixed(2);
+    e.target.setAttribute('aria-valuenow', extractionSettings.minSaturation);
     reExtract(true);
   });
   document.getElementById('sIgnoreWhite').addEventListener('change', e => {
     extractionSettings.ignoreWhite = e.target.checked;
     reExtract();
   });
-  // Name list change: force re-fetch by clearing the cached key
   document.getElementById('sNameList').addEventListener('change', e => {
     extractionSettings.nameList = e.target.value;
-    lastNamedHexKey = ''; // invalidate cache so names re-fetch on next runExtraction
+    lastNamedHexKey = '';
     reExtract();
   });
 
-  document.getElementById('expHex').addEventListener('click', () => exportHex(palette));
+  document.getElementById('expHex').addEventListener('click',    () => exportHex(palette));
   document.getElementById('expRgbHsl').addEventListener('click', () => exportRgbHsl(palette));
-  document.getElementById('expCss').addEventListener('click', () => exportCss(palette));
-  document.getElementById('expScp').addEventListener('click', () => exportScp(palette));
-  document.getElementById('expPng').addEventListener('click', () => exportPng(imgEl, palette));
+  document.getElementById('expCss').addEventListener('click',    () => exportCss(palette));
+  document.getElementById('expScp').addEventListener('click',    () => exportScp(palette));
+  document.getElementById('expPng').addEventListener('click',    () => exportPng(imgEl, palette));
 }
 
-// ── EXPORT HELPERS ────────────────────────────────────────────────────────────
-function getDataURL(imgEl) {
-  const c = document.createElement('canvas');
-  c.width = imgEl.naturalWidth || imgEl.width;
-  c.height = imgEl.naturalHeight || imgEl.height;
-  c.getContext('2d').drawImage(imgEl, 0, 0);
-  return c.toDataURL('image/png');
-}
-
-function dataURLtoBlob(dataURL) {
-  const parts = dataURL.split(',');
-  const mime = parts[0].match(/:(.*?);/)[1];
-  const binary = atob(parts[1]);
-  const arr = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
-  return new Blob([arr], { type: mime });
-}
-
+// ── EXPORTS ───────────────────────────────────────────────────────────────────
 function downloadText(content, filename) {
   const a = document.createElement('a');
   a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
@@ -1534,7 +1608,6 @@ function slugName() {
   return currentImageObj ? currentImageObj.channel : 'palette';
 }
 
-// Returns "Colour N — #hex — Name" or "Colour N — #hex" if name unavailable
 function colourTitle(index, hex) {
   const name = currentColorNames[hex.toLowerCase()];
   return name
@@ -1542,7 +1615,6 @@ function colourTitle(index, hex) {
     : `Colour ${index + 1} — ${hex}`;
 }
 
-// ── EXPORTS ───────────────────────────────────────────────────────────────────
 function exportHex(palette) {
   const lines = palette.map((rgb, i) => {
     const { tints, shades } = makeTintsShades(rgb);
@@ -1569,33 +1641,26 @@ function exportRgbHsl(palette) {
 function exportCss(palette) {
   const varLines = [];
   palette.forEach((rgb, i) => {
-    const hex = rgbToHex(rgb);
+    const hex  = rgbToHex(rgb);
     const name = currentColorNames[hex.toLowerCase()];
-    const comment = name ? ` /* ${name} */` : '';
     const { tints, shades } = makeTintsShades(rgb);
     const all = [...tints, rgb, ...shades];
     all.forEach((c, si) => {
       const label = si < TINT_STEPS ? `tint-${TINT_STEPS - si}` : si === TINT_STEPS ? 'base' : `shade-${si - TINT_STEPS}`;
       const [h,s,l] = rgbToHsl(c);
-      const baseComment = si === TINT_STEPS ? comment : '';
-      varLines.push(`  --color-${i+1}-${label}: hsl(${h}, ${s}%, ${l}%);${baseComment}`);
+      const comment = (si === TINT_STEPS && name) ? ` /* ${name} */` : '';
+      varLines.push(`  --color-${i+1}-${label}: hsl(${h}, ${s}%, ${l}%);${comment}`);
     });
   });
-  const css = `:root {\n${varLines.join('\n')}\n}`;
-  downloadText(css, `${slugName()}-vars.css`);
+  downloadText(`:root {\n${varLines.join('\n')}\n}`, `${slugName()}-vars.css`);
 }
 
 function exportScp(palette) {
-  // Simple Color Palette format (linear sRGB, float 0–1)
   const colors = palette.map((rgb, i) => {
     const [r,g,b] = rgb.map(v => parseFloat((v/255).toFixed(4)));
-    return {
-      name: colourTitle(i, rgbToHex(rgb)),
-      components: [r, g, b]
-    };
+    return { name: colourTitle(i, rgbToHex(rgb)), components: [r, g, b] };
   });
-  const obj = { name: slugName(), colors };
-  downloadText(JSON.stringify(obj, null, 2), `${slugName()}.color-palette`);
+  downloadText(JSON.stringify({ name: slugName(), colors }, null, 2), `${slugName()}.color-palette`);
 }
 
 function exportPng(imgEl, palette) {
@@ -1607,11 +1672,10 @@ function exportPng(imgEl, palette) {
 
   const COLS = TINT_STEPS + 1 + SHADE_STEPS;
   const swatchW = Math.floor((imgW - PAD * (COLS + 1)) / COLS);
-
   const totalH = imgH + PAD + palette.length * (SWATCH_H + PAD) + PAD;
 
   const c = document.createElement('canvas');
-  c.width = imgW + PAD * 2;
+  c.width  = imgW + PAD * 2;
   c.height = totalH;
   const cx = c.getContext('2d');
 
@@ -1625,19 +1689,18 @@ function exportPng(imgEl, palette) {
     const { tints, shades } = makeTintsShades(rgb);
     const all = [...tints, rgb, ...shades];
     all.forEach((c2, si) => {
-      const x = PAD + si * (swatchW + PAD);
-      cx.fillStyle = rgbToHex(c2);
-      const h = si === TINT_STEPS ? SWATCH_H : SWATCH_H - 8;
+      const x    = PAD + si * (swatchW + PAD);
+      const h    = si === TINT_STEPS ? SWATCH_H : SWATCH_H - 8;
       const yOff = si === TINT_STEPS ? 0 : 4;
+      cx.fillStyle = rgbToHex(c2);
       roundRect(cx, x, y + yOff, swatchW, h, 4);
       cx.fill();
 
-      cx.font = '10px monospace';
+      const isBase = si === TINT_STEPS;
+      const name   = isBase ? currentColorNames[rgbToHex(c2).toLowerCase()] : null;
+      cx.font      = '10px monospace';
       cx.fillStyle = textColour(c2);
       cx.textAlign = 'center';
-      // Base swatch: show name if available, otherwise hex; non-base: hex only
-      const isBase = si === TINT_STEPS;
-      const name = isBase ? currentColorNames[rgbToHex(c2).toLowerCase()] : null;
       cx.fillText(name || rgbToHex(c2), x + swatchW/2, y + yOff + h - 8);
     });
     y += SWATCH_H + PAD;

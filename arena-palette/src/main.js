@@ -3,21 +3,17 @@ const STORAGE_KEY = 'arena-palette-v1';
 const DEFAULT_CHANNELS = ['', '', ''];
 const MAX_CHANNELS = 4;
 const IMAGES_PER_CHANNEL = 3;
-// NUM_COLORS is now dynamic — see extractionSettings
 const TINT_STEPS = 3;
 const SHADE_STEPS = 3;
 
 // Are.na API v3 — https://www.are.na/developers/explore
 const API_BASE = 'https://api.are.na/v3';
-const MAX_RETRIES = 12; // max attempts per image slot to land on an Image block
+const MAX_RETRIES = 12;
 
 // ── COLOUR NAME API ───────────────────────────────────────────────────────────
 // https://api.color.pizza/v1/ — meodai/color-name-api
-// Single batch call: ?values=FF0000,00FF00&list=bestOf
 const COLOR_NAME_API = 'https://api.color.pizza/v1/';
 
-// Available name lists. Key = API list param, value = display label.
-// 'bestOf' is the API's curated default (goodnamesonly=true equivalent).
 const NAME_LISTS = {
   bestOf:              'best of',
   japaneseTraditional: 'Japanese traditional',
@@ -33,11 +29,11 @@ const NAME_LISTS = {
 const SETTINGS_KEY = 'arena-palette-settings-v1';
 const DEFAULT_SETTINGS = {
   colorCount:    7,
-  quality:      'med',    // 'hi' | 'med' | 'lo'
-  colorSpace:   'oklch',  // 'oklch' | 'rgb'
+  quality:      'med',
+  colorSpace:   'oklch',
   ignoreWhite:   true,
   minSaturation: 0,
-  nameList:     'bestOf', // key from NAME_LISTS
+  nameList:     'bestOf',
 };
 
 function qualityValue(q) {
@@ -89,11 +85,29 @@ let channels = [];
 function renderChannels() {
   channelListEl.innerHTML = '';
   channels.forEach((slug, i) => {
+    const humanN = i + 1;
     const row = document.createElement('div');
     row.className = 'channel-row';
+    row.setAttribute('role', 'listitem');
     row.innerHTML = `
-      <input type="text" placeholder="channel-slug" value="${slug}" data-idx="${i}" />
-      <button class="btn-icon" data-remove="${i}" title="remove">×</button>
+      <label for="channel-input-${i}" class="visually-hidden">Channel ${humanN} slug</label>
+      <input
+        type="text"
+        id="channel-input-${i}"
+        name="channel-${i}"
+        placeholder="channel-slug"
+        value="${slug}"
+        data-idx="${i}"
+        aria-label="Channel ${humanN} slug"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <button
+        class="btn-icon"
+        data-remove="${i}"
+        aria-label="Remove channel ${humanN}"
+        title="Remove channel ${humanN}"
+      >×</button>
     `;
     channelListEl.appendChild(row);
   });
@@ -121,6 +135,9 @@ btnAddChannel.addEventListener('click', () => {
   if (channels.length < MAX_CHANNELS) {
     channels.push('');
     renderChannels();
+    // Focus the new input
+    const inputs = channelListEl.querySelectorAll('input[type="text"]');
+    if (inputs.length) inputs[inputs.length - 1].focus();
   }
 });
 
@@ -140,7 +157,6 @@ tokenInput.addEventListener('input', persistState);
 })();
 
 // ── ARE.NA API v3 ─────────────────────────────────────────────────────────────
-// Step 1: fetch channel metadata to get total block count
 async function fetchChannelMeta(slug, headers) {
   const res = await fetch(`${API_BASE}/channels/${encodeURIComponent(slug)}`, { headers });
   if (!res.ok) {
@@ -150,7 +166,6 @@ async function fetchChannelMeta(slug, headers) {
   return res.json();
 }
 
-// Step 2: fetch a single block at a random page offset (per=1 means page = position)
 async function fetchBlockAtPage(slug, page, headers) {
   const res = await fetch(
     `${API_BASE}/channels/${encodeURIComponent(slug)}/contents?per=1&page=${page}`,
@@ -158,11 +173,9 @@ async function fetchBlockAtPage(slug, page, headers) {
   );
   if (!res.ok) throw new Error(`Fetch failed for "${slug}" page ${page} (${res.status})`);
   const data = await res.json();
-  return data.data?.[0] || null; // v3 wraps blocks in data[]
+  return data.data?.[0] || null;
 }
 
-// Fetch slotsNeeded random image blocks from a channel.
-// Retries up to MAX_RETRIES times per slot to land on an Image block.
 async function fetchChannelImages(slug, token, slotsNeeded) {
   const headers = {};
   if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -211,7 +224,7 @@ btnFetch.addEventListener('click', async () => {
   }
 
   btnFetch.disabled = true;
-  setStatus('<span class="analyse-spinner"></span>fetching…');
+  setStatus('<span class="analyse-spinner" aria-hidden="true"></span>fetching…');
   persistState();
 
   const token = tokenInput.value.trim();
@@ -256,29 +269,44 @@ function renderImageGrid(images) {
     const thumb = document.createElement('div');
     thumb.className = 'thumb';
     thumb.dataset.idx = i;
+    thumb.setAttribute('role', 'listitem');
     thumb.innerHTML = `
-      <img src="${img.url}" crossorigin="anonymous" loading="lazy" alt="${img.title}" />
-      <span class="channel-tag">${img.channel}</span>
+      <img src="${img.url}" crossorigin="anonymous" loading="lazy"
+        alt="${img.title ? img.title + ' from ' + img.channel : 'Image from ' + img.channel}" />
+      <span class="channel-tag" aria-hidden="true">${img.channel}</span>
     `;
+    // Make thumb keyboard-accessible
+    thumb.setAttribute('tabindex', '0');
+    thumb.setAttribute('role', 'button');
+    thumb.setAttribute('aria-label', `Extract palette from ${img.title || 'image'} (${img.channel})`);
     thumb.addEventListener('click', () => selectImage(i));
+    thumb.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectImage(i); }
+    });
     imageGrid.appendChild(thumb);
   });
 }
 
 // ── IMAGE SELECTION ───────────────────────────────────────────────────────────
-let currentPalette   = null;
-let currentImageObj  = null;
-let currentImageEl   = null; // cached HTMLImageElement — reused on settings change
-let currentColorNames = {};  // hex (lowercase, with #) → name string
-let lastNamedHexKey  = '';   // fingerprint to avoid redundant API calls
+let currentPalette    = null;
+let currentImageObj   = null;
+let currentImageEl    = null;
+let currentColorNames = {};
+let lastNamedHexKey   = '';
 
 function selectImage(idx) {
-  document.querySelectorAll('.thumb').forEach(t => t.classList.remove('selected'));
+  document.querySelectorAll('.thumb').forEach(t => {
+    t.classList.remove('selected');
+    t.setAttribute('aria-pressed', 'false');
+  });
   const thumb = document.querySelector(`.thumb[data-idx="${idx}"]`);
-  if (thumb) thumb.classList.add('selected');
+  if (thumb) {
+    thumb.classList.add('selected');
+    thumb.setAttribute('aria-pressed', 'true');
+  }
 
   currentImageObj = loadedImages[idx];
-  analysisArea.innerHTML = `<div class="empty-analysis"><span class="analyse-spinner"></span>extracting palette…</div>`;
+  analysisArea.innerHTML = `<div class="empty-analysis" role="status"><span class="analyse-spinner" aria-hidden="true"></span>extracting palette…</div>`;
 
   const img = new Image();
   img.crossOrigin = 'anonymous';
@@ -287,34 +315,29 @@ function selectImage(idx) {
     runExtraction();
   };
   img.onerror = () => {
-    analysisArea.innerHTML = `<div class="empty-analysis">could not load image for analysis (CORS)</div>`;
+    analysisArea.innerHTML = `<div class="empty-analysis" role="alert">could not load image for analysis (CORS)</div>`;
   };
   img.src = currentImageObj.original + '?t=' + Date.now();
 }
 
-// Run extraction on the cached image — called on first load and on settings change.
-// Renders immediately with name placeholders, then patches in names when API responds.
+// ── EXTRACTION ────────────────────────────────────────────────────────────────
 async function runExtraction() {
   if (!currentImageEl) return;
   const paletteData = extractPalette(currentImageEl);
   const swatches    = extractSwatches(currentImageEl);
   currentPalette = paletteData;
 
-  // Render straight away with loading placeholders for names
   renderAnalysis(currentImageEl, paletteData, swatches, currentColorNames);
 
-  // Build a fingerprint of the current palette hexes + chosen list
-  const hexes   = paletteData.map(d => rgbToHex(d.rgb));
-  const hexKey  = hexes.join(',') + '|' + extractionSettings.nameList;
+  const hexes  = paletteData.map(d => rgbToHex(d.rgb));
+  const hexKey = hexes.join(',') + '|' + extractionSettings.nameList;
 
-  // Only hit the API if palette or list has changed
   if (hexKey !== lastNamedHexKey) {
-    lastNamedHexKey  = hexKey;
-    currentColorNames = {}; // clear stale names while loading
-    patchColorLabels(paletteData, currentColorNames); // show … placeholders
+    lastNamedHexKey   = hexKey;
+    currentColorNames = {};
+    patchColorLabels(paletteData, currentColorNames);
 
     const names = await fetchColorNames(hexes, extractionSettings.nameList);
-    // Guard: another extraction may have fired while we were waiting
     if (hexKey === lastNamedHexKey) {
       currentColorNames = names;
       patchColorLabels(paletteData, currentColorNames);
@@ -323,20 +346,15 @@ async function runExtraction() {
 }
 
 // ── COLOUR NAME API ───────────────────────────────────────────────────────────
-// Batch-fetch names for an array of hex strings from api.color.pizza.
-// Returns a map of lowercase hex-with-# → name string.
-// Never throws — returns empty map on any failure.
 async function fetchColorNames(hexArray, list) {
   try {
-    // API expects hex values without '#', comma-separated
     const values = hexArray.map(h => h.replace('#', '')).join(',');
     const params = new URLSearchParams({ values, list });
     const res = await fetch(`${COLOR_NAME_API}?${params}`);
     if (!res.ok) return {};
     const data = await res.json();
-    // Response: { colors: [{ hex: '#3a2f1e', name: 'Walnut Brown', ... }, ...] }
-    // The API returns one entry per input colour, in order.
     const map = {};
+    // Use requestedHex (exact input hex) not hex (nearest match hex)
     (data.colors || []).forEach(c => {
       if (c.requestedHex && c.name) map[c.requestedHex.toLowerCase()] = c.name;
     });
@@ -346,8 +364,6 @@ async function fetchColorNames(hexArray, list) {
   }
 }
 
-// Patch just the colour label elements in place — no full re-render needed.
-// Called twice: once with empty map (shows …) and once with names.
 function patchColorLabels(paletteData, nameMap) {
   paletteData.forEach((d, i) => {
     const el = document.getElementById(`colour-label-${i}`);
@@ -359,19 +375,17 @@ function patchColorLabels(paletteData, nameMap) {
   });
 }
 
-// Build the inner HTML for a colour label.
-// name = undefined → loading state; name = '' → not found; name = string → show it.
 function buildLabelHtml(index, hex, pct, name) {
-  const num  = String(index + 1).padStart(2, '0');
+  const num      = String(index + 1).padStart(2, '0');
   const namePart = name === undefined
-    ? `<span class="colour-name-loading">…</span>`
+    ? `<span class="colour-name-loading" aria-label="loading colour name">…</span>`
     : name
       ? `<span class="colour-name">${name}</span>`
       : '';
   return `${num} · <span class="colour-hex">${hex}</span>${namePart ? ' · ' + namePart : ''} · ${pct}%`;
 }
 
-// ── COLOUR EXTRACTION (Color Thief v3 — MMCQ) ───────────────────────────────
+// ── COLOUR EXTRACTION ────────────────────────────────────────────────────────
 function extractPalette(imgEl) {
   const s = extractionSettings;
   const colors = ColorThief.getPaletteSync(imgEl, {
@@ -421,7 +435,6 @@ function swatchProportions(swatchMap, paletteData) {
   return applyFloor(result, 0.05);
 }
 
-// ── FLOOR HELPER ─────────────────────────────────────────────────────────────
 function applyFloor(items, minProp) {
   const raw = items.reduce((s, r) => s + r.proportion, 0) || 1;
   items.forEach(r => r.proportion = r.proportion / raw);
@@ -442,10 +455,11 @@ function rgbToHex([r,g,b]) {
 }
 
 function hexToRgb(hex) {
-  const r = parseInt(hex.slice(1,3),16);
-  const g = parseInt(hex.slice(3,5),16);
-  const b = parseInt(hex.slice(5,7),16);
-  return [r,g,b];
+  return [
+    parseInt(hex.slice(1,3),16),
+    parseInt(hex.slice(3,5),16),
+    parseInt(hex.slice(5,7),16)
+  ];
 }
 
 function rgbToHsl([r,g,b]) {
@@ -494,7 +508,6 @@ function textColour(rgb) {
 }
 
 // ── RENDER ANALYSIS ───────────────────────────────────────────────────────────
-// nameMap may be empty on first call (names still loading) — labels show … until patched.
 function renderAnalysis(imgEl, paletteData, swatchMap, nameMap) {
   const palette = paletteData.map(d => d.rgb);
 
@@ -505,20 +518,23 @@ function renderAnalysis(imgEl, paletteData, swatchMap, nameMap) {
       const pct = Math.round(proportion * 100);
       return `<div class="semantic-segment"
         style="flex:${proportion};background:${hex}"
-        title="${role} · ${hex} · ${pct}%">
-        <span class="semantic-segment-label" style="color:${tc}">${pct > 8 ? role : ''}</span>
+        title="${role} · ${hex} · ${pct}%"
+        aria-label="${role}: ${hex}, ${pct}%">
+        <span class="semantic-segment-label" style="color:${tc}" aria-hidden="true">${pct > 8 ? role : ''}</span>
       </div>`;
     }).join('');
     const legend = swatchData.map(({ role, hex }) =>
-      `<div class="semantic-legend-item" onclick="navigator.clipboard.writeText('${hex}').catch(()=>{})">
-        <div class="semantic-legend-dot" style="background:${hex}"></div>
+      `<button class="semantic-legend-item"
+        onclick="navigator.clipboard.writeText('${hex}').catch(()=>{})"
+        aria-label="Copy ${role} colour ${hex} to clipboard">
+        <span class="semantic-legend-dot" style="background:${hex}" aria-hidden="true"></span>
         <span>${role} · ${hex}</span>
-      </div>`
+      </button>`
     ).join('');
     return `<div class="semantic-section">
-      <div class="semantic-label">semantic palette</div>
-      <div class="semantic-bar">${segments}</div>
-      <div class="semantic-legend">${legend}</div>
+      <div class="semantic-label" id="semantic-label">semantic palette</div>
+      <div class="semantic-bar" role="img" aria-labelledby="semantic-label">${segments}</div>
+      <div class="semantic-legend" role="list">${legend}</div>
     </div>`;
   })() : '';
 
@@ -527,48 +543,55 @@ function renderAnalysis(imgEl, paletteData, swatchMap, nameMap) {
     paletteData.map(({ rgb, proportion }) => ({ hex: rgbToHex(rgb), tc: textColour(rgb), proportion })),
     0.01
   );
-  const mainPropBar = `<div class="semantic-section" style="margin-top:0;padding-top:0;border-top:none;margin-bottom:0.75rem">
-    <div class="semantic-label">colour proportions</div>
-    <div class="semantic-bar">${
+  const mainPropBar = `<div class="semantic-section semantic-section--prop-bar">
+    <div class="semantic-label" id="prop-bar-label">colour proportions</div>
+    <div class="semantic-bar" role="img" aria-labelledby="prop-bar-label">${
       propBarItems.map(({ hex, tc, proportion }) => {
         const pct = Math.round(proportion * 100);
         return `<div class="semantic-segment"
           style="flex:${proportion};background:${hex}"
-          title="${hex} · ${pct}%">
-          <span class="semantic-segment-label" style="color:${tc}">${pct > 6 ? pct + '%' : ''}</span>
+          title="${hex} · ${pct}%"
+          aria-label="${hex}: ${pct}%">
+          <span class="semantic-segment-label" style="color:${tc}" aria-hidden="true">${pct > 6 ? pct + '%' : ''}</span>
         </div>`;
       }).join('')
     }</div>
   </div>`;
 
-  // Colour rows — label gets an id so patchColorLabels can update it without re-render
+  // Colour rows
   const rows = paletteData.map(({ rgb, proportion }, i) => {
     const { tints, shades } = makeTintsShades(rgb);
     const allSwatches = [...tints, rgb, ...shades];
-    const pct = Math.round(proportion * 100);
-    const hex = rgbToHex(rgb);
+    const pct  = Math.round(proportion * 100);
+    const hex  = rgbToHex(rgb);
     const name = nameMap[hex.toLowerCase()];
 
     const swatchHtml = allSwatches.map((c, si) => {
-      const ch = rgbToHex(c);
+      const ch     = rgbToHex(c);
       const isBase = si === TINT_STEPS;
-      const tc = textColour(c);
+      const tc     = textColour(c);
+      const label  = si < TINT_STEPS
+        ? `Tint ${TINT_STEPS - si} of colour ${i+1}: ${ch}`
+        : isBase
+          ? `Base colour ${i+1}: ${ch}${name ? ' (' + name + ')' : ''}`
+          : `Shade ${si - TINT_STEPS} of colour ${i+1}: ${ch}`;
       return `<div class="swatch${isBase ? ' base' : ''}"
         style="background:${ch};color:${ch}"
         data-hex="${ch}"
         data-tc="${tc}"
-        tabindex="0">${ch}</div>`;
+        tabindex="0"
+        role="button"
+        aria-label="${label} — click to copy">${ch}</div>`;
     }).join('');
 
     return `<div class="colour-block">
       <div class="colour-label" id="colour-label-${i}">${buildLabelHtml(i, hex, pct, name)}</div>
-      <div class="swatch-row">${swatchHtml}</div>
+      <div class="swatch-row" role="list" aria-label="Tints and shades of colour ${i+1}">${swatchHtml}</div>
     </div>`;
   }).join('');
 
   const s = extractionSettings;
 
-  // Build name list options
   const nameListOptions = Object.entries(NAME_LISTS).map(([key, label]) =>
     `<option value="${key}" ${s.nameList === key ? 'selected' : ''}>${label}</option>`
   ).join('');
@@ -577,71 +600,96 @@ function renderAnalysis(imgEl, paletteData, swatchMap, nameMap) {
     <div class="analysis-layout">
       <figure class="image-figure">
         <div class="selected-image-wrap">
-          <img src="${imgEl.src}" alt="${currentImageObj?.title || ''}" crossorigin="anonymous" />
+          <img src="${imgEl.src}" alt="${currentImageObj?.title || 'Selected image'}" crossorigin="anonymous" />
         </div>
         <figcaption class="image-caption">
           ${currentImageObj?.title ? `<span class="image-title">${currentImageObj.title}</span>` : ''}
-          <a class="image-link" href="${currentImageObj?.blockUrl || '#'}" target="_blank" rel="noopener">
+          <a class="image-link"
+            href="${currentImageObj?.blockUrl || '#'}"
+            target="_blank"
+            rel="noopener"
+            aria-label="View ${currentImageObj?.title || 'this image'} on Are.na (opens in new tab)">
             view on are.na ↗
           </a>
         </figcaption>
       </figure>
+
       <div class="palette-panel">
 
         <div class="settings-panel">
-          <button class="settings-toggle" id="settingsToggle">
+          <button
+            class="settings-toggle"
+            id="settingsToggle"
+            aria-expanded="false"
+            aria-controls="settingsBody"
+          >
             extraction settings
-            <span class="caret">&#x25BE;</span>
+            <span class="caret" aria-hidden="true">&#x25BE;</span>
           </button>
-          <div class="settings-body hidden" id="settingsBody">
+          <div class="settings-body hidden" id="settingsBody" role="group" aria-label="Extraction settings">
             <div class="setting-row">
-              <label>colours <span class="setting-val" id="colorCountVal">${s.colorCount}</span></label>
-              <input type="range" id="sColorCount" min="4" max="12" step="1" value="${s.colorCount}">
+              <label for="sColorCount">
+                colours
+                <span class="setting-val" id="colorCountVal" aria-live="polite">${s.colorCount}</span>
+              </label>
+              <input type="range" id="sColorCount" name="colorCount"
+                min="4" max="12" step="1" value="${s.colorCount}"
+                aria-valuemin="4" aria-valuemax="12" aria-valuenow="${s.colorCount}"
+                aria-label="Number of colours to extract">
             </div>
             <div class="setting-row">
-              <label>quality</label>
-              <select id="sQuality">
-                <option value="hi" ${s.quality==='hi'?'selected':''}>high (slow)</option>
+              <label for="sQuality">quality</label>
+              <select id="sQuality" name="quality" aria-label="Extraction quality">
+                <option value="hi"  ${s.quality==='hi' ?'selected':''}>high (slow)</option>
                 <option value="med" ${s.quality==='med'?'selected':''}>medium</option>
-                <option value="lo" ${s.quality==='lo'?'selected':''}>low (fast)</option>
+                <option value="lo"  ${s.quality==='lo' ?'selected':''}>low (fast)</option>
               </select>
             </div>
             <div class="setting-row">
-              <label>colour space</label>
-              <select id="sColorSpace">
+              <label for="sColorSpace">colour space</label>
+              <select id="sColorSpace" name="colorSpace" aria-label="Colour space for extraction">
                 <option value="oklch" ${s.colorSpace==='oklch'?'selected':''}>oklch (perceptual)</option>
-                <option value="rgb" ${s.colorSpace==='rgb'?'selected':''}>rgb</option>
+                <option value="rgb"   ${s.colorSpace==='rgb'  ?'selected':''}>rgb</option>
               </select>
             </div>
             <div class="setting-row">
-              <label>min saturation <span class="setting-val" id="minSatVal">${s.minSaturation.toFixed(2)}</span></label>
-              <input type="range" id="sMinSat" min="0" max="0.5" step="0.05" value="${s.minSaturation}">
+              <label for="sMinSat">
+                min saturation
+                <span class="setting-val" id="minSatVal" aria-live="polite">${s.minSaturation.toFixed(2)}</span>
+              </label>
+              <input type="range" id="sMinSat" name="minSaturation"
+                min="0" max="0.5" step="0.05" value="${s.minSaturation}"
+                aria-valuemin="0" aria-valuemax="0.5" aria-valuenow="${s.minSaturation}"
+                aria-label="Minimum saturation threshold">
             </div>
-            <div class="setting-row" style="grid-column:1/-1">
+            <div class="setting-row setting-row--full">
               <div class="setting-toggle-row">
-                <input type="checkbox" id="sIgnoreWhite" ${s.ignoreWhite?'checked':''}>
+                <input type="checkbox" id="sIgnoreWhite" name="ignoreWhite" ${s.ignoreWhite?'checked':''}>
                 <label for="sIgnoreWhite">ignore white / near-white pixels</label>
               </div>
             </div>
-            <div class="setting-row" style="grid-column:1/-1">
-              <label>colour name vocabulary</label>
-              <select id="sNameList">${nameListOptions}</select>
+            <div class="setting-row setting-row--full">
+              <label for="sNameList">colour name vocabulary</label>
+              <select id="sNameList" name="nameList" aria-label="Colour name vocabulary">
+                ${nameListOptions}
+              </select>
             </div>
           </div>
         </div>
 
         ${mainPropBar}
-        <div class="semantic-section" style="margin-top:0">
+        <div class="semantic-section semantic-section--flush">
           <div class="semantic-label">tints &amp; shades</div>
         </div>
-        <div class="colour-rows">${rows}</div>
+        <div class="colour-rows" role="list" aria-label="Extracted colours with tints and shades">${rows}</div>
         ${semanticBarHtml}
-        <div class="export-bar">
-          <button class="btn-export" id="expHex">export hex</button>
-          <button class="btn-export" id="expRgbHsl">export rgb + hsl</button>
-          <button class="btn-export" id="expCss">export css vars</button>
-          <button class="btn-export" id="expScp">export .color-palette</button>
-          <button class="btn-export" id="expPng">export png</button>
+
+        <div class="export-bar" role="toolbar" aria-label="Export palette">
+          <button class="btn-export" id="expHex"    aria-label="Export hex values as text file">export hex</button>
+          <button class="btn-export" id="expRgbHsl" aria-label="Export RGB and HSL values as text file">export rgb + hsl</button>
+          <button class="btn-export" id="expCss"    aria-label="Export CSS custom properties">export css vars</button>
+          <button class="btn-export" id="expScp"    aria-label="Export Simple Color Palette file">export .color-palette</button>
+          <button class="btn-export" id="expPng"    aria-label="Export palette as PNG image">export png</button>
         </div>
       </div>
     </div>
@@ -658,14 +706,21 @@ function renderAnalysis(imgEl, paletteData, swatchMap, nameMap) {
     sw.addEventListener('click', () => {
       navigator.clipboard.writeText(sw.dataset.hex).catch(() => {});
     });
+    sw.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        navigator.clipboard.writeText(sw.dataset.hex).catch(() => {});
+      }
+    });
   });
 
-  // Settings toggle
+  // Settings toggle — uses aria-expanded
   document.getElementById('settingsToggle').addEventListener('click', () => {
-    const body = document.getElementById('settingsBody');
-    const btn  = document.getElementById('settingsToggle');
+    const body    = document.getElementById('settingsBody');
+    const btn     = document.getElementById('settingsToggle');
+    const isOpen  = !body.classList.contains('hidden');
     body.classList.toggle('hidden');
-    btn.classList.toggle('open');
+    btn.setAttribute('aria-expanded', String(!isOpen));
   });
 
   // Settings controls
@@ -682,7 +737,9 @@ function renderAnalysis(imgEl, paletteData, swatchMap, nameMap) {
 
   document.getElementById('sColorCount').addEventListener('input', e => {
     extractionSettings.colorCount = parseInt(e.target.value);
-    document.getElementById('colorCountVal').textContent = extractionSettings.colorCount;
+    const val = document.getElementById('colorCountVal');
+    val.textContent = extractionSettings.colorCount;
+    e.target.setAttribute('aria-valuenow', extractionSettings.colorCount);
     reExtract(true);
   });
   document.getElementById('sQuality').addEventListener('change', e => {
@@ -695,45 +752,29 @@ function renderAnalysis(imgEl, paletteData, swatchMap, nameMap) {
   });
   document.getElementById('sMinSat').addEventListener('input', e => {
     extractionSettings.minSaturation = parseFloat(e.target.value);
-    document.getElementById('minSatVal').textContent = extractionSettings.minSaturation.toFixed(2);
+    const val = document.getElementById('minSatVal');
+    val.textContent = extractionSettings.minSaturation.toFixed(2);
+    e.target.setAttribute('aria-valuenow', extractionSettings.minSaturation);
     reExtract(true);
   });
   document.getElementById('sIgnoreWhite').addEventListener('change', e => {
     extractionSettings.ignoreWhite = e.target.checked;
     reExtract();
   });
-  // Name list change: force re-fetch by clearing the cached key
   document.getElementById('sNameList').addEventListener('change', e => {
     extractionSettings.nameList = e.target.value;
-    lastNamedHexKey = ''; // invalidate cache so names re-fetch on next runExtraction
+    lastNamedHexKey = '';
     reExtract();
   });
 
-  document.getElementById('expHex').addEventListener('click', () => exportHex(palette));
+  document.getElementById('expHex').addEventListener('click',    () => exportHex(palette));
   document.getElementById('expRgbHsl').addEventListener('click', () => exportRgbHsl(palette));
-  document.getElementById('expCss').addEventListener('click', () => exportCss(palette));
-  document.getElementById('expScp').addEventListener('click', () => exportScp(palette));
-  document.getElementById('expPng').addEventListener('click', () => exportPng(imgEl, palette));
+  document.getElementById('expCss').addEventListener('click',    () => exportCss(palette));
+  document.getElementById('expScp').addEventListener('click',    () => exportScp(palette));
+  document.getElementById('expPng').addEventListener('click',    () => exportPng(imgEl, palette));
 }
 
-// ── EXPORT HELPERS ────────────────────────────────────────────────────────────
-function getDataURL(imgEl) {
-  const c = document.createElement('canvas');
-  c.width = imgEl.naturalWidth || imgEl.width;
-  c.height = imgEl.naturalHeight || imgEl.height;
-  c.getContext('2d').drawImage(imgEl, 0, 0);
-  return c.toDataURL('image/png');
-}
-
-function dataURLtoBlob(dataURL) {
-  const parts = dataURL.split(',');
-  const mime = parts[0].match(/:(.*?);/)[1];
-  const binary = atob(parts[1]);
-  const arr = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
-  return new Blob([arr], { type: mime });
-}
-
+// ── EXPORTS ───────────────────────────────────────────────────────────────────
 function downloadText(content, filename) {
   const a = document.createElement('a');
   a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
@@ -745,7 +786,6 @@ function slugName() {
   return currentImageObj ? currentImageObj.channel : 'palette';
 }
 
-// Returns "Colour N — #hex — Name" or "Colour N — #hex" if name unavailable
 function colourTitle(index, hex) {
   const name = currentColorNames[hex.toLowerCase()];
   return name
@@ -753,7 +793,6 @@ function colourTitle(index, hex) {
     : `Colour ${index + 1} — ${hex}`;
 }
 
-// ── EXPORTS ───────────────────────────────────────────────────────────────────
 function exportHex(palette) {
   const lines = palette.map((rgb, i) => {
     const { tints, shades } = makeTintsShades(rgb);
@@ -780,33 +819,26 @@ function exportRgbHsl(palette) {
 function exportCss(palette) {
   const varLines = [];
   palette.forEach((rgb, i) => {
-    const hex = rgbToHex(rgb);
+    const hex  = rgbToHex(rgb);
     const name = currentColorNames[hex.toLowerCase()];
-    const comment = name ? ` /* ${name} */` : '';
     const { tints, shades } = makeTintsShades(rgb);
     const all = [...tints, rgb, ...shades];
     all.forEach((c, si) => {
       const label = si < TINT_STEPS ? `tint-${TINT_STEPS - si}` : si === TINT_STEPS ? 'base' : `shade-${si - TINT_STEPS}`;
       const [h,s,l] = rgbToHsl(c);
-      const baseComment = si === TINT_STEPS ? comment : '';
-      varLines.push(`  --color-${i+1}-${label}: hsl(${h}, ${s}%, ${l}%);${baseComment}`);
+      const comment = (si === TINT_STEPS && name) ? ` /* ${name} */` : '';
+      varLines.push(`  --color-${i+1}-${label}: hsl(${h}, ${s}%, ${l}%);${comment}`);
     });
   });
-  const css = `:root {\n${varLines.join('\n')}\n}`;
-  downloadText(css, `${slugName()}-vars.css`);
+  downloadText(`:root {\n${varLines.join('\n')}\n}`, `${slugName()}-vars.css`);
 }
 
 function exportScp(palette) {
-  // Simple Color Palette format (linear sRGB, float 0–1)
   const colors = palette.map((rgb, i) => {
     const [r,g,b] = rgb.map(v => parseFloat((v/255).toFixed(4)));
-    return {
-      name: colourTitle(i, rgbToHex(rgb)),
-      components: [r, g, b]
-    };
+    return { name: colourTitle(i, rgbToHex(rgb)), components: [r, g, b] };
   });
-  const obj = { name: slugName(), colors };
-  downloadText(JSON.stringify(obj, null, 2), `${slugName()}.color-palette`);
+  downloadText(JSON.stringify({ name: slugName(), colors }, null, 2), `${slugName()}.color-palette`);
 }
 
 function exportPng(imgEl, palette) {
@@ -818,11 +850,10 @@ function exportPng(imgEl, palette) {
 
   const COLS = TINT_STEPS + 1 + SHADE_STEPS;
   const swatchW = Math.floor((imgW - PAD * (COLS + 1)) / COLS);
-
   const totalH = imgH + PAD + palette.length * (SWATCH_H + PAD) + PAD;
 
   const c = document.createElement('canvas');
-  c.width = imgW + PAD * 2;
+  c.width  = imgW + PAD * 2;
   c.height = totalH;
   const cx = c.getContext('2d');
 
@@ -836,19 +867,18 @@ function exportPng(imgEl, palette) {
     const { tints, shades } = makeTintsShades(rgb);
     const all = [...tints, rgb, ...shades];
     all.forEach((c2, si) => {
-      const x = PAD + si * (swatchW + PAD);
-      cx.fillStyle = rgbToHex(c2);
-      const h = si === TINT_STEPS ? SWATCH_H : SWATCH_H - 8;
+      const x    = PAD + si * (swatchW + PAD);
+      const h    = si === TINT_STEPS ? SWATCH_H : SWATCH_H - 8;
       const yOff = si === TINT_STEPS ? 0 : 4;
+      cx.fillStyle = rgbToHex(c2);
       roundRect(cx, x, y + yOff, swatchW, h, 4);
       cx.fill();
 
-      cx.font = '10px monospace';
+      const isBase = si === TINT_STEPS;
+      const name   = isBase ? currentColorNames[rgbToHex(c2).toLowerCase()] : null;
+      cx.font      = '10px monospace';
       cx.fillStyle = textColour(c2);
       cx.textAlign = 'center';
-      // Base swatch: show name if available, otherwise hex; non-base: hex only
-      const isBase = si === TINT_STEPS;
-      const name = isBase ? currentColorNames[rgbToHex(c2).toLowerCase()] : null;
       cx.fillText(name || rgbToHex(c2), x + swatchW/2, y + yOff + h - 8);
     });
     y += SWATCH_H + PAD;

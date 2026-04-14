@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Are.na Palette</title>
 <!--
-  arena-palette v1.20
+  arena-palette v1.22
   ──────────────────────────────────────────────────────────────────
   Are.na colour palette extractor tool
   Fetches images from up to 4 Are.na channels, extracts a 7-colour
@@ -14,95 +14,42 @@
 
   Changelog:
 
-    v1.20 (2026-04-13) — Colour naming via api.color.pizza (meodai/color-name-api).
-                         Main palette colours named automatically after extraction
-                         in a single batch API call. Names shown in colour row labels
-                         as "01 · #3a2f1e · Walnut Brown · 12%". Loading state shows
-                         "…" while API call is in flight; no layout shift. Name
-                         vocabulary selectable in extraction settings: bestOf (default),
-                         japaneseTraditional, sanzoWadaI, wikipedia, werner, ridgway,
-                         nbsIscc, thesaurus. Changing vocabulary clears cache and
-                         refetches. Names included in all exports: hex, rgb+hsl, css
-                         vars (as comment on base var), .color-palette JSON, and png
-                         (name shown on base swatch where it fits).
-    v1.19 (2026-04-13) — Clean layout rewrite. Flexbox page structure (sidebar fixed
-                         width, main flex:1 min-width:0). Removed aspect-ratio from
-                         image container — scales naturally (width:100%, height:auto,
-                         max-height:70vh). overflow-x:hidden on body. min-width:0 on
-                         all flex/grid children.
-    v1.18 (2026-04-13) — Fixed palette panel overflow at mid widths: raised desktop
-                         breakpoint to 1200px, added min-width:0 to image-figure and
-                         palette-panel so grid children cannot overflow their cells.
-    v1.17 (2026-04-13) — Three-breakpoint responsive system. Desktop (>1100px):
-                         sidebar | image | palettes side by side. Tablet (600–1100px):
-                         sidebar + single-column main (image above palette). Mobile
-                         (<600px): full stack, thumbs in 3-column grid, channel tags
-                         hidden on thumbs.
-    v1.16 (2026-04-13) — Fixed responsive layout: analysis-layout now uses
-                         auto-fit minmax(28rem, 1fr) so columns scale smoothly and
-                         wrap naturally without a hard media query snap. Thumbnail
-                         grid restored at all widths.
-    v1.15 (2026-04-13) — Fixed responsive stacking: removed duplicate .analysis-layout
-                         definition that was overriding the media query. Added page-level
-                         breakpoint at 900px: sidebar goes full-width, thumbnail grid
-                         hidden, sidebar border flips to bottom.
+    v1.22 (2026-04-14) — Remove all inline styles and spacer divs from template.
+                         Spacing now handled in CSS: gap on .channels-section,
+                         margin-top on .status-msg, #tokenHint rule in stylesheet.
+                         In main.js: proportion bar wrapper gets .prop-bar class,
+                         full-span setting rows get .setting-row--full class,
+                         tints & shades heading gets .section-heading--flush class.
+    v1.21a (2026-04-13) — Colour token correction. --bg #8e8e8e, --surface #686868,
+                         --surface2 #5a5a5a. --surface-text #e8e8e8 / --surface-muted
+                         #b0b0b0 for text on dark surfaces. .visually-hidden class.
+    v1.21 (2026-04-13) — Accessibility and contrast pass. Dark text on mid-grey.
+                         Light input field backgrounds. Min 14px font size.
+                         Button hierarchy. Proper labels and aria throughout.
+    v1.20 (2026-04-13) — Colour naming via api.color.pizza.
+    v1.19 (2026-04-13) — Clean layout rewrite.
+    v1.18 (2026-04-13) — Fixed palette panel overflow at mid widths.
+    v1.17 (2026-04-13) — Three-breakpoint responsive system.
+    v1.16 (2026-04-13) — Fixed responsive layout.
+    v1.15 (2026-04-13) — Fixed responsive stacking.
     v1.14 (2026-04-13) — Layout restructure: thumbnails moved to sidebar.
-                         grid. Main area is image + palette side by side, stacking to
-                         single column below 900px. Caption moved outside aspect-ratio
-                         container using image-figure wrapper. Page scrolls as whole.
-    v1.13 (2026-04-13) — Image caption below selected image: block title (if set)
-                         and "view on are.na ↗" link to the block page. blockUrl
-                         added to image data object using are.na/block/{id} pattern.
-    v1.12 (2026-04-13) — Replaced swatch tooltip with inline hex reveal. Hex text
-                         hidden at rest (colour matches swatch bg), revealed on
-                         hover/focus. Click still copies to clipboard.
-    v1.11 (2026-04-13) — Added "tints & shades" section heading with rule above
-                         colour rows, matching semantic palette heading style.
-                         Fixed swatch tooltip centering: fixed width + translateX(-50%).
-    v1.10 (2026-04-13) — Mid-grey colour scheme (#808080 base) for neutral colour
-                         judgement. Remapped all surfaces to subtle grey tones.
-                         Font pass: Karla for all UI text; Courier Prime kept only
-                         for hex/code output (tooltips, legend values).
-    v1.9 (2026-04-12) — Full CSS unit pass: 62.5% root font-size trick, all font
-                         sizes and spacing converted to rem throughout.
-    v1.8 (2026-04-12) — Typography: Karla (sans) + Courier Prime (mono). Increased
-                         base font size to 16px. Darkened --text and --muted for legibility.
-    v1.7 (2026-04-07) - Add full-width proportion bar, 1% floor to show colours. Share
-                         applyFloor helper
-    v1.6 (2026-04-07) — Added semantic palette section below tint/shade rows.
-                         getSwatchesSync extracts Vibrant, DarkVibrant, LightVibrant,
-                         Muted, DarkMuted, LightMuted. Displayed as a proportional
-                         colour bar (widths from nearest palette colour proportion)
-                         with a hex legend below. Click any legend item to copy hex.
-    v1.5 (2026-04-07) — Fixed Color object access to use c.array() (public API).
-                         Added extraction settings panel: colorCount, quality,
-                         colorSpace, ignoreWhite, minSaturation. All persisted to
-                         localStorage. Cached loaded HTMLImageElement so settings
-                         changes re-run extraction locally with no Are.na API hit.
-    v1.4 (2026-04-07) — Upgraded to Color Thief v3 (unpkg). v3 Color objects expose
-                         .population directly, removing the manual pixel-count loop.
-    v1.3 (2026-04-07) — Replaced k-means with Color Thief v2 (MMCQ). Added
-                         manual pixel-count second pass for proportions. Proportion
-                         bar displayed above each swatch row.
-    v1.2 (2026-04-07) — Fixed v3 image URL fields (image.src / image.small.src).
-                         Single channel now fills all 9 grid slots; multiple channels
-                         distribute slots evenly (e.g. 2 channels = 5+4, 3 = 3+3+3).
-                         Two-step random-page fetch: channel meta for total count,
-                         then per=1 at random page offsets with retry loop.
-    v1.1 (2026-04-07) — Migrated to Are.na v3 API.
-    v1.0 (2026-04-07) — Initial release. Are.na v2 API, fixed pool of
-                         40 images per channel. Hand-rolled k-means extraction.
-
+    v1.13 (2026-04-13) — Image caption below selected image.
+    v1.12 (2026-04-13) — Replaced swatch tooltip with inline hex reveal.
+    v1.11 (2026-04-13) — Added "tints & shades" section heading.
+    v1.10 (2026-04-13) — Mid-grey colour scheme (#808080 base).
+    v1.9  (2026-04-12) — Full CSS unit pass.
+    v1.8  (2026-04-12) — Typography: Karla + Courier Prime.
+    v1.7  (2026-04-07) — Full-width proportion bar.
+    v1.6  (2026-04-07) — Semantic palette section.
+    v1.5  (2026-04-07) — Extraction settings panel. localStorage persistence.
+    v1.4  (2026-04-07) — Color Thief v3.
+    v1.3  (2026-04-07) — Color Thief v2 (MMCQ).
+    v1.2  (2026-04-07) — Fixed v3 image URL fields. Two-step random-page fetch.
+    v1.1  (2026-04-07) — Migrated to Are.na v3 API.
+    v1.0  (2026-04-07) — Initial release.
 
   API: Are.na REST API v3 — https://www.are.na/developers/explore
-  Base URL: https://api.are.na
-  Endpoints used:
-    GET /v3/channels/{slug}           — channel metadata (total count)
-    GET /v3/channels/{slug}/contents  — paginated blocks (per=1 for random page)
-
   Colour naming: api.color.pizza v1 — https://github.com/meodai/color-name-api
-  Endpoint used:
-    GET /v1/?values={hex,...}&list={listKey}
 
   Dependencies:
     Color Thief 3.x (unpkg) — MMCQ palette extraction, v3 API
@@ -118,58 +65,74 @@
 
 <header>
   <h1>are.na palette</h1>
-  <span>v1.20</span>
+  <span aria-label="Version 1.22">v1.22</span>
 </header>
 
 <div class="layout">
   <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div>
-      <h2>Channels</h2>
-      <div style="height:10px"></div>
-      <div class="channel-list" id="channelList"></div>
-      <div style="height:8px"></div>
-      <button class="btn-add" id="btnAddChannel">+ add channel</button>
-    </div>
+  <aside class="sidebar" aria-label="Channels and images">
+
+    <section class="channels-section" aria-labelledby="channels-heading">
+      <h2 id="channels-heading">Channels</h2>
+      <div class="channel-list" id="channelList" role="list"></div>
+      <button class="btn-add" id="btnAddChannel" aria-label="Add another channel">
+        + add channel
+      </button>
+    </section>
 
     <div class="token-row">
-      <label>Access token (optional)</label>
-      <input type="password" id="tokenInput" placeholder="leave blank for public channels" />
+      <label for="tokenInput">Access token (optional)</label>
+      <input
+        type="password"
+        id="tokenInput"
+        name="arena-token"
+        placeholder="leave blank for public channels"
+        autocomplete="off"
+        aria-describedby="tokenHint"
+      />
+      <span id="tokenHint">Only needed for private channels</span>
     </div>
 
-    <div>
+    <div class="fetch-row">
       <button class="btn-fetch" id="btnFetch">fetch images</button>
-      <div style="height:8px"></div>
-      <div class="status-msg" id="statusMsg"></div>
+      <div class="status-msg" id="statusMsg" role="status" aria-live="polite"></div>
     </div>
 
-    <div class="sidebar-images">
-      <h2>Images</h2>
-      <div class="placeholder-grid" id="imageGrid">
-        <div class="placeholder-cell"></div>
-        <div class="placeholder-cell"></div>
-        <div class="placeholder-cell"></div>
-        <div class="placeholder-cell"></div>
-        <div class="placeholder-cell"></div>
-        <div class="placeholder-cell"></div>
-        <div class="placeholder-cell"></div>
-        <div class="placeholder-cell"></div>
-        <div class="placeholder-cell"></div>
+    <section class="sidebar-images" aria-labelledby="images-heading">
+      <h2 id="images-heading">Images</h2>
+      <div
+        class="placeholder-grid"
+        id="imageGrid"
+        role="list"
+        aria-label="Fetched images — click to extract palette"
+      >
+        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
+        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
+        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
+        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
+        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
+        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
+        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
+        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
+        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
       </div>
-    </div>
+    </section>
+
   </aside>
 
   <!-- MAIN -->
-  <main class="main">
+  <main class="main" aria-label="Palette analysis">
     <h2>Palette analysis</h2>
     <div id="analysisArea">
-      <div class="empty-analysis">← select an image to extract its palette</div>
+      <div class="empty-analysis" role="status">
+        ← select an image to extract its palette
+      </div>
     </div>
   </main>
 </div>
 
-<!-- Hidden canvas for colour extraction -->
-<canvas id="scratchCanvas" style="display:none"></canvas>
+<!-- Hidden canvas for colour extraction — display:none is functional, not presentational -->
+<canvas id="scratchCanvas" style="display:none" aria-hidden="true"></canvas>
 
 <!-- INJECT:JS -->
 </body>
