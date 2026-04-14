@@ -2,86 +2,26 @@ arena-palette todos:
 
     Immediate - do first:
         ✔ Set up git repository for arena-palette @priority(1) @done (26-04-13 10:16)
-        - Write concat build script (Python or shell, no npm) to assemble HTML from separate CSS/JS/HTML source files @priority(1)
-        - Decide on source file structure (e.g. src/style.css, src/main.js, src/index.html) @priority(1)
+        ✔ Write concat build script (Python or shell, no npm) to assemble HTML from separate CSS/JS/HTML source files @priority(1) @done (26-04-13 20:53)
+        ✔ Decide on source file structure (e.g. src/style.css, src/main.js, src/index.html) @priority(1) @done (26-04-13 20:53)
 
     Layout and design:
         ✔ Review overall layout — Kim to share screenshots with annotations @priority(2) @done (26-04-13 10:16)
-        - Design tweaks to palette panel (spacing, typography, swatch sizing) @priority(2)
-        - Consider whether settings panel should be collapsed by default permanently or remember open/closed state @priority(3)
+        ✔ Design tweaks to palette panel (spacing, typography, swatch sizing) @priority(2) @done (26-04-13 20:53)
+        ✔ Consider whether settings panel should be collapsed by default permanently or remember open/closed state @priority(3) @done (26-04-14 20:55)
         ✔ overlay hex on to swatches @done (26-04-13 10:16)
+        - move extract settings below image?
         - make swatches square
-        - tweak size of text and make it darker
+        ✔ tweak size of text and make it darker @done (26-04-14 20:55)
         ✔ mid grey for background, like a palette? @done (26-04-13 10:17)
         - general - CSS kit for standard styling of my stuff
-        - sort out the form field backgrounds
-        - sort out typography - it's still illegible
+        ✔ sort out the form field backgrounds @done (26-04-14 20:55)
+        ✔ sort out typography - it's still illegible @done (26-04-14 20:55)
         ✔ three column? or move image thumbs to under the fetch thingy? @done (26-04-13 10:17)
         - move to claude code
-        - Naming - fetch colour names from API, and allow choices https://api.color.pizza/v1/docs/
-        - add colour libraries to knowledge
-            - [adobe/leonardo: Generate colors based on a desired contrast ratio](https://github.com/adobe/leonardo)
-            - [ase-util - npm](https://www.npmjs.com/package/ase-util)
-            - [Ashung/import-colors-sketch: Import colors from macOS CLR, Photoshop ACO/ACT, Illustrator ASE, GIMP GPL, Sketch, Text file to Sketch color variables.](https://github.com/Ashung/import-colors-sketch)
-            - [bgrins/TinyColor: Fast, small color manipulation and conversion for JavaScript](https://github.com/bgrins/TinyColor)
-            - [bjango/Color-Creator: Photoshop, Sketch and Affinity Designer documents that use base colors to generate larger palettes.](https://github.com/bjango/Color-Creator)
-            - [bruce/tinge: Extract color information from CSS/SCSS files (for various formats)](https://github.com/bruce/tinge)
-            - [chroma.js api docs!](https://gka.github.io/chroma.js/)
-            - [Color Name API Playground](https://meodai.github.io/color-name-api/)
-            - [Color Name API](https://api.color.pizza/v1/docs/)
-            - [color-js/color.js: Color conversion & manipulation library by the editors of the CSS Color specifications](https://github.com/color-js/color.js)
-            - [color.adobe.com/create/image-gradient](https://color.adobe.com/create/image-gradient)
-            - [Color.js: Let’s get serious about color • Color.js](https://colorjs.io/)
-            - [corpora/data/colors at master · dariusk/corpora](https://github.com/dariusk/corpora/tree/master/data/colors)
-            - [darosh/colorgram-js: Color extraction library](https://github.com/darosh/colorgram-js)
-            - [darosh/colorsort-js: Various color sorting method in TypeScript](https://github.com/darosh/colorsort-js)
-            - [dfernandez79/ase-util: Utility library to handle Adobe Swatch Exchange (ASE) files](https://github.com/dfernandez79/ase-util)
-            - [dtao/nearest-color: Find the nearest color](https://github.com/dtao/nearest-color)
-            - [dtao/nearest-color: Find the nearest color](https://github.com/dtao/nearest-color)
-            - [Evercoder/culori: A comprehensive color library for JavaScript.](https://github.com/Evercoder/culori)
-            - [griffin-stewie/clg: Supports generate clr file or code from ASE file a.k.a. "Adobe Swatch Exchange" etc.](https://github.com/griffin-stewie/clg)
-            - [GrumpyCockatiel/ColorSwatchUtility: Swift 4 classes to convert a collection of colors to/from an Adobe ASE Swatch file, Procreate file or plain CSV file.](https://github.com/GrumpyCockatiel/ColorSwatchUtility)
-            - [GrumpyCockatiel/ColorSwatchUtility: Swift 4 classes to convert a collection of colors to/from an Adobe ASE Swatch file, Procreate file or plain CSV file.](https://github.com/GrumpyCockatiel/ColorSwatchUtility)
-            - [hughsk/adobe-swatch-exchange: Encode/decode color palettes in Adobe's .ase format](https://github.com/hughsk/adobe-swatch-exchange)
-            - [IanManske/Okolors: Generate a color palette from an image using k-means clustering in the Oklab color space.](https://github.com/IanManske/Okolors)
-            - [joshbeckman/thecolorapi: Your fast, modern, swiss army knife for color. Color conversion, naming, schemeing, and placeholders.](https://github.com/joshbeckman/thecolorapi)
-            - [k-vyn/coloralgorithm: JavaScript function to produce color sets](https://github.com/k-vyn/coloralgorithm)
-            - [k-vyn/coloralgorithm: JavaScript function to produce color sets](https://github.com/k-vyn/coloralgorithm?tab=readme-ov-file)
-            - [lizadaly/vanderbot: Python code to generate color study graphs](https://github.com/lizadaly/vanderbot)
-            - [lizadaly/vanderbot: Python code to generate color study graphs](https://github.com/lizadaly/vanderbot)
-            - [lorossi/image-palette: Extract the dominant colors from any image](https://github.com/lorossi/image-palette)
-            - [lter/lterpalettefinder: Extract Color Palettes from Photos and Pick Official LTER Palettes](https://github.com/lter/lterpalettefinder)
-            - [mattdesl/dictionary-of-colour-combinations: palettes from A Dictionary of Colour Combinations](https://github.com/mattdesl/dictionary-of-colour-combinations)
-            - [mattdesl/dictionary-of-colour-combinations: palettes from A Dictionary of Colour Combinations](https://github.com/mattdesl/dictionary-of-colour-combinations)
-            - [meodai/color-name-api: Rest API that returns a bunch of color names for a given color-value](https://github.com/meodai/color-name-api)
-            - [meodai/color-name-lists: A collection of color name lists](https://github.com/meodai/color-name-lists)
-            - [meodai/farbvelo: "Random" color palette generator, cycles](https://github.com/meodai/farbvelo)
-            - [meodai/fettepalette: Color ramp generator using curves within the HSV color model](https://github.com/meodai/fettepalette)
-            - [meodai/palette-aldente: Color palette curation and sharing tool](https://github.com/meodai/palette-aldente)
-            - [meodai/poline: Esoteric Palette Generator Mico-Lib Interpolating HSL Color in cartesian space](https://github.com/meodai/poline)
-            - [meodai/pro-color-harmonies: color generation lib inspired by colorpalette.pro](https://github.com/meodai/pro-color-harmonies)
-            - [meodai/rampensau: Color palette generation function using hue cycling and simple easing functions.](https://github.com/meodai/rampensau)
-            - [meodai/RYBitten: Implementation of pseudo RYB color conversions derived from Johannes Itten's color wheel.](https://github.com/meodai/RYBitten)
-            - [meodai/skill.color-expert: Agent skill for color science expertise. Many references covering color spaces, accessibility (APCA, WCAG), palette generation, pigment mixing, and historical color theory. Works with Claude Code, Codex, Cursor, Copilot & others.](https://github.com/meodai/skill.color-expert)
-            - [meodai/spectral.js: Spectral.js is a paint like color mixing library utilizing the Kubelka-Munk theory.](https://github.com/meodai/spectral.js)
-            - [MichailSemoglou/color-palette-extractor: This script extracts a color palette from an image and generates various color harmonies. It creates a PDF report and a text file with the color information.](https://github.com/MichailSemoglou/color-palette-extractor)
-            - [neilbartlett/color-temperature](https://github.com/neilbartlett/color-temperature)
-            - [ovdixon/are.na-tools: Browser tools for Are.na](https://github.com/ovdixon/are.na-tools)
-            - [pomeranian99/weirdoldbookfinder](https://github.com/pomeranian99/weirdoldbookfinder)
-            - [Qix-/color: :rainbow: Javascript color conversion and manipulation library](https://github.com/Qix-/color)
-            - [ramonpoca/ColorTools: Tools for color management in Mac OS X and iOS, supporting Adobe Swatch Exchange and NSColorList formats](https://github.com/ramonpoca/ColorTools)
-            - [robertcoopercode/color-namer: Web app that generates color names for hex and rgb colors 🎨](https://github.com/robertcoopercode/color-namer)
-            - [scrtwpns/mixbox: Mixbox is a library for natural color mixing based on real pigments.](https://github.com/scrtwpns/mixbox)
-            - [simonwep/pickr: 🎨 Pickr - A simple, multi-themed, responsive and hackable Color-Picker library. No dependencies, no jQuery. Compatible with all CSS Frameworks e.g. Bootstrap, Materialize. Supports alpha channel, rgba, hsla, hsva and more!](https://github.com/simonwep/pickr)
-            - [simple-color-palette/simple-color-palette: A minimal JSON-based file format for defining color palettes](https://github.com/simple-color-palette/simple-color-palette)
-            - [simple-color-palette/spec: Specification for the Simple Color Palette format](https://github.com/simple-color-palette/spec)
-            - [sukitsubaki/image-color-scheme: Extract dominant colors from images and create beautiful color palettes with minimal dependencies. Supports various palette types: monochromatic, analogous, complementary, triadic, and tetradic.](https://github.com/sukitsubaki/image-color-scheme)
-            - [Vibrant-Colors/node-vibrant: 🎨 Extract prominent colors from an image](https://github.com/Vibrant-Colors/node-vibrant)
-            - [Vibrant-Colors/node-vibrant: 🎨 Extract prominent colors from an image](https://github.com/Vibrant-Colors/node-vibrant)
-            - [words/color-description: Color-Description turns a technical color representation into a human readable description.](https://github.com/words/color-description)
-            - https://github.com/Evercoder/culori
-
+        ✔ Naming - fetch colour names from API, and allow choices https://api.color.pizza/v1/docs/ @done (26-04-13 22:33)
         ✔ pull down titles and details of image from arena @done (26-04-13 10:17)
+        - dark / mid / light mode
         - redo output stuff - all colours, make it square
         - work out what would need to change to publish this online
             - auth?
@@ -94,12 +34,21 @@ arena-palette todos:
         - Integrate RampenSau hue-shifted tints/shades as an alternative to plain HSL scaling — new chat @priority(2)
             - Prototype exists — needs real image testing before committing
             - Key parameter: hCycles controls hue drift across the ramp
-
+Rework credit block:
+        - reorder the credit block
+            Vanitas by Louise Giovanelli | White Cube
+            view on are.na ↗
+            via
+            kim-plowright
+            source
+            Vanitas by Louise Giovanelli | White Cube
+            accessed 2 September 2025
 
     Grid and image handling:
         - Add per-slot refresh button (re-fetch a single grid image without clearing all 9) @priority(2)
         - Add per-slot lock (preserve an image across re-fetches, like arena-picks) @priority(2)
         - Auto-strip full Are.na URLs pasted as channel slugs (e.g. are.na/kim/my-channel → my-channel) @priority(2)
+        - add a 'block' section that just takes the URL of an image block
         - Cache fetched images by URL to avoid re-fetching on repeated thumbnail clicks @priority(3)
 
     Export:

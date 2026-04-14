@@ -58,6 +58,11 @@
         <span class="caret" aria-hidden="true">&#x25BE;</span>
       </button>
       <div class="section-body" id="channelsBody">
+        
+        <div class="channel-list" id="channelList" role="list"></div>
+        <button class="btn-add" id="btnAddChannel" aria-label="Add another channel">
+          + add channel
+        </button>
         <div class="token-row">
           <label for="tokenInput">Access token</label>
           <input
@@ -70,12 +75,8 @@
           />
           <span id="tokenHint">Only needed for private channels</span>
         </div>
-        <div class="channel-list" id="channelList" role="list"></div>
-        <button class="btn-add" id="btnAddChannel" aria-label="Add another channel">
-          + add channel
-        </button>
         <div class="fetch-row">
-          <button class="btn-fetch" id="btnFetch">fetch images</button>
+          <button class="btn-fetch" id="btnFetch">Fetch images</button>
           <div class="status-msg" id="statusMsg" role="status" aria-live="polite"></div>
         </div>
       </div>
@@ -109,9 +110,9 @@
 
   <!-- COLUMN 2: IMAGE -->
   <section class="image-col" aria-labelledby="image-col-heading">
-    <h2 class="col-heading" id="image-col-heading">Select an image</h2>
+    <h2 class="col-heading" id="image-col-heading">Image</h2>
     <div id="imageArea">
-      <div class="empty-image" role="status">← select a thumbnail to view</div>
+      <div class="empty-image" role="status">← add channels to get random images</div>
     </div>
   </section>
 
