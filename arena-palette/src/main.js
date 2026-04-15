@@ -893,6 +893,16 @@ function slugName() {
   return currentImageObj ? currentImageObj.channel : 'palette';
 }
 
+// Export filename base: strip the Are.na hash suffix from the channel slug
+// and append the block id. e.g. "chromatic-vwdupl8d0lk" + id 44858120
+// => "chromatic-block-44858120"
+function exportSlug() {
+  if (!currentImageObj) return 'palette';
+  const channel = currentImageObj.channel.replace(/-(?=[a-z0-9]{7,}$)[a-z0-9]*[0-9][a-z0-9]*$/i, '');
+  const id = currentImageObj.id || '';
+  return id ? `${channel}-block-${id}` : channel;
+}
+
 function colourTitle(index, hex) {
   const name = currentColorNames[hex.toLowerCase()];
   return name
@@ -925,7 +935,7 @@ function exportHex(palette) {
     exportHeader()
     + lines.join('\n\n')
     + (semLines.length ? '\n\n/* Semantic palette */\n' + semLines.join('\n\n') : ''),
-    `${slugName()}-hex.txt`
+    `${exportSlug()}-hex.txt`
   );
 }
 
@@ -951,7 +961,7 @@ function exportRgbHsl(palette) {
     exportHeader()
     + lines.join('\n\n')
     + (semLines.length ? '\n\nSemantic palette\n' + semLines.join('\n\n') : ''),
-    `${slugName()}-rgb-hsl.txt`
+    `${exportSlug()}-rgb-hsl.txt`
   );
 }
 
@@ -984,7 +994,7 @@ function exportCss(palette) {
 
   downloadText(
     header + `:root {\n${varLines.join('\n')}${semBlock}\n}`,
-    `${slugName()}-vars.css`
+    `${exportSlug()}-vars.css`
   );
 }
 
@@ -1006,7 +1016,7 @@ function exportScp(palette) {
     colors,
     semanticColors,
   };
-  downloadText(JSON.stringify(payload, null, 2), `${slugName()}.color-palette`);
+  downloadText(JSON.stringify(payload, null, 2), `${exportSlug()}.color-palette`);
 }
 
 
@@ -1242,7 +1252,7 @@ async function exportPngBars() {
   c.width = 1200; c.height = 1200;
   await document.fonts.ready;
   await renderBars(c, data);
-  triggerCanvasDownload(c, `${slugName()}-bars.png`);
+  triggerCanvasDownload(c, `${exportSlug()}-bars.png`);
 }
 
 async function exportPngDots(withBackground) {
@@ -1253,7 +1263,7 @@ async function exportPngDots(withBackground) {
   await document.fonts.ready;
   await renderDots(c, data, withBackground);
   const suffix = withBackground ? 'dots-bg' : 'dots';
-  triggerCanvasDownload(c, `${slugName()}-${suffix}.png`);
+  triggerCanvasDownload(c, `${exportSlug()}-${suffix}.png`);
 }
 
 
