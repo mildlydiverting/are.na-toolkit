@@ -16,8 +16,6 @@ Source files are split into:
 
 Built via `arena-palette/build.py` (Python concat script, no npm).
 
-Companion project: `are.na-picks` (separate public repo, already on GitHub), which shares the same two-step API fetch pattern.
-
 ---
 
 ## Current file state (v1.23)
@@ -35,115 +33,135 @@ Companion project: `are.na-picks` (separate public repo, already on GitHub), whi
 - Color Thief v3: use `c.array()` for `[r,g,b]`, not `.rgb` or `._r._g._b`
 - `applyFloor(items, minProp)` shared helper normalises proportions (1% floor for main bar, 5% for semantic bar)
 - `currentSwatchData` global caches the semantic palette (array of `{role, hex, tc, proportion}`) — populated in `runExtraction()` via `swatchProportions()`, used by exports
+- `currentBlock` global caches the current Are.na block object (has `.id`, `.title`, `.source.url`, `.user.username`, etc.)
+- `currentImageEl` caches the loaded HTMLImageElement — also used by PNG export to draw the image onto canvas
 
 **Colour name API:**
 - `https://api.color.pizza/v1/` — fetched on every extraction, batched as comma-separated hex values
-- Multiple name vocabularies selectable in settings (bestOf, japaneseTraditional, sanzoWadaI, wikipedia, werner, ridgway, nbsIscc, thesaurus)
+- Multiple name vocabularies selectable in settings
 - Names cached in `currentColorNames` map (`hex.toLowerCase() → name`)
 - `requestedHex` field used for lookup (not `hex`) — important gotcha
-- Names appear in swatch labels and in all exports
-
-**Layout (v1.23 — three-column grid):**
-- `grid-template-columns: 24rem 1fr 1fr` — sidebar | image col | palette col
-- Responsive: ≤1100px sidebar + stacked cols; ≤600px full stack
-- Image: `width:100%; height:auto; max-height:60vh; object-fit:contain`
-- `overflow-x:hidden` on body; `min-width:0` on all flex/grid children that need to shrink
 
 **CSS system (style.css v1.23):**
-- `font-size: 62.5%` on `:root` so `1rem = 10px`. All sizing in rem. Minimum font size `1.4rem` everywhere.
+- `font-size: 62.5%` on `:root` so `1rem = 10px`
 - Colour tokens: `--bg: #8e8e8e`, `--surface: #686868`, `--surface2: #5a5a5a`, `--border: #4a4a4a`, `--text: #000000`, `--muted: #1a1a1a`, `--surface-text: #e8e8e8`, `--input-bg: #e8e8e8`, `--accent: #000000`, `--accent-text: #f0f0f0`
-- Fonts: Karla (`--font`, `--font-sans`) for all UI; Courier Prime (`--font-mono`) for hex/code output only
-- No inline styles except dynamic computed values (flex, background, color from palette data)
-
-**Swatch hex reveal:**
-- Hex text inside each swatch, colour matches background at rest (invisible)
-- On hover/focus, `color` switches to light/dark contrast colour via JS event listeners
-- Click copies hex to clipboard
-
-**Image metadata panel:**
-- Block title, "view on are.na ↗" link, username link, source URL, date accessed
-- Description with show more/less toggle (clamped to 3 lines at rest)
+- Fonts: Karla (`--font`, `--font-sans`) for UI; Courier Prime (`--font-mono`) for hex/code output only
 
 ---
 
-## What was done this session (2026-04-14/15)
+## What was done in the previous session (2026-04-15)
 
-### Colour naming API integration
-- `fetchColorNames()` batches all palette hex values in one API call
-- Colour names appear in swatch labels (`01 · #hex · Name · 48%`) and in all exports
-- `patchColorLabels()` updates labels in place after async fetch, without re-rendering
-- Name vocabulary choosable in extraction settings panel
+### PNG export — two new canvas renderers built and signed off
 
-### Export updates (patch file: `export-functions-patch-v2.js`)
-All four text/structured exports updated:
+Two standalone HTML test harnesses were built and are working. They need to be integrated into `main.js` as an `exportPng()` replacement. The two files are attached to this chat for reference.
 
-**Shared header block (hex + rgb+hsl):**
+**Bars 2 renderer** (`bars2-renderer.html`) — reference card layout:
+- 1200×1200px canvas, transparent background
+- Left column: tint/shade grid + bottom palette section
+- Right column: image thumbnail (520×950, centre-crop, origin 580,100)
+- Export: single PNG (no background toggle needed for bars)
+
+**Dots 1 renderer** (`dots1-renderer.html`) — dot grid layout:
+- 1200×1200px canvas, transparent background
+- Dots fill l→r, t→b, 10 cols × 9 rows max (90 dots)
+- Export: TWO buttons — "transparent" and "with background" (blurred image, 40px blur, 0.6 opacity over white)
+
+Both renderers share:
+- Are.na logo SVG (inline Path2D, 65×40px)
+- Karla 400 28px for URL text, baseline mid-aligned to logo, nudged -2px
+- Logo position: x=100, y=1110 (dots) / x=85, y=1070 (bars)
+- URL text: `blockUrl` field (e.g. `are.na/block/15064199`, no https://www.)
+
+### Grid spec — Bars 2
+
 ```
-arena-palette export
-Image:  [block title]
-Source: https://www.are.na/block/[id]
----
+Canvas: 1200×1200px
+Cell: 50px, gutter: 10px, step: 60px
+Double-width cell: 110px, step: 120px
+Tint/shade grid origin: (100, 100), 8 cols, max 12 rows
+
+Row layout (each palette colour = one row):
+| s3 | s2 | s1 | base·base | t1 | t2 | t3 |
+x: 100, 160, 220, 280(double), 400, 460, 520
+
+Bottom section — always at fixed y positions:
+Row 1: y=880, Row 2: y=940, Row 3: y=1000
+
+Bottom row layout:
+| c01 | c02 | c03 | c04 | smd·smd | svd·svd |
+x: 100, 160, 220, 280, 340(double), 460(double)
+
+smd = semantic muted dark, svd = semantic vibrant dark
+(rows: dark / mid / light)
+
+Image: 520×950px, origin (580, 100), centre-crop
+Logo: 65×40px at (85, 1070)
 ```
 
-**CSS export** — header as comment block at top of file; semantic colours added as a separate `/* semantic palette */` block in `:root` using `--semantic-[role]` custom properties.
+### Grid spec — Dots 1
 
-**SCP/JSON export** — `sourceUrl` field added; `semanticColors` array added alongside `colors`.
+```
+Canvas: 1200×1200px
+Grid: 100px cells
+Active cols: 1–10 (cols 0 and 11 are empty margins)
+Active rows: 1+ (row 0 is empty top margin)
+Dot: 60px diameter, centred in cell (20px offset from cell origin)
 
-**All exports now include semantic palette colours.** Requires:
-1. `let currentSwatchData = [];` global in main.js
-2. `currentSwatchData = swatchProportions(swatches, paletteData);` in `runExtraction()`
-3. `hexToRgb()` helper (add if not already present)
+Dot sequence: for each palette colour → s3, s2, s1, base, t1, t2, t3
+Then semantic dots: darkVibrant, vibrant, lightVibrant, darkMuted, muted, lightMuted
+Fills l→r, t→b. Max 90 dots (10×9).
 
-### PNG export — design exploration (not yet implemented in code)
-Two layout directions agreed, to be implemented as `exportPng()` replacement:
+Logo: 65×40px at (100, 1110)
+```
 
-**Layout E — image + tint/shade bars:**
-- Square canvas, transparent background
-- Image fills top ~58%, cropped to width
-- Thin semantic colour strip immediately below image
-- 7 tint/shade bars below that, one per palette colour, full light→dark ramp, base step 1.6× wider
-- No text overlay
+### Data shape expected by both renderers
 
-**Layout F — image + dot grid:**
-- Square canvas, transparent background
-- Image full bleed
-- 7×N grid of dots overlaid, equally spaced — showing full tint/base/shade ramp per colour (7 cols × rows)
-- Semantic colours as a separate final row, visually separated by a faint dashed rule
-- No text overlay, no image darkening
+```js
+{
+  blockUrl: 'are.na/block/12345678',   // no protocol, no www
+  imageUrl: '...',                      // original image URL for canvas draw
 
-Both layouts prototyped as Pillow (Python) scripts for design exploration; final implementation will use HTML Canvas in-browser. Design to be finalised after Photoshop exploration.
+  palette: [                            // up to 12 entries
+    {
+      base: '#rrggbb',
+      shades: ['#dark3', '#dark2', '#dark1'],   // s3→s1, darkest first
+      tints:  ['#light1', '#light2', '#light3'] // t1→t3, lightest last
+    },
+    // ...
+  ],
 
-**PNG metadata:** PNG tEXt/iTXt chunks to embed Title, Source URL, channel, extraction date — to be added when canvas export is implemented.
+  semantic: {
+    darkVibrant:  '#rrggbb',  // may be null
+    vibrant:      '#rrggbb',
+    lightVibrant: '#rrggbb',
+    darkMuted:    '#rrggbb',
+    muted:        '#rrggbb',
+    lightMuted:   '#rrggbb',
+  }
+}
+```
 
-**Filename:** `{channel-slug}-{block-id}.png` preferred over sanitised URL slug.
+### What needs doing in this session
 
-**Colour sorting:** Simple HSL hue sort (no external dependency) to be added before rendering. `colorsort-js` reviewed but not suitable (TypeScript/pnpm, not CDN-friendly).
+1. **Map `currentSwatchData` and friends to the renderer data shape** — the renderers expect `palette[].shades/tints` arrays; need to confirm how tints/shades are currently stored in `main.js` and write the mapping function
+2. **Add export UI** to the main tool — a format toggle (dots / bars) and export buttons. Dots gets two buttons (transparent / with background); bars gets one.
+3. **Wire `currentBlock`** to `blockUrl` and `imageUrl` fields
+4. **Test with real images** — especially blurred background on dots, and centre-crop with portrait/landscape images in bars
 
----
-
-## Known issues / next steps
-
-- PNG export: implement E and F layouts in canvas, replacing current basic export
-- PNG export: add colour sort (hue order, light→dark) before rendering
-- PNG export: embed PNG metadata (title, source URL)
-- Cache-bust fix: repeated thumbnail clicks re-fetch from API (known, not yet fixed)
-- Spacing "funkiness" at certain breakpoints — not yet investigated
-- RampenSau tints/shades: prototyped, set aside — results unsatisfactory (hue-cycling generator, not exact-colour tint/shade tool)
-- `shared/arena-api.js` not yet extracted
+### Deferred (not this session)
+- Colour sort (hue order) before rendering
+- PNG metadata embedding (tEXt/iTXt chunks)
+- Cache-bust fix for repeated thumbnail clicks
+- `shared/arena-api.js` extraction
+- RampenSau tints/shades (set aside — unsatisfactory results)
 
 ---
 
 ## Working approach
 
-Kim prefers:
 - Iterative, targeted changes — not large rewrites unless necessary
-- Version note in file header; changelog as a separate `changelog.md` file
-- Screenshots to communicate layout issues
-- Understanding the root cause alongside any fix
-- Learning as she goes along
-- Clean, modular, semantic code; accessible with progressive enhancement
+- Version note in file header; changelog as `changelog.md`
 - CSS CUBE methodology: https://cube.fyi
-- Atomic design: https://atomicdesign.bradfrost.com/table-of-contents/
-- Eleventy / Hugo as SSGs if needed
-- GitHub raw URL fetch to share files (repo is public)
 - British English
+- Karla + Courier Prime (Google Fonts) — already loaded in the tool
+- No build step dependencies; Python concat build only

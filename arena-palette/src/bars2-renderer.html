@@ -10,7 +10,7 @@
 </style>
 <!-- Google Fonts: Karla -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Karla:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
 <canvas id="c" width="1200" height="1200"></canvas>
@@ -80,7 +80,7 @@ const C = {
   LOGO_H: 40,
 
   // Text
-  URL_FONT: '500 40px Karla, sans-serif',
+  URL_FONT: '400 28px Karla, sans-serif',
   URL_BASELINE_OFFSET: 30, // visual tweak: text baseline from logo top
 };
 
@@ -211,7 +211,7 @@ async function render(canvas, data) {
   ctx.fillStyle = '#000000';
   ctx.textBaseline = 'middle';
   const textX = LOGO_X + LOGO_W + 16;
-  const textY = LOGO_Y + LOGO_H / 2 + 2; // +2 visual tweak
+  const textY = LOGO_Y + LOGO_H / 2 - 2; // -2px = 4px up from previous position
   ctx.fillText(data.blockUrl, textX, textY);
 }
 

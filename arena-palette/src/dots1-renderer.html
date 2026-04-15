@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dots 1 — arena-palette export renderer</title>
+<style>
+  body { background: #444; display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 40px; font-family: sans-serif; }
+  canvas { box-shadow: 0 4px 24px rgba(0,0,0,0.5); }
+  .buttons { display: flex; gap: 12px; }
+  button { padding: 10px 24px; font-size: 14px; cursor: pointer; }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+<canvas id="c" width="1200" height="1200"></canvas>
+<div class="buttons">
+  <button id="export-transparent">Export PNG — transparent</button>
+  <button id="export-background">Export PNG — with background</button>
+</div>
+
+<script>
+// ─── Sample data ──────────────────────────────────────────────────────────────
+
+const SAMPLE = {
+  blockUrl: 'are.na/block/15064199',
+  imageUrl: 'https://d2w9rnfcy7mm78.cloudfront.net/15064199/original_3e3e3e3e.jpg',
+
+  palette: [
+    { base: '#c17a6f', shades: ['#1a0b0a', '#4a2420', '#7d3d38'], tints: ['#d9a9a4', '#ecd4d1', '#f8efee'] },
+    { base: '#8b6e8f', shades: ['#130f14', '#3d2d41', '#62496a'], tints: ['#b39ab7', '#d4c5d6', '#f0eaf1'] },
+    { base: '#5c4a3a', shades: ['#0d0b08', '#2a2019', '#432f25'], tints: ['#8c7a6a', '#bdb0a5', '#e8e3df'] },
+    { base: '#d4a843', shades: ['#1e1608', '#5e3f10', '#9e6c1e'], tints: ['#e3c47a', '#f0daa9', '#faf2de'] },
+    { base: '#7fb8a4', shades: ['#0f1b17', '#334d43', '#538070'], tints: ['#a8d1c5', '#cce4dd', '#edf6f3'] },
+    { base: '#c45c6a', shades: ['#1c0b0d', '#5a2028', '#924046'], tints: ['#d98991', '#ecb9bd', '#f8e7e8'] },
+    { base: '#9b8cb0', shades: ['#161320', '#3d3554', '#655987'], tints: ['#bcb2ca', '#d8d3e2', '#f2f0f6'] },
+    { base: '#4e7a5e', shades: ['#0b1210', '#1f3426', '#34583e'], tints: ['#7da98e', '#aacab4', '#d8e9de'] },
+    { base: '#d4837a', shades: ['#1e0c0b', '#5c2f2b', '#944e49'], tints: ['#e3ada8', '#f0ceca', '#faeae9'] },
+    { base: '#a87b3a', shades: ['#160f07', '#43300f', '#75511e'], tints: ['#c4a06e', '#dcc4a3', '#f3ead8'] },
+    { base: '#6b5d8a', shades: ['#0f0d14', '#2c2638', '#49405f'], tints: ['#978db0', '#bfb9cf', '#e8e6f0'] },
+    { base: '#c9b89a', shades: ['#1c1610', '#564431', '#8c7154'], tints: ['#dacebc', '#ece5d9', '#f9f7f3'] },
+  ],
+
+  semantic: {
+    darkVibrant:  '#8b1a4a',
+    vibrant:      '#c94b8b',
+    lightVibrant: '#e891bc',
+    darkMuted:    '#5c3d52',
+    muted:        '#a87898',
+    lightMuted:   '#d4b4c4',
+  }
+};
+
+// ─── Layout constants ─────────────────────────────────────────────────────────
+
+const C = {
+  GRID:       100,   // cell size
+  DOT_D:       60,   // dot diameter
+  DOT_R:       30,   // dot radius
+  DOT_OFFSET:  20,   // (100 - 60) / 2 — from cell origin to dot edge
+
+  // Active grid: cols 1–10, rows 1+
+  COL_START:    1,
+  COL_END:     10,   // inclusive
+  COLS:        10,   // active columns
+
+  // Logo
+  LOGO_X:     100,
+  LOGO_Y:    1110,
+  LOGO_W:      65,
+  LOGO_H:      40,
+
+  // Text
+  URL_FONT: '400 28px Karla, sans-serif',
+
+  // Blurred background
+  BLUR_AMOUNT: 40,   // px
+  BLUR_OPACITY: 0.6, // over white
+};
+
+// ─── Logo path ────────────────────────────────────────────────────────────────
+
+const LOGO_PATH = 'M12.8745 5.60598L11.0723 4.13301C10.962 4.04311 10.962 3.89549 11.0723 3.80532L12.8745 2.33271C12.9852 2.24262 13.0314 2.09042 12.9774 1.99467C12.9233 1.8992 12.7722 1.86521 12.642 1.91915L10.499 2.80685C10.3687 2.86134 10.246 2.78708 10.2265 2.64233L9.90419 0.263056C9.88431 0.118402 9.77971 0 9.67139 0C9.56359 0 9.45908 0.118402 9.43972 0.262966L9.11728 2.64242C9.09757 2.78717 8.97499 2.86125 8.84454 2.80694L6.737 1.93399C6.6063 1.87987 6.39338 1.87987 6.26302 1.93399L4.15514 2.80694C4.02478 2.86125 3.90203 2.78717 3.88249 2.64242L3.56048 0.262966C3.5406 0.118402 3.43617 0 3.32829 0C3.22006 0 3.11538 0.118402 3.09593 0.262966L2.77348 2.64242C2.75395 2.78717 2.63128 2.86125 2.50092 2.80694L0.358028 1.91942C0.227755 1.86521 0.076908 1.89938 0.0227932 1.99476C-0.0312351 2.0906 0.0148402 2.24289 0.125145 2.3328L1.92753 3.80541C2.03792 3.89558 2.03792 4.0432 1.92753 4.13319L0.125145 5.60598C0.0144945 5.69606 -0.0313216 5.85735 0.0226203 5.96415C0.0768216 6.07114 0.227669 6.11411 0.357769 6.05981L2.48147 5.17283C2.612 5.11862 2.73337 5.19243 2.75161 5.33717L3.05798 7.73721C3.07648 7.88169 3.19784 8 3.32769 8C3.45735 8 3.57881 7.88178 3.5974 7.73721L3.90428 5.33717C3.92243 5.19243 4.04432 5.1187 4.17416 5.17283L6.26302 6.0447C6.39321 6.09918 6.60621 6.09918 6.73649 6.0447L8.82501 5.17283C8.95502 5.11862 9.07656 5.19243 9.09515 5.33717L9.40203 7.73721C9.42035 7.88169 9.54181 8 9.67131 8C9.80115 8 9.9226 7.88178 9.94102 7.73721L10.2479 5.33717C10.2666 5.19243 10.3879 5.1187 10.518 5.17283L12.6419 6.05981C12.7716 6.11411 12.9229 6.07105 12.977 5.96424C13.0312 5.85762 12.9851 5.69633 12.8745 5.60625L12.8745 5.60598ZM8.28939 4.15171L6.70225 5.42249C6.59117 5.51149 6.40894 5.51149 6.29821 5.42249L4.71055 4.15171C4.59956 4.06271 4.59869 3.91617 4.70882 3.82581L6.29942 2.52285C6.40955 2.4325 6.59013 2.4325 6.70035 2.52285L8.29095 3.82581C8.40134 3.91608 8.40047 4.06262 8.28922 4.1518L8.28939 4.15171Z';
+
+function drawLogo(ctx, x, y, w, h, colour = '#000000') {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(w / 13, h / 8);
+  ctx.fillStyle = colour;
+  ctx.fill(new Path2D(LOGO_PATH));
+  ctx.restore();
+}
+
+// ─── Build flat dot sequence ──────────────────────────────────────────────────
+
+function buildDotSequence(palette, semantic) {
+  const dots = [];
+
+  // Tint/shade ramp: for each colour, s3→s2→s1→base→t1→t2→t3
+  palette.slice(0, 12).forEach(col => {
+    dots.push(col.shades[0]); // s3 — darkest
+    dots.push(col.shades[1]); // s2
+    dots.push(col.shades[2]); // s1
+    dots.push(col.base);
+    dots.push(col.tints[0]);  // t1
+    dots.push(col.tints[1]);  // t2
+    dots.push(col.tints[2]);  // t3 — lightest
+  });
+
+  // Semantic: dark vibrant, vibrant, light vibrant, dark muted, muted, light muted
+  const semSlots = [
+    semantic.darkVibrant,
+    semantic.vibrant,
+    semantic.lightVibrant,
+    semantic.darkMuted,
+    semantic.muted,
+    semantic.lightMuted,
+  ];
+  semSlots.forEach(c => { if (c) dots.push(c); });
+
+  return dots; // max 84 + 6 = 90
+}
+
+// ─── Draw dots ────────────────────────────────────────────────────────────────
+
+function drawDots(ctx, dots) {
+  const { GRID, DOT_R, DOT_OFFSET, COLS } = C;
+
+  dots.forEach((colour, i) => {
+    if (!colour) return;
+
+    // Position in active grid (cols 1–10, rows 1+)
+    const col = (i % COLS) + 1;  // 1–10
+    const row = Math.floor(i / COLS) + 1; // 1+
+
+    // Pixel centre of dot
+    const cx = col * GRID + DOT_OFFSET + DOT_R;
+    const cy = row * GRID + DOT_OFFSET + DOT_R;
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, DOT_R, 0, Math.PI * 2);
+    ctx.fillStyle = colour;
+    ctx.fill();
+  });
+}
+
+// ─── Draw logo + URL ──────────────────────────────────────────────────────────
+
+function drawChrome(ctx, blockUrl, logoColour = '#000000', textColour = '#000000') {
+  const { LOGO_X, LOGO_Y, LOGO_W, LOGO_H, URL_FONT } = C;
+
+  drawLogo(ctx, LOGO_X, LOGO_Y, LOGO_W, LOGO_H, logoColour);
+
+  ctx.font = URL_FONT;
+  ctx.fillStyle = textColour;
+  ctx.textBaseline = 'middle';
+  const textX = LOGO_X + LOGO_W + 16;
+  const textY = LOGO_Y + LOGO_H / 2 - 2;
+  ctx.fillText(blockUrl, textX, textY);
+}
+
+// ─── Blurred background ───────────────────────────────────────────────────────
+
+function drawBlurredBackground(ctx, img) {
+  const { BLUR_AMOUNT, BLUR_OPACITY } = C;
+
+  // White base
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, 1200, 1200);
+
+  // Draw image blurred and at reduced opacity, scaled to fill canvas
+  ctx.save();
+  ctx.globalAlpha = BLUR_OPACITY;
+  ctx.filter = `blur(${BLUR_AMOUNT}px)`;
+
+  // Scale to fill — centre crop
+  const srcAspect = img.width / img.height;
+  // Canvas is square so dstAspect = 1
+  // Add extra pixels to avoid blur edge fade-out at canvas bounds
+  const BLEED = BLUR_AMOUNT * 2;
+  let sx, sy, sw, sh;
+  if (srcAspect > 1) {
+    sh = img.height;
+    sw = sh;
+    sx = (img.width - sw) / 2;
+    sy = 0;
+  } else {
+    sw = img.width;
+    sh = sw;
+    sx = 0;
+    sy = (img.height - sh) / 2;
+  }
+  ctx.drawImage(img, sx, sy, sw, sh, -BLEED, -BLEED, 1200 + BLEED * 2, 1200 + BLEED * 2);
+
+  ctx.restore();
+}
+
+// ─── Load image ───────────────────────────────────────────────────────────────
+
+function loadImage(url) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
+// ─── Main render ─────────────────────────────────────────────────────────────
+
+async function render(canvas, data, withBackground = false) {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, 1200, 1200);
+
+  const dots = buildDotSequence(data.palette, data.semantic);
+
+  // Load image (needed for background variant, or just in case)
+  const img = await loadImage(data.imageUrl);
+
+  if (withBackground && img) {
+    drawBlurredBackground(ctx, img);
+    drawDots(ctx, dots);
+    // On dark/mid background, logo and URL in white looks better — 
+    // but the spec image shows black; keeping black, can tweak later
+    drawChrome(ctx, data.blockUrl);
+  } else {
+    // Transparent — just dots and chrome
+    drawDots(ctx, dots);
+    drawChrome(ctx, data.blockUrl);
+  }
+}
+
+// ─── Export ───────────────────────────────────────────────────────────────────
+
+function exportPng(canvas, filename) {
+  const a = document.createElement('a');
+  a.download = filename;
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+}
+
+// ─── Boot ─────────────────────────────────────────────────────────────────────
+
+const canvas = document.getElementById('c');
+
+// Default preview: transparent
+document.fonts.ready.then(() => {
+  render(canvas, SAMPLE, false);
+});
+
+document.getElementById('export-transparent').addEventListener('click', async () => {
+  await render(canvas, SAMPLE, false);
+  exportPng(canvas, `dots1-${SAMPLE.blockUrl.split('/').pop()}-transparent.png`);
+});
+
+document.getElementById('export-background').addEventListener('click', async () => {
+  await render(canvas, SAMPLE, true);
+  exportPng(canvas, `dots1-${SAMPLE.blockUrl.split('/').pop()}-background.png`);
+  // Re-render transparent for screen preview after export
+  await render(canvas, SAMPLE, false);
+});
+</script>
+</body>
+</html>
