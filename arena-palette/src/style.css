@@ -643,6 +643,29 @@
     gap: 0.6rem;
     padding-top: 0.75rem;
     margin-top: 0.5rem;
+    align-items: center;
+  }
+
+  .export-png-group {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.2rem 0.6rem 0.2rem 0.4rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  .export-png-label {
+    font-size: 1.2rem;
+    color: var(--muted);
+    font-family: var(--font);
+    letter-spacing: 0.04em;
+    padding-right: 0.2rem;
+  }
+
+  .export-png-group .btn-export {
+    border: none;
+    padding: 0.4rem 0.8rem;
   }
 
 /* ── SPINNER ── */
