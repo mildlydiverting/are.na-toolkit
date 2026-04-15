@@ -158,6 +158,7 @@ tokenInput.addEventListener('input', persistState);
 // ── INIT ──────────────────────────────────────────────────────────────────────
 (function init() {
   loadSettings();
+  let currentSwatchData = [];
   const saved = loadState();
   channels = saved?.channels?.length ? saved.channels : [...DEFAULT_CHANNELS];
   if (saved?.token) tokenInput.value = saved.token;
@@ -377,7 +378,7 @@ function renderImagePanel(imgObj) {
 
   const sourceHtml = hasSource ? `
     <div class="image-meta-row">
-      <span class="image-meta-label">via</span>
+      <span class="image-meta-label">source</span>
       <a href="${imgObj.sourceUrl}" target="_blank" rel="noopener">${escapeHtml(imgObj.sourceTitle)}</a>
       ${createdDate ? `<span class="image-meta-label">accessed ${createdDate}</span>` : ''}
     </div>
@@ -442,6 +443,7 @@ async function runExtraction() {
   if (!currentImageEl) return;
   const paletteData = extractPalette(currentImageEl);
   const swatches    = extractSwatches(currentImageEl);
+  currentSwatchData = swatchProportions(swatches, paletteData);
   currentPalette = paletteData;
 
   renderAnalysis(paletteData, swatches, currentColorNames);
@@ -568,6 +570,17 @@ function applyFloor(items, minProp) {
 // ── COLOUR UTILITIES ──────────────────────────────────────────────────────────
 function rgbToHex([r,g,b]) {
   return '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
+}
+
+// ── HELPER — needed for rgb+hsl and css exports ───────────────────────────────
+// (only add this if hexToRgb doesn't already exist in main.js)
+function hexToRgb(hex) {
+  const h = hex.replace('#','');
+  return [
+    parseInt(h.slice(0,2),16),
+    parseInt(h.slice(2,4),16),
+    parseInt(h.slice(4,6),16),
+  ];
 }
 
 function rgbToHsl([r,g,b]) {
@@ -879,13 +892,33 @@ function colourTitle(index, hex) {
     : `Colour ${index + 1} — ${hex}`;
 }
 
+function exportHeader() {
+  const title = currentImageObj?.title || '';
+  const url   = currentImageObj?.blockUrl || '';
+  const lines = ['arena-palette export'];
+  if (title) lines.push(`Image:  ${title}`);
+  if (url)   lines.push(`Source: ${url}`);
+  lines.push('---');
+  return lines.join('\n') + '\n\n';
+}
+
 function exportHex(palette) {
   const lines = palette.map((rgb, i) => {
     const { tints, shades } = makeTintsShades(rgb);
     const all = [...tints, rgb, ...shades];
     return `/* ${colourTitle(i, rgbToHex(rgb))} */\n` + all.map(c => rgbToHex(c)).join('\n');
   });
-  downloadText(lines.join('\n\n'), `${slugName()}-hex.txt`);
+
+  const semLines = currentSwatchData.map(({ role, hex }) =>
+    `/* ${role} */\n${hex}`
+  );
+
+  downloadText(
+    exportHeader()
+    + lines.join('\n\n')
+    + (semLines.length ? '\n\n/* Semantic palette */\n' + semLines.join('\n\n') : ''),
+    `${slugName()}-hex.txt`
+  );
 }
 
 function exportRgbHsl(palette) {
@@ -899,7 +932,19 @@ function exportRgbHsl(palette) {
     });
     return `${colourTitle(i, rgbToHex(rgb))}\n${all.join('\n')}`;
   });
-  downloadText(lines.join('\n\n'), `${slugName()}-rgb-hsl.txt`);
+
+  const semLines = currentSwatchData.map(({ role, hex }) => {
+    const rgb = hexToRgb(hex);
+    const [h,s,l] = rgbToHsl(rgb);
+    return `${role}\n  base     ${hex}  rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})  hsl(${h}, ${s}%, ${l}%)`;
+  });
+
+  downloadText(
+    exportHeader()
+    + lines.join('\n\n')
+    + (semLines.length ? '\n\nSemantic palette\n' + semLines.join('\n\n') : ''),
+    `${slugName()}-rgb-hsl.txt`
+  );
 }
 
 function exportCss(palette) {
@@ -916,7 +961,23 @@ function exportCss(palette) {
       varLines.push(`  --color-${i+1}-${label}: hsl(${h}, ${s}%, ${l}%);${comment}`);
     });
   });
-  downloadText(`:root {\n${varLines.join('\n')}\n}`, `${slugName()}-vars.css`);
+
+  const semVarLines = currentSwatchData.map(({ role, hex }) => {
+    const rgb = hexToRgb(hex);
+    const [h,s,l] = rgbToHsl(rgb);
+    const key = role.replace(/([A-Z])/g, '-$1').toLowerCase().replace(/^-/, '');
+    return `  --semantic-${key}: hsl(${h}, ${s}%, ${l}%);`;
+  });
+
+  const header = `/*\n * ${currentImageObj?.title || 'arena-palette'}\n * Source: ${currentImageObj?.blockUrl || ''}\n */\n\n`;
+  const semBlock = semVarLines.length
+    ? `\n\n  /* semantic palette */\n${semVarLines.join('\n')}`
+    : '';
+
+  downloadText(
+    header + `:root {\n${varLines.join('\n')}${semBlock}\n}`,
+    `${slugName()}-vars.css`
+  );
 }
 
 function exportScp(palette) {
@@ -924,8 +985,22 @@ function exportScp(palette) {
     const [r,g,b] = rgb.map(v => parseFloat((v/255).toFixed(4)));
     return { name: colourTitle(i, rgbToHex(rgb)), components: [r, g, b] };
   });
-  downloadText(JSON.stringify({ name: slugName(), colors }, null, 2), `${slugName()}.color-palette`);
+
+  const semanticColors = currentSwatchData.map(({ role, hex }) => {
+    const rgb = hexToRgb(hex);
+    const [r,g,b] = rgb.map(v => parseFloat((v/255).toFixed(4)));
+    return { name: role, hex, components: [r, g, b] };
+  });
+
+  const payload = {
+    name:           currentImageObj?.title || slugName(),
+    sourceUrl:      currentImageObj?.blockUrl || '',
+    colors,
+    semanticColors,
+  };
+  downloadText(JSON.stringify(payload, null, 2), `${slugName()}.color-palette`);
 }
+
 
 function exportPng(imgEl, palette) {
   const SWATCH_H = 60;
