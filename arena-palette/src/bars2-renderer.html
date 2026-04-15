@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bars 2 — arena-palette export renderer</title>
+<style>
+  body { background: #444; display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 40px; font-family: sans-serif; }
+  canvas { box-shadow: 0 4px 24px rgba(0,0,0,0.5); }
+  button { padding: 10px 24px; font-size: 14px; cursor: pointer; }
+</style>
+<!-- Google Fonts: Karla -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Karla:wght@500&display=swap" rel="stylesheet">
+</head>
+<body>
+<canvas id="c" width="1200" height="1200"></canvas>
+<button id="export">Export PNG</button>
+
+<script>
+// ─── Sample data (replace with real extraction output) ────────────────────────
+
+const SAMPLE = {
+  blockUrl: 'are.na/block/15064199',
+  imageUrl: 'https://d2w9rnfcy7mm78.cloudfront.net/15064199/original_3e3e3e3e.jpg',
+
+  // Up to 12 palette colours. Each has shade steps s3→s1, base, tint steps t1→t3
+  palette: [
+    { base: '#c17a6f', shades: ['#1a0b0a', '#4a2420', '#7d3d38'], tints: ['#d9a9a4', '#ecd4d1', '#f8efee'] },
+    { base: '#8b6e8f', shades: ['#130f14', '#3d2d41', '#62496a'], tints: ['#b39ab7', '#d4c5d6', '#f0eaf1'] },
+    { base: '#5c4a3a', shades: ['#0d0b08', '#2a2019', '#432f25'], tints: ['#8c7a6a', '#bdb0a5', '#e8e3df'] },
+    { base: '#d4a843', shades: ['#1e1608', '#5e3f10', '#9e6c1e'], tints: ['#e3c47a', '#f0daa9', '#faf2de'] },
+    { base: '#7fb8a4', shades: ['#0f1b17', '#334d43', '#538070'], tints: ['#a8d1c5', '#cce4dd', '#edf6f3'] },
+    { base: '#c45c6a', shades: ['#1c0b0d', '#5a2028', '#924046'], tints: ['#d98991', '#ecb9bd', '#f8e7e8'] },
+    { base: '#9b8cb0', shades: ['#161320', '#3d3554', '#655987'], tints: ['#bcb2ca', '#d8d3e2', '#f2f0f6'] },
+    { base: '#4e7a5e', shades: ['#0b1210', '#1f3426', '#34583e'], tints: ['#7da98e', '#aacab4', '#d8e9de'] },
+    { base: '#d4837a', shades: ['#1e0c0b', '#5c2f2b', '#944e49'], tints: ['#e3ada8', '#f0ceca', '#faeae9'] },
+    { base: '#a87b3a', shades: ['#160f07', '#43300f', '#75511e'], tints: ['#c4a06e', '#dcc4a3', '#f3ead8'] },
+    { base: '#6b5d8a', shades: ['#0f0d14', '#2c2638', '#49405f'], tints: ['#978db0', '#bfb9cf', '#e8e6f0'] },
+    { base: '#c9b89a', shades: ['#1c1610', '#564431', '#8c7154'], tints: ['#dacebc', '#ece5d9', '#f9f7f3'] },
+  ],
+
+  // Semantic palette — always in this fixed order (may have nulls if fewer extracted)
+  semantic: {
+    darkVibrant:  '#8b1a4a',
+    vibrant:      '#c94b8b',
+    lightVibrant: '#e891bc',
+    darkMuted:    '#5c3d52',
+    muted:        '#a87898',
+    lightMuted:   '#d4b4c4',
+  }
+};
+
+// ─── Layout constants ─────────────────────────────────────────────────────────
+
+const C = {
+  // Grid
+  CELL: 50,
+  GUTTER: 10,
+  STEP: 60,        // CELL + GUTTER
+  DOUBLE: 110,     // double-width cell
+  DSTEP: 120,      // double-width step
+
+  // Tint/shade grid origin
+  GRID_X: 100,
+  GRID_Y: 100,
+
+  // Bottom section
+  BOT_Y: 880,      // y of first bottom row
+
+  // Image
+  IMG_X: 580,
+  IMG_Y: 100,
+  IMG_W: 520,
+  IMG_H: 950,      // 580+520=1100; 100+950=1050 — but canvas is 1200, leaves 150 bottom
+
+  // Logo
+  LOGO_X: 85,
+  LOGO_Y: 1070,
+  LOGO_W: 65,
+  LOGO_H: 40,
+
+  // Text
+  URL_FONT: '500 40px Karla, sans-serif',
+  URL_BASELINE_OFFSET: 30, // visual tweak: text baseline from logo top
+};
+
+// ─── Colour helpers ───────────────────────────────────────────────────────────
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return [r,g,b];
+}
+
+// ─── Logo ─────────────────────────────────────────────────────────────────────
+
+// Inline the SVG path so we don't need fetch()
+const LOGO_PATH = 'M12.8745 5.60598L11.0723 4.13301C10.962 4.04311 10.962 3.89549 11.0723 3.80532L12.8745 2.33271C12.9852 2.24262 13.0314 2.09042 12.9774 1.99467C12.9233 1.8992 12.7722 1.86521 12.642 1.91915L10.499 2.80685C10.3687 2.86134 10.246 2.78708 10.2265 2.64233L9.90419 0.263056C9.88431 0.118402 9.77971 0 9.67139 0C9.56359 0 9.45908 0.118402 9.43972 0.262966L9.11728 2.64242C9.09757 2.78717 8.97499 2.86125 8.84454 2.80694L6.737 1.93399C6.6063 1.87987 6.39338 1.87987 6.26302 1.93399L4.15514 2.80694C4.02478 2.86125 3.90203 2.78717 3.88249 2.64242L3.56048 0.262966C3.5406 0.118402 3.43617 0 3.32829 0C3.22006 0 3.11538 0.118402 3.09593 0.262966L2.77348 2.64242C2.75395 2.78717 2.63128 2.86125 2.50092 2.80694L0.358028 1.91942C0.227755 1.86521 0.076908 1.89938 0.0227932 1.99476C-0.0312351 2.0906 0.0148402 2.24289 0.125145 2.3328L1.92753 3.80541C2.03792 3.89558 2.03792 4.0432 1.92753 4.13319L0.125145 5.60598C0.0144945 5.69606 -0.0313216 5.85735 0.0226203 5.96415C0.0768216 6.07114 0.227669 6.11411 0.357769 6.05981L2.48147 5.17283C2.612 5.11862 2.73337 5.19243 2.75161 5.33717L3.05798 7.73721C3.07648 7.88169 3.19784 8 3.32769 8C3.45735 8 3.57881 7.88178 3.5974 7.73721L3.90428 5.33717C3.92243 5.19243 4.04432 5.1187 4.17416 5.17283L6.26302 6.0447C6.39321 6.09918 6.60621 6.09918 6.73649 6.0447L8.82501 5.17283C8.95502 5.11862 9.07656 5.19243 9.09515 5.33717L9.40203 7.73721C9.42035 7.88169 9.54181 8 9.67131 8C9.80115 8 9.9226 7.88178 9.94102 7.73721L10.2479 5.33717C10.2666 5.19243 10.3879 5.1187 10.518 5.17283L12.6419 6.05981C12.7716 6.11411 12.9229 6.07105 12.977 5.96424C13.0312 5.85762 12.9851 5.69633 12.8745 5.60625L12.8745 5.60598ZM8.28939 4.15171L6.70225 5.42249C6.59117 5.51149 6.40894 5.51149 6.29821 5.42249L4.71055 4.15171C4.59956 4.06271 4.59869 3.91617 4.70882 3.82581L6.29942 2.52285C6.40955 2.4325 6.59013 2.4325 6.70035 2.52285L8.29095 3.82581C8.40134 3.91608 8.40047 4.06262 8.28922 4.1518L8.28939 4.15171Z';
+
+function drawLogo(ctx, x, y, w, h) {
+  ctx.save();
+  // SVG viewBox is 0 0 13 8 → scale to w×h
+  const sx = w / 13;
+  const sy = h / 8;
+  ctx.translate(x, y);
+  ctx.scale(sx, sy);
+  ctx.fillStyle = '#000000';
+  const p = new Path2D(LOGO_PATH);
+  ctx.fill(p);
+  ctx.restore();
+}
+
+// ─── Draw a single cell ───────────────────────────────────────────────────────
+
+function drawCell(ctx, x, y, w, h, colour) {
+  if (!colour) return;
+  ctx.fillStyle = colour;
+  ctx.fillRect(x, y, w, h);
+}
+
+// ─── Main render ─────────────────────────────────────────────────────────────
+
+async function render(canvas, data) {
+  const ctx = canvas.getContext('2d');
+  const { CELL, GUTTER, STEP, DOUBLE, DSTEP, GRID_X, GRID_Y, BOT_Y,
+          IMG_X, IMG_Y, IMG_W, IMG_H, LOGO_X, LOGO_Y, LOGO_W, LOGO_H,
+          URL_FONT, URL_BASELINE_OFFSET } = C;
+
+  // Clear (transparent)
+  ctx.clearRect(0, 0, 1200, 1200);
+
+  const palette = data.palette.slice(0, 12);
+  const sem = data.semantic;
+
+  // ── Tint/shade grid ────────────────────────────────────────────────────────
+  // Row layout x positions:
+  // s3: GRID_X
+  // s2: GRID_X + STEP
+  // s1: GRID_X + STEP*2
+  // base (double): GRID_X + STEP*3
+  // t1: GRID_X + STEP*3 + DSTEP
+  // t2: GRID_X + STEP*3 + DSTEP + STEP
+  // t3: GRID_X + STEP*3 + DSTEP + STEP*2
+
+  const XS3   = GRID_X;
+  const XS2   = GRID_X + STEP;
+  const XS1   = GRID_X + STEP * 2;
+  const XBASE = GRID_X + STEP * 3;
+  const XT1   = XBASE + DSTEP;
+  const XT2   = XBASE + DSTEP + STEP;
+  const XT3   = XBASE + DSTEP + STEP * 2;
+
+  palette.forEach((col, i) => {
+    const y = GRID_Y + i * STEP;
+    drawCell(ctx, XS3,   y, CELL,   CELL, col.shades[0]);
+    drawCell(ctx, XS2,   y, CELL,   CELL, col.shades[1]);
+    drawCell(ctx, XS1,   y, CELL,   CELL, col.shades[2]);
+    drawCell(ctx, XBASE, y, DOUBLE, CELL, col.base);
+    drawCell(ctx, XT1,   y, CELL,   CELL, col.tints[0]);
+    drawCell(ctx, XT2,   y, CELL,   CELL, col.tints[1]);
+    drawCell(ctx, XT3,   y, CELL,   CELL, col.tints[2]);
+  });
+
+  // ── Bottom section ─────────────────────────────────────────────────────────
+  // c01–c04: x = 100, 160, 220, 280  (single CELL, STEP apart)
+  // smd/svd double: x = 340, 460
+  // 3 rows at BOT_Y, BOT_Y+STEP, BOT_Y+STEP*2
+
+  const palCols = [0,1,2,3].map(i => i * STEP + GRID_X); // 100,160,220,280
+  const XSEM1 = GRID_X + STEP * 4; // 340 — dark/vibrant
+  const XSEM2 = XSEM1 + DSTEP;     // 460 — light/muted
+
+  const botRows = [BOT_Y, BOT_Y + STEP, BOT_Y + STEP * 2];
+
+  // Main palette colours c01–c12 in groups of 4
+  const groups = [[0,1,2,3],[4,5,6,7],[8,9,10,11]];
+  groups.forEach((idxs, rowI) => {
+    const y = botRows[rowI];
+    idxs.forEach((pi, ci) => {
+      if (pi < palette.length) {
+        drawCell(ctx, palCols[ci], y, CELL, CELL, palette[pi].base);
+      }
+    });
+  });
+
+  // Semantic colours
+  // Row 0: darkVibrant (double), darkMuted (double) — wait, check order:
+  // spec: | smd smd | svd svd | → dark muted, dark vibrant
+  // grouped as: row0=dark, row1=mid, row2=light
+  const semOrder = [
+    [sem.darkMuted,  sem.darkVibrant],
+    [sem.muted,      sem.vibrant],
+    [sem.lightMuted, sem.lightVibrant],
+  ];
+
+  semOrder.forEach(([left, right], rowI) => {
+    const y = botRows[rowI];
+    drawCell(ctx, XSEM1, y, DOUBLE, CELL, left);
+    drawCell(ctx, XSEM2, y, DOUBLE, CELL, right);
+  });
+
+  // ── Image ──────────────────────────────────────────────────────────────────
+  await drawImage(ctx, data.imageUrl, IMG_X, IMG_Y, IMG_W, IMG_H);
+
+  // ── Logo + URL ─────────────────────────────────────────────────────────────
+  drawLogo(ctx, LOGO_X, LOGO_Y, LOGO_W, LOGO_H);
+
+  // URL text — baseline aligned to vertical centre of logo
+  ctx.font = URL_FONT;
+  ctx.fillStyle = '#000000';
+  ctx.textBaseline = 'middle';
+  const textX = LOGO_X + LOGO_W + 16;
+  const textY = LOGO_Y + LOGO_H / 2 + 2; // +2 visual tweak
+  ctx.fillText(data.blockUrl, textX, textY);
+}
+
+// ─── Image draw with centre-crop ──────────────────────────────────────────────
+
+function drawImage(ctx, url, x, y, w, h) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      // Centre-crop to fill w×h
+      const srcAspect = img.width / img.height;
+      const dstAspect = w / h;
+      let sx, sy, sw, sh;
+      if (srcAspect > dstAspect) {
+        // Image wider than container — crop sides
+        sh = img.height;
+        sw = sh * dstAspect;
+        sx = (img.width - sw) / 2;
+        sy = 0;
+      } else {
+        // Image taller than container — crop top/bottom
+        sw = img.width;
+        sh = sw / dstAspect;
+        sx = 0;
+        sy = (img.height - sh) / 2;
+      }
+      ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+      resolve();
+    };
+    img.onerror = () => {
+      // Draw placeholder if image fails to load
+      ctx.fillStyle = '#cccccc';
+      ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = '#888888';
+      ctx.font = '24px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('image unavailable', x + w/2, y + h/2);
+      ctx.textAlign = 'left';
+      resolve();
+    };
+    img.src = url;
+  });
+}
+
+// ─── Boot ─────────────────────────────────────────────────────────────────────
+
+// Wait for Karla to load
+document.fonts.ready.then(() => {
+  const canvas = document.getElementById('c');
+  render(canvas, SAMPLE);
+});
+
+document.getElementById('export').addEventListener('click', () => {
+  const canvas = document.getElementById('c');
+  const a = document.createElement('a');
+  a.download = 'bars2-export.png';
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+});
+</script>
+</body>
+</html>
