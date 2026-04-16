@@ -1235,7 +1235,7 @@ async function renderDots(canvas, data, withBackground) {
       let current = full;
       let size = Math.max(sw, sh);
       while (size > 20) {
-        size = Math.max(Math.round(size / 2), 5);
+        size = Math.max(Math.round(size / 2), 12);
         const next = makeCanvas(size, size);
         smoothDraw(next.getContext('2d'), current, size, size);
         current = next;
@@ -1255,8 +1255,10 @@ async function renderDots(canvas, data, withBackground) {
 
       // Step 5 — stretch back up to canvas. The many-step downscale means
       // no grid or edge artifacts — just smooth colour regions.
+      // Dark images get lower opacity so bright hotspots don't punch through
+      // against the black base; light images can afford more colour.
       ctx.save();
-      ctx.globalAlpha = 0.85;
+      ctx.globalAlpha = avgLum < 0.5 ? 0.65 : 0.80;
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(current, 0, 0, 1200, 1200);
