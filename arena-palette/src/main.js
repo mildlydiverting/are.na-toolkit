@@ -1200,12 +1200,7 @@ async function renderDots(canvas, data, withBackground) {
   if (withBackground) {
     const img = await loadImageForCanvas(data.imageUrl);
     if (img) {
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, 1200, 1200);
-      ctx.save();
-      ctx.globalAlpha = 0.6;
-      ctx.filter = 'blur(40px)';
-      const BLEED = 80;
+      // Centre-crop the source image to a square first
       const srcAspect = img.width / img.height;
       let sx, sy, sw, sh;
       if (srcAspect > 1) {
@@ -1213,7 +1208,34 @@ async function renderDots(canvas, data, withBackground) {
       } else {
         sw = img.width; sh = sw; sx = 0; sy = (img.height - sh) / 2;
       }
-      ctx.drawImage(img, sx, sy, sw, sh, -BLEED, -BLEED, 1200 + BLEED * 2, 1200 + BLEED * 2);
+
+      // Step 1 — draw to a tiny canvas. This is the actual blur:
+      // downscaling to ~30px and stretching back up gives a strong,
+      // reliable blur without depending on CSS filter support on canvas.
+      const TINY = 30;
+      const tiny = document.createElement('canvas');
+      tiny.width = TINY; tiny.height = TINY;
+      tiny.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, TINY, TINY);
+
+      // Step 2 — sample average luminance from the tiny canvas
+      const tinyPx = tiny.getContext('2d').getImageData(0, 0, TINY, TINY).data;
+      let lumSum = 0;
+      for (let i = 0; i < tinyPx.length; i += 4) {
+        lumSum += (0.299 * tinyPx[i] + 0.587 * tinyPx[i+1] + 0.114 * tinyPx[i+2]) / 255;
+      }
+      const avgLum = lumSum / (tinyPx.length / 4);
+
+      // Step 3 — fill base colour matched to image tone
+      ctx.fillStyle = avgLum < 0.5 ? '#000000' : '#ffffff';
+      ctx.fillRect(0, 0, 1200, 1200);
+
+      // Step 4 — stretch the tiny canvas back up to fill the output.
+      // imageSmoothingQuality 'low' maximises the smearing effect.
+      ctx.save();
+      ctx.globalAlpha = 0.85;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(tiny, 0, 0, 1200, 1200);
       ctx.restore();
     }
   }
