@@ -2176,24 +2176,36 @@ async function renderDots(canvas, data, withBackground) {
         dstCtx.drawImage(src, 0, 0, dw, dh);
       };
 
-      // Step 1 — crop to square at full resolution
+      // Step 1 — crop source image to square
       const full = makeCanvas(sw, sh);
-      smoothDraw(full.getContext('2d'), img, sw, sh);
-      // (drawImage with src crop args)
-      full.getContext('2d').clearRect(0, 0, sw, sh);
       full.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
 
-      // Step 2 — repeatedly halve down to ~20px
+      // Step 2 — downscale to a floor of ~40px.
+      // Staying at 40px (not 10px) means diagonals are still represented
+      // smoothly — going lower creates a pixel grid too coarse to avoid
+      // staircase artifacts when stretched back up.
       let current = full;
       let size = Math.max(sw, sh);
-      while (size > 20) {
-        size = Math.max(Math.round(size / 2), 12);
+      while (size > 40) {
+        size = Math.max(Math.round(size / 2), 40);
         const next = makeCanvas(size, size);
         smoothDraw(next.getContext('2d'), current, size, size);
         current = next;
       }
 
-      // Step 3 — sample luminance from the tiny result
+      // Step 3 — ping-pong: upscale to 300px then back down to 40px,
+      // repeated 3 times. Each round-trip smears colour boundaries further
+      // without ever going below the 40px resolution floor, so diagonals
+      // stay smooth throughout.
+      for (let i = 0; i < 3; i++) {
+        const up = makeCanvas(300, 300);
+        smoothDraw(up.getContext('2d'), current, 300, 300);
+        const down = makeCanvas(40, 40);
+        smoothDraw(down.getContext('2d'), up, 40, 40);
+        current = down;
+      }
+
+      // Step 4 — sample luminance from the blurred result
       const lumPx = current.getContext('2d').getImageData(0, 0, current.width, current.height).data;
       let lumSum = 0;
       for (let i = 0; i < lumPx.length; i += 4) {
@@ -2201,19 +2213,20 @@ async function renderDots(canvas, data, withBackground) {
       }
       const avgLum = lumSum / (lumPx.length / 4);
 
-      // Step 4 — fill base colour matched to image tone
+      // Step 5 — fill base colour matched to image tone
       ctx.fillStyle = avgLum < 0.5 ? '#000000' : '#ffffff';
       ctx.fillRect(0, 0, 1200, 1200);
 
-      // Step 5 — stretch back up to canvas. The many-step downscale means
-      // no grid or edge artifacts — just smooth colour regions.
-      // Dark images get lower opacity so bright hotspots don't punch through
-      // against the black base; light images can afford more colour.
+      // Step 6 — upscale to output via 300px intermediate for a final
+      // smoothing pass before the big stretch to 1200px.
+      const mid = makeCanvas(300, 300);
+      smoothDraw(mid.getContext('2d'), current, 300, 300);
+
       ctx.save();
       ctx.globalAlpha = avgLum < 0.5 ? 0.65 : 0.80;
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(current, 0, 0, 1200, 1200);
+      ctx.drawImage(mid, 0, 0, 1200, 1200);
       ctx.restore();
     }
   }
