@@ -1209,33 +1209,57 @@ async function renderDots(canvas, data, withBackground) {
         sw = img.width; sh = sw; sx = 0; sy = (img.height - sh) / 2;
       }
 
-      // Step 1 — draw to a tiny canvas. This is the actual blur:
-      // downscaling to ~30px and stretching back up gives a strong,
-      // reliable blur without depending on CSS filter support on canvas.
-      const TINY = 30;
-      const tiny = document.createElement('canvas');
-      tiny.width = TINY; tiny.height = TINY;
-      tiny.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, TINY, TINY);
+      // Multi-pass downscale blur — each halving pass blurs the previous
+      // result, giving a smooth gaussian-like wash without blocky artifacts.
+      // Single-step approaches (tiny canvas stretched up) always show either
+      // pixel grid (too small) or edge stepping (too large).
+      const makeCanvas = (w, h) => {
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        return c;
+      };
+      const smoothDraw = (dstCtx, src, dw, dh) => {
+        dstCtx.imageSmoothingEnabled = true;
+        dstCtx.imageSmoothingQuality = 'high';
+        dstCtx.drawImage(src, 0, 0, dw, dh);
+      };
 
-      // Step 2 — sample average luminance from the tiny canvas
-      const tinyPx = tiny.getContext('2d').getImageData(0, 0, TINY, TINY).data;
-      let lumSum = 0;
-      for (let i = 0; i < tinyPx.length; i += 4) {
-        lumSum += (0.299 * tinyPx[i] + 0.587 * tinyPx[i+1] + 0.114 * tinyPx[i+2]) / 255;
+      // Step 1 — crop to square at full resolution
+      const full = makeCanvas(sw, sh);
+      smoothDraw(full.getContext('2d'), img, sw, sh);
+      // (drawImage with src crop args)
+      full.getContext('2d').clearRect(0, 0, sw, sh);
+      full.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+
+      // Step 2 — repeatedly halve down to ~20px
+      let current = full;
+      let size = Math.max(sw, sh);
+      while (size > 20) {
+        size = Math.max(Math.round(size / 2), 5);
+        const next = makeCanvas(size, size);
+        smoothDraw(next.getContext('2d'), current, size, size);
+        current = next;
       }
-      const avgLum = lumSum / (tinyPx.length / 4);
 
-      // Step 3 — fill base colour matched to image tone
+      // Step 3 — sample luminance from the tiny result
+      const lumPx = current.getContext('2d').getImageData(0, 0, current.width, current.height).data;
+      let lumSum = 0;
+      for (let i = 0; i < lumPx.length; i += 4) {
+        lumSum += (0.299 * lumPx[i] + 0.587 * lumPx[i+1] + 0.114 * lumPx[i+2]) / 255;
+      }
+      const avgLum = lumSum / (lumPx.length / 4);
+
+      // Step 4 — fill base colour matched to image tone
       ctx.fillStyle = avgLum < 0.5 ? '#000000' : '#ffffff';
       ctx.fillRect(0, 0, 1200, 1200);
 
-      // Step 4 — stretch the tiny canvas back up to fill the output.
-      // imageSmoothingQuality 'low' maximises the smearing effect.
+      // Step 5 — stretch back up to canvas. The many-step downscale means
+      // no grid or edge artifacts — just smooth colour regions.
       ctx.save();
       ctx.globalAlpha = 0.85;
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(tiny, 0, 0, 1200, 1200);
+      ctx.drawImage(current, 0, 0, 1200, 1200);
       ctx.restore();
     }
   }
