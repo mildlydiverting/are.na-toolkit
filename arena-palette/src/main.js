@@ -1246,8 +1246,8 @@ async function renderDots(canvas, data, withBackground) {
       // without ever going below the 40px resolution floor, so diagonals
       // stay smooth throughout.
       for (let i = 0; i < 3; i++) {
-        const up = makeCanvas(300, 300);
-        smoothDraw(up.getContext('2d'), current, 300, 300);
+        const up = makeCanvas(100, 100);
+        smoothDraw(up.getContext('2d'), current, 100, 100);
         const down = makeCanvas(40, 40);
         smoothDraw(down.getContext('2d'), up, 40, 40);
         current = down;
@@ -1267,8 +1267,8 @@ async function renderDots(canvas, data, withBackground) {
 
       // Step 6 — upscale to output via 300px intermediate for a final
       // smoothing pass before the big stretch to 1200px.
-      const mid = makeCanvas(300, 300);
-      smoothDraw(mid.getContext('2d'), current, 300, 300);
+      const mid = makeCanvas(100, 100);
+      smoothDraw(mid.getContext('2d'), current, 100, 100);
 
       ctx.save();
       ctx.globalAlpha = avgLum < 0.5 ? 0.65 : 0.80;
