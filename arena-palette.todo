@@ -30,6 +30,7 @@ Grid and image handling:
 		- Auto-strip full Are.na URLs pasted as channel slugs (e.g. are.na/kim/my-channel → my-channel) @priority(2)
 		- add a 'block' section that just takes the URL of an image block
 		- Cache fetched images by URL to avoid re-fetching on repeated thumbnail clicks @priority(3)
+		- use blurhash somehow? https://github.com/woltapp/blurhash its in the api return.
 Colour picking and editing:
 		- Revisit RampenSau tints/shades if a suitable approach emerges (deferred - results unsatisfactory)
 		- Draggable colour pickers on the image (circles on canvas, repositionable) — new chat @priority(2)

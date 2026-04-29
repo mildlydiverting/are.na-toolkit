@@ -26,7 +26,7 @@ Built via `arena-palette/build.py` (Python concat script, no npm).
 - Karla + Courier Prime (Google Fonts)
 
 **Architecture — must preserve:**
-- Are.na API v3 (`https://api.are.na/v3`). Never v2.
+- USE Are.na API v3 (`https://api.are.na/v3`). NEVER v2.
 - Image URLs: `image.src` (original), `image.small.src` (thumbnail)
 - Two-step random fetch: channel meta for total count → `per=1&page={random}` with up to 12 retries to land on an Image block
 - `currentImageEl` caches the loaded `HTMLImageElement` — settings changes call `runExtraction()` directly, never `selectImage()`, so no unnecessary API hits
@@ -35,6 +35,39 @@ Built via `arena-palette/build.py` (Python concat script, no npm).
 - `currentSwatchData` global caches the semantic palette (array of `{role, hex, tc, proportion}`) — populated in `runExtraction()` via `swatchProportions()`, used by exports. **Now declared at module scope** (was incorrectly inside the `init` IIFE in earlier versions).
 - `currentBlock` / `currentImageObj` global caches the current Are.na block object (has `.id`, `.title`, `.source.url`, `.user.username`, `.channel`, `.original`, etc.)
 - `currentImageEl` caches the loaded HTMLImageElement — also used by PNG export to draw the image onto canvas
+
+### Are.na v3 API — confirmed image fields (from live block response)
+
+`image.blurhash` — present and confirmed in v3
+`dominant_color` — not present in v3 (earlier sources claiming this were wrong)
+Image variants available: `small`, `medium`, `large`, `square`, `src` (original) — all served from `images.are.na` CDN, not CloudFront directly. Thumbnail URLs are base64-encoded resize parameter objects, not signed paths.
+
+### BlurHash — average colour extraction
+
+https://github.com/woltapp/blurhash
+
+The DC component (digits 2–5 of the blurhash string, 0-indexed) encodes the average colour of the image as a 24-bit sRGB value in base 83
+Decodable without the full algorithm or a canvas — just 4 characters, a base-83 lookup, and a bit-shift
+Decoder snippet: 
+
+```
+function blurhashDominantColor(blurhash) {
+  const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz#$%*+,-.:;=?@[]^_{|}~';
+  const decode83 = str => [...str].reduce((v, c) => v * 83 + chars.indexOf(c), 0);
+  const val = decode83(blurhash.slice(2, 6));
+  return [(val >> 16) & 0xff, (val >> 8) & 0xff, val & 0xff]; // [r, g, b]
+}
+```
+
+Useful as an instant loading-state colour, available before the thumbnail loads
+
+### Security / public deployment
+
+Token is stored in localStorage under STORAGE_KEY alongside channel slugs, via saveState()
+Settings stored separately under SETTINGS_KEY
+Safe for a public static deployment — each visitor's browser has isolated localStorage
+Users without a token can still access public channels unauthenticated
+CORS gotcha to test: thumbnail images are served from images.are.na; verify canvas toBlob() still works after PNG export when served from a real public origin (not just file://)
 
 **Colour name API:**
 - `https://api.color.pizza/v1/` — fetched on every extraction, batched as comma-separated hex values
