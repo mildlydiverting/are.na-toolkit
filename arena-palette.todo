@@ -1,62 +1,80 @@
 arena-palette todos:
-
-    Immediate - do first:
-        ✔ Set up git repository for arena-palette @priority(1) @done (26-04-13 10:16)
-        ✔ Write concat build script (Python or shell, no npm) to assemble HTML from separate CSS/JS/HTML source files @priority(1) @done (26-04-13 20:53)
-        ✔ Decide on source file structure (e.g. src/style.css, src/main.js, src/index.html) @priority(1) @done (26-04-13 20:53)
-
-    Layout and design:
-        ✔ Review overall layout — Kim to share screenshots with annotations @priority(2) @done (26-04-13 10:16)
-        ✔ Design tweaks to palette panel (spacing, typography, swatch sizing) @priority(2) @done (26-04-13 20:53)
-        ✔ Consider whether settings panel should be collapsed by default permanently or remember open/closed state @priority(3) @done (26-04-14 20:55)
-        ✔ overlay hex on to swatches @done (26-04-13 10:16)
-        - move extract settings below image?
-        - make swatches square
-        ✔ tweak size of text and make it darker @done (26-04-14 20:55)
-        ✔ mid grey for background, like a palette? @done (26-04-13 10:17)
-        - general - CSS kit for standard styling of my stuff
-        ✔ sort out the form field backgrounds @done (26-04-14 20:55)
-        ✔ sort out typography - it's still illegible @done (26-04-14 20:55)
-        ✔ three column? or move image thumbs to under the fetch thingy? @done (26-04-13 10:17)
-        - move to claude code
-        ✔ Naming - fetch colour names from API, and allow choices https://api.color.pizza/v1/docs/ @done (26-04-13 22:33)
-        ✔ pull down titles and details of image from arena @done (26-04-13 10:17)
-        - dark / mid / light mode
-        - redo output stuff - all colours, make it square
-        - work out what would need to change to publish this online
-            - auth?
-            - secret keys?
-
-    Colour picking and editing:
-        - Draggable colour pickers on the image (circles on canvas, repositionable) — new chat @priority(2)
-            Note: Color Thief does not return pixel positions, so initial circle placement will be approximate
-            - On drag release, sample pixel colour at new position and re-run extraction from that point
-        - Integrate RampenSau hue-shifted tints/shades as an alternative to plain HSL scaling — new chat @priority(2)
-            - Prototype exists — needs real image testing before committing
-            - Key parameter: hCycles controls hue drift across the ramp
+Immediate - do first:
+	- Fix cache-bust on repeated thumbnail clicks (?t= param causes re-fetch from Are.na) @tag(bug)
+	- Extract shared/arena-api.js utility module (Are.na API helpers, reusable across tools)
+Layout and design:
+		- Investigate spacing "funkiness" at certain breakpoints @tag(bug)
+		- move extract settings below image?
+		- make swatches square
+		- review overall layout / design
+		- move to claude code
+		- Consider light/dark mode toggle (colour system designed for it, toggle not yet built)
+			- dark / mid / light mode
+		- redo output stuff - all colours, make it square @done(2026-04-18)
+		- work out what would need to change to publish this online
+			- auth?
+			- secret keys?
+		- general - CSS kit for standard styling of my stuff
 Rework credit block:
-        - reorder the credit block
-            Vanitas by Louise Giovanelli | White Cube
-            view on are.na ↗
-            via
-            kim-plowright
-            source
-            Vanitas by Louise Giovanelli | White Cube
-            accessed 2 September 2025
+		- reorder the credit block
+			Vanitas by Louise Giovanelli | White Cube
+			view on are.na ↗
+			via
+			kim-plowright
+			source
+			Vanitas by Louise Giovanelli | White Cube
+			accessed 2 September 2025
+Grid and image handling:
+		- Add per-slot refresh button (re-fetch a single grid image without clearing all 9) @priority(2)
+		- Add per-slot lock (preserve an image across re-fetches, like arena-picks) @priority(2)
+		- Auto-strip full Are.na URLs pasted as channel slugs (e.g. are.na/kim/my-channel → my-channel) @priority(2)
+		- add a 'block' section that just takes the URL of an image block
+		- Cache fetched images by URL to avoid re-fetching on repeated thumbnail clicks @priority(3)
+Colour picking and editing:
+		- Revisit RampenSau tints/shades if a suitable approach emerges (deferred - results unsatisfactory)
+		- Draggable colour pickers on the image (circles on canvas, repositionable) — new chat @priority(2)
+			Note: Color Thief does not return pixel positions, so initial circle placement will be approximate
+			- On drag release, sample pixel colour at new position and re-run extraction from that point
+		- Integrate RampenSau hue-shifted tints/shades as an alternative to plain HSL scaling — new chat @priority(2)
+			- Prototype exists — needs real image testing before committing
+			- Key parameter: hCycles controls hue drift across the ramp
+		- https://img-colors.com/ - INVESTIGATE OTHER algorithms for colour picking.
+	- https://img-colors.com/docs
+		
+Export:
+		- Implement PNG export: E and F layouts in canvas (replacing current basic export)
+		- Embed PNG metadata (tEXt/iTXt chunks: title, source URL, channel, extraction date)
+		- Add colour sort (hue order, light→dark) before rendering
+		- Include semantic palette colours in hex/CSS/SCP exports @priority(3)
+		- Add copy-all button for semantic palette hex values @priority(3)
+		- Review export PNG layout @priority(3)
+		- Pipe in to https://themer.dev/ to output themes for software
+Future - arena tools suite:
+		- Consider shared arena-config.js pattern across arena-palette and arena-picks @priority(4)
+		- Shared fetch utilities (fetchChannelMeta, fetchBlockAtPage) as a common module @priority(4)
+		- Shared UI patterns (channel slug inputs, token field, grid) @priority(4)
+Files In Git:
+	https://raw.githubusercontent.com/mildlydiverting/are.na-toolkit/refs/heads/main/arena-palette-context.md
+	https://raw.githubusercontent.com/mildlydiverting/are.na-toolkit/refs/heads/main/arena-palette.todo
+	https://raw.githubusercontent.com/mildlydiverting/are.na-toolkit/refs/heads/main/arena-palette/build.py
+	https://raw.githubusercontent.com/mildlydiverting/are.na-toolkit/refs/heads/main/arena-palette/build.py
+	https://raw.githubusercontent.com/mildlydiverting/are.na-toolkit/refs/heads/main/arena-palette/src/style.css
+	https://raw.githubusercontent.com/mildlydiverting/are.na-toolkit/refs/heads/main/arena-palette/src/main.js
+	
+	
 
-    Grid and image handling:
-        - Add per-slot refresh button (re-fetch a single grid image without clearing all 9) @priority(2)
-        - Add per-slot lock (preserve an image across re-fetches, like arena-picks) @priority(2)
-        - Auto-strip full Are.na URLs pasted as channel slugs (e.g. are.na/kim/my-channel → my-channel) @priority(2)
-        - add a 'block' section that just takes the URL of an image block
-        - Cache fetched images by URL to avoid re-fetching on repeated thumbnail clicks @priority(3)
-
-    Export:
-        - Include semantic palette colours in hex/CSS/SCP exports @priority(3)
-        - Add copy-all button for semantic palette hex values @priority(3)
-        - Review export PNG layout @priority(3)
-
-    Future - arena tools suite:
-        - Consider shared arena-config.js pattern across arena-palette and arena-picks @priority(4)
-        - Shared fetch utilities (fetchChannelMeta, fetchBlockAtPage) as a common module @priority(4)
-        - Shared UI patterns (channel slug inputs, token field, grid) @priority(4)
+Archive:
+	✔ Set up git repository for arena-palette @done (26-04-13 10:16) @project(arena-palette todos / Immediate - do first)
+	✔ Write concat build script (Python or shell, no npm) to assemble HTML from separate CSS/JS/HTML source files @done (26-04-13 20:53) @project(arena-palette todos / Immediate - do first)
+	✔ Decide on source file structure (e.g. src/style.css, src/main.js, src/index.html) @done (26-04-13 20:53) @project(arena-palette todos / Immediate - do first)
+	✔ Review overall layout — Kim to share screenshots with annotations @done (26-04-13 10:16) @project(arena-palette todos / Layout and design)
+	✔ Design tweaks to palette panel (spacing, typography, swatch sizing) @done (26-04-13 20:53) @project(arena-palette todos / Layout and design)
+	✔ Consider whether settings panel should be collapsed by default permanently or remember open/closed state @done (26-04-14 20:55) @project(arena-palette todos / Layout and design)
+	✔ overlay hex on to swatches @done (26-04-13 10:16) @project(arena-palette todos / Layout and design)
+	✔ tweak size of text and make it darker @done (26-04-14 20:55) @project(arena-palette todos / Layout and design)
+	✔ mid grey for background, like a palette? @done (26-04-13 10:17) @project(arena-palette todos / Layout and design)
+	✔ sort out the form field backgrounds @done (26-04-14 20:55) @project(arena-palette todos / Layout and design)
+	✔ sort out typography - it's still illegible @done (26-04-14 20:55) @project(arena-palette todos / Layout and design)
+	✔ three column? or move image thumbs to under the fetch thingy? @done (26-04-13 10:17) @project(arena-palette todos / Layout and design)
+	✔ Naming - fetch colour names from API, and allow choices https://api.color.pizza/v1/docs/ @done (26-04-13 22:33) @project(arena-palette todos / Layout and design)
+	✔ pull down titles and details of image from arena @done (26-04-13 10:17) @project(arena-palette todos / Layout and design)
