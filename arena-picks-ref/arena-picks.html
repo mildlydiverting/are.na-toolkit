@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Are.na picks</title>
+<!--
+  arena-picks.html
+  ─────────────────────────────────────────────────────────────────
+  v1.0  Initial build. Are.na API v2. Boards as "username/slug".
+  v1.1  Updated to Are.na API v3. Base URL https://api.are.na/v3.
+        Response data in data[], total count from meta.total_count,
+        block type from block.type (was block.class).
+        Token URL updated to /settings/personal-access-tokens.
+  v1.2  Fixed 404 errors. v3 API takes bare channel slug only.
+        Use just the last segment of the board URL.
+  v1.3  Fixed blank cards. TextBlock content is an object
+        {markdown, html, plain}. Added client-side ALLOWED_TYPES
+        filter with retry loop (no server-side type filter in v3).
+  v1.4  Three fixes from inspecting actual v3 response shape:
+        (a) Board title was undefined — now fetches /channels/{slug}
+            separately for title and total count.
+        (b) Image URL was wrong — block.image.large.src not .url.
+        (c) HTML leaking out of cards — switched to DOM methods.
+        Config split into separate arena-config.js file.
+  v1.5  Text blocks show content in the media area as well as the
+        excerpt in the card body.
+  v1.6  All colours extracted to CSS custom properties. Light and
+        dark modes: responds to macOS system setting via
+        prefers-color-scheme, with a manual toggle switch in the
+        header that overrides it. Warm deep grey palette for dark.
+  v1.7  Per-card lock button. Locked cards are skipped on shuffle
+        and held in place. Lock icon overlaid on the media area,
+        top-right. Locked cards get a subtle border accent.
+  v1.8  Save snapshot. "Save" button downloads a zip containing
+        index.md (YAML frontmatter + one section per card) and any
+        fetchable images. Images fetched from Are.na CDN; falls
+        back gracefully to URL-only if CORS blocks the fetch.
+        Uses JSZip 3.10.1 loaded from jsDelivr CDN.
+  v1.8a Fixed image filenames: use block.image.filename from API
+        instead of parsing signed CloudFront URLs (which contain
+        base64 query params that break extension detection). Also
+        removed angle-bracket URL wrapping that malformed the md,
+        and fallback now links to Are.na page not the expiring CDN URL.
+  v1.8b Fixed markdown alt text and headings: titles containing square
+        brackets (common in link block titles) broke image syntax and
+        heading parsing. Added mdSafe() to strip brackets, backticks
+        and stray newlines from any text used in markdown constructs.
+  ─────────────────────────────────────────────────────────────────
+  Requires: arena-config.js in the same folder as this file.
+-->
+<style>
+  /* ── Colour tokens ───────────────────────────────────────────────
+     All colours live here. Edit these to retheme the whole page.
+     Light uses warm off-whites; dark uses warm deep greys to match.
+  ────────────────────────────────────────────────────────────────── */
+  :root {
+    --bg-page:        #f5f4f0;
+    --bg-card:        #ffffff;
+    --bg-media:       #ede9e4;
+    --bg-btn:         #ffffff;
+    --bg-btn-hover:   #eeece8;
+    --bg-badge:       #ede9e4;
+
+    --text-primary:   #1a1a18;
+    --text-secondary: #888580;
+    --text-muted:     #aaa49e;
+    --text-heading:   #888580;
+    --text-preview:   #4a4845;
+
+    --border-card:    #e5e3de;
+    --border-btn:     #ccc8c2;
+    --border-locked:  #a89880;
+
+    --toggle-bg:      #ccc8c2;
+    --toggle-thumb:   #f5f4f0;
+
+    --lock-btn-bg:         rgba(255,255,255,0.75);
+    --lock-btn-bg-hover:   rgba(255,255,255,0.95);
+    --lock-btn-bg-locked:  rgba(255,255,255,0.95);
+    --lock-btn-icon:       #888580;
+    --lock-btn-icon-locked:#1a1a18;
+
+    --error-bg:       #fff5f5;
+    --error-border:   #fdd;
+    --error-text:     #c00;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg-page:        #1e1d1b;
+      --bg-card:        #2a2825;
+      --bg-media:       #322f2c;
+      --bg-btn:         #2a2825;
+      --bg-btn-hover:   #35312e;
+      --bg-badge:       #322f2c;
+
+      --text-primary:   #e8e4de;
+      --text-secondary: #9e9890;
+      --text-muted:     #6e6860;
+      --text-heading:   #6e6860;
+      --text-preview:   #c0b8ae;
+
+      --border-card:    #3a3733;
+      --border-btn:     #4a4640;
+      --border-locked:  #7a6e60;
+
+      --toggle-bg:      #6e6860;
+      --toggle-thumb:   #1e1d1b;
+
+      --lock-btn-bg:         rgba(30,29,27,0.70);
+      --lock-btn-bg-hover:   rgba(30,29,27,0.90);
+      --lock-btn-bg-locked:  rgba(30,29,27,0.90);
+      --lock-btn-icon:       #9e9890;
+      --lock-btn-icon-locked:#e8e4de;
+
+      --error-bg:       #2a1f1f;
+      --error-border:   #5a2828;
+      --error-text:     #e07070;
+    }
+  }
+
+  body.theme-dark {
+    --bg-page:        #1e1d1b;
+    --bg-card:        #2a2825;
+    --bg-media:       #322f2c;
+    --bg-btn:         #2a2825;
+    --bg-btn-hover:   #35312e;
+    --bg-badge:       #322f2c;
+
+    --text-primary:   #e8e4de;
+    --text-secondary: #9e9890;
+    --text-muted:     #6e6860;
+    --text-heading:   #6e6860;
+    --text-preview:   #c0b8ae;
+
+    --border-card:    #3a3733;
+    --border-btn:     #4a4640;
+    --border-locked:  #7a6e60;
+
+    --toggle-bg:      #6e6860;
+    --toggle-thumb:   #1e1d1b;
+
+    --lock-btn-bg:         rgba(30,29,27,0.70);
+    --lock-btn-bg-hover:   rgba(30,29,27,0.90);
+    --lock-btn-bg-locked:  rgba(30,29,27,0.90);
+    --lock-btn-icon:       #9e9890;
+    --lock-btn-icon-locked:#e8e4de;
+
+    --error-bg:       #2a1f1f;
+    --error-border:   #5a2828;
+    --error-text:     #e07070;
+  }
+
+  body.theme-light {
+    --bg-page:        #f5f4f0;
+    --bg-card:        #ffffff;
+    --bg-media:       #ede9e4;
+    --bg-btn:         #ffffff;
+    --bg-btn-hover:   #eeece8;
+    --bg-badge:       #ede9e4;
+
+    --text-primary:   #1a1a18;
+    --text-secondary: #888580;
+    --text-muted:     #aaa49e;
+    --text-heading:   #888580;
+    --text-preview:   #4a4845;
+
+    --border-card:    #e5e3de;
+    --border-btn:     #ccc8c2;
+    --border-locked:  #a89880;
+
+    --toggle-bg:      #ccc8c2;
+    --toggle-thumb:   #f5f4f0;
+
+    --lock-btn-bg:         rgba(255,255,255,0.75);
+    --lock-btn-bg-hover:   rgba(255,255,255,0.95);
+    --lock-btn-bg-locked:  rgba(255,255,255,0.95);
+    --lock-btn-icon:       #888580;
+    --lock-btn-icon-locked:#1a1a18;
+
+    --error-bg:       #fff5f5;
+    --error-border:   #fdd;
+    --error-text:     #c00;
+  }
+
+  /* ── Base ────────────────────────────────────────────────────────── */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg-page);
+    color: var(--text-primary);
+    padding: 2rem;
+    min-height: 100vh;
+    transition: background 0.25s, color 0.25s;
+  }
+
+  /* ── Header ──────────────────────────────────────────────────────── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+  }
+
+  header h1 {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-heading);
+    letter-spacing: 0.02em;
+  }
+
+  .header-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* ── Shared button style ─────────────────────────────────────────── */
+  .hdr-btn {
+    font-size: 13px;
+    font-weight: 500;
+    padding: 7px 16px;
+    border: 1px solid var(--border-btn);
+    border-radius: 8px;
+    background: var(--bg-btn);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.25s, color 0.25s;
+  }
+
+  .hdr-btn:hover  { background: var(--bg-btn-hover); }
+  .hdr-btn:disabled { opacity: 0.4; cursor: default; }
+
+  /* ── Theme toggle ────────────────────────────────────────────────── */
+  .theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .toggle-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    transition: color 0.25s;
+    min-width: 28px;
+  }
+
+  .toggle-track {
+    position: relative;
+    width: 34px;
+    height: 19px;
+    background: var(--toggle-bg);
+    border-radius: 10px;
+    flex-shrink: 0;
+    transition: background 0.25s;
+  }
+
+  .toggle-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 13px;
+    height: 13px;
+    background: var(--toggle-thumb);
+    border-radius: 50%;
+    transition: transform 0.2s, background 0.25s;
+  }
+
+  body.theme-dark .toggle-thumb {
+    transform: translateX(15px);
+  }
+
+  /* ── Grid ────────────────────────────────────────────────────────── */
+  #grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  @media (max-width: 800px) {
+    #grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  @media (max-width: 500px) {
+    #grid { grid-template-columns: 1fr; }
+  }
+
+  /* ── Cards ───────────────────────────────────────────────────────── */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: background 0.25s, border-color 0.25s;
+  }
+
+  .card.is-locked {
+    border-color: var(--border-locked);
+  }
+
+  /* ── Media area ──────────────────────────────────────────────────── */
+  .card-media-wrap {
+    width: 100%;
+    aspect-ratio: 1;
+    background: var(--bg-media);
+    overflow: hidden;
+    flex-shrink: 0;
+    position: relative;
+    transition: background 0.25s;
+  }
+
+  .card-media-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .card-media-wrap svg.placeholder-icon {
+    display: block;
+    margin: auto;
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.2;
+    stroke: var(--text-primary);
+    transition: stroke 0.25s;
+  }
+
+  .card-text-preview {
+    width: 100%;
+    height: 100%;
+    padding: 1rem;
+    overflow: hidden;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text-preview);
+    display: -webkit-box;
+    -webkit-line-clamp: 8;
+    -webkit-box-orient: vertical;
+    transition: color 0.25s;
+  }
+
+  /* ── Lock button ─────────────────────────────────────────────────── */
+  .lock-btn {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: var(--lock-btn-bg);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.15s, background 0.15s;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  .lock-btn svg {
+    width: 14px;
+    height: 14px;
+    stroke: var(--lock-btn-icon);
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke 0.15s;
+    flex-shrink: 0;
+  }
+
+  .card:hover .lock-btn,
+  .card.is-locked .lock-btn {
+    opacity: 1;
+  }
+
+  .lock-btn:hover          { background: var(--lock-btn-bg-hover); }
+  .card.is-locked .lock-btn { background: var(--lock-btn-bg-locked); }
+  .card.is-locked .lock-btn svg { stroke: var(--lock-btn-icon-locked); }
+
+  /* ── Card body ───────────────────────────────────────────────────── */
+  .card-body {
+    padding: 10px 13px 13px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .board-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    transition: color 0.25s;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex: 1;
+    transition: color 0.25s;
+  }
+
+  .card-title a { color: inherit; text-decoration: none; }
+  .card-title a:hover { text-decoration: underline; }
+
+  .card-description {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-top: 5px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: color 0.25s;
+  }
+
+  .card-type {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    margin-top: 8px;
+    background: var(--bg-badge);
+    color: var(--text-muted);
+    align-self: flex-start;
+    transition: background 0.25s, color 0.25s;
+  }
+
+  /* ── Errors ──────────────────────────────────────────────────────── */
+  .error-card {
+    background: var(--error-bg);
+    border: 1px solid var(--error-border);
+    padding: 1rem;
+    border-radius: 12px;
+    font-size: 13px;
+    color: var(--error-text);
+    line-height: 1.5;
+  }
+
+  .error-card a { color: var(--error-text); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Are.na picks</h1>
+  <div class="header-controls">
+    <div class="theme-toggle" id="theme-toggle" title="Toggle light/dark mode">
+      <span class="toggle-label" id="toggle-label">Light</span>
+      <div class="toggle-track">
+        <div class="toggle-thumb" id="toggle-thumb"></div>
+      </div>
+    </div>
+    <button id="save-btn" class="hdr-btn">Save ↓</button>
+    <button id="shuffle-btn" class="hdr-btn">Shuffle ↻</button>
+  </div>
+</header>
+
+<div id="grid"></div>
+
+<!-- JSZip for building the zip in-browser -->
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<!-- Config loaded before main script -->
+<script src="arena-config.js"></script>
+
+<script>
+const API = "https://api.are.na/v3";
+
+/* ── Theme ───────────────────────────────────────────────────────── */
+const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
+
+function isDark() {
+  if (document.body.classList.contains('theme-dark')) return true;
+  if (document.body.classList.contains('theme-light')) return false;
+  return systemDark.matches;
+}
+
+function applyTheme(dark) {
+  document.getElementById('toggle-thumb').style.transform = dark ? 'translateX(15px)' : '';
+  document.getElementById('toggle-label').textContent = dark ? 'Dark' : 'Light';
+}
+
+applyTheme(isDark());
+
+systemDark.addEventListener('change', () => {
+  if (!document.body.classList.contains('theme-dark') &&
+      !document.body.classList.contains('theme-light')) {
+    applyTheme(systemDark.matches);
+  }
+});
+
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  const currentlyDark = isDark();
+  document.body.classList.remove('theme-dark', 'theme-light');
+  document.body.classList.add(currentlyDark ? 'theme-light' : 'theme-dark');
+  applyTheme(!currentlyDark);
+});
+
+/* ── SVG helpers ─────────────────────────────────────────────────── */
+const ns = 'http://www.w3.org/2000/svg';
+
+function svgEl(tag, attrs) {
+  const el = document.createElementNS(ns, tag);
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+  return el;
+}
+
+function makeLockIcon(locked) {
+  const svg = svgEl('svg', { viewBox: '0 0 24 24' });
+  if (locked) {
+    svg.appendChild(svgEl('rect', { x:'5', y:'11', width:'14', height:'10', rx:'2' }));
+    svg.appendChild(svgEl('path', { d:'M8 11V7a4 4 0 018 0v4' }));
+  } else {
+    svg.appendChild(svgEl('rect', { x:'5', y:'11', width:'14', height:'10', rx:'2' }));
+    svg.appendChild(svgEl('path', { d:'M8 11V7a4 4 0 017.74-1' }));
+  }
+  return svg;
+}
+
+const PLACEHOLDER_ICONS = {
+  Text:       'M4 6h16M4 10h16M4 14h10',
+  Link:       'M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71 M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71',
+  Embed:      null,
+  Attachment: 'M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48',
+};
+
+function makeSvgPlaceholder(kind) {
+  const svg = svgEl('svg', {
+    width: '40', height: '40', viewBox: '0 0 24 24',
+    fill: 'none', 'stroke-width': '1.5',
+  });
+  svg.classList.add('placeholder-icon');
+  if (kind === 'Embed') {
+    svg.appendChild(svgEl('polygon', { points: '5 3 19 12 5 21 5 3' }));
+  } else if (PLACEHOLDER_ICONS[kind]) {
+    PLACEHOLDER_ICONS[kind].split(' M').forEach((d, i) => {
+      svg.appendChild(svgEl('path', { d: i === 0 ? d : 'M' + d }));
+    });
+  } else {
+    svg.appendChild(svgEl('rect', { x:'3', y:'3', width:'18', height:'18', rx:'2' }));
+  }
+  return svg;
+}
+
+/* ── Content helpers ─────────────────────────────────────────────── */
+function getImageSrc(block) {
+  const img = block.image;
+  if (!img) return null;
+  return img.large?.src || img.medium?.src || img.small?.src || img.src || null;
+}
+
+function getTextExcerpt(block) {
+  const c = block.content;
+  if (!c) return '';
+  if (typeof c === 'string') return c.replace(/<[^>]*>/g, '').trim();
+  if (typeof c === 'object') return (c.plain || c.markdown || '').trim();
+  return '';
+}
+
+/* ── Card builder ────────────────────────────────────────────────── */
+function buildCard({ block, boardTitle, slug }, index) {
+  const kind = block.type;
+  const arenaUrl = `https://www.are.na/block/${block.id}`;
+
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.dataset.index      = index;
+  card.dataset.slug       = slug;
+  // Store full block data for use by saveSnapshot without a re-fetch
+  card.dataset.block      = JSON.stringify(block);
+  card.dataset.boardTitle = boardTitle || '';
+
+  // Media area
+  const mediaWrap = document.createElement('div');
+  mediaWrap.className = 'card-media-wrap';
+
+  const imgSrc = getImageSrc(block);
+  if (imgSrc) {
+    const img = document.createElement('img');
+    img.src = imgSrc;
+    img.alt = block.title || '';
+    img.loading = 'lazy';
+    mediaWrap.appendChild(img);
+  } else if (kind === 'Text') {
+    const preview = document.createElement('div');
+    preview.className = 'card-text-preview';
+    preview.textContent = getTextExcerpt(block);
+    mediaWrap.appendChild(preview);
+  } else {
+    mediaWrap.appendChild(makeSvgPlaceholder(kind));
+  }
+
+  // Lock button
+  const lockBtn = document.createElement('button');
+  lockBtn.className = 'lock-btn';
+  lockBtn.title = 'Lock this card';
+  lockBtn.appendChild(makeLockIcon(false));
+  lockBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isNowLocked = !card.classList.contains('is-locked');
+    card.classList.toggle('is-locked', isNowLocked);
+    lockBtn.title = isNowLocked ? 'Unlock this card' : 'Lock this card';
+    lockBtn.replaceChildren(makeLockIcon(isNowLocked));
+  });
+  mediaWrap.appendChild(lockBtn);
+  card.appendChild(mediaWrap);
+
+  // Body
+  const body = document.createElement('div');
+  body.className = 'card-body';
+
+  const label = document.createElement('div');
+  label.className = 'board-label';
+  label.textContent = boardTitle || '';
+  body.appendChild(label);
+
+  const titleWrap = document.createElement('div');
+  titleWrap.className = 'card-title';
+  const titleLink = document.createElement('a');
+  titleLink.href = (kind === 'Link' && block.source?.url) ? block.source.url : arenaUrl;
+  titleLink.target = '_blank';
+  titleLink.rel = 'noopener';
+  titleLink.textContent = block.title || block.generated_title || '(untitled)';
+  titleWrap.appendChild(titleLink);
+  body.appendChild(titleWrap);
+
+  let excerpt = '';
+  if (kind === 'Text') {
+    excerpt = getTextExcerpt(block);
+  } else if (kind === 'Link' && block.source?.url) {
+    try { excerpt = new URL(block.source.url).hostname.replace('www.', ''); } catch {}
+  } else if (kind === 'Attachment' && block.attachment?.filename) {
+    excerpt = block.attachment.filename;
+  } else if (kind === 'Embed' && block.embed?.title) {
+    excerpt = block.embed.title;
+  }
+  if (excerpt) {
+    const desc = document.createElement('div');
+    desc.className = 'card-description';
+    desc.textContent = excerpt;
+    body.appendChild(desc);
+  }
+
+  const badge = document.createElement('span');
+  badge.className = 'card-type';
+  badge.textContent = kind.toLowerCase();
+  body.appendChild(badge);
+
+  card.appendChild(body);
+  return card;
+}
+
+function buildErrorCard(slug, message) {
+  const div = document.createElement('div');
+  div.className = 'error-card';
+  div.textContent = `"${slug}": ${message}`;
+  return div;
+}
+
+/* ── Data fetching ───────────────────────────────────────────────── */
+async function fetchChannelMeta(slug, headers) {
+  const res = await fetch(`${API}/channels/${slug}`, { headers });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.details?.message || `Board not found: "${slug}" (HTTP ${res.status})`);
+  }
+  return res.json();
+}
+
+async function fetchOneBlock(slug, total, headers) {
+  const page = Math.floor(Math.random() * total) + 1;
+  const res = await fetch(
+    `${API}/channels/${slug}/contents?per=1&page=${page}&sort=position_desc`,
+    { headers }
+  );
+  if (!res.ok) throw new Error(`Could not fetch block (HTTP ${res.status})`);
+  const data = await res.json();
+  return data.data?.[0] || null;
+}
+
+async function fetchRandomBlock(slug) {
+  const headers = { Authorization: `Bearer ${ARENA_CONFIG.token}` };
+  const channel = await fetchChannelMeta(slug, headers);
+  const total = channel.counts?.contents ?? 0;
+  if (!total) throw new Error(`Board is empty: "${slug}"`);
+
+  for (let attempt = 0; attempt < ARENA_CONFIG.maxRetries; attempt++) {
+    const block = await fetchOneBlock(slug, total, headers);
+    if (block && ARENA_CONFIG.allowedTypes.has(block.type)) {
+      return { block, boardTitle: channel.title, slug };
+    }
+  }
+  throw new Error(`Couldn't find an allowed block type after ${ARENA_CONFIG.maxRetries} tries. Check ALLOWED_TYPES in arena-config.js.`);
+}
+
+/* ── Shuffle ─────────────────────────────────────────────────────── */
+async function shuffle() {
+  const btn  = document.getElementById('shuffle-btn');
+  const grid = document.getElementById('grid');
+  btn.disabled = true;
+  btn.textContent = 'Loading…';
+
+  const allSlugs = ARENA_CONFIG.boards.filter(Boolean).slice(0, 4);
+
+  if (grid.children.length === 0) {
+    const results = await Promise.allSettled(allSlugs.map(fetchRandomBlock));
+    results.forEach((result, i) => {
+      grid.appendChild(
+        result.status === 'fulfilled'
+          ? buildCard(result.value, i)
+          : buildErrorCard(allSlugs[i], result.reason.message)
+      );
+    });
+  } else {
+    const cards = Array.from(grid.children);
+    const toRefresh = cards.filter(c => !c.classList.contains('is-locked'));
+    const results = await Promise.allSettled(
+      toRefresh.map(c => fetchRandomBlock(c.dataset.slug))
+    );
+    results.forEach((result, i) => {
+      const oldCard = toRefresh[i];
+      const index   = parseInt(oldCard.dataset.index, 10);
+      const slug    = oldCard.dataset.slug;
+      const newCard = result.status === 'fulfilled'
+        ? buildCard(result.value, index)
+        : buildErrorCard(slug, result.reason.message);
+      grid.replaceChild(newCard, oldCard);
+    });
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Shuffle ↻';
+}
+
+/* ── Markdown helpers ────────────────────────────────────────────── */
+// Sanitise a string for use in markdown alt text and headings.
+// Removes characters that break markdown parsing: square brackets,
+// backticks, and trims to a reasonable length.
+function mdSafe(str) {
+  return (str || '')
+    .replace(/[\[\]`]/g, '')
+    .replace(/[\n\r]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/* ── Save snapshot ───────────────────────────────────────────────────
+   Reads the current grid, builds a zip containing:
+     index.md  — YAML frontmatter + one ## section per card
+     images/   — fetched image/screenshot files (best-effort)
+────────────────────────────────────────────────────────────────────── */
+async function saveSnapshot() {
+  const btn  = document.getElementById('save-btn');
+  const grid = document.getElementById('grid');
+  const cards = Array.from(grid.children).filter(c => c.dataset.block);
+
+  if (cards.length === 0) {
+    alert('Nothing to save yet — load some cards first.');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+
+  const zip  = new JSZip();
+  const now  = new Date();
+  const ts   = now.toISOString();                                    // full ISO for YAML
+  const slug = now.toISOString().slice(0, 16).replace(/[:T]/g, '-'); // e.g. 2026-03-19-14-32
+  const folderName = `arena-picks-${slug}`;
+
+  // Collect card data and attempt image fetches in parallel
+  const cardData = cards.map((card, i) => {
+    const block      = JSON.parse(card.dataset.block);
+    const boardTitle = card.dataset.boardTitle;
+    const boardSlug  = card.dataset.slug;
+    const imgSrc     = getImageSrc(block);
+    const arenaUrl   = `https://www.are.na/block/${block.id}`;
+    // Use block.image.filename from the API — the signed CloudFront URLs contain
+    // base64 query params that break naive extension extraction by splitting on '.'
+    const apiFilename = block.image?.filename || block.attachment?.filename || null;
+    const ext = apiFilename ? (apiFilename.split('.').pop().toLowerCase() || 'jpg') : 'jpg';
+    const imgFilename = imgSrc ? `images/block-${block.id}.${ext}` : null;
+    return { block, boardTitle, boardSlug, imgSrc, imgFilename, arenaUrl, position: i + 1 };
+  });
+
+  // Fetch all images in parallel; null if unavailable or CORS-blocked
+  const imageBuffers = await Promise.all(
+    cardData.map(async ({ imgSrc }) => {
+      if (!imgSrc) return null;
+      try {
+        const res = await fetch(imgSrc);
+        if (!res.ok) return null;
+        return await res.arrayBuffer();
+      } catch {
+        return null; // CORS or network failure — degrade gracefully
+      }
+    })
+  );
+
+  // Add images to zip
+  cardData.forEach(({ imgFilename }, i) => {
+    if (imgFilename && imageBuffers[i]) {
+      zip.file(imgFilename, imageBuffers[i]);
+    }
+  });
+
+  // Build YAML frontmatter
+  const boardLines = [...new Set(cardData.map(d => `  - slug: ${d.boardSlug}\n    title: "${d.boardTitle}"`))]
+    .join('\n');
+  const blockIds = cardData.map(d => d.block.id).join(', ');
+
+  const frontmatter = `---
+saved: "${ts}"
+boards:
+${boardLines}
+block_ids: [${blockIds}]
+---
+
+`;
+
+  // Build one markdown section per card
+  const sections = cardData.map(({ block, boardTitle, boardSlug, imgSrc, imgFilename, arenaUrl, position }, i) => {
+    const kind    = block.type;
+    const title   = mdSafe(block.title || block.generated_title || '(untitled)');
+    const linkUrl = (kind === 'Link' && block.source?.url) ? block.source.url : arenaUrl;
+
+    const lines = [];
+    lines.push(`## ${position}. ${title}`);
+    lines.push('');
+    lines.push(`- **Board:** ${boardTitle} (\`${boardSlug}\`)`);
+    lines.push(`- **Type:** ${kind.toLowerCase()}`);
+    lines.push(`- **Are.na:** ${arenaUrl}`);
+
+    if (kind === 'Link' && block.source?.url) {
+      lines.push(`- **Source:** ${block.source.url}`);
+    }
+    if (kind === 'Attachment' && block.attachment?.url) {
+      lines.push(`- **File:** ${block.attachment.url}`);
+    }
+    if (kind === 'Embed' && block.embed?.source_url) {
+      lines.push(`- **Embed:** ${block.embed.source_url}`);
+    }
+
+    lines.push('');
+
+    // Image — local path if we got it, fallback to remote URL
+    if (imgFilename && imageBuffers[i]) {
+      lines.push(`![${title}](${imgFilename})`);
+    } else if (imgSrc) {
+      // Signed CDN URLs expire — link to the Are.na block page instead
+      lines.push(`![${title}](${arenaUrl})`);
+      lines.push('');
+      lines.push(`_Image could not be downloaded. View on Are.na: ${arenaUrl}_`);
+    }
+
+    // Text content
+    if (kind === 'Text') {
+      const text = getTextExcerpt(block);
+      if (text) {
+        lines.push('');
+        lines.push(text);
+      }
+    }
+
+    lines.push('');
+    lines.push('---');
+    lines.push('');
+
+    return lines.join('\n');
+  });
+
+  const markdown = frontmatter + sections.join('\n');
+  zip.file('index.md', markdown);
+
+  // Generate and trigger download
+  const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `${folderName}.zip`;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  btn.disabled = false;
+  btn.textContent = 'Save ↓';
+}
+
+/* ── Init ────────────────────────────────────────────────────────── */
+if (typeof ARENA_CONFIG === 'undefined') {
+  document.getElementById('grid').innerHTML =
+    '<div class="error-card" style="grid-column:1/-1">arena-config.js not found. Make sure it is in the same folder as this file.</div>';
+} else if (ARENA_CONFIG.token === 'PASTE_YOUR_TOKEN_HERE') {
+  document.getElementById('grid').innerHTML =
+    '<div class="error-card" style="grid-column:1/-1">Open arena-config.js and fill in your token and board slugs.<br><br>' +
+    'Get your token at: <a href="https://www.are.na/settings/personal-access-tokens" target="_blank">are.na/settings/personal-access-tokens</a></div>';
+} else {
+  shuffle();
+}
+
+document.getElementById('shuffle-btn').addEventListener('click', shuffle);
+document.getElementById('save-btn').addEventListener('click', saveSnapshot);
+</script>
+</body>
+</html>
