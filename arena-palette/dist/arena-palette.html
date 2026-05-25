@@ -5,10 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Are.na Palette</title>
 <!--
-  arena-palette v1.27
+  arena-palette v1.28
   ──────────────────────────────────────────────────────────────────
   Changelog:
 
+    v1.28 (2026-05-25) — Split export rgb + hsl into two separate files
+                         (export rgb → -rgb.txt, export hsl → -hsl.txt).
     v1.27 (2026-05-25) — Add extracted palette section (bar + legend)
                          between proportion bar and semantic bar.
     v1.26 (2026-05-25) — Unified swatchLabel across all exports: #hex Name
@@ -886,7 +888,7 @@
 
     <div class="sidebar-branding">
       <h1>are.na palette</h1>
-      <span class="version" aria-label="Version 1.27">v1.27</span>
+      <span class="version" aria-label="Version 1.28">v1.28</span>
     </div>
 
     <!-- Channels — collapsible, open by default, auto-closes on image load -->
@@ -1797,7 +1799,8 @@ function renderAnalysis(paletteData, swatchMap, nameMap) {
 
       <div class="export-bar" role="toolbar" aria-label="Export palette">
         <button class="btn-export" id="expHex"    aria-label="Export hex values as text file">export hex</button>
-        <button class="btn-export" id="expRgbHsl" aria-label="Export RGB and HSL values as text file">export rgb + hsl</button>
+        <button class="btn-export" id="expRgb"    aria-label="Export RGB values as text file">export rgb</button>
+        <button class="btn-export" id="expHsl"    aria-label="Export HSL values as text file">export hsl</button>
         <button class="btn-export" id="expCss"    aria-label="Export CSS custom properties">export css vars</button>
         <button class="btn-export" id="expScp"    aria-label="Export Simple Color Palette file">export .color-palette</button>
         <button class="btn-export" id="expAse"     aria-label="Export Adobe Swatch Exchange file">export .ase</button>
@@ -1889,7 +1892,8 @@ function renderAnalysis(paletteData, swatchMap, nameMap) {
   });
 
   document.getElementById('expHex').addEventListener('click',    () => exportHex(palette));
-  document.getElementById('expRgbHsl').addEventListener('click', () => exportRgbHsl(palette));
+  document.getElementById('expRgb').addEventListener('click',    () => exportRgb(palette));
+  document.getElementById('expHsl').addEventListener('click',    () => exportHsl(palette));
   document.getElementById('expCss').addEventListener('click',    () => exportCss(palette));
   document.getElementById('expScp').addEventListener('click',    () => exportScp(palette));
   document.getElementById('expAse').addEventListener('click',     () => exportAse(palette));
@@ -2008,7 +2012,7 @@ function exportHex(palette) {
   downloadText(out.join('\n'), `${exportSlug()}-hex.txt`);
 }
 
-function exportRgbHsl(palette) {
+function exportRgb(palette) {
   const out = [exportHeader()];
 
   // 1. Palette
@@ -2017,8 +2021,7 @@ function exportRgbHsl(palette) {
     const hex  = rgbToHex(rgb);
     const name = currentColorNames[hex.toLowerCase()];
     const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
-    const [h,s,l] = rgbToHsl(rgb);
-    out.push(`/* ${swatchLabel(hex, name, pct || null)} */\nrgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})  hsl(${h}, ${s}%, ${l}%)\n`);
+    out.push(`/* ${swatchLabel(hex, name, pct || null)} */\nrgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})\n`);
   });
 
   // 2. Semantic palette
@@ -2026,9 +2029,8 @@ function exportRgbHsl(palette) {
     out.push('/* Semantic palette */\n');
     currentSwatchData.forEach(({ role, hex, proportion }) => {
       const rgb = hexToRgb(hex);
-      const [h,s,l] = rgbToHsl(rgb);
       const pct = Math.round((proportion ?? 0) * 100);
-      out.push(`/* ${swatchLabel(hex, role, pct || null)} */\nrgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})  hsl(${h}, ${s}%, ${l}%)\n`);
+      out.push(`/* ${swatchLabel(hex, role, pct || null)} */\nrgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})\n`);
     });
   }
 
@@ -2038,23 +2040,69 @@ function exportRgbHsl(palette) {
     const hex  = rgbToHex(rgb);
     const name = currentColorNames[hex.toLowerCase()];
     const { tints, shades } = makeTintsShades(rgb);
-    out.push(`/* ${swatchLabel(hex, name)} */`); // block header
+    out.push(`/* ${swatchLabel(hex, name)} */`);
     tints.forEach((c, ti) => {
       const th = rgbToHex(c);
-      const [h,s,l] = rgbToHsl(c);
-      out.push(`/* ${swatchLabel(th, name, null, `tint ${TINT_STEPS - ti}`)} */\nrgb(${c[0]}, ${c[1]}, ${c[2]})  hsl(${h}, ${s}%, ${l}%)`);
+      out.push(`/* ${swatchLabel(th, name, null, `tint ${TINT_STEPS - ti}`)} */\nrgb(${c[0]}, ${c[1]}, ${c[2]})`);
     });
-    const [bh,bs,bl] = rgbToHsl(rgb);
-    out.push(`/* ${swatchLabel(hex, name)} */\nrgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})  hsl(${bh}, ${bs}%, ${bl}%)`);
+    out.push(`/* ${swatchLabel(hex, name)} */\nrgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`);
     shades.forEach((c, si) => {
       const sh = rgbToHex(c);
-      const [h,s,l] = rgbToHsl(c);
-      out.push(`/* ${swatchLabel(sh, name, null, `shade ${si + 1}`)} */\nrgb(${c[0]}, ${c[1]}, ${c[2]})  hsl(${h}, ${s}%, ${l}%)`);
+      out.push(`/* ${swatchLabel(sh, name, null, `shade ${si + 1}`)} */\nrgb(${c[0]}, ${c[1]}, ${c[2]})`);
     });
     out.push('');
   });
 
-  downloadText(out.join('\n'), `${exportSlug()}-rgb-hsl.txt`);
+  downloadText(out.join('\n'), `${exportSlug()}-rgb.txt`);
+}
+
+function exportHsl(palette) {
+  const out = [exportHeader()];
+
+  // 1. Palette
+  out.push('/* Palette */\n');
+  palette.forEach((rgb, i) => {
+    const hex  = rgbToHex(rgb);
+    const name = currentColorNames[hex.toLowerCase()];
+    const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
+    const [h,s,l] = rgbToHsl(rgb);
+    out.push(`/* ${swatchLabel(hex, name, pct || null)} */\nhsl(${h}, ${s}%, ${l}%)\n`);
+  });
+
+  // 2. Semantic palette
+  if (currentSwatchData.length) {
+    out.push('/* Semantic palette */\n');
+    currentSwatchData.forEach(({ role, hex, proportion }) => {
+      const rgb = hexToRgb(hex);
+      const [h,s,l] = rgbToHsl(rgb);
+      const pct = Math.round((proportion ?? 0) * 100);
+      out.push(`/* ${swatchLabel(hex, role, pct || null)} */\nhsl(${h}, ${s}%, ${l}%)\n`);
+    });
+  }
+
+  // 3. Tints and Shades
+  out.push('/* Tints and Shades */\n');
+  palette.forEach((rgb) => {
+    const hex  = rgbToHex(rgb);
+    const name = currentColorNames[hex.toLowerCase()];
+    const { tints, shades } = makeTintsShades(rgb);
+    out.push(`/* ${swatchLabel(hex, name)} */`);
+    tints.forEach((c, ti) => {
+      const th = rgbToHex(c);
+      const [h,s,l] = rgbToHsl(c);
+      out.push(`/* ${swatchLabel(th, name, null, `tint ${TINT_STEPS - ti}`)} */\nhsl(${h}, ${s}%, ${l}%)`);
+    });
+    const [bh,bs,bl] = rgbToHsl(rgb);
+    out.push(`/* ${swatchLabel(hex, name)} */\nhsl(${bh}, ${bs}%, ${bl}%)`);
+    shades.forEach((c, si) => {
+      const sh = rgbToHex(c);
+      const [h,s,l] = rgbToHsl(c);
+      out.push(`/* ${swatchLabel(sh, name, null, `shade ${si + 1}`)} */\nhsl(${h}, ${s}%, ${l}%)`);
+    });
+    out.push('');
+  });
+
+  downloadText(out.join('\n'), `${exportSlug()}-hsl.txt`);
 }
 
 function exportCss(palette) {
