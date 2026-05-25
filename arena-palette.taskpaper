@@ -1,52 +1,48 @@
 arena-palette todos:
+
 Immediate - do first:
 	- Fix cache-bust on repeated thumbnail clicks (?t= param causes re-fetch from Are.na) @tag(bug)
 	- Extract shared/arena-api.js utility module (Are.na API helpers, reusable across tools)
+	- fix issue with names having been stripped in last update.
 Layout and design:
-		- Investigate spacing "funkiness" at certain breakpoints @tag(bug)
-		- move extract settings below image?
-		- make swatches square
-		- review overall layout / design
-		- move to claude code
-		- Consider light/dark mode toggle (colour system designed for it, toggle not yet built)
-			- dark / mid / light mode
-		- redo output stuff - all colours, make it square @done(2026-04-18)
-		- work out what would need to change to publish this online
-			- auth?
-			- secret keys?
-		- general - CSS kit for standard styling of my stuff
-Rework credit block:
-		- reorder the credit block
-			Vanitas by Louise Giovanelli | White Cube
-			view on are.na ↗
-			via
-			kim-plowright
-			source
-			Vanitas by Louise Giovanelli | White Cube
-			accessed 2 September 2025
+	- decent CSS! How can I make it better?
+	- Investigate spacing "funkiness" at certain breakpoints @tag(bug)
+	- move extract settings below image?
+	- make swatches square
+	- review overall layout / design
+	- move to claude code
+	- Consider light/dark mode toggle (colour system designed for it, toggle not yet built)
+		- dark / mid / light mode
+	- general - CSS kit for standard styling of my stuff
 Grid and image handling:
 		- Add per-slot refresh button (re-fetch a single grid image without clearing all 9) @priority(2)
 		- Add per-slot lock (preserve an image across re-fetches, like arena-picks) @priority(2)
-		- Auto-strip full Are.na URLs pasted as channel slugs (e.g. are.na/kim/my-channel → my-channel) @priority(2)
 		- add a 'block' section that just takes the URL of an image block
 		- Cache fetched images by URL to avoid re-fetching on repeated thumbnail clicks @priority(3)
 		- use blurhash somehow? https://github.com/woltapp/blurhash its in the api return. 
 Colour picking and editing:
-		- Revisit RampenSau tints/shades if a suitable approach emerges (deferred - results unsatisfactory)
-		- Draggable colour pickers on the image (circles on canvas, repositionable) — new chat @priority(2)
+	- https://tineye.com/labs/multicolr add ability to pass colours and percentages to Tin Eye Multicolor search @date(2026-04-30)
+	- and behance https://www.behance.net/search/projects/poster?tracking_source=typeahead_search_direct&color_hex=0D719C @date(2026-04-30)
+	- https://www.designspiration.com/search/saves/?q=%23ff7651%20%23006c67&qa=typed&term_meta%5B%5D=%23ff7651%7Ctyped%7Ccolor%7C0&term_meta%5B%5D=%23006c67%7Ctyped%7Ccolor%7C1 also Designspriation search (any more?) @date(2026-04-30)
+	- set up ability to edit and pick a colour
+	- look for alternative ways of picking colours
+	- https://colorjs.io/ or culori? @date(2026-05-01)
+	- Revisit RampenSau tints/shades if a suitable approach emerges (deferred - results unsatisfactory)
+	- Draggable colour pickers on the image (circles on canvas, repositionable) — new chat @priority(2)
 			Note: Color Thief does not return pixel positions, so initial circle placement will be approximate
 			- On drag release, sample pixel colour at new position and re-run extraction from that point
-		- Integrate RampenSau hue-shifted tints/shades as an alternative to plain HSL scaling — new chat @priority(2)
+	- Integrate RampenSau hue-shifted tints/shades as an alternative to plain HSL scaling — new chat @priority(2)
 			- Prototype exists — needs real image testing before committing
 			- Key parameter: hCycles controls hue drift across the ramp
-		- https://img-colors.com/ - INVESTIGATE OTHER algorithms for colour picking.
+	- https://img-colors.com/ - INVESTIGATE OTHER algorithms for colour picking.
 	- https://img-colors.com/docs
+	- any ideas for improving code from here? https://dev.to/linmingren/building-a-browser-based-image-color-palette-extractor-a-deep-dive-into-pure-frontend-2gap
 		
 Export:
+		- does https://gist.github.com/eip/3837dfdaeb0326d44cf60c65f59e74c2 give us enough JS to create CLR files?
 		- Implement PNG export: E and F layouts in canvas (replacing current basic export)
 		- Embed PNG metadata (tEXt/iTXt chunks: title, source URL, channel, extraction date)
 		- Add colour sort (hue order, light→dark) before rendering
-		- Include semantic palette colours in hex/CSS/SCP exports @priority(3)
 		- Add copy-all button for semantic palette hex values @priority(3)
 		- Review export PNG layout @priority(3)
 		- Pipe in to https://themer.dev/ to output themes for software
@@ -65,6 +61,20 @@ Files In Git:
 	
 
 Archive:
+	- redo output stuff - all colours, make it square @done(2026-04-18) @project(Layout and design)
+	- work out what would need to change to publish this online @done(2026-05-25) @project(Layout and design)
+		- auth? @done(2026-05-25)
+		- secret keys? @done(2026-05-25)
+	- reorder the credit block @done(2026-05-25) @project(Rework credit block)
+			Vanitas by Louise Giovanelli | White Cube
+			view on are.na ↗
+			via
+			kim-plowright
+			source
+			Vanitas by Louise Giovanelli | White Cube
+			accessed 2 September 2025
+	- Auto-strip full Are.na URLs pasted as channel slugs (e.g. are.na/kim/my-channel → my-channel) @done(2026-05-25) @project(Grid and image handling)
+	- Include semantic palette colours in hex/CSS/SCP exports @done(2026-05-25) @project(Export)
 	✔ Set up git repository for arena-palette @done (26-04-13 10:16) @project(arena-palette todos / Immediate - do first)
 	✔ Write concat build script (Python or shell, no npm) to assemble HTML from separate CSS/JS/HTML source files @done (26-04-13 20:53) @project(arena-palette todos / Immediate - do first)
 	✔ Decide on source file structure (e.g. src/style.css, src/main.js, src/index.html) @done (26-04-13 20:53) @project(arena-palette todos / Immediate - do first)
