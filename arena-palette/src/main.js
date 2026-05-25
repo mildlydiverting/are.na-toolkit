@@ -876,6 +876,9 @@ function renderAnalysis(paletteData, swatchMap, nameMap) {
   document.getElementById('expRgbHsl').addEventListener('click', () => exportRgbHsl(palette));
   document.getElementById('expCss').addEventListener('click',    () => exportCss(palette));
   document.getElementById('expScp').addEventListener('click',    () => exportScp(palette));
+  document.getElementById('expAse').addEventListener('click',     () => exportAse(palette));
+  document.getElementById('expGpl').addEventListener('click',     () => exportGpl(palette));
+  document.getElementById('expPalette').addEventListener('click', () => exportProcreatePalette(palette));
   document.getElementById('expPngBars').addEventListener('click',   () => exportPngBars());
   document.getElementById('expPngDots').addEventListener('click',   () => exportPngDots(false));
   document.getElementById('expPngDotsBg').addEventListener('click', () => exportPngDots(true));
