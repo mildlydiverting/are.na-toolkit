@@ -884,7 +884,7 @@
           + add channel
         </button>
         <div class="token-row">
-          <label for="tokenInput">Access token</label>
+          <label for="tokenInput">Are.na Access token</label>
           <input
             type="password"
             id="tokenInput"
@@ -893,7 +893,7 @@
             autocomplete="off"
             aria-describedby="tokenHint"
           />
-          <span id="tokenHint">Only needed for private channels</span>
+          <span id="tokenHint">Only needed for private channels. Only needs READ access, and is stored in your browser's local storage. <a href="https://www.are.na/developers/personal-access-tokens">Get one on are.na</a></span>
         </div>
         <div class="fetch-row">
           <button class="btn-fetch" id="btnFetch">Fetch images</button>
@@ -1744,6 +1744,9 @@ function renderAnalysis(paletteData, swatchMap, nameMap) {
         <button class="btn-export" id="expRgbHsl" aria-label="Export RGB and HSL values as text file">export rgb + hsl</button>
         <button class="btn-export" id="expCss"    aria-label="Export CSS custom properties">export css vars</button>
         <button class="btn-export" id="expScp"    aria-label="Export Simple Color Palette file">export .color-palette</button>
+        <button class="btn-export" id="expAse"     aria-label="Export Adobe Swatch Exchange file">export .ase</button>
+        <button class="btn-export" id="expGpl"     aria-label="Export GIMP palette file">export .gpl</button>
+        <button class="btn-export" id="expPalette" aria-label="Export Procreate palette file">export .palette</button>
         <div class="export-png-group" role="group" aria-label="Export PNG">
           <span class="export-png-label">png:</span>
           <button class="btn-export" id="expPngBars"         aria-label="Export reference card PNG (bars layout)">bars</button>
@@ -1828,6 +1831,9 @@ function renderAnalysis(paletteData, swatchMap, nameMap) {
   document.getElementById('expRgbHsl').addEventListener('click', () => exportRgbHsl(palette));
   document.getElementById('expCss').addEventListener('click',    () => exportCss(palette));
   document.getElementById('expScp').addEventListener('click',    () => exportScp(palette));
+  document.getElementById('expAse').addEventListener('click',     () => exportAse(palette));
+  document.getElementById('expGpl').addEventListener('click',     () => exportGpl(palette));
+  document.getElementById('expPalette').addEventListener('click', () => exportProcreatePalette(palette));
   document.getElementById('expPngBars').addEventListener('click',   () => exportPngBars());
   document.getElementById('expPngDots').addEventListener('click',   () => exportPngDots(false));
   document.getElementById('expPngDotsBg').addEventListener('click', () => exportPngDots(true));
@@ -1840,6 +1846,16 @@ function downloadText(content, filename) {
   a.download = filename;
   a.click();
 }
+
+function downloadBinary(buffer, filename) {
+  const blob = new Blob([buffer], { type: 'application/octet-stream' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
 
 function slugName() {
   return currentImageObj ? currentImageObj.channel : 'palette';
@@ -1969,6 +1985,234 @@ function exportScp(palette) {
     semanticColors,
   };
   downloadText(JSON.stringify(payload, null, 2), `${exportSlug()}.color-palette`);
+}
+
+// ── EXPORT — ASE (Adobe Swatch Exchange) ──────────────────────────────────────
+function exportAse(palette) {
+  // ASE binary format — big-endian throughout
+  // Spec: https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/
+
+  function writeUTF16BE(str) {
+    // null-terminated UTF-16BE string, length-prefixed (uint16 = char count + 1)
+    const len = str.length + 1;
+    const buf = new ArrayBuffer(2 + len * 2);
+    const view = new DataView(buf);
+    view.setUint16(0, len, false);
+    for (let i = 0; i < str.length; i++) {
+      view.setUint16(2 + i * 2, str.charCodeAt(i), false);
+    }
+    view.setUint16(2 + str.length * 2, 0, false); // null terminator
+    return buf;
+  }
+
+  function colourBlock(name, rgb) {
+    // Block type 0x0001 = colour entry
+    const nameBuffer   = writeUTF16BE(name);
+    const modelBuffer  = new TextEncoder().encode('RGB '); // 4 bytes
+    const valBuffer    = new ArrayBuffer(12); // 3× float32
+    const valView      = new DataView(valBuffer);
+    valView.setFloat32(0, rgb[0] / 255, false);
+    valView.setFloat32(4, rgb[1] / 255, false);
+    valView.setFloat32(8, rgb[2] / 255, false);
+    const typeBuffer   = new ArrayBuffer(2);
+    new DataView(typeBuffer).setUint16(0, 0, false); // 0 = global
+
+    const bodyLen = nameBuffer.byteLength + 4 + 12 + 2;
+    const header  = new ArrayBuffer(6);
+    const hv      = new DataView(header);
+    hv.setUint16(0, 0x0001, false); // block type: colour
+    hv.setUint32(2, bodyLen, false);
+
+    return [header, nameBuffer, modelBuffer, valBuffer, typeBuffer];
+  }
+
+  function groupStartBlock(name) {
+    const nameBuffer = writeUTF16BE(name);
+    const header     = new ArrayBuffer(6);
+    const hv         = new DataView(header);
+    hv.setUint16(0, 0xC001, false); // group start
+    hv.setUint32(2, nameBuffer.byteLength, false);
+    return [header, nameBuffer];
+  }
+
+  function groupEndBlock() {
+    const buf = new ArrayBuffer(6);
+    const view = new DataView(buf);
+    view.setUint16(0, 0xC002, false); // group end
+    view.setUint32(2, 0, false);
+    return [buf];
+  }
+
+  function swatchName(label, hex, pct) {
+    const name = currentColorNames[hex.toLowerCase()];
+    const base = name ? `${name} — ${hex}` : hex;
+    return pct != null ? `${base} — ${pct}%` : base;
+  }
+
+  // Assemble blocks
+  const blocks = [];
+  let blockCount = 0;
+
+  palette.forEach((rgb, i) => {
+    const baseHex  = rgbToHex(rgb);
+    const baseName = currentColorNames[baseHex.toLowerCase()];
+    const groupName = baseName ? `${baseName} — ${baseHex}` : `Colour ${i + 1} — ${baseHex}`;
+    const pct = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
+
+    blocks.push(...groupStartBlock(groupName));
+    blockCount++;
+
+    const { tints, shades } = makeTintsShades(rgb);
+    // tints: lightest first from makeTintsShades — label tint 3, 2, 1
+    tints.forEach((c, ti) => {
+      const h = rgbToHex(c);
+      blocks.push(...colourBlock(swatchName(`tint ${TINT_STEPS - ti}`, h, null), c));
+      blockCount++;
+    });
+
+    // base colour
+    blocks.push(...colourBlock(swatchName('base', baseHex, pct || null), rgb));
+    blockCount++;
+
+    shades.forEach((c, si) => {
+      const h = rgbToHex(c);
+      blocks.push(...colourBlock(swatchName(`shade ${si + 1}`, h, null), c));
+      blockCount++;
+    });
+
+    blocks.push(...groupEndBlock());
+    blockCount++;
+  });
+
+  // Semantic group
+  if (currentSwatchData.length) {
+    blocks.push(...groupStartBlock('Semantic palette'));
+    blockCount++;
+    currentSwatchData.forEach(({ role, hex, proportion }) => {
+      const pct = Math.round((proportion ?? 0) * 100);
+      blocks.push(...colourBlock(swatchName(role, hex, pct || null), hexToRgb(hex)));
+      blockCount++;
+    });
+    blocks.push(...groupEndBlock());
+    blockCount++;
+  }
+
+  // File header: magic + version + block count
+  const magic   = new TextEncoder().encode('ASEF');
+  const fileHdr = new ArrayBuffer(8);
+  const fhv     = new DataView(fileHdr);
+  fhv.setUint16(0, 1, false); // version major
+  fhv.setUint16(2, 0, false); // version minor
+  fhv.setUint32(4, blockCount, false);
+
+  // Concatenate all buffers
+  const all    = [magic, fileHdr, ...blocks];
+  const total  = all.reduce((n, b) => n + b.byteLength, 0);
+  const out    = new Uint8Array(total);
+  let offset   = 0;
+  all.forEach(b => {
+    out.set(new Uint8Array(b), offset);
+    offset += b.byteLength;
+  });
+
+  downloadBinary(out.buffer, `${exportSlug()}.ase`);
+}
+
+// ── EXPORT — GPL (GIMP palette) ───────────────────────────────────────────────
+function exportGpl(palette) {
+  const title = currentImageObj?.title || exportSlug();
+  const lines = [
+    'GIMP Palette',
+    `Name: ${title}`,
+    `Columns: ${1 + TINT_STEPS + SHADE_STEPS}`,
+    '#',
+  ];
+
+  palette.forEach((rgb, i) => {
+    const baseHex  = rgbToHex(rgb);
+    const name     = currentColorNames[baseHex.toLowerCase()];
+    const label    = name ? `${name} — ${baseHex}` : `Colour ${i + 1} — ${baseHex}`;
+    const pct      = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
+    lines.push(`# ${label}${pct ? ` — ${pct}%` : ''}`);
+
+    const { tints, shades } = makeTintsShades(rgb);
+    tints.forEach((c, ti) => {
+      const tLabel = name ? `${name} tint ${TINT_STEPS - ti}` : `Colour ${i+1} tint ${TINT_STEPS - ti}`;
+      lines.push(`${c[0]}\t${c[1]}\t${c[2]}\t${tLabel}`);
+    });
+    lines.push(`${rgb[0]}\t${rgb[1]}\t${rgb[2]}\t${label}`);
+    shades.forEach((c, si) => {
+      const sLabel = name ? `${name} shade ${si + 1}` : `Colour ${i+1} shade ${si + 1}`;
+      lines.push(`${c[0]}\t${c[1]}\t${c[2]}\t${sLabel}`);
+    });
+  });
+
+  if (currentSwatchData.length) {
+    lines.push('# Semantic palette');
+    currentSwatchData.forEach(({ role, hex, proportion }) => {
+      const rgb = hexToRgb(hex);
+      const pct = Math.round((proportion ?? 0) * 100);
+      const label = `${role} — ${hex}${pct ? ` — ${pct}%` : ''}`;
+      lines.push(`${rgb[0]}\t${rgb[1]}\t${rgb[2]}\t${label}`);
+    });
+  }
+
+  downloadText(lines.join('\n'), `${exportSlug()}.gpl`);
+}
+
+// ── EXPORT — Procreate .palette ───────────────────────────────────────────────
+function exportProcreatePalette(palette) {
+  // Procreate palette JSON: array of up to 30 colour objects
+  // Each: { name, hue, saturation, brightness, alpha } — all floats 0–1 (HSB)
+  // Unfilled slots must be null
+
+  function rgbToHsb([r, g, b]) {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    const d = max - min;
+    let h = 0;
+    if (d !== 0) {
+      switch (max) {
+        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+        case g: h = ((b - r) / d + 2) / 6; break;
+        case b: h = ((r - g) / d + 4) / 6; break;
+      }
+    }
+    return [h, max === 0 ? 0 : d / max, max];
+  }
+
+  function makeEntry(rgb, name) {
+    const [h, s, b] = rgbToHsb(rgb);
+    return { name, hue: h, saturation: s, brightness: b, alpha: 1 };
+  }
+
+  const swatches = [];
+
+  palette.forEach((rgb, i) => {
+    const baseHex = rgbToHex(rgb);
+    const name    = currentColorNames[baseHex.toLowerCase()];
+    const label   = name || `Colour ${i + 1}`;
+    const { tints, shades } = makeTintsShades(rgb);
+
+    tints.forEach((c, ti) => {
+      swatches.push(makeEntry(c, `${label} tint ${TINT_STEPS - ti}`));
+    });
+    swatches.push(makeEntry(rgb, label));
+    shades.forEach((c, si) => {
+      swatches.push(makeEntry(c, `${label} shade ${si + 1}`));
+    });
+  });
+
+  currentSwatchData.forEach(({ role, hex }) => {
+    swatches.push(makeEntry(hexToRgb(hex), role));
+  });
+
+  // Pad or truncate to exactly 30
+  const MAX = 30;
+  const trimmed = swatches.slice(0, MAX);
+  while (trimmed.length < MAX) trimmed.push(null);
+
+  downloadText(JSON.stringify(trimmed, null, 2), `${exportSlug()}.palette`);
 }
 
 
