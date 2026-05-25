@@ -792,6 +792,9 @@ function renderAnalysis(paletteData, swatchMap, nameMap) {
         <button class="btn-export" id="expRgbHsl" aria-label="Export RGB and HSL values as text file">export rgb + hsl</button>
         <button class="btn-export" id="expCss"    aria-label="Export CSS custom properties">export css vars</button>
         <button class="btn-export" id="expScp"    aria-label="Export Simple Color Palette file">export .color-palette</button>
+        <button class="btn-export" id="expAse"     aria-label="Export Adobe Swatch Exchange file">export .ase</button>
+        <button class="btn-export" id="expGpl"     aria-label="Export GIMP palette file">export .gpl</button>
+        <button class="btn-export" id="expPalette" aria-label="Export Procreate palette file">export .palette</button>
         <div class="export-png-group" role="group" aria-label="Export PNG">
           <span class="export-png-label">png:</span>
           <button class="btn-export" id="expPngBars"         aria-label="Export reference card PNG (bars layout)">bars</button>
