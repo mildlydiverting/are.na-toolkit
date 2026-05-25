@@ -409,15 +409,15 @@ function renderImagePanel(imgObj) {
       </div>
       <figcaption class="image-meta">
         ${imgObj.title ? `<div class="image-meta-row"><strong>${escapeHtml(imgObj.title)}</strong></div>` : ''}
+        ${descHtml}
+        ${sourceHtml}
+        ${viaHtml}
         <div class="image-meta-row">
           <a href="${imgObj.blockUrl}" target="_blank" rel="noopener"
             aria-label="View ${imgObj.title ? escapeHtml(imgObj.title) : 'this image'} on Are.na (opens in new tab)">
             view on are.na ↗
           </a>
         </div>
-        ${sourceHtml}
-        ${descHtml}
-        ${viaHtml}
       </figcaption>
     </figure>
   `;
@@ -684,6 +684,38 @@ function renderAnalysis(paletteData, swatchMap, nameMap) {
     }</div>
   </div>`;
 
+  // Extracted palette section — same structure as semantic, sits between prop bar and semantic
+  const paletteSectionHtml = (() => {
+    const items = applyFloor(
+      paletteData.map(({ rgb, proportion }) => ({ hex: rgbToHex(rgb), tc: textColour(rgb), proportion })),
+      0.01
+    );
+    const segments = items.map(({ hex, tc, proportion }) => {
+      const pct = Math.round(proportion * 100);
+      return `<div class="semantic-segment"
+        style="flex:${proportion};background:${hex}"
+        title="${hex} · ${pct}%"
+        aria-label="${hex}: ${pct}%">
+        <span class="semantic-segment-label" style="color:${tc}" aria-hidden="true">${pct > 8 ? pct + '%' : ''}</span>
+      </div>`;
+    }).join('');
+    const legend = paletteData.map(({ rgb }) => {
+      const hex  = rgbToHex(rgb);
+      const name = nameMap[hex.toLowerCase()];
+      return `<button class="semantic-legend-item"
+        onclick="navigator.clipboard.writeText('${hex}').catch(()=>{})"
+        aria-label="Copy ${name ? name + ' ' : ''}${hex} to clipboard">
+        <span class="semantic-legend-dot" style="background:${hex}" aria-hidden="true"></span>
+        <span>${name ? `${name} · ${hex}` : hex}</span>
+      </button>`;
+    }).join('');
+    return `<div class="semantic-section">
+      <div class="semantic-label" id="palette-section-label">extracted palette</div>
+      <div class="semantic-bar" role="img" aria-labelledby="palette-section-label">${segments}</div>
+      <div class="semantic-legend" role="list">${legend}</div>
+    </div>`;
+  })();
+
   // Colour rows
   const rows = paletteData.map(({ rgb, proportion }, i) => {
     const { tints, shades } = makeTintsShades(rgb);
@@ -785,6 +817,7 @@ function renderAnalysis(paletteData, swatchMap, nameMap) {
       </div>
 
       ${mainPropBar}
+      ${paletteSectionHtml}
       ${semanticBarHtml}
 
       <div class="export-bar" role="toolbar" aria-label="Export palette">
@@ -931,6 +964,22 @@ function colourTitle(index, hex) {
     : `Colour ${index + 1} — ${hex}`;
 }
 
+// Consistent label: #hex [Name] [(xx%)] [tint N / shade N]
+// Pass null/undefined for fields to omit.
+function swatchLabel(hex, name, pct, suffix) {
+  const parts = [hex];
+  if (name) parts.push(name);
+  if (pct != null) parts.push(`(${pct}%)`);
+  if (suffix) parts.push(suffix);
+  return parts.join(' ');
+}
+
+// CSS variable name slug: "Warm Cinnabar" → "warm-cinnabar"
+function cssSlug(name, fallback) {
+  if (!name) return fallback;
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || fallback;
+}
+
 function exportHeader() {
   const title = currentImageObj?.title || '';
   const url   = currentImageObj?.blockUrl || '';
@@ -942,100 +991,184 @@ function exportHeader() {
 }
 
 function exportHex(palette) {
-  const lines = palette.map((rgb, i) => {
-    const { tints, shades } = makeTintsShades(rgb);
-    const all = [...tints, rgb, ...shades];
-    return `/* ${colourTitle(i, rgbToHex(rgb))} */\n` + all.map(c => rgbToHex(c)).join('\n');
-  });
+  const out = [exportHeader()];
 
-  const semLines = currentSwatchData.map(({ role, hex }) =>
-    `/* ${role} */\n${hex}`
-  );
-
-  downloadText(
-    exportHeader()
-    + lines.join('\n\n')
-    + (semLines.length ? '\n\n/* Semantic palette */\n' + semLines.join('\n\n') : ''),
-    `${exportSlug()}-hex.txt`
-  );
-}
-
-function exportRgbHsl(palette) {
-  const lines = palette.map((rgb, i) => {
-    const { tints, shades } = makeTintsShades(rgb);
-    const all = [...tints, rgb, ...shades].map((c, si) => {
-      const hex = rgbToHex(c);
-      const [h,s,l] = rgbToHsl(c);
-      const label = si < TINT_STEPS ? `tint ${TINT_STEPS - si}` : si === TINT_STEPS ? 'base' : `shade ${si - TINT_STEPS}`;
-      return `  ${label.padEnd(8)} ${hex}  rgb(${c[0]}, ${c[1]}, ${c[2]})  hsl(${h}, ${s}%, ${l}%)`;
-    });
-    return `${colourTitle(i, rgbToHex(rgb))}\n${all.join('\n')}`;
-  });
-
-  const semLines = currentSwatchData.map(({ role, hex }) => {
-    const rgb = hexToRgb(hex);
-    const [h,s,l] = rgbToHsl(rgb);
-    return `${role}\n  base     ${hex}  rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})  hsl(${h}, ${s}%, ${l}%)`;
-  });
-
-  downloadText(
-    exportHeader()
-    + lines.join('\n\n')
-    + (semLines.length ? '\n\nSemantic palette\n' + semLines.join('\n\n') : ''),
-    `${exportSlug()}-rgb-hsl.txt`
-  );
-}
-
-function exportCss(palette) {
-  const varLines = [];
+  // 1. Palette
+  out.push('/* Palette */\n');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
     const name = currentColorNames[hex.toLowerCase()];
-    const { tints, shades } = makeTintsShades(rgb);
-    const all = [...tints, rgb, ...shades];
-    all.forEach((c, si) => {
-      const label = si < TINT_STEPS ? `tint-${TINT_STEPS - si}` : si === TINT_STEPS ? 'base' : `shade-${si - TINT_STEPS}`;
-      const [h,s,l] = rgbToHsl(c);
-      const comment = (si === TINT_STEPS && name) ? ` /* ${name} */` : '';
-      varLines.push(`  --color-${i+1}-${label}: hsl(${h}, ${s}%, ${l}%);${comment}`);
+    const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
+    out.push(`/* ${swatchLabel(hex, name, pct || null)} */\n${hex}\n`);
+  });
+
+  // 2. Semantic palette
+  if (currentSwatchData.length) {
+    out.push('/* Semantic palette */\n');
+    currentSwatchData.forEach(({ role, hex, proportion }) => {
+      const pct = Math.round((proportion ?? 0) * 100);
+      out.push(`/* ${swatchLabel(hex, role, pct || null)} */\n${hex}\n`);
     });
+  }
+
+  // 3. Tints and Shades
+  out.push('/* Tints and Shades */\n');
+  palette.forEach((rgb) => {
+    const hex  = rgbToHex(rgb);
+    const name = currentColorNames[hex.toLowerCase()];
+    const { tints, shades } = makeTintsShades(rgb);
+    out.push(`/* ${swatchLabel(hex, name)} */`); // block header
+    tints.forEach((c, ti) => {
+      const th = rgbToHex(c);
+      out.push(`/* ${swatchLabel(th, name, null, `tint ${TINT_STEPS - ti}`)} */\n${th}`);
+    });
+    out.push(`/* ${swatchLabel(hex, name)} */\n${hex}`);
+    shades.forEach((c, si) => {
+      const sh = rgbToHex(c);
+      out.push(`/* ${swatchLabel(sh, name, null, `shade ${si + 1}`)} */\n${sh}`);
+    });
+    out.push('');
   });
 
-  const semVarLines = currentSwatchData.map(({ role, hex }) => {
-    const rgb = hexToRgb(hex);
+  downloadText(out.join('\n'), `${exportSlug()}-hex.txt`);
+}
+
+function exportRgbHsl(palette) {
+  const out = [exportHeader()];
+
+  // 1. Palette
+  out.push('/* Palette */\n');
+  palette.forEach((rgb, i) => {
+    const hex  = rgbToHex(rgb);
+    const name = currentColorNames[hex.toLowerCase()];
+    const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
     const [h,s,l] = rgbToHsl(rgb);
-    const key = role.replace(/([A-Z])/g, '-$1').toLowerCase().replace(/^-/, '');
-    return `  --semantic-${key}: hsl(${h}, ${s}%, ${l}%);`;
+    out.push(`/* ${swatchLabel(hex, name, pct || null)} */\nrgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})  hsl(${h}, ${s}%, ${l}%)\n`);
   });
 
-  const header = `/*\n * ${currentImageObj?.title || 'arena-palette'}\n * Source: ${currentImageObj?.blockUrl || ''}\n */\n\n`;
-  const semBlock = semVarLines.length
-    ? `\n\n  /* semantic palette */\n${semVarLines.join('\n')}`
-    : '';
+  // 2. Semantic palette
+  if (currentSwatchData.length) {
+    out.push('/* Semantic palette */\n');
+    currentSwatchData.forEach(({ role, hex, proportion }) => {
+      const rgb = hexToRgb(hex);
+      const [h,s,l] = rgbToHsl(rgb);
+      const pct = Math.round((proportion ?? 0) * 100);
+      out.push(`/* ${swatchLabel(hex, role, pct || null)} */\nrgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})  hsl(${h}, ${s}%, ${l}%)\n`);
+    });
+  }
 
-  downloadText(
-    header + `:root {\n${varLines.join('\n')}${semBlock}\n}`,
-    `${exportSlug()}-vars.css`
-  );
+  // 3. Tints and Shades
+  out.push('/* Tints and Shades */\n');
+  palette.forEach((rgb) => {
+    const hex  = rgbToHex(rgb);
+    const name = currentColorNames[hex.toLowerCase()];
+    const { tints, shades } = makeTintsShades(rgb);
+    out.push(`/* ${swatchLabel(hex, name)} */`); // block header
+    tints.forEach((c, ti) => {
+      const th = rgbToHex(c);
+      const [h,s,l] = rgbToHsl(c);
+      out.push(`/* ${swatchLabel(th, name, null, `tint ${TINT_STEPS - ti}`)} */\nrgb(${c[0]}, ${c[1]}, ${c[2]})  hsl(${h}, ${s}%, ${l}%)`);
+    });
+    const [bh,bs,bl] = rgbToHsl(rgb);
+    out.push(`/* ${swatchLabel(hex, name)} */\nrgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})  hsl(${bh}, ${bs}%, ${bl}%)`);
+    shades.forEach((c, si) => {
+      const sh = rgbToHex(c);
+      const [h,s,l] = rgbToHsl(c);
+      out.push(`/* ${swatchLabel(sh, name, null, `shade ${si + 1}`)} */\nrgb(${c[0]}, ${c[1]}, ${c[2]})  hsl(${h}, ${s}%, ${l}%)`);
+    });
+    out.push('');
+  });
+
+  downloadText(out.join('\n'), `${exportSlug()}-rgb-hsl.txt`);
+}
+
+function exportCss(palette) {
+  const header = `/*\n * arena-palette export\n * ${currentImageObj?.title || ''}\n * ${currentImageObj?.blockUrl || ''}\n */\n\n`;
+  const varLines = [];
+
+  // 1. Palette — one var per base colour, named by slug
+  varLines.push('  /* Palette */');
+  palette.forEach((rgb, i) => {
+    const hex  = rgbToHex(rgb);
+    const name = currentColorNames[hex.toLowerCase()];
+    const slug = cssSlug(name, `color-${i + 1}`);
+    const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
+    const [h,s,l] = rgbToHsl(rgb);
+    varLines.push(`  --${slug}: hsl(${h}, ${s}%, ${l}%); /* ${swatchLabel(hex, null, pct || null)} */`);
+  });
+  varLines.push('');
+
+  // 2. Semantic palette
+  if (currentSwatchData.length) {
+    varLines.push('  /* Semantic palette */');
+    currentSwatchData.forEach(({ role, hex, proportion }) => {
+      const rgb = hexToRgb(hex);
+      const [h,s,l] = rgbToHsl(rgb);
+      const pct = Math.round((proportion ?? 0) * 100);
+      const key = role.replace(/([A-Z])/g, '-$1').toLowerCase().replace(/^-/, '');
+      varLines.push(`  --semantic-${key}: hsl(${h}, ${s}%, ${l}%); /* ${swatchLabel(hex, null, pct || null)} */`);
+    });
+    varLines.push('');
+  }
+
+  // 3. Tints & shades — --slug-tint-N / --slug-base / --slug-shade-N
+  varLines.push('  /* Tints & shades */');
+  palette.forEach((rgb, i) => {
+    const hex  = rgbToHex(rgb);
+    const name = currentColorNames[hex.toLowerCase()];
+    const slug = cssSlug(name, `color-${i + 1}`);
+    const { tints, shades } = makeTintsShades(rgb);
+    tints.forEach((c, ti) => {
+      const th = rgbToHex(c);
+      const [h,s,l] = rgbToHsl(c);
+      varLines.push(`  --${slug}-tint-${TINT_STEPS - ti}: hsl(${h}, ${s}%, ${l}%); /* ${th} */`);
+    });
+    const [bh,bs,bl] = rgbToHsl(rgb);
+    varLines.push(`  --${slug}-base: hsl(${bh}, ${bs}%, ${bl}%); /* ${hex} */`);
+    shades.forEach((c, si) => {
+      const sh = rgbToHex(c);
+      const [h,s,l] = rgbToHsl(c);
+      varLines.push(`  --${slug}-shade-${si + 1}: hsl(${h}, ${s}%, ${l}%); /* ${sh} */`);
+    });
+    varLines.push('');
+  });
+
+  while (varLines[varLines.length - 1] === '') varLines.pop();
+
+  downloadText(header + `:root {\n${varLines.join('\n')}\n}`, `${exportSlug()}-vars.css`);
 }
 
 function exportScp(palette) {
-  const colors = palette.map((rgb, i) => {
-    const [r,g,b] = rgb.map(v => parseFloat((v/255).toFixed(4)));
-    return { name: colourTitle(i, rgbToHex(rgb)), components: [r, g, b] };
+  const paletteEntries = palette.map((rgb, i) => {
+    const hex  = rgbToHex(rgb);
+    const name = currentColorNames[hex.toLowerCase()];
+    const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
+    return { hex, ...(name ? { name } : {}), ...(pct ? { proportion: pct / 100 } : {}) };
   });
 
-  const semanticColors = currentSwatchData.map(({ role, hex }) => {
-    const rgb = hexToRgb(hex);
-    const [r,g,b] = rgb.map(v => parseFloat((v/255).toFixed(4)));
-    return { name: role, hex, components: [r, g, b] };
+  const semanticEntries = currentSwatchData.map(({ role, hex, proportion }) => {
+    const pct = Math.round((proportion ?? 0) * 100);
+    return { role, hex, ...(pct ? { proportion: pct / 100 } : {}) };
+  });
+
+  const tintsShades = palette.map((rgb, i) => {
+    const hex  = rgbToHex(rgb);
+    const name = currentColorNames[hex.toLowerCase()];
+    const { tints, shades } = makeTintsShades(rgb);
+    return {
+      hex,
+      ...(name ? { name } : {}),
+      tints:  tints.map((c, ti) => ({ hex: rgbToHex(c), label: `tint ${TINT_STEPS - ti}` })),
+      shades: shades.map((c, si) => ({ hex: rgbToHex(c), label: `shade ${si + 1}` })),
+    };
   });
 
   const payload = {
-    name:           currentImageObj?.title || slugName(),
-    sourceUrl:      currentImageObj?.blockUrl || '',
-    colors,
-    semanticColors,
+    name:        currentImageObj?.title || slugName(),
+    sourceUrl:   currentImageObj?.blockUrl || '',
+    palette:     paletteEntries,
+    semantic:    semanticEntries,
+    tintsShades,
   };
   downloadText(JSON.stringify(payload, null, 2), `${exportSlug()}.color-palette`);
 }
@@ -1096,12 +1229,6 @@ function exportAse(palette) {
     return [buf];
   }
 
-  function swatchName(label, hex, pct) {
-    const name = currentColorNames[hex.toLowerCase()];
-    const base = name ? `${name} — ${hex}` : hex;
-    return pct != null ? `${base} — ${pct}%` : base;
-  }
-
   // Assemble blocks — order: base colours, semantic palette, tints/shades per colour
   const blocks = [];
   let blockCount = 0;
@@ -1110,9 +1237,10 @@ function exportAse(palette) {
   blocks.push(...groupStartBlock('Base colours'));
   blockCount++;
   palette.forEach((rgb, i) => {
-    const baseHex  = rgbToHex(rgb);
-    const pct = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
-    blocks.push(...colourBlock(swatchName(`colour ${i + 1}`, baseHex, pct || null), rgb));
+    const baseHex = rgbToHex(rgb);
+    const name    = currentColorNames[baseHex.toLowerCase()];
+    const pct     = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
+    blocks.push(...colourBlock(swatchLabel(baseHex, name, pct || null), rgb));
     blockCount++;
   });
   blocks.push(...groupEndBlock());
@@ -1124,7 +1252,7 @@ function exportAse(palette) {
     blockCount++;
     currentSwatchData.forEach(({ role, hex, proportion }) => {
       const pct = Math.round((proportion ?? 0) * 100);
-      blocks.push(...colourBlock(swatchName(role, hex, pct || null), hexToRgb(hex)));
+      blocks.push(...colourBlock(swatchLabel(hex, role, pct || null), hexToRgb(hex)));
       blockCount++;
     });
     blocks.push(...groupEndBlock());
@@ -1133,29 +1261,24 @@ function exportAse(palette) {
 
   // 3. Tints & shades per colour
   palette.forEach((rgb, i) => {
-    const baseHex  = rgbToHex(rgb);
-    const baseName = currentColorNames[baseHex.toLowerCase()];
-    const groupName = baseName ? `${baseName} — ${baseHex}` : `Colour ${i + 1} — ${baseHex}`;
-    const pct = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
+    const baseHex = rgbToHex(rgb);
+    const name    = currentColorNames[baseHex.toLowerCase()];
+    const pct     = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
 
-    blocks.push(...groupStartBlock(groupName));
+    blocks.push(...groupStartBlock(swatchLabel(baseHex, name)));
     blockCount++;
 
     const { tints, shades } = makeTintsShades(rgb);
-    // tints: lightest first from makeTintsShades — label tint 3, 2, 1
     tints.forEach((c, ti) => {
       const h = rgbToHex(c);
-      blocks.push(...colourBlock(swatchName(`tint ${TINT_STEPS - ti}`, h, null), c));
+      blocks.push(...colourBlock(swatchLabel(h, name, null, `tint ${TINT_STEPS - ti}`), c));
       blockCount++;
     });
-
-    // base colour
-    blocks.push(...colourBlock(swatchName('base', baseHex, pct || null), rgb));
+    blocks.push(...colourBlock(swatchLabel(baseHex, name, pct || null), rgb));
     blockCount++;
-
     shades.forEach((c, si) => {
       const h = rgbToHex(c);
-      blocks.push(...colourBlock(swatchName(`shade ${si + 1}`, h, null), c));
+      blocks.push(...colourBlock(swatchLabel(h, name, null, `shade ${si + 1}`), c));
       blockCount++;
     });
 
@@ -1197,11 +1320,10 @@ function exportGpl(palette) {
   // 1. Base colours
   lines.push('# Base colours');
   palette.forEach((rgb, i) => {
-    const baseHex = rgbToHex(rgb);
-    const name    = currentColorNames[baseHex.toLowerCase()];
-    const label   = name ? `${name} — ${baseHex}` : `Colour ${i + 1} — ${baseHex}`;
-    const pct     = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
-    lines.push(`${rgb[0]}\t${rgb[1]}\t${rgb[2]}\t${label}${pct ? ` — ${pct}%` : ''}`);
+    const hex  = rgbToHex(rgb);
+    const name = currentColorNames[hex.toLowerCase()];
+    const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
+    lines.push(`${rgb[0]}\t${rgb[1]}\t${rgb[2]}\t${swatchLabel(hex, name, pct || null)}`);
   });
 
   // 2. Semantic palette
@@ -1210,28 +1332,25 @@ function exportGpl(palette) {
     currentSwatchData.forEach(({ role, hex, proportion }) => {
       const rgb = hexToRgb(hex);
       const pct = Math.round((proportion ?? 0) * 100);
-      const label = `${role} — ${hex}${pct ? ` — ${pct}%` : ''}`;
-      lines.push(`${rgb[0]}\t${rgb[1]}\t${rgb[2]}\t${label}`);
+      lines.push(`${rgb[0]}\t${rgb[1]}\t${rgb[2]}\t${swatchLabel(hex, role, pct || null)}`);
     });
   }
 
   // 3. Tints & shades per colour
   palette.forEach((rgb, i) => {
-    const baseHex  = rgbToHex(rgb);
-    const name     = currentColorNames[baseHex.toLowerCase()];
-    const label    = name ? `${name} — ${baseHex}` : `Colour ${i + 1} — ${baseHex}`;
-    const pct      = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
-    lines.push(`# ${label}${pct ? ` — ${pct}%` : ''}`);
-
+    const hex  = rgbToHex(rgb);
+    const name = currentColorNames[hex.toLowerCase()];
+    const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
+    lines.push(`# ${swatchLabel(hex, name, pct || null)}`);
     const { tints, shades } = makeTintsShades(rgb);
     tints.forEach((c, ti) => {
-      const tLabel = name ? `${name} tint ${TINT_STEPS - ti}` : `Colour ${i+1} tint ${TINT_STEPS - ti}`;
-      lines.push(`${c[0]}\t${c[1]}\t${c[2]}\t${tLabel}`);
+      const th = rgbToHex(c);
+      lines.push(`${c[0]}\t${c[1]}\t${c[2]}\t${swatchLabel(th, name, null, `tint ${TINT_STEPS - ti}`)}`);
     });
-    lines.push(`${rgb[0]}\t${rgb[1]}\t${rgb[2]}\t${label}`);
+    lines.push(`${rgb[0]}\t${rgb[1]}\t${rgb[2]}\t${swatchLabel(hex, name)}`);
     shades.forEach((c, si) => {
-      const sLabel = name ? `${name} shade ${si + 1}` : `Colour ${i+1} shade ${si + 1}`;
-      lines.push(`${c[0]}\t${c[1]}\t${c[2]}\t${sLabel}`);
+      const sh = rgbToHex(c);
+      lines.push(`${c[0]}\t${c[1]}\t${c[2]}\t${swatchLabel(sh, name, null, `shade ${si + 1}`)}`);
     });
   });
 
@@ -1268,30 +1387,32 @@ function exportProcreatePalette(palette) {
 
   // 1. Base colours
   palette.forEach((rgb, i) => {
-    const baseHex = rgbToHex(rgb);
-    const name    = currentColorNames[baseHex.toLowerCase()];
-    const label   = name || `Colour ${i + 1}`;
-    swatches.push(makeEntry(rgb, label));
+    const hex  = rgbToHex(rgb);
+    const name = currentColorNames[hex.toLowerCase()];
+    const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
+    swatches.push(makeEntry(rgb, swatchLabel(hex, name, pct || null)));
   });
 
   // 2. Semantic palette
-  currentSwatchData.forEach(({ role, hex }) => {
-    swatches.push(makeEntry(hexToRgb(hex), role));
+  currentSwatchData.forEach(({ role, hex, proportion }) => {
+    const pct = Math.round((proportion ?? 0) * 100);
+    swatches.push(makeEntry(hexToRgb(hex), swatchLabel(hex, role, pct || null)));
   });
 
   // 3. Tints & shades per colour
-  palette.forEach((rgb, i) => {
-    const baseHex = rgbToHex(rgb);
-    const name    = currentColorNames[baseHex.toLowerCase()];
-    const label   = name || `Colour ${i + 1}`;
+  palette.forEach((rgb) => {
+    const hex  = rgbToHex(rgb);
+    const name = currentColorNames[hex.toLowerCase()];
     const { tints, shades } = makeTintsShades(rgb);
 
     tints.forEach((c, ti) => {
-      swatches.push(makeEntry(c, `${label} tint ${TINT_STEPS - ti}`));
+      const th = rgbToHex(c);
+      swatches.push(makeEntry(c, swatchLabel(th, name, null, `tint ${TINT_STEPS - ti}`)));
     });
-    swatches.push(makeEntry(rgb, label));
+    swatches.push(makeEntry(rgb, swatchLabel(hex, name)));
     shades.forEach((c, si) => {
-      swatches.push(makeEntry(c, `${label} shade ${si + 1}`));
+      const sh = rgbToHex(c);
+      swatches.push(makeEntry(c, swatchLabel(sh, name, null, `shade ${si + 1}`)));
     });
   });
 
