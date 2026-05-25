@@ -390,6 +390,16 @@ function renderImagePanel(imgObj) {
     </div>
   ` : '';
 
+  const viaHtml = hasUser ? `
+    <div class="image-meta-row">
+      <span class="image-meta-label">via</span>
+      <a href="https://www.are.na/${imgObj.userSlug}" target="_blank" rel="noopener"
+        aria-label="View ${escapeHtml(imgObj.userName)}'s Are.na profile">
+        ${escapeHtml(imgObj.userName)}
+      </a>
+    </div>
+  ` : '';
+
   imageArea.innerHTML = `
     <figure class="image-figure">
       <div class="selected-image-wrap">
@@ -404,16 +414,10 @@ function renderImagePanel(imgObj) {
             aria-label="View ${imgObj.title ? escapeHtml(imgObj.title) : 'this image'} on Are.na (opens in new tab)">
             view on are.na ↗
           </a>
-          ${hasUser ? `
-            <span class="image-meta-label">via</span>
-            <a href="https://www.are.na/${imgObj.userSlug}" target="_blank" rel="noopener"
-              aria-label="View ${escapeHtml(imgObj.userName)}'s Are.na profile">
-              ${escapeHtml(imgObj.userName)}
-            </a>
-          ` : ''}
         </div>
         ${sourceHtml}
         ${descHtml}
+        ${viaHtml}
       </figcaption>
     </figure>
   `;
@@ -781,10 +785,6 @@ function renderAnalysis(paletteData, swatchMap, nameMap) {
       </div>
 
       ${mainPropBar}
-      <div class="semantic-section semantic-section--flush">
-        <div class="semantic-label">tints &amp; shades</div>
-      </div>
-      <div class="colour-rows" role="list" aria-label="Extracted colours with tints and shades">${rows}</div>
       ${semanticBarHtml}
 
       <div class="export-bar" role="toolbar" aria-label="Export palette">
@@ -802,6 +802,11 @@ function renderAnalysis(paletteData, swatchMap, nameMap) {
           <button class="btn-export" id="expPngDotsBg"       aria-label="Export dot grid PNG with blurred image background">dots + bg</button>
         </div>
       </div>
+
+      <div class="semantic-section semantic-section--flush">
+        <div class="semantic-label">tints &amp; shades</div>
+      </div>
+      <div class="colour-rows" role="list" aria-label="Extracted colours with tints and shades">${rows}</div>
     </div>
   `;
 
@@ -1097,10 +1102,36 @@ function exportAse(palette) {
     return pct != null ? `${base} — ${pct}%` : base;
   }
 
-  // Assemble blocks
+  // Assemble blocks — order: base colours, semantic palette, tints/shades per colour
   const blocks = [];
   let blockCount = 0;
 
+  // 1. Base colours group
+  blocks.push(...groupStartBlock('Base colours'));
+  blockCount++;
+  palette.forEach((rgb, i) => {
+    const baseHex  = rgbToHex(rgb);
+    const pct = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
+    blocks.push(...colourBlock(swatchName(`colour ${i + 1}`, baseHex, pct || null), rgb));
+    blockCount++;
+  });
+  blocks.push(...groupEndBlock());
+  blockCount++;
+
+  // 2. Semantic group
+  if (currentSwatchData.length) {
+    blocks.push(...groupStartBlock('Semantic palette'));
+    blockCount++;
+    currentSwatchData.forEach(({ role, hex, proportion }) => {
+      const pct = Math.round((proportion ?? 0) * 100);
+      blocks.push(...colourBlock(swatchName(role, hex, pct || null), hexToRgb(hex)));
+      blockCount++;
+    });
+    blocks.push(...groupEndBlock());
+    blockCount++;
+  }
+
+  // 3. Tints & shades per colour
   palette.forEach((rgb, i) => {
     const baseHex  = rgbToHex(rgb);
     const baseName = currentColorNames[baseHex.toLowerCase()];
@@ -1131,19 +1162,6 @@ function exportAse(palette) {
     blocks.push(...groupEndBlock());
     blockCount++;
   });
-
-  // Semantic group
-  if (currentSwatchData.length) {
-    blocks.push(...groupStartBlock('Semantic palette'));
-    blockCount++;
-    currentSwatchData.forEach(({ role, hex, proportion }) => {
-      const pct = Math.round((proportion ?? 0) * 100);
-      blocks.push(...colourBlock(swatchName(role, hex, pct || null), hexToRgb(hex)));
-      blockCount++;
-    });
-    blocks.push(...groupEndBlock());
-    blockCount++;
-  }
 
   // File header: magic + version + block count
   const magic   = new TextEncoder().encode('ASEF');
@@ -1176,6 +1194,28 @@ function exportGpl(palette) {
     '#',
   ];
 
+  // 1. Base colours
+  lines.push('# Base colours');
+  palette.forEach((rgb, i) => {
+    const baseHex = rgbToHex(rgb);
+    const name    = currentColorNames[baseHex.toLowerCase()];
+    const label   = name ? `${name} — ${baseHex}` : `Colour ${i + 1} — ${baseHex}`;
+    const pct     = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
+    lines.push(`${rgb[0]}\t${rgb[1]}\t${rgb[2]}\t${label}${pct ? ` — ${pct}%` : ''}`);
+  });
+
+  // 2. Semantic palette
+  if (currentSwatchData.length) {
+    lines.push('# Semantic palette');
+    currentSwatchData.forEach(({ role, hex, proportion }) => {
+      const rgb = hexToRgb(hex);
+      const pct = Math.round((proportion ?? 0) * 100);
+      const label = `${role} — ${hex}${pct ? ` — ${pct}%` : ''}`;
+      lines.push(`${rgb[0]}\t${rgb[1]}\t${rgb[2]}\t${label}`);
+    });
+  }
+
+  // 3. Tints & shades per colour
   palette.forEach((rgb, i) => {
     const baseHex  = rgbToHex(rgb);
     const name     = currentColorNames[baseHex.toLowerCase()];
@@ -1194,16 +1234,6 @@ function exportGpl(palette) {
       lines.push(`${c[0]}\t${c[1]}\t${c[2]}\t${sLabel}`);
     });
   });
-
-  if (currentSwatchData.length) {
-    lines.push('# Semantic palette');
-    currentSwatchData.forEach(({ role, hex, proportion }) => {
-      const rgb = hexToRgb(hex);
-      const pct = Math.round((proportion ?? 0) * 100);
-      const label = `${role} — ${hex}${pct ? ` — ${pct}%` : ''}`;
-      lines.push(`${rgb[0]}\t${rgb[1]}\t${rgb[2]}\t${label}`);
-    });
-  }
 
   downloadText(lines.join('\n'), `${exportSlug()}.gpl`);
 }
@@ -1236,6 +1266,20 @@ function exportProcreatePalette(palette) {
 
   const swatches = [];
 
+  // 1. Base colours
+  palette.forEach((rgb, i) => {
+    const baseHex = rgbToHex(rgb);
+    const name    = currentColorNames[baseHex.toLowerCase()];
+    const label   = name || `Colour ${i + 1}`;
+    swatches.push(makeEntry(rgb, label));
+  });
+
+  // 2. Semantic palette
+  currentSwatchData.forEach(({ role, hex }) => {
+    swatches.push(makeEntry(hexToRgb(hex), role));
+  });
+
+  // 3. Tints & shades per colour
   palette.forEach((rgb, i) => {
     const baseHex = rgbToHex(rgb);
     const name    = currentColorNames[baseHex.toLowerCase()];
@@ -1249,10 +1293,6 @@ function exportProcreatePalette(palette) {
     shades.forEach((c, si) => {
       swatches.push(makeEntry(c, `${label} shade ${si + 1}`));
     });
-  });
-
-  currentSwatchData.forEach(({ role, hex }) => {
-    swatches.push(makeEntry(hexToRgb(hex), role));
   });
 
   // Pad or truncate to exactly 30

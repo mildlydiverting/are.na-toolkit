@@ -425,6 +425,13 @@
     font-size: 1.4rem;
     color: var(--surface-muted);
   }
+  #tokenHint a {
+    color: var(--surface-muted);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+    transition: color 0.15s;
+  }
+  #tokenHint a:hover { color: var(--surface-text); }
 
 /* ── BUTTONS ── */
 

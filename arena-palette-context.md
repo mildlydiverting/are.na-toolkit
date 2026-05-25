@@ -6,7 +6,7 @@
 
 The repo is public at `https://github.com/mildlydiverting/are.na-toolkit`.
 
-The current built file is `arena-palette.html` (v1.24), located at:
+The current built file is `arena-palette.html` (v1.25), located at:
 `~/Development/are.na-toolkit/arena-palette/dist/arena-palette.html`
 
 Source files are split into:
@@ -18,7 +18,7 @@ Built via `arena-palette/build.py` (Python concat script, no npm).
 
 ---
 
-## Current file state (v1.24)
+## Current file state (v1.25)
 
 **Key dependencies:**
 - Color Thief v3 (unpkg CDN) — MMCQ palette + swatch extraction
@@ -145,14 +145,54 @@ Styled via `.export-png-group`, `.export-png-label`, `.export-png-group .btn-exp
 
 ---
 
-## Deferred (not this session)
+## What was done (2026-05-25) — v1.24 + v1.25
 
+### v1.24 — ASE, GPL, Procreate exports
+
+Three new export functions added to `main.js`, plus `downloadBinary` helper:
+- `exportAse(palette)` — binary Adobe Swatch Exchange (grouped, RGB float32 big-endian)
+- `exportGpl(palette)` — GIMP palette plain text
+- `exportProcreatePalette(palette)` — JSON, exactly 30 HSB slots, null-padded
+- `downloadBinary(buffer, filename)` — Blob download for binary formats
+
+Buttons added to export bar: `expAse`, `expGpl`, `expPalette`.
+
+### v1.25 — Design and export order changes
+
+**Credit block** (`renderImagePanel` in main.js):
+- `viaHtml` is now built as a separate variable and rendered after `descHtml`, not inline with "view on are.na"
+- Order: title → view on are.na → source/accessed → description (collapsed) → via [username]
+
+**Palette column order** (in `renderAnalysis` template string):
+- Settings panel → proportion bar → semantic bar → export buttons → tints & shades label → colour rows
+- (Previously: settings → prop bar → tints label → colour rows → semantic → exports)
+
+**Export order — ASE, GPL, Procreate** updated to:
+1. Base colours (just the extracted base colours, one per entry/slot)
+2. Semantic palette
+3. Tints & shades per colour (full groups)
+
+**tokenHint link** — `#tokenHint a` styled in `style.css` to use `--surface-muted` with underline, hover → `--surface-text`. Removes browser-default purple.
+
+### Image grid fetch — known issue
+
+`GRID_SIZE = 12`, `MAX_RETRIES = 12`. Each slot tries up to 12 times to land on an Image block at a random page. If all retries fail for a slot (e.g. channel has sparse image blocks), that slot is silently dropped. Result: 11 images instead of 12. Fix TBD — see deferred.
+
+---
+
+## Deferred
+
+- Fix silent slot drop in `fetchChannelImages` — 11 images returned instead of 12 when one slot exhausts retries (see fetch logic around line 200)
 - Colour sort (hue order) before rendering
 - PNG metadata embedding (tEXt/iTXt chunks)
 - Cache-bust fix for repeated thumbnail clicks
 - `shared/arena-api.js` extraction
 - RampenSau tints/shades (set aside — unsatisfactory results)
 - Bars renderer background (currently transparent — intentional for now)
+- Tiny swatch strip below proportion bar (base colours as small squares, like semantic bar) — in progress
+- Update hex/rgb+hsl/CSS/SCP exports to match new order (base → semantic → tints/shades)
+- ASE/GPL/Procreate labelling tweaks — TBD
+- Semantic role names in export labels — TBD
 
 ---
 
