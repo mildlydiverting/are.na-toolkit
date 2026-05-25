@@ -889,6 +889,16 @@ function downloadText(content, filename) {
   a.click();
 }
 
+function downloadBinary(buffer, filename) {
+  const blob = new Blob([buffer], { type: 'application/octet-stream' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+
 function slugName() {
   return currentImageObj ? currentImageObj.channel : 'palette';
 }
