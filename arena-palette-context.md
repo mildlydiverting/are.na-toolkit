@@ -6,19 +6,19 @@
 
 The repo is public at `https://github.com/mildlydiverting/are.na-toolkit`.
 
-The current built file is `arena-palette.html` (v1.25), located at:
+The current built file is `arena-palette.html` (v1.29), located at:
 `~/Development/are.na-toolkit/arena-palette/dist/arena-palette.html`
 
 Source files are split into:
 - `arena-palette/src/main.js`
 - `arena-palette/src/style.css`
-- `arena-palette/src/index.html`
+- `arena-palette/src/template.html`
 
 Built via `arena-palette/build.py` (Python concat script, no npm).
 
 ---
 
-## Current file state (v1.25)
+## Current file state (v1.29)
 
 **Key dependencies:**
 - Color Thief v3 (unpkg CDN) — MMCQ palette + swatch extraction
@@ -31,8 +31,8 @@ Built via `arena-palette/build.py` (Python concat script, no npm).
 - Two-step random fetch: channel meta for total count → `per=1&page={random}` with up to 12 retries to land on an Image block
 - `currentImageEl` caches the loaded `HTMLImageElement` — settings changes call `runExtraction()` directly, never `selectImage()`, so no unnecessary API hits
 - Color Thief v3: use `c.array()` for `[r,g,b]`, not `.rgb` or `._r._g._b`
-- `applyFloor(items, minProp)` shared helper normalises proportions (1% floor for main bar, 5% for semantic bar)
-- `currentSwatchData` global caches the semantic palette (array of `{role, hex, tc, proportion}`) — populated in `runExtraction()` via `swatchProportions()`, used by exports. **Now declared at module scope** (was incorrectly inside the `init` IIFE in earlier versions).
+- `applyFloor(items, minProp)` shared helper normalises proportions (1% floor for bars, 5% for semantic bar)
+- `currentSwatchData` global caches the semantic palette (array of `{role, hex, tc, proportion}`) — populated in `runExtraction()` via `swatchProportions()`, used by exports. Declared at module scope.
 - `currentBlock` / `currentImageObj` global caches the current Are.na block object (has `.id`, `.title`, `.source.url`, `.user.username`, `.channel`, `.original`, etc.)
 - `currentImageEl` caches the loaded HTMLImageElement — also used by PNG export to draw the image onto canvas
 
@@ -40,17 +40,15 @@ Built via `arena-palette/build.py` (Python concat script, no npm).
 
 `image.blurhash` — present and confirmed in v3
 `dominant_color` — not present in v3 (earlier sources claiming this were wrong)
-Image variants available: `small`, `medium`, `large`, `square`, `src` (original) — all served from `images.are.na` CDN, not CloudFront directly. Thumbnail URLs are base64-encoded resize parameter objects, not signed paths.
+Image variants available: `small`, `medium`, `large`, `square`, `src` (original) — all served from `images.are.na` CDN. Thumbnail URLs are base64-encoded resize parameter objects, not signed paths.
 
 ### BlurHash — average colour extraction
 
 https://github.com/woltapp/blurhash
 
-The DC component (digits 2–5 of the blurhash string, 0-indexed) encodes the average colour of the image as a 24-bit sRGB value in base 83
-Decodable without the full algorithm or a canvas — just 4 characters, a base-83 lookup, and a bit-shift
-Decoder snippet: 
+The DC component (digits 2–5 of the blurhash string, 0-indexed) encodes the average colour of the image as a 24-bit sRGB value in base 83. Decodable without the full algorithm — just 4 characters, a base-83 lookup, and a bit-shift.
 
-```
+```js
 function blurhashDominantColor(blurhash) {
   const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz#$%*+,-.:;=?@[]^_{|}~';
   const decode83 = str => [...str].reduce((v, c) => v * 83 + chars.indexOf(c), 0);
@@ -59,148 +57,112 @@ function blurhashDominantColor(blurhash) {
 }
 ```
 
-Useful as an instant loading-state colour, available before the thumbnail loads
-
 ### Security / public deployment
 
-Token is stored in localStorage under STORAGE_KEY alongside channel slugs, via saveState()
-Settings stored separately under SETTINGS_KEY
-Safe for a public static deployment — each visitor's browser has isolated localStorage
-Users without a token can still access public channels unauthenticated
-CORS gotcha to test: thumbnail images are served from images.are.na; verify canvas toBlob() still works after PNG export when served from a real public origin (not just file://)
+Token stored in localStorage under `STORAGE_KEY` alongside channel slugs, via `saveState()`. Settings stored separately under `SETTINGS_KEY`. Safe for public static deployment — each visitor's browser has isolated localStorage.
 
 **Colour name API:**
-- `https://api.color.pizza/v1/` — fetched on every extraction, batched as comma-separated hex values
+- `https://api.color.pizza/v1/` — fetched on every extraction, batched as comma-separated hex values (WITHOUT `#`)
 - Multiple name vocabularies selectable in settings
-- Names cached in `currentColorNames` map (`hex.toLowerCase() → name`)
-- `requestedHex` field used for lookup (not `hex`) — important gotcha
+- Names cached in `currentColorNames` map — keyed by `requestedHex.toLowerCase()` where `requestedHex` IS returned WITH `#` by color.pizza (e.g. `'#ff0000'`)
+- `rgbToHex()` also returns `#ff0000`, so name lookups use `hex.toLowerCase()` directly — no slicing needed
+- `patchColorLabels(paletteData, nameMap)` should update both colour row labels (`colour-label-N`) AND extracted colours legend items (`[data-hex]`). In v1.29 this is broken — see deferred.
 
-**CSS system (style.css v1.24):**
+**CSS system (style.css):**
 - `font-size: 62.5%` on `:root` so `1rem = 10px`
-- Colour tokens: `--bg: #8e8e8e`, `--surface: #686868`, `--surface2: #5a5a5a`, `--border: #4a4a4a`, `--text: #000000`, `--muted: #1a1a1a`, `--surface-text: #e8e8e8`, `--input-bg: #e8e8e8`, `--accent: #000000`, `--accent-text: #f0f0f0`
+- Colour tokens: `--bg: #8e8e8e`, `--surface: #686868`, `--surface2: #5a5a5a`, `--border: #4a4a4a`, `--text: #000000`, `--muted: #1a1a1a`, `--surface-text: #e8e8e8`, `--surface-muted: #b0b0b0`, `--input-bg: #e8e8e8`, `--accent: #000000`, `--accent-text: #f0f0f0`
 - Fonts: Karla (`--font`, `--font-sans`) for UI; Courier Prime (`--font-mono`) for hex/code output only
 
----
+### Layout — three columns
 
-## What was done in this session (2026-04-16)
+1. **Sidebar** — channels section (collapsible), token input, fetch button, image thumbnail grid
+2. **Image column** — selected image + credit block below
+3. **Palette column** — extracted colours bar + legend, semantic palette bar + legend, export buttons, tints/shades rows
 
-### PNG export — two renderers integrated into main.js
+### Credit block order (`renderImagePanel`)
 
-The two standalone renderer test harnesses (`bars2-renderer.html`, `dots1-renderer.html`) from the previous session have been integrated into `main.js`. The old `exportPng` function (simple image + swatch strip) has been removed and replaced.
+title (bold) → description (collapsed, conditional) → source/accessed (conditional) → via [username] (conditional) → "view on are.na ↗" (always, own row)
 
-**New functions in main.js:**
+### Palette column order (`renderAnalysis`)
 
-- `buildRendererData()` — maps `currentPalette`, `currentSwatchData`, `currentImageObj` to the renderer data shape. Reverses tints and shades arrays (Color Thief returns tints lightest-first; renderers want darkest-first). Strips protocol/www from `blockUrl`. Reads `currentImageObj.original` for `imageUrl`.
-- `drawLogoOnCanvas(ctx, x, y, w, h, colour)` — draws the Are.na logo SVG inline via Path2D
-- `drawChrome(ctx, blockUrl, logoX, logoY, logoW, logoH, logoColour, textColour)` — logo + URL text
-- `loadImageForCanvas(url)` — Promise-based image loader with crossOrigin
-- `renderBars(canvas, data)` — async, 1200×1200, transparent background, bars layout
-- `buildDotSequence(palette, semantic)` — flat array of hex strings for dots renderer
-- `renderDots(canvas, data, withBackground)` — async, 1200×1200, transparent or blurred-bg
-- `triggerCanvasDownload(canvas, filename)` — toBlob → object URL → click
-- `exportPngBars()` — wires renderBars to download
-- `exportPngDots(withBackground)` — wires renderDots to download
+Settings panel → extracted colours section → semantic palette section → export buttons → tints & shades label → colour rows
 
-**Export bar UI** — the old single `export png` button is replaced with a grouped cluster:
-```
-png: | bars | dots | dots + bg |
-```
-Styled via `.export-png-group`, `.export-png-label`, `.export-png-group .btn-export` in style.css.
+### Export functions
 
-**Export filenames** — new `exportSlug()` function:
-- Strips the Are.na hash suffix from channel slug (e.g. `chromatic-vwdupl8d0lk` → `chromatic`)
-- Regex: `/-(?=[a-z0-9]{7,}$)[a-z0-9]*[0-9][a-z0-9]*$/i` — requires ≥7 chars and at least one digit, so plain English words at end of slug are preserved
-- Appends block id: `chromatic-block-44858120`
-- Used for all export filenames; `slugName()` kept for the `.color-palette` payload `name` field
+All exports use `swatchLabel(hex, name, pct, suffix)` for unified label format: `#hex [Name] [(xx%)] [tint/shade N]`
+CSS vars use `cssSlug(name, fallback)` for name-slugged var names (e.g. `--cinnabar-base`, `--cinnabar-tint-3`).
+Export order everywhere: 1. Base colours, 2. Semantic palette, 3. Tints & shades
 
-### Tints/shades array orientation — verified
+| Button | Function | Format |
+|---|---|---|
+| export hex | `exportHex` | `.txt` |
+| export rgb | `exportRgb` | `-rgb.txt` |
+| export hsl | `exportHsl` | `-hsl.txt` |
+| export css vars | `exportCss` | `.css` |
+| export .color-palette | `exportScp` | JSON |
+| export .ase | `exportAse` | binary |
+| export .gpl | `exportGpl` | plain text |
+| export .palette | `exportProcreatePalette` | JSON, 30 HSB slots |
+| png: bars | `exportPngBars` | 1200×1200 PNG |
+| png: dots | `exportPngDots(false)` | 1200×1200 PNG |
+| png: dots + bg | `exportPngDots(true)` | 1200×1200 PNG |
 
-`makeTintsShades` returns:
-- `tints[0]` = lightest (t3), `tints[2]` = darkest tint (t1) — **lightest first**
-- `shades[0]` = lightest shade (s1), `shades[2]` = darkest (s3) — **lightest first**
+### PNG renderers (integrated into main.js)
 
-`buildRendererData()` reverses both arrays so renderers receive:
-- `tints: [t1, t2, t3]` — darkest tint first, lightest last
-- `shades: [s3, s2, s1]` — darkest shade first
+- `buildRendererData()` — maps globals to renderer data shape; reverses tints/shades (Color Thief lightest-first → renderers want darkest-first)
+- `renderBars(canvas, data)` — bars layout, transparent background
+- `renderDots(canvas, data, withBackground)` — dots layout; blurred bg via multi-pass downscale + ping-pong (3× 40px↔100px)
+- `exportSlug()` — strips Are.na hash suffix, appends block id (e.g. `chromatic-block-44858120`)
 
-### Blurred background for dots renderer
+### Channel input URL parsing
 
-`css filter: blur()` does not work when applied to a canvas context — it has no effect on `drawImage` operations, only on the canvas element itself as a CSS property. All previous blur attempts (40px, 64px) were silently no-ops.
-
-**Current approach — multi-pass downscale + ping-pong:**
-
-1. Centre-crop source image to square
-2. Repeatedly halve down to a **40px floor** (never lower — going below 40px creates a pixel grid too coarse for diagonals, causing staircase artifacts when upscaled)
-3. **Ping-pong** 3×: upscale to 100px → downscale to 40px. Each round-trip smears colour boundaries further without going below the safe floor
-4. Sample average luminance from the 40px result (standard `0.299R + 0.587G + 0.114B`)
-5. Fill base: `#000000` if avgLum < 0.5, `#ffffff` if ≥ 0.5 — keeps dark images dark
-6. Upscale via 100px intermediate → stretch to 1200×1200
-7. `globalAlpha`: `0.65` for dark images, `0.80` for light — prevents bright hotspots bleeding through on dark-background images
-
-**Tuning levers** (if blur needs adjustment):
-- More dissolution: increase ping-pong iterations (3 → 4 or 5)
-- Staircase artifacts return: raise the 40px floor, not lower it
-- Hotspot bleed on dark images: lower the dark `globalAlpha` (0.65 → 0.50)
-- Too much structure surviving: lower ping-pong ceiling (100px → 60px)
+`parseArenaSlug(val)` — extracts slug from full URL (`https://www.are.na/user/channel-slug` → `channel-slug`). Applied on `paste` (immediate transform) and `blur` (normalise if URL was typed).
 
 ---
 
-## What was done (2026-05-25) — v1.24 + v1.25
+## Session history
 
-### v1.24 — ASE, GPL, Procreate exports
+### 2026-04-16 — PNG export + renderers (v1.x)
 
-Three new export functions added to `main.js`, plus `downloadBinary` helper:
-- `exportAse(palette)` — binary Adobe Swatch Exchange (grouped, RGB float32 big-endian)
-- `exportGpl(palette)` — GIMP palette plain text
-- `exportProcreatePalette(palette)` — JSON, exactly 30 HSB slots, null-padded
-- `downloadBinary(buffer, filename)` — Blob download for binary formats
+Two renderer test harnesses (`bars2-renderer.html`, `dots1-renderer.html`) integrated into `main.js`. Blurred background implemented via multi-pass downscale + ping-pong (40px floor). Export filenames via `exportSlug()`.
 
-Buttons added to export bar: `expAse`, `expGpl`, `expPalette`.
+### 2026-05-25 — v1.24–v1.29
 
-### v1.25 — Design and export order changes
+**v1.24** — ASE, GPL, Procreate exports (`exportAse`, `exportGpl`, `exportProcreatePalette`, `downloadBinary`)
 
-**Credit block** (`renderImagePanel` in main.js):
-- `viaHtml` is now built as a separate variable and rendered after `descHtml`, not inline with "view on are.na"
-- Order: title → view on are.na → source/accessed → description (collapsed) → via [username]
+**v1.25** — Credit block reorder, palette column reorder, tokenHint link colour fix
 
-**Palette column order** (in `renderAnalysis` template string):
-- Settings panel → proportion bar → semantic bar → export buttons → tints & shades label → colour rows
-- (Previously: settings → prop bar → tints label → colour rows → semantic → exports)
+**v1.26** — `swatchLabel` + `cssSlug` helpers; unified label format across all exports; CSS vars name-slugged; SCP JSON restructured (`palette/semantic/tintsShades`); export order standardised (base → semantic → tints/shades); credit block final order (title → desc → source → via → view on are.na)
 
-**Export order — ASE, GPL, Procreate** updated to:
-1. Base colours (just the extracted base colours, one per entry/slot)
-2. Semantic palette
-3. Tints & shades per colour (full groups)
+**v1.27** — Extracted colours section added (proportion bar + legend with names) between existing bar and semantic section
 
-**tokenHint link** — `#tokenHint a` styled in `style.css` to use `--surface-muted` with underline, hover → `--surface-text`. Removes browser-default purple.
+**v1.28** — `exportRgb` and `exportHsl` split from old `exportRgbHsl` (two separate files: `-rgb.txt`, `-hsl.txt`)
 
-### Image grid fetch — known issue
-
-`GRID_SIZE = 12`, `MAX_RETRIES = 12`. Each slot tries up to 12 times to land on an Image block at a random page. If all retries fail for a slot (e.g. channel has sparse image blocks), that slot is silently dropped. Result: 11 images instead of 12. Fix TBD — see deferred.
+**v1.29** — Duplicate proportion bar removed (single "extracted colours" section remains); colour name lookup key fix (`hex.slice(1)` not `hex` — fixes names not appearing); `patchColorLabels` extended to update extracted colours legend; channel slug overlays removed from thumbnail grid; `parseArenaSlug` added for URL → slug parsing on channel inputs
 
 ---
 
-## Deferred
+## Deferred / known issues
 
-- Fix silent slot drop in `fetchChannelImages` — 11 images returned instead of 12 when one slot exhausts retries (see fetch logic around line 200)
-- Colour sort (hue order) before rendering
-- PNG metadata embedding (tEXt/iTXt chunks)
-- Cache-bust fix for repeated thumbnail clicks
-- `shared/arena-api.js` extraction
-- RampenSau tints/shades (set aside — unsatisfactory results)
-- Bars renderer background (currently transparent — intentional for now)
-- Tiny swatch strip below proportion bar (base colours as small squares, like semantic bar) — in progress
-- Update hex/rgb+hsl/CSS/SCP exports to match new order (base → semantic → tints/shades)
-- ASE/GPL/Procreate labelling tweaks — TBD
-- Semantic role names in export labels — TBD
+- **11-image fetch bug** — `GRID_SIZE=12`, `MAX_RETRIES=12`. If a slot exhausts retries (sparse image channel), it silently drops. Quick fix: raise `MAX_RETRIES` to 20–25. Proper fix: track failures and retry from a different channel. See fetch logic around line 200.
+- **Colour sort** — hue-order sort before rendering, not yet implemented
+- **PNG metadata** — tEXt/iTXt chunk embedding not implemented
+- **Cache-bust** — repeated thumbnail clicks may hit cached image; fix TBD
+- **`shared/arena-api.js` extraction** — Are.na API calls could be pulled into a shared module for the toolkit
+- **Bars renderer background** — currently transparent; intentional for now
+- **ASE/GPL/Procreate labelling** — swatch names could be further refined; semantic role names in labels TBD
+- **CORS test for PNG export** — verify `canvas.toBlob()` works when served from a real public origin (not just `file://`)
+- **v1.29 colour name regression** — changing `hex.toLowerCase()` to `hex.slice(1).toLowerCase()` in `patchColorLabels` (and in `paletteSectionHtml` initial render) was wrong. `currentColorNames` keys ARE stored with `#` prefix (color.pizza returns `requestedHex` with `#`). The change broke existing colour row name display. Fix: revert key lookups to `hex.toLowerCase()` everywhere. The real issue with the palette legend was never a key mismatch — it was simply that `patchColorLabels` didn't update those DOM nodes. Fix: keep keys as-is; just extend `patchColorLabels` to also update `[data-hex]` legend items using `btn.dataset.hex` (which has `#`) directly against the unchanged `nameMap`.
+- **`.channel-tag` CSS** — two rules remain in style.css after the HTML element was removed in v1.29; harmless dead code, can be cleaned up
 
 ---
 
 ## Working approach
 
 - Iterative, targeted changes — not large rewrites unless necessary
-- Version note in file header; changelog as `changelog.md`
+- Version bump + changelog entry in `template.html` header on each change; project notes in this file
 - CSS CUBE methodology: https://cube.fyi
 - British English
 - Karla + Courier Prime (Google Fonts) — already loaded in the tool
-- No build step dependencies; Python concat build only
+- No build step dependencies; Python concat build only (`build.py`)
+- Ask before making changes to code

@@ -126,6 +126,23 @@ function renderChannels() {
       channels[+e.target.dataset.idx] = e.target.value.trim();
       persistState();
     });
+    inp.addEventListener('paste', e => {
+      e.preventDefault();
+      const pasted = (e.clipboardData || window.clipboardData).getData('text').trim();
+      const slug = parseArenaSlug(pasted);
+      e.target.value = slug;
+      channels[+e.target.dataset.idx] = slug;
+      persistState();
+    });
+    inp.addEventListener('blur', e => {
+      const raw = e.target.value.trim();
+      const slug = parseArenaSlug(raw);
+      if (slug !== raw) {
+        e.target.value = slug;
+        channels[+e.target.dataset.idx] = slug;
+        persistState();
+      }
+    });
   });
 
   channelListEl.querySelectorAll('[data-remove]').forEach(btn => {
@@ -151,6 +168,12 @@ btnAddChannel.addEventListener('click', () => {
 
 function persistState() {
   saveState(channels, tokenInput.value);
+}
+
+// Extract slug from a full are.na URL, e.g. https://www.are.na/user/channel-slug → channel-slug
+function parseArenaSlug(val) {
+  const match = val.match(/are\.na\/[^/?#\s]+\/([^/?#\s]+)/);
+  return match ? match[1] : val;
 }
 
 tokenInput.addEventListener('input', persistState);
@@ -298,7 +321,6 @@ function renderImageGrid(images) {
     thumb.innerHTML = `
       <img src="${img.url}" crossorigin="anonymous" loading="lazy"
         alt="${img.title ? img.title + ' from ' + img.channel : 'Image from ' + img.channel}" />
-      <span class="channel-tag" aria-hidden="true">${img.channel}</span>
     `;
     thumb.addEventListener('click', () => selectImage(i));
     thumb.addEventListener('keydown', e => {
@@ -493,8 +515,17 @@ function patchColorLabels(paletteData, nameMap) {
     if (!el) return;
     const hex  = rgbToHex(d.rgb);
     const pct  = Math.round(d.proportion * 100);
-    const name = nameMap[hex.toLowerCase()];
+    const name = nameMap[hex.slice(1).toLowerCase()];
     el.innerHTML = buildLabelHtml(i, hex, pct, name);
+  });
+
+  // Also patch the extracted colours legend items
+  document.querySelectorAll('.semantic-legend-item[data-hex]').forEach(btn => {
+    const hex  = btn.dataset.hex;
+    const name = nameMap[hex.slice(1).toLowerCase()];
+    const label = btn.querySelector('.palette-legend-label');
+    if (label) label.textContent = name ? `${name} · ${hex}` : hex;
+    btn.setAttribute('aria-label', `Copy ${name ? name + ' ' : ''}${hex} to clipboard`);
   });
 }
 
@@ -664,25 +695,6 @@ function renderAnalysis(paletteData, swatchMap, nameMap) {
     </div>`;
   })() : '';
 
-  // Proportion bar
-  const propBarItems = applyFloor(
-    paletteData.map(({ rgb, proportion }) => ({ hex: rgbToHex(rgb), tc: textColour(rgb), proportion })),
-    0.01
-  );
-  const mainPropBar = `<div class="semantic-section semantic-section--prop-bar">
-    <div class="semantic-label" id="prop-bar-label">colour proportions</div>
-    <div class="semantic-bar" role="img" aria-labelledby="prop-bar-label">${
-      propBarItems.map(({ hex, tc, proportion }) => {
-        const pct = Math.round(proportion * 100);
-        return `<div class="semantic-segment"
-          style="flex:${proportion};background:${hex}"
-          title="${hex} · ${pct}%"
-          aria-label="${hex}: ${pct}%">
-          <span class="semantic-segment-label" style="color:${tc}" aria-hidden="true">${pct > 6 ? pct + '%' : ''}</span>
-        </div>`;
-      }).join('')
-    }</div>
-  </div>`;
 
   // Extracted palette section — same structure as semantic, sits between prop bar and semantic
   const paletteSectionHtml = (() => {
@@ -701,16 +713,17 @@ function renderAnalysis(paletteData, swatchMap, nameMap) {
     }).join('');
     const legend = paletteData.map(({ rgb }) => {
       const hex  = rgbToHex(rgb);
-      const name = nameMap[hex.toLowerCase()];
+      const name = nameMap[hex.slice(1).toLowerCase()];
       return `<button class="semantic-legend-item"
+        data-hex="${hex}"
         onclick="navigator.clipboard.writeText('${hex}').catch(()=>{})"
         aria-label="Copy ${name ? name + ' ' : ''}${hex} to clipboard">
         <span class="semantic-legend-dot" style="background:${hex}" aria-hidden="true"></span>
-        <span>${name ? `${name} · ${hex}` : hex}</span>
+        <span class="palette-legend-label">${name ? `${name} · ${hex}` : hex}</span>
       </button>`;
     }).join('');
     return `<div class="semantic-section">
-      <div class="semantic-label" id="palette-section-label">extracted palette</div>
+      <div class="semantic-label" id="palette-section-label">extracted colours</div>
       <div class="semantic-bar" role="img" aria-labelledby="palette-section-label">${segments}</div>
       <div class="semantic-legend" role="list">${legend}</div>
     </div>`;
@@ -816,7 +829,6 @@ function renderAnalysis(paletteData, swatchMap, nameMap) {
         </div>
       </div>
 
-      ${mainPropBar}
       ${paletteSectionHtml}
       ${semanticBarHtml}
 
