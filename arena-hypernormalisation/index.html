@@ -29,48 +29,54 @@ body {
 }
 
 #setup h1 {
-  font-size: clamp(16px, 2.5vw, 30px);
+  font-size: clamp(22px, 3.5vw, 42px);
   letter-spacing: 0.2em;
   font-weight: bold;
   text-align: center;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .subtitle {
-  font-size: 12px;
+  font-size: 15px;
   color: #aaa;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  margin-bottom: 48px;
+  letter-spacing: 0.1em;
+  margin-bottom: 44px;
   text-align: center;
 }
 
-.channel-panels {
+.setup-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 40px;
   width: 100%;
-  max-width: 760px;
+  max-width: 800px;
   margin-bottom: 36px;
 }
 
-@media (max-width: 580px) {
-  .channel-panels { grid-template-columns: 1fr; gap: 28px; }
+@media (max-width: 600px) {
+  .setup-grid { grid-template-columns: 1fr; gap: 28px; }
+}
+
+.setup-full {
+  width: 100%;
+  max-width: 800px;
+  margin-bottom: 32px;
 }
 
 .panel-label {
-  font-size: 10px;
-  letter-spacing: 0.2em;
+  font-size: 13px;
+  letter-spacing: 0.18em;
   color: #aaa;
   text-transform: uppercase;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
+  font-weight: bold;
 }
 
 .panel-hint {
-  font-size: 11px;
+  font-size: 14px;
   color: #999;
-  margin-bottom: 10px;
-  line-height: 1.5;
+  margin-bottom: 12px;
+  line-height: 1.55;
 }
 
 .input-row {
@@ -79,29 +85,29 @@ body {
   margin-bottom: 12px;
 }
 
-.input-row input, .api-input {
+.text-input {
   flex: 1;
   background: #111;
-  border: 1px solid #2a2a2a;
-  color: #e0e0e0;
-  padding: 10px 12px;
-  font-size: 12px;
+  border: 1px solid #333;
+  color: #e8e8e8;
+  padding: 11px 13px;
+  font-size: 14px;
   font-family: Arial, sans-serif;
   outline: none;
   transition: border-color 0.15s;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
 }
 
-.input-row input:focus, .api-input:focus { border-color: #555; }
-.input-row input::placeholder, .api-input::placeholder { color: #666; }
+.text-input:focus { border-color: #666; }
+.text-input::placeholder { color: #666; }
 
 .btn-add {
   background: #222;
-  border: 1px solid #333;
-  color: #aaa;
-  padding: 10px 14px;
-  font-size: 10px;
-  letter-spacing: 0.15em;
+  border: 1px solid #444;
+  color: #bbb;
+  padding: 11px 16px;
+  font-size: 13px;
+  letter-spacing: 0.12em;
   cursor: pointer;
   font-family: Arial, sans-serif;
   transition: background 0.15s, color 0.15s;
@@ -109,6 +115,21 @@ body {
 }
 
 .btn-add:hover { background: #333; color: #fff; }
+
+.btn-sm {
+  background: none;
+  border: 1px solid #333;
+  color: #888;
+  padding: 7px 12px;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  font-family: Arial, sans-serif;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.btn-sm:hover { color: #fff; border-color: #666; }
 
 .chips {
   display: flex;
@@ -119,15 +140,14 @@ body {
 
 .chip {
   background: #1a1a1a;
-  border: 1px solid #333;
-  padding: 5px 8px 5px 10px;
-  font-size: 11px;
-  color: #bbb;
+  border: 1px solid #3a3a3a;
+  padding: 6px 10px 6px 13px;
+  font-size: 13px;
+  color: #ccc;
   display: flex;
   align-items: center;
   gap: 8px;
-  letter-spacing: 0.04em;
-  max-width: 200px;
+  max-width: 220px;
 }
 
 .chip span {
@@ -141,7 +161,7 @@ body {
   border: none;
   color: #888;
   cursor: pointer;
-  font-size: 15px;
+  font-size: 16px;
   padding: 0;
   line-height: 1;
   flex-shrink: 0;
@@ -150,24 +170,58 @@ body {
 
 .chip-x:hover { color: #fff; }
 
-.api-section {
-  width: 100%;
-  max-width: 760px;
-  margin-bottom: 36px;
+.file-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
 }
 
-.api-section .panel-label { margin-bottom: 10px; }
+.file-label-btn {
+  background: #222;
+  border: 1px solid #444;
+  color: #bbb;
+  padding: 9px 14px;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
 
-.api-section .panel-hint { margin-bottom: 12px; }
+.file-label-btn:hover { background: #333; color: #fff; }
 
-.api-input { width: 100%; }
+.file-name {
+  font-size: 13px;
+  color: #888;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+input[type=file] { display: none; }
+
+.cache-note {
+  font-size: 12px;
+  color: #666;
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
+.cache-note a {
+  color: #888;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.cache-note a:hover { color: #bbb; }
 
 .btn-go {
   background: #fff;
   color: #000;
   border: none;
-  padding: 14px 52px;
-  font-size: 13px;
+  padding: 15px 56px;
+  font-size: 16px;
   letter-spacing: 0.25em;
   cursor: pointer;
   font-family: Arial, sans-serif;
@@ -185,22 +239,29 @@ body {
 }
 
 #status {
-  margin-top: 18px;
-  font-size: 11px;
+  margin-top: 16px;
+  font-size: 13px;
   color: #aaa;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  min-height: 18px;
+  letter-spacing: 0.08em;
+  min-height: 20px;
   text-align: center;
 }
 
 .error {
   margin-top: 12px;
-  font-size: 12px;
-  color: #ff6666;
-  max-width: 600px;
+  font-size: 14px;
+  color: #ff7777;
+  max-width: 640px;
   text-align: center;
   line-height: 1.5;
+}
+
+hr.divider {
+  border: none;
+  border-top: 1px solid #222;
+  width: 100%;
+  max-width: 800px;
+  margin-bottom: 32px;
 }
 
 /* ── DISPLAY ─────────────────────────────────── */
@@ -225,7 +286,6 @@ body {
   image-rendering: crisp-edges;
 }
 
-/* Fade overlay for transitions */
 #fade-overlay {
   position: absolute;
   inset: 0;
@@ -278,7 +338,7 @@ body {
   border: 1px solid rgba(255,255,255,0.22);
   color: #e0e0e0;
   padding: 9px 15px;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.14em;
   cursor: pointer;
   font-family: Arial, sans-serif;
@@ -302,8 +362,7 @@ body {
 }
 
 .ctrl-divider {
-  width: 1px;
-  height: 20px;
+  width: 1px; height: 20px;
   background: rgba(255,255,255,0.15);
   margin: 0 2px;
   flex-shrink: 0;
@@ -332,52 +391,97 @@ input[type=range] {
 #speed-val {
   font-size: 10px;
   color: rgba(255,255,255,0.5);
-  min-width: 24px;
-  letter-spacing: 0.05em;
+  min-width: 26px;
 }
 </style>
 </head>
 <body>
 
-<!-- ═══════════════ SETUP ═══════════════ -->
+<!-- ═══════ SETUP ═══════ -->
 <div id="setup">
   <h1>ARENA HYPERNORMALISATION</h1>
   <p class="subtitle">image + text from are.na channels</p>
 
-  <div class="channel-panels">
+  <!-- Channels -->
+  <div class="setup-grid">
     <div>
       <div class="panel-label">Image Channels</div>
-      <p class="panel-hint">Paste an are.na URL or channel slug. Images will be used as backgrounds.</p>
+      <p class="panel-hint">Paste an are.na URL or channel slug. Images are used as backgrounds.</p>
       <div class="input-row">
-        <input id="img-input" type="text" placeholder="e.g. my-image-channel or full URL" />
-        <button class="btn-add" onclick="addChannel('image')">ADD</button>
+        <input class="text-input" id="img-input" type="text" placeholder="URL or slug" />
+        <button class="btn-add" onclick="addChannel('image')">Add</button>
       </div>
       <div class="chips" id="img-chips"></div>
     </div>
 
     <div>
       <div class="panel-label">Text Channels</div>
-      <p class="panel-hint">Paste an are.na URL or channel slug. Text blocks will be used as captions.</p>
+      <p class="panel-hint">Paste an are.na URL or channel slug. Text blocks become captions.</p>
       <div class="input-row">
-        <input id="txt-input" type="text" placeholder="e.g. my-text-channel or full URL" />
-        <button class="btn-add" onclick="addChannel('text')">ADD</button>
+        <input class="text-input" id="txt-input" type="text" placeholder="URL or slug" />
+        <button class="btn-add" onclick="addChannel('text')">Add</button>
       </div>
       <div class="chips" id="txt-chips"></div>
     </div>
   </div>
 
-  <div class="api-section">
-    <div class="panel-label">Are.na Access Token <span style="font-weight:normal;text-transform:none;letter-spacing:0">(optional — required for private channels)</span></div>
-    <p class="panel-hint">Get yours at are.na → Settings → Developers</p>
-    <input class="api-input" id="api-key" type="password" placeholder="Paste access token here" />
+  <hr class="divider" />
+
+  <!-- Search -->
+  <div class="setup-full">
+    <div class="panel-label">Or search are.na</div>
+    <p class="panel-hint">
+      Search public are.na blocks by keyword — fetches matching images and texts.
+      Leave blank to pull recent public blocks. Results are pooled with your channels above.
+    </p>
+    <div class="input-row">
+      <input class="text-input" id="search-input" type="text" placeholder="e.g. landscape, machines, dreams — or leave blank for recent public blocks" />
+      <button class="btn-add" onclick="addSearch()">Add</button>
+    </div>
+    <div class="chips" id="search-chips"></div>
   </div>
 
-  <button class="btn-go" id="btn-go" onclick="go()" disabled>GO</button>
+  <hr class="divider" />
+
+  <!-- Audio -->
+  <div class="setup-full">
+    <div class="panel-label">Music (optional)</div>
+    <p class="panel-hint">
+      Paste a direct audio URL (MP3, OGG, stream) or choose a local file.
+      Try <a href="https://archive.org/search?query=trip+hop&and[]=mediatype%3A%22audio%22" target="_blank" style="color:#aaa">Internet Archive</a>
+      for free CC-licensed trip-hop and ambient — copy the direct MP3 link.
+    </p>
+    <div class="input-row">
+      <input class="text-input" id="audio-url-input" type="text" placeholder="https://archive.org/... or any direct MP3/OGG URL" />
+      <button class="btn-add" onclick="setAudioUrl()">Set</button>
+    </div>
+    <div class="file-row">
+      <label class="file-label-btn" for="audio-file-input">Local file…</label>
+      <input type="file" id="audio-file-input" accept="audio/*" onchange="setAudioFile(event)" />
+      <span class="file-name" id="audio-file-name">No file chosen</span>
+    </div>
+    <div id="audio-status" class="cache-note"></div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- API key -->
+  <div class="setup-full">
+    <div class="panel-label">Are.na Access Token <span style="font-weight:normal;text-transform:none;letter-spacing:0;font-size:12px">(optional — needed for private channels)</span></div>
+    <p class="panel-hint">Get yours at are.na → Settings → Developers</p>
+    <input class="text-input" style="width:100%" id="api-key" type="password" placeholder="Paste access token here" />
+    <p class="cache-note" style="margin-top:10px">
+      Channel content is cached locally for 24 hours so you won't hammer the API.
+      <a onclick="clearAllCache()">Clear cache</a> to force a fresh fetch.
+    </p>
+  </div>
+
+  <button class="btn-go" id="btn-go" onclick="go()" disabled>Go</button>
   <div id="status"></div>
   <div id="error-area"></div>
 </div>
 
-<!-- ═══════════════ DISPLAY ═══════════════ -->
+<!-- ═══════ DISPLAY ═══════ -->
 <div id="display">
   <div id="canvas-wrap">
     <canvas id="mainCanvas"></canvas>
@@ -401,46 +505,141 @@ input[type=range] {
         <span id="speed-val">10s</span>
       </div>
       <div class="ctrl-divider"></div>
+      <button class="ctrl-btn" id="btn-audio" onclick="toggleAudio()" style="display:none">♪ Music</button>
       <button class="ctrl-btn" onclick="downloadPNG()">↓ Save PNG</button>
     </div>
   </div>
 </div>
 
+<!-- Hidden audio element -->
+<audio id="bgAudio" loop></audio>
+
 <script>
 'use strict';
 
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════
+// CONSTANTS
+// ════════════════════════════════════════════════
+
+const TEXT_COLORS  = ['#FFFFFF', '#4499FF', '#FF00CC', '#FF2222'];
+const CACHE_TTL    = 24 * 60 * 60 * 1000;  // 24 hours
+const CACHE_PFX    = 'ahyp2_';
+const PREFS_KEY    = 'ahyp2_prefs';
+const MAX_WORDS    = 30;
+
+// ════════════════════════════════════════════════
+// SHUFFLE BAG — deals every item once before repeating
+// ════════════════════════════════════════════════
+
+class ShuffleBag {
+  constructor(items) {
+    this._src = [...items];
+    this._bag = [];
+  }
+  next() {
+    if (this._bag.length === 0) this._bag = shuffle(this._src);
+    return this._bag.pop();
+  }
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ════════════════════════════════════════════════
 // STATE
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════
 
 const S = {
   imageChannelSlugs: [],
   textChannelSlugs:  [],
-  apiKey: '',
-  allImages: [],   // [{url, channelSlug}]
-  allTexts:  [],   // [{content, channelSlug}]
-  history: [],     // [{imageUrl, text, color}]
-  historyPos: -1,
-  loadedImg: null, // current HTMLImageElement
-  currentText: '',
-  currentColor: '#FFFFFF',
-  isPlaying: false,
-  playTimer: null,
-  playDelay: 10000,
-  controlsTimer: null,
-  transitioning: false,
+  searchQueries:     [],   // are.na search terms
+  apiKey:            '',
+  allImages:         [],
+  allTexts:          [],
+  imageBag:          null,
+  textBag:           null,
+  history:           [],
+  historyPos:        -1,
+  loadedImg:         null,
+  currentText:       '',
+  currentColor:      '#FFFFFF',
+  isPlaying:         false,
+  playTimer:         null,
+  playDelay:         10000,
+  controlsTimer:     null,
+  transitioning:     false,
 };
 
-const TEXT_COLORS = ['#FFFFFF', '#4499FF', '#FF00CC', '#FF2222'];
+// ════════════════════════════════════════════════
+// LOCAL STORAGE — preferences
+// ════════════════════════════════════════════════
 
+function savePrefs() {
+  try {
+    localStorage.setItem(PREFS_KEY, JSON.stringify({
+      imageChannelSlugs: S.imageChannelSlugs,
+      textChannelSlugs:  S.textChannelSlugs,
+      searchQueries:     S.searchQueries,
+    }));
+  } catch (_) {}
+}
 
-// ═══════════════════════════════════════════════
+function loadPrefs() {
+  try {
+    const raw = localStorage.getItem(PREFS_KEY);
+    if (!raw) return;
+    const p = JSON.parse(raw);
+    S.imageChannelSlugs = p.imageChannelSlugs || [];
+    S.textChannelSlugs  = p.textChannelSlugs  || [];
+    S.searchQueries     = p.searchQueries     || [];
+    renderChips('image');
+    renderChips('text');
+    renderSearchChips();
+    updateGoBtn();
+  } catch (_) {}
+}
+
+// ════════════════════════════════════════════════
+// LOCAL STORAGE — block cache
+// ════════════════════════════════════════════════
+
+function cacheSet(key, value) {
+  try {
+    localStorage.setItem(CACHE_PFX + key, JSON.stringify({ v: value, t: Date.now() }));
+  } catch (_) {}
+}
+
+function cacheGet(key) {
+  try {
+    const raw = localStorage.getItem(CACHE_PFX + key);
+    if (!raw) return null;
+    const { v, t } = JSON.parse(raw);
+    if (Date.now() - t > CACHE_TTL) {
+      localStorage.removeItem(CACHE_PFX + key);
+      return null;
+    }
+    return v;
+  } catch (_) { return null; }
+}
+
+function clearAllCache() {
+  const keys = Object.keys(localStorage).filter(k => k.startsWith(CACHE_PFX));
+  keys.forEach(k => localStorage.removeItem(k));
+  document.getElementById('status').textContent = 'Cache cleared — will fetch fresh on next Go.';
+}
+
+// ════════════════════════════════════════════════
 // SETUP UI
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════
 
 function slugFrom(raw) {
   raw = raw.trim().replace(/\/$/, '');
-  // Try as URL
   try {
     const u = new URL(raw.startsWith('http') ? raw : 'https://' + raw);
     if (u.hostname.includes('are.na')) {
@@ -448,21 +647,21 @@ function slugFrom(raw) {
       if (parts.length >= 2) return parts[parts.length - 1];
     }
   } catch (_) {}
-  // Treat as slug (last path segment)
   const parts = raw.split('/').filter(Boolean);
   return parts[parts.length - 1] || '';
 }
 
 function addChannel(type) {
-  const inputId = type === 'image' ? 'img-input' : 'txt-input';
-  const arr     = type === 'image' ? S.imageChannelSlugs : S.textChannelSlugs;
-  const input   = document.getElementById(inputId);
-  const slug    = slugFrom(input.value);
+  const id   = type === 'image' ? 'img-input' : 'txt-input';
+  const arr  = type === 'image' ? S.imageChannelSlugs : S.textChannelSlugs;
+  const input = document.getElementById(id);
+  const slug  = slugFrom(input.value);
   if (!slug) return;
   if (!arr.includes(slug)) arr.push(slug);
   input.value = '';
   renderChips(type);
   updateGoBtn();
+  savePrefs();
 }
 
 function removeChannel(type, slug) {
@@ -471,89 +670,154 @@ function removeChannel(type, slug) {
   if (i >= 0) arr.splice(i, 1);
   renderChips(type);
   updateGoBtn();
+  savePrefs();
 }
 
 function renderChips(type) {
-  const arr  = type === 'image' ? S.imageChannelSlugs : S.textChannelSlugs;
-  const el   = document.getElementById(type === 'image' ? 'img-chips' : 'txt-chips');
+  const arr = type === 'image' ? S.imageChannelSlugs : S.textChannelSlugs;
+  const el  = document.getElementById(type === 'image' ? 'img-chips' : 'txt-chips');
   el.innerHTML = arr.map(slug =>
     `<div class="chip"><span title="${slug}">${slug}</span>` +
     `<button class="chip-x" onclick="removeChannel('${type}','${slug}')">×</button></div>`
   ).join('');
 }
 
-function updateGoBtn() {
-  document.getElementById('btn-go').disabled =
-    S.imageChannelSlugs.length === 0 || S.textChannelSlugs.length === 0;
+function addSearch() {
+  const input = document.getElementById('search-input');
+  const query = input.value.trim();
+  // Allow empty string (represents "recent public blocks")
+  const label = query || '(recent public)';
+  const key   = query;
+  if (!S.searchQueries.some(q => q === key)) S.searchQueries.push(key);
+  input.value = '';
+  renderSearchChips();
+  updateGoBtn();
+  savePrefs();
 }
 
-// Enter key on inputs
-document.getElementById('img-input').addEventListener('keydown', e => { if (e.key === 'Enter') addChannel('image'); });
-document.getElementById('txt-input').addEventListener('keydown', e => { if (e.key === 'Enter') addChannel('text'); });
+function removeSearch(key) {
+  S.searchQueries = S.searchQueries.filter(q => q !== key);
+  renderSearchChips();
+  updateGoBtn();
+  savePrefs();
+}
 
+function renderSearchChips() {
+  const el = document.getElementById('search-chips');
+  el.innerHTML = S.searchQueries.map(q => {
+    const label = q || '(recent public)';
+    const safe  = q.replace(/'/g, "\\'");
+    return `<div class="chip"><span title="${label}">${label}</span>` +
+           `<button class="chip-x" onclick="removeSearch('${safe}')">×</button></div>`;
+  }).join('');
+}
 
-// ═══════════════════════════════════════════════
+function updateGoBtn() {
+  const hasContent =
+    S.imageChannelSlugs.length > 0 ||
+    S.textChannelSlugs.length > 0  ||
+    S.searchQueries.length > 0;
+  document.getElementById('btn-go').disabled = !hasContent;
+}
+
+// Enter keys
+['img-input','txt-input','search-input'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    if (id === 'img-input')    addChannel('image');
+    if (id === 'txt-input')    addChannel('text');
+    if (id === 'search-input') addSearch();
+  });
+});
+
+// ════════════════════════════════════════════════
 // ARE.NA API
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════
+
+function arenaHeaders() {
+  return S.apiKey ? { Authorization: `Bearer ${S.apiKey}` } : {};
+}
 
 async function fetchChannelContents(slug) {
-  const headers = S.apiKey ? { Authorization: `Bearer ${S.apiKey}` } : {};
-  let page = 1, all = [], total = null;
+  const cacheKey = 'chan_' + slug;
+  const cached   = cacheGet(cacheKey);
+  if (cached) return { data: cached, fromCache: true };
 
+  let page = 1, all = [], total = null;
   while (true) {
     const url = `https://api.are.na/v2/channels/${encodeURIComponent(slug)}/contents?per=100&page=${page}`;
-    const res = await fetch(url, { headers });
+    const res  = await fetch(url, { headers: arenaHeaders() });
     if (!res.ok) {
       const txt = await res.text().catch(() => res.statusText);
-      throw new Error(`Channel "${slug}" – ${res.status}: ${txt.slice(0, 120)}`);
+      throw new Error(`Channel "${slug}" – ${res.status}: ${txt.slice(0,120)}`);
     }
-    const data = await res.json();
+    const data  = await res.json();
     const items = data.contents || [];
     all = all.concat(items);
     if (total === null) total = data.length || 0;
     if (items.length < 100 || all.length >= total) break;
     page++;
   }
-  return all;
+  cacheSet(cacheKey, all);
+  return { data: all, fromCache: false };
 }
 
-function extractImages(blocks, slug) {
-  return blocks
-    .filter(b => b.class === 'Image' || (b.class === 'Link' && b.image))
-    .map(b => ({
-      url: b.image?.display?.url || b.image?.large?.url || b.image?.original?.url,
-      channelSlug: slug,
-    }))
-    .filter(b => b.url);
+async function fetchSearch(query) {
+  const cacheKey = 'srch_' + (query || '__recent__');
+  const cached   = cacheGet(cacheKey);
+  if (cached) return { data: cached, fromCache: true };
+
+  // Fetch pages of search results
+  let page = 1, all = [], total = null;
+  while (true) {
+    const q   = query ? encodeURIComponent(query) : '';
+    const url = `https://api.are.na/v2/search?q=${q}&per=100&page=${page}`;
+    const res  = await fetch(url, { headers: arenaHeaders() });
+    if (!res.ok) {
+      const txt = await res.text().catch(() => res.statusText);
+      throw new Error(`Search "${query || 'recent'}" – ${res.status}: ${txt.slice(0,120)}`);
+    }
+    const data   = await res.json();
+    const blocks = data.blocks || [];
+    all = all.concat(blocks);
+    if (total === null) total = (data.blocks_count || data.total || blocks.length);
+    if (blocks.length < 100 || all.length >= Math.min(total, 500)) break;
+    page++;
+  }
+  cacheSet(cacheKey, all);
+  return { data: all, fromCache: false };
 }
 
 function stripHtml(html) {
-  // Remove HTML tags, decode basic entities
   return html
     .replace(/<br\s*\/?>/gi, ' ')
     .replace(/<[^>]+>/g, '')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/\s+/g, ' ')
-    .trim();
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ').trim();
 }
 
-function extractTexts(blocks, slug) {
+function wordCount(str) {
+  return str.split(/\s+/).filter(w => w).length;
+}
+
+function extractImages(blocks) {
+  return blocks
+    .filter(b => b.class === 'Image' || (b.class === 'Link' && b.image))
+    .map(b => ({ url: b.image?.display?.url || b.image?.large?.url || b.image?.original?.url }))
+    .filter(b => b.url);
+}
+
+function extractTexts(blocks) {
   return blocks
     .filter(b => b.class === 'Text' && b.content)
-    .map(b => ({ content: stripHtml(b.content), channelSlug: slug }))
-    .filter(b => b.content.length > 3)
-    .filter(b => b.content.split(/\s+/).filter(w => w).length <= 20);
+    .map(b => ({ content: stripHtml(b.content) }))
+    .filter(b => b.content.length > 3 && wordCount(b.content) <= MAX_WORDS);
 }
 
-
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════
 // GO / LOAD
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════
 
 async function go() {
   S.apiKey = document.getElementById('api-key').value.trim();
@@ -561,56 +825,91 @@ async function go() {
   const errorEl  = document.getElementById('error-area');
   const btn      = document.getElementById('btn-go');
 
-  btn.disabled = true;
+  btn.disabled   = true;
   errorEl.innerHTML = '';
-  S.allImages = [];
-  S.allTexts  = [];
+  S.allImages    = [];
+  S.allTexts     = [];
+  let cacheHits  = 0, fetched = 0;
 
   try {
+    // Image channels
     for (const slug of S.imageChannelSlugs) {
       statusEl.textContent = `Fetching ${slug}…`;
-      const contents = await fetchChannelContents(slug);
-      S.allImages = S.allImages.concat(extractImages(contents, slug));
+      const { data, fromCache } = await fetchChannelContents(slug);
+      S.allImages = S.allImages.concat(extractImages(data));
+      fromCache ? cacheHits++ : fetched++;
     }
 
+    // Text channels
     for (const slug of S.textChannelSlugs) {
       statusEl.textContent = `Fetching ${slug}…`;
-      const contents = await fetchChannelContents(slug);
-      S.allTexts = S.allTexts.concat(extractTexts(contents, slug));
+      const { data, fromCache } = await fetchChannelContents(slug);
+      S.allTexts = S.allTexts.concat(extractTexts(data));
+      fromCache ? cacheHits++ : fetched++;
     }
 
-    if (S.allImages.length === 0)
-      throw new Error('No images found in your image channels. Make sure the channels contain image blocks.');
-    if (S.allTexts.length === 0)
-      throw new Error('No text found in your text channels. Make sure the channels contain text blocks.');
+    // Search queries (mixed: add images and texts from each)
+    for (const query of S.searchQueries) {
+      statusEl.textContent = `Searching "${query || 'recent public blocks'}"…`;
+      const { data, fromCache } = await fetchSearch(query);
+      S.allImages = S.allImages.concat(extractImages(data));
+      S.allTexts  = S.allTexts.concat(extractTexts(data));
+      fromCache ? cacheHits++ : fetched++;
+    }
 
-    statusEl.textContent = `${S.allImages.length} images · ${S.allTexts.length} texts`;
+    // Deduplicate
+    S.allImages = dedup(S.allImages, 'url');
+    S.allTexts  = dedup(S.allTexts, 'content');
+
+    if (S.allImages.length === 0)
+      throw new Error('No images found. Check your channels contain image blocks, or try a search query.');
+    if (S.allTexts.length === 0)
+      throw new Error(`No short texts found (≤${MAX_WORDS} words). Check your text channels have short blocks.`);
+
+    const cacheNote = cacheHits > 0 ? ` (${cacheHits} from cache)` : '';
+    statusEl.textContent =
+      `${S.allImages.length} images · ${S.allTexts.length} texts${cacheNote}`;
+
+    S.imageBag   = new ShuffleBag(S.allImages);
+    S.textBag    = new ShuffleBag(S.allTexts);
     S.history    = [];
     S.historyPos = -1;
+
+    savePrefs();
 
     document.getElementById('setup').style.display   = 'none';
     document.getElementById('display').style.display = 'block';
     initCanvas();
-    await advance(true); // first slide, no fade
+    tryStartAudio();
+    await advance(true);
 
   } catch (err) {
-    statusEl.textContent = '';
-    errorEl.innerHTML = `<p class="error">${err.message}</p>`;
-    btn.disabled = false;
+    statusEl.textContent  = '';
+    errorEl.innerHTML     = `<p class="error">${err.message}</p>`;
+    btn.disabled          = false;
   }
+}
+
+function dedup(arr, key) {
+  const seen = new Set();
+  return arr.filter(item => {
+    if (seen.has(item[key])) return false;
+    seen.add(item[key]);
+    return true;
+  });
 }
 
 function backToSetup() {
   stopPlay();
+  pauseAudio();
   document.getElementById('display').style.display = 'none';
   document.getElementById('setup').style.display   = 'flex';
   document.getElementById('btn-go').disabled        = false;
 }
 
-
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════
 // CANVAS + RESIZE
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════
 
 const canvas = document.getElementById('mainCanvas');
 const ctx    = canvas.getContext('2d', { willReadFrequently: true });
@@ -632,16 +931,14 @@ function resizeCanvas() {
   canvas.height = ch;
   canvas.style.width  = cw + 'px';
   canvas.style.height = ch + 'px';
-
   if (S.loadedImg && S.currentText) {
     renderFrame(S.loadedImg, S.currentText, S.currentColor, canvas, ctx);
   }
 }
 
-
-// ═══════════════════════════════════════════════
-// TEXT LAYOUT + RENDERING
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════
+// RENDERING
+// ════════════════════════════════════════════════
 
 function wordWrap(ctx2d, text, maxWidth) {
   const words = text.split(' ');
@@ -662,16 +959,13 @@ function wordWrap(ctx2d, text, maxWidth) {
 
 function sampleBrightness(ctx2d, x, y, w, h) {
   try {
-    const px   = ctx2d.getImageData(Math.round(x), Math.round(y), Math.round(w), Math.round(h)).data;
-    let   sum  = 0;
-    const n    = px.length / 4;
-    for (let i = 0; i < px.length; i += 4) {
+    const px  = ctx2d.getImageData(Math.round(x), Math.round(y), Math.round(Math.max(1,w)), Math.round(Math.max(1,h))).data;
+    let sum = 0;
+    const n = px.length / 4;
+    for (let i = 0; i < px.length; i += 4)
       sum += (px[i] * 0.299 + px[i+1] * 0.587 + px[i+2] * 0.114) / 255;
-    }
     return sum / n;
-  } catch (_) {
-    return 0.5;
-  }
+  } catch (_) { return 0.5; }
 }
 
 function renderFrame(img, text, color, targetCanvas, targetCtx) {
@@ -680,11 +974,10 @@ function renderFrame(img, text, color, targetCanvas, targetCtx) {
   const cw = c.width;
   const ch = c.height;
 
-  // Black fill
   cx.fillStyle = '#000';
   cx.fillRect(0, 0, cw, ch);
 
-  // Draw image as cover
+  // Cover-fit image
   const ia = img.naturalWidth / img.naturalHeight;
   const ca = cw / ch;
   let sx, sy, sw, sh;
@@ -697,82 +990,72 @@ function renderFrame(img, text, color, targetCanvas, targetCtx) {
   }
   cx.drawImage(img, sx, sy, sw, sh, 0, 0, cw, ch);
 
-  // ── Text layout ──
-  const upper    = text.toUpperCase();
-  const maxW     = cw * 0.78;
+  // Text sizing — bigger base, scale down by line count
+  const upper = text.toUpperCase();
+  const maxW  = cw * 0.78;
 
-  // Start with a larger size; reduce if too many lines
   let fontSize = Math.round(ch * 0.088);
   cx.font = `bold ${fontSize}px Arial, sans-serif`;
   let lines = wordWrap(cx, upper, maxW);
 
   if (lines.length > 2) {
     fontSize = Math.round(ch * 0.068);
-    cx.font = `bold ${fontSize}px Arial, sans-serif`;
-    lines = wordWrap(cx, upper, maxW);
+    cx.font  = `bold ${fontSize}px Arial, sans-serif`;
+    lines    = wordWrap(cx, upper, maxW);
   }
   if (lines.length > 4) {
     fontSize = Math.round(ch * 0.052);
-    cx.font = `bold ${fontSize}px Arial, sans-serif`;
-    lines = wordWrap(cx, upper, maxW);
+    cx.font  = `bold ${fontSize}px Arial, sans-serif`;
+    lines    = wordWrap(cx, upper, maxW);
   }
 
-  const lineH       = fontSize * 1.38;
-  const totalH      = lines.length * lineH;
-  // Short text: centred around 55% down; longer: 63% down
-  const yAnchor     = ch * (lines.length <= 2 ? 0.55 : 0.63);
-  const textTop     = yAnchor - totalH / 2;
+  const lineH   = fontSize * 1.38;
+  const totalH  = lines.length * lineH;
+  // More central: short text ~55%, longer ~63%
+  const yAnchor = ch * (lines.length <= 2 ? 0.55 : 0.63);
+  const textTop = yAnchor - totalH / 2;
 
-  // Sample brightness in text zone
+  // Sample brightness in text region
   const sampleX = (cw - maxW) / 2;
   const sampleY = Math.max(0, textTop - fontSize * 0.3);
   const sampleH = Math.min(totalH + fontSize * 0.6, ch - sampleY);
   const bright  = sampleBrightness(cx, sampleX, sampleY, maxW, sampleH);
 
-  // Apply shadow only for pale images
+  // TV-caption style shadow only when image is pale
   if (bright > 0.42) {
-    // Hard 2px TV-caption drop shadow
-    cx.shadowColor    = 'rgba(0,0,0,0.92)';
-    cx.shadowBlur     = 2;
-    cx.shadowOffsetX  = 2;
-    cx.shadowOffsetY  = 2;
+    cx.shadowColor   = 'rgba(0,0,0,0.92)';
+    cx.shadowBlur    = 2;
+    cx.shadowOffsetX = 2;
+    cx.shadowOffsetY = 2;
   } else if (bright > 0.28) {
-    cx.shadowColor    = 'rgba(0,0,0,0.7)';
-    cx.shadowBlur     = 3;
-    cx.shadowOffsetX  = 1;
-    cx.shadowOffsetY  = 1;
+    cx.shadowColor   = 'rgba(0,0,0,0.7)';
+    cx.shadowBlur    = 3;
+    cx.shadowOffsetX = 1;
+    cx.shadowOffsetY = 1;
   }
-  // else: dark image, no shadow needed
 
   cx.fillStyle    = color;
   cx.textAlign    = 'center';
   cx.textBaseline = 'top';
   cx.font         = `bold ${fontSize}px Arial, sans-serif`;
 
-  lines.forEach((line, i) => {
-    cx.fillText(line, cw / 2, textTop + i * lineH);
-  });
+  lines.forEach((line, i) => cx.fillText(line, cw / 2, textTop + i * lineH));
 
-  // Reset shadow
-  cx.shadowColor   = 'transparent';
-  cx.shadowBlur    = 0;
-  cx.shadowOffsetX = 0;
-  cx.shadowOffsetY = 0;
+  cx.shadowColor = 'transparent'; cx.shadowBlur = 0;
+  cx.shadowOffsetX = 0; cx.shadowOffsetY = 0;
 }
 
-
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════
 // IMAGE LOADING
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════
 
 function loadImg(url) {
   return new Promise((resolve, reject) => {
-    const img      = new Image();
+    const img       = new Image();
     img.crossOrigin = 'anonymous';
-    img.onload     = () => resolve(img);
-    img.onerror    = () => {
-      // Fallback without crossOrigin (canvas will be tainted but at least displays)
-      const img2  = new Image();
+    img.onload      = () => resolve(img);
+    img.onerror     = () => {
+      const img2   = new Image();
       img2.onload  = () => resolve(img2);
       img2.onerror = reject;
       img2.src     = url;
@@ -781,16 +1064,16 @@ function loadImg(url) {
   });
 }
 
-
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════
 // SLIDE NAVIGATION
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════
 
 function pickEntry() {
-  const imgObj  = S.allImages[Math.floor(Math.random() * S.allImages.length)];
-  const txtObj  = S.allTexts[Math.floor(Math.random() * S.allTexts.length)];
-  const color   = TEXT_COLORS[Math.floor(Math.random() * TEXT_COLORS.length)];
-  return { imageUrl: imgObj.url, text: txtObj.content, color };
+  return {
+    imageUrl: S.imageBag.next().url,
+    text:     S.textBag.next().content,
+    color:    TEXT_COLORS[Math.floor(Math.random() * TEXT_COLORS.length)],
+  };
 }
 
 async function showEntry(entry, immediate) {
@@ -799,24 +1082,17 @@ async function showEntry(entry, immediate) {
 
   if (!immediate) await fade(true);
 
-  let img;
-  let attempts = 0;
+  let img, attempts = 0;
   while (attempts < 5) {
     try {
-      img = await loadImg(entry.imageUrl);
-      break;
+      img = await loadImg(entry.imageUrl); break;
     } catch (_) {
-      // Bad image URL — pick a different image and update the entry
       attempts++;
-      const fallback   = S.allImages[Math.floor(Math.random() * S.allImages.length)];
-      entry.imageUrl   = fallback.url;
+      entry.imageUrl = S.imageBag.next().url;
     }
   }
 
-  if (!img) {
-    S.transitioning = false;
-    return;
-  }
+  if (!img) { S.transitioning = false; return; }
 
   S.loadedImg    = img;
   S.currentText  = entry.text;
@@ -830,7 +1106,6 @@ async function showEntry(entry, immediate) {
 }
 
 async function advance(immediate) {
-  // Move forward in history, or pick new entry
   S.historyPos++;
   if (S.historyPos < S.history.length) {
     await showEntry(S.history[S.historyPos], immediate);
@@ -841,55 +1116,36 @@ async function advance(immediate) {
   }
 }
 
-async function goBack() {
-  if (S.historyPos <= 0) return;
+async function nextSlide() {
+  stopPlay(); updatePlayBtn(); await advance(false);
+}
+
+async function prevSlide() {
+  if (S.transitioning || S.historyPos <= 0) return;
+  stopPlay(); updatePlayBtn();
   S.historyPos--;
   await showEntry(S.history[S.historyPos], false);
 }
 
-async function nextSlide() {
-  stopPlay();
-  updatePlayBtn();
-  await advance(false);
-}
-
-async function prevSlide() {
-  if (S.transitioning) return;
-  stopPlay();
-  updatePlayBtn();
-  await goBack();
-}
-
-
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════
 // FADE
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════
 
 function fade(toBlack) {
   return new Promise(resolve => {
     const ov = document.getElementById('fade-overlay');
-    ov.style.transition = toBlack
-      ? 'opacity 0.35s ease'
-      : 'opacity 0.55s ease';
-    ov.style.opacity = toBlack ? '1' : '0';
+    ov.style.transition = toBlack ? 'opacity 0.35s ease' : 'opacity 0.55s ease';
+    ov.style.opacity    = toBlack ? '1' : '0';
     setTimeout(resolve, toBlack ? 380 : 580);
   });
 }
 
-
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════
 // AUTOPLAY
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════
 
-function togglePlay() {
-  S.isPlaying ? stopPlay() : startPlay();
-  updatePlayBtn();
-}
-
-function startPlay() {
-  S.isPlaying = true;
-  scheduleNext();
-}
+function togglePlay()  { S.isPlaying ? stopPlay() : startPlay(); updatePlayBtn(); }
+function startPlay()   { S.isPlaying = true; scheduleNext(); }
 
 function stopPlay() {
   S.isPlaying = false;
@@ -898,9 +1154,7 @@ function stopPlay() {
 
 function scheduleNext() {
   if (S.playTimer) clearTimeout(S.playTimer);
-  S.playTimer = setTimeout(async () => {
-    if (S.isPlaying) await advance(false);
-  }, S.playDelay);
+  S.playTimer = setTimeout(async () => { if (S.isPlaying) await advance(false); }, S.playDelay);
 }
 
 function setSpeed(val) {
@@ -910,30 +1164,79 @@ function setSpeed(val) {
 
 function updatePlayBtn() {
   const btn = document.getElementById('btn-play');
-  if (S.isPlaying) {
-    btn.textContent = '⏸ Pause';
+  if (S.isPlaying) { btn.textContent = '⏸ Pause'; btn.classList.add('active'); }
+  else             { btn.textContent = '▶ Play';  btn.classList.remove('active'); }
+}
+
+// ════════════════════════════════════════════════
+// AUDIO
+// ════════════════════════════════════════════════
+
+const bgAudio = document.getElementById('bgAudio');
+bgAudio.volume = 0.4;
+
+function setAudioUrl() {
+  const url = document.getElementById('audio-url-input').value.trim();
+  if (!url) return;
+  bgAudio.src = url;
+  document.getElementById('audio-status').textContent = '✓ Audio source set — will play on Go.';
+  document.getElementById('audio-url-input').value = '';
+}
+
+function setAudioFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  bgAudio.src = URL.createObjectURL(file);
+  document.getElementById('audio-file-name').textContent = file.name;
+  document.getElementById('audio-status').textContent    = '✓ Local file ready — will play on Go.';
+}
+
+function tryStartAudio() {
+  if (!bgAudio.src) return;
+  bgAudio.play().then(() => {
+    const btn = document.getElementById('btn-audio');
+    btn.style.display = '';
+    btn.textContent   = '♪ Mute';
+    btn.classList.add('active');
+  }).catch(() => {
+    // Autoplay blocked — show button so user can start it
+    const btn = document.getElementById('btn-audio');
+    btn.style.display = '';
+    btn.textContent   = '♪ Play music';
+  });
+}
+
+function pauseAudio() {
+  bgAudio.pause();
+  const btn = document.getElementById('btn-audio');
+  btn.textContent = '♪ Music';
+  btn.classList.remove('active');
+}
+
+function toggleAudio() {
+  const btn = document.getElementById('btn-audio');
+  if (bgAudio.paused) {
+    bgAudio.play().catch(() => {});
+    btn.textContent = '♪ Mute';
     btn.classList.add('active');
   } else {
-    btn.textContent = '▶ Play';
+    bgAudio.pause();
+    btn.textContent = '♪ Music';
     btn.classList.remove('active');
   }
 }
 
-
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════
 // DOWNLOAD
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════
 
 async function downloadPNG() {
   if (!S.loadedImg || !S.currentText) return;
-
   const exp    = document.createElement('canvas');
-  exp.width    = 1920;
-  exp.height   = 1080;
+  exp.width    = 1920; exp.height = 1080;
   const expCtx = exp.getContext('2d', { willReadFrequently: true });
 
   try {
-    // Re-load image fresh with crossOrigin for a clean export canvas
     const freshImg = await loadImg(S.loadedImg.src);
     renderFrame(freshImg, S.currentText, S.currentColor, exp, expCtx);
   } catch (_) {
@@ -941,19 +1244,18 @@ async function downloadPNG() {
   }
 
   try {
-    const link      = document.createElement('a');
-    link.download   = 'arena-hypernormalisation.png';
-    link.href       = exp.toDataURL('image/png');
+    const link    = document.createElement('a');
+    link.download = 'arena-hypernormalisation.png';
+    link.href     = exp.toDataURL('image/png');
     link.click();
   } catch (_) {
-    alert('Could not export — the image source may not allow cross-origin access. Try adding your are.na API key.');
+    alert('Could not export — the image may not allow cross-origin access.');
   }
 }
 
-
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════
 // CONTROLS VISIBILITY
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════
 
 const displayEl  = document.getElementById('display');
 const controlsEl = document.getElementById('controls');
@@ -961,47 +1263,36 @@ const controlsEl = document.getElementById('controls');
 function showControls() {
   controlsEl.classList.add('visible');
   if (S.controlsTimer) clearTimeout(S.controlsTimer);
-  S.controlsTimer = setTimeout(hideControls, 3200);
-}
-
-function hideControls() {
-  controlsEl.classList.remove('visible');
+  S.controlsTimer = setTimeout(() => controlsEl.classList.remove('visible'), 3200);
 }
 
 displayEl.addEventListener('mousemove', showControls);
 displayEl.addEventListener('touchstart', showControls, { passive: true });
 
-// Click on canvas: toggle controls
 canvas.addEventListener('click', () => {
-  if (controlsEl.classList.contains('visible')) {
-    hideControls();
-  } else {
-    showControls();
-  }
+  controlsEl.classList.contains('visible')
+    ? controlsEl.classList.remove('visible')
+    : showControls();
 });
 
-// Keyboard shortcuts
 document.addEventListener('keydown', e => {
   if (document.getElementById('display').style.display === 'none') return;
   switch (e.key) {
-    case 'ArrowRight':
-    case 'n':
-    case 'N':
-      e.preventDefault(); nextSlide(); break;
-    case 'ArrowLeft':
-    case 'p':
-    case 'P':
-      e.preventDefault(); prevSlide(); break;
-    case ' ':
-      e.preventDefault(); togglePlay(); break;
-    case 's':
-    case 'S':
-      downloadPNG(); break;
-    case 'Escape':
-      backToSetup(); break;
+    case 'ArrowRight': case 'n': case 'N': e.preventDefault(); nextSlide(); break;
+    case 'ArrowLeft':  case 'p': case 'P': e.preventDefault(); prevSlide(); break;
+    case ' ':                               e.preventDefault(); togglePlay(); break;
+    case 'm': case 'M':                                         toggleAudio(); break;
+    case 's': case 'S':                                         downloadPNG(); break;
+    case 'Escape':                                              backToSetup(); break;
   }
   showControls();
 });
+
+// ════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════
+
+loadPrefs();
 </script>
 </body>
 </html>
