@@ -443,12 +443,13 @@ input[type=range] {
   <div class="setup-full">
     <div class="panel-label">Music (optional)</div>
     <p class="panel-hint">
-      Paste a direct audio URL (MP3, OGG, stream) or choose a local file.
-      Try <a href="https://archive.org/search?query=trip+hop&and[]=mediatype%3A%22audio%22" target="_blank" style="color:#aaa">Internet Archive</a>
-      for free CC-licensed trip-hop and ambient — copy the direct MP3 link.
+      Paste a <strong style="color:#ccc">direct MP3/OGG file URL</strong> (not a web page) or choose a local file.
+      On <a href="https://archive.org/search?query=trip+hop&and[]=mediatype%3A%22audio%22" target="_blank" style="color:#aaa">Internet Archive</a>,
+      open an item → click a track's download link → copy that .mp3 URL.
+      SoundCloud/YouTube coming soon.
     </p>
     <div class="input-row">
-      <input class="text-input" id="audio-url-input" type="text" placeholder="https://archive.org/... or any direct MP3/OGG URL" />
+      <input class="text-input" id="audio-url-input" type="text" placeholder="https://archive.org/download/item-id/track.mp3" />
       <button class="btn-add" onclick="setAudioUrl()">Set</button>
     </div>
     <div class="file-row">
@@ -955,16 +956,6 @@ function wordWrap(ctx2d, text, maxWidth) {
   return lines;
 }
 
-function sampleBrightness(ctx2d, x, y, w, h) {
-  try {
-    const px  = ctx2d.getImageData(Math.round(x), Math.round(y), Math.round(Math.max(1,w)), Math.round(Math.max(1,h))).data;
-    let sum = 0;
-    const n = px.length / 4;
-    for (let i = 0; i < px.length; i += 4)
-      sum += (px[i] * 0.299 + px[i+1] * 0.587 + px[i+2] * 0.114) / 255;
-    return sum / n;
-  } catch (_) { return 0.5; }
-}
 
 function renderFrame(img, text, color, targetCanvas, targetCtx) {
   const c  = targetCanvas || canvas;
@@ -988,49 +979,35 @@ function renderFrame(img, text, color, targetCanvas, targetCtx) {
   }
   cx.drawImage(img, sx, sy, sw, sh, 0, 0, cw, ch);
 
-  // Text sizing — bigger base, scale down by line count
+  // Text sizing: start large, step down only if too many lines
   const upper = text.toUpperCase();
-  const maxW  = cw * 0.78;
+  const maxW  = cw * 0.82;  // slightly wider column = fewer forced wraps
 
-  let fontSize = Math.round(ch * 0.088);
+  let fontSize = Math.round(ch * 0.096);  // base: ~104px at 1080p
   cx.font = `bold ${fontSize}px Arial, sans-serif`;
   let lines = wordWrap(cx, upper, maxW);
 
-  if (lines.length > 2) {
-    fontSize = Math.round(ch * 0.068);
+  if (lines.length > 3) {
+    fontSize = Math.round(ch * 0.076);    // medium: ~82px
     cx.font  = `bold ${fontSize}px Arial, sans-serif`;
     lines    = wordWrap(cx, upper, maxW);
   }
-  if (lines.length > 4) {
-    fontSize = Math.round(ch * 0.052);
+  if (lines.length > 5) {
+    fontSize = Math.round(ch * 0.060);    // small: ~65px
     cx.font  = `bold ${fontSize}px Arial, sans-serif`;
     lines    = wordWrap(cx, upper, maxW);
   }
 
   const lineH   = fontSize * 1.38;
   const totalH  = lines.length * lineH;
-  // More central: short text ~55%, longer ~63%
   const yAnchor = ch * (lines.length <= 2 ? 0.55 : 0.63);
   const textTop = yAnchor - totalH / 2;
 
-  // Sample brightness in text region
-  const sampleX = (cw - maxW) / 2;
-  const sampleY = Math.max(0, textTop - fontSize * 0.3);
-  const sampleH = Math.min(totalH + fontSize * 0.6, ch - sampleY);
-  const bright  = sampleBrightness(cx, sampleX, sampleY, maxW, sampleH);
-
-  // TV-caption style shadow only when image is pale
-  if (bright > 0.42) {
-    cx.shadowColor   = 'rgba(0,0,0,0.92)';
-    cx.shadowBlur    = 2;
-    cx.shadowOffsetX = 2;
-    cx.shadowOffsetY = 2;
-  } else if (bright > 0.28) {
-    cx.shadowColor   = 'rgba(0,0,0,0.7)';
-    cx.shadowBlur    = 3;
-    cx.shadowOffsetX = 1;
-    cx.shadowOffsetY = 1;
-  }
+  // Always: crisp 2px hard black drop shadow, no blur
+  cx.shadowColor   = 'rgba(0,0,0,0.88)';
+  cx.shadowBlur    = 0;
+  cx.shadowOffsetX = 2;
+  cx.shadowOffsetY = 2;
 
   cx.fillStyle    = color;
   cx.textAlign    = 'center';
