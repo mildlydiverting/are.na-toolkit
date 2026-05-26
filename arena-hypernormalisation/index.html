@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARENA HYPERNORMALISATION</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #000;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  height: 100vh;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── SETUP ─────────────────────────────────── */
+
+#setup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 48px 32px;
+  overflow-y: auto;
+}
+
+#setup h1 {
+  font-size: clamp(16px, 2.5vw, 30px);
+  letter-spacing: 0.2em;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 12px;
+  color: #aaa;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 48px;
+  text-align: center;
+}
+
+.channel-panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  width: 100%;
+  max-width: 760px;
+  margin-bottom: 36px;
+}
+
+@media (max-width: 580px) {
+  .channel-panels { grid-template-columns: 1fr; gap: 28px; }
+}
+
+.panel-label {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: #aaa;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.panel-hint {
+  font-size: 11px;
+  color: #999;
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.input-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.input-row input, .api-input {
+  flex: 1;
+  background: #111;
+  border: 1px solid #2a2a2a;
+  color: #e0e0e0;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-family: Arial, sans-serif;
+  outline: none;
+  transition: border-color 0.15s;
+  letter-spacing: 0.03em;
+}
+
+.input-row input:focus, .api-input:focus { border-color: #555; }
+.input-row input::placeholder, .api-input::placeholder { color: #666; }
+
+.btn-add {
+  background: #222;
+  border: 1px solid #333;
+  color: #aaa;
+  padding: 10px 14px;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  cursor: pointer;
+  font-family: Arial, sans-serif;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.btn-add:hover { background: #333; color: #fff; }
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 28px;
+}
+
+.chip {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  padding: 5px 8px 5px 10px;
+  font-size: 11px;
+  color: #bbb;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.04em;
+  max-width: 200px;
+}
+
+.chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chip-x {
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  font-size: 15px;
+  padding: 0;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.1s;
+}
+
+.chip-x:hover { color: #fff; }
+
+.api-section {
+  width: 100%;
+  max-width: 760px;
+  margin-bottom: 36px;
+}
+
+.api-section .panel-label { margin-bottom: 10px; }
+
+.api-section .panel-hint { margin-bottom: 12px; }
+
+.api-input { width: 100%; }
+
+.btn-go {
+  background: #fff;
+  color: #000;
+  border: none;
+  padding: 14px 52px;
+  font-size: 13px;
+  letter-spacing: 0.25em;
+  cursor: pointer;
+  font-family: Arial, sans-serif;
+  font-weight: bold;
+  text-transform: uppercase;
+  transition: background 0.15s;
+}
+
+.btn-go:hover { background: #ddd; }
+
+.btn-go:disabled {
+  background: #1e1e1e;
+  color: #777;
+  cursor: not-allowed;
+}
+
+#status {
+  margin-top: 18px;
+  font-size: 11px;
+  color: #aaa;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  min-height: 18px;
+  text-align: center;
+}
+
+.error {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #ff6666;
+  max-width: 600px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* ── DISPLAY ─────────────────────────────────── */
+
+#display {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #000;
+}
+
+#canvas-wrap {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#mainCanvas {
+  display: block;
+  image-rendering: crisp-edges;
+}
+
+/* Fade overlay for transitions */
+#fade-overlay {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* ── CONTROLS ─────────────────────────────────── */
+
+#controls {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+
+#controls.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.ctrl-bar-top {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  padding: 20px 24px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  background: linear-gradient(rgba(0,0,0,0.55) 0%, transparent 100%);
+}
+
+.ctrl-bar-bottom {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 20px 24px 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  background: linear-gradient(transparent 0%, rgba(0,0,0,0.65) 100%);
+}
+
+.ctrl-btn {
+  background: rgba(0,0,0,0.55);
+  border: 1px solid rgba(255,255,255,0.22);
+  color: #e0e0e0;
+  padding: 9px 15px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  cursor: pointer;
+  font-family: Arial, sans-serif;
+  text-transform: uppercase;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  white-space: nowrap;
+}
+
+.ctrl-btn:hover {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.5);
+  color: #fff;
+}
+
+.ctrl-btn.active {
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.6);
+  color: #fff;
+}
+
+.ctrl-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(255,255,255,0.15);
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
+.speed-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px;
+}
+
+.speed-wrap label {
+  font-size: 10px;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+}
+
+input[type=range] {
+  width: 70px;
+  accent-color: rgba(255,255,255,0.7);
+  cursor: pointer;
+}
+
+#speed-val {
+  font-size: 10px;
+  color: rgba(255,255,255,0.5);
+  min-width: 24px;
+  letter-spacing: 0.05em;
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ SETUP ═══════════════ -->
+<div id="setup">
+  <h1>ARENA HYPERNORMALISATION</h1>
+  <p class="subtitle">image + text from are.na channels</p>
+
+  <div class="channel-panels">
+    <div>
+      <div class="panel-label">Image Channels</div>
+      <p class="panel-hint">Paste an are.na URL or channel slug. Images will be used as backgrounds.</p>
+      <div class="input-row">
+        <input id="img-input" type="text" placeholder="e.g. my-image-channel or full URL" />
+        <button class="btn-add" onclick="addChannel('image')">ADD</button>
+      </div>
+      <div class="chips" id="img-chips"></div>
+    </div>
+
+    <div>
+      <div class="panel-label">Text Channels</div>
+      <p class="panel-hint">Paste an are.na URL or channel slug. Text blocks will be used as captions.</p>
+      <div class="input-row">
+        <input id="txt-input" type="text" placeholder="e.g. my-text-channel or full URL" />
+        <button class="btn-add" onclick="addChannel('text')">ADD</button>
+      </div>
+      <div class="chips" id="txt-chips"></div>
+    </div>
+  </div>
+
+  <div class="api-section">
+    <div class="panel-label">Are.na Access Token <span style="font-weight:normal;text-transform:none;letter-spacing:0">(optional — required for private channels)</span></div>
+    <p class="panel-hint">Get yours at are.na → Settings → Developers</p>
+    <input class="api-input" id="api-key" type="password" placeholder="Paste access token here" />
+  </div>
+
+  <button class="btn-go" id="btn-go" onclick="go()" disabled>GO</button>
+  <div id="status"></div>
+  <div id="error-area"></div>
+</div>
+
+<!-- ═══════════════ DISPLAY ═══════════════ -->
+<div id="display">
+  <div id="canvas-wrap">
+    <canvas id="mainCanvas"></canvas>
+  </div>
+
+  <div id="fade-overlay"></div>
+
+  <div id="controls">
+    <div class="ctrl-bar-top">
+      <button class="ctrl-btn" onclick="backToSetup()">⚙ Setup</button>
+    </div>
+    <div class="ctrl-bar-bottom">
+      <button class="ctrl-btn" onclick="prevSlide()">◀ Prev</button>
+      <button class="ctrl-btn" id="btn-play" onclick="togglePlay()">▶ Play</button>
+      <button class="ctrl-btn" onclick="nextSlide()">Next ▶</button>
+      <div class="ctrl-divider"></div>
+      <div class="speed-wrap">
+        <label>Speed</label>
+        <input type="range" id="speed-slider" min="3" max="30" value="10"
+               oninput="setSpeed(this.value)" />
+        <span id="speed-val">10s</span>
+      </div>
+      <div class="ctrl-divider"></div>
+      <button class="ctrl-btn" onclick="downloadPNG()">↓ Save PNG</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+
+const S = {
+  imageChannelSlugs: [],
+  textChannelSlugs:  [],
+  apiKey: '',
+  allImages: [],   // [{url, channelSlug}]
+  allTexts:  [],   // [{content, channelSlug}]
+  history: [],     // [{imageUrl, text, color}]
+  historyPos: -1,
+  loadedImg: null, // current HTMLImageElement
+  currentText: '',
+  currentColor: '#FFFFFF',
+  isPlaying: false,
+  playTimer: null,
+  playDelay: 10000,
+  controlsTimer: null,
+  transitioning: false,
+};
+
+const TEXT_COLORS = ['#FFFFFF', '#4499FF', '#FF00CC', '#FF2222'];
+
+
+// ═══════════════════════════════════════════════
+// SETUP UI
+// ═══════════════════════════════════════════════
+
+function slugFrom(raw) {
+  raw = raw.trim().replace(/\/$/, '');
+  // Try as URL
+  try {
+    const u = new URL(raw.startsWith('http') ? raw : 'https://' + raw);
+    if (u.hostname.includes('are.na')) {
+      const parts = u.pathname.split('/').filter(Boolean);
+      if (parts.length >= 2) return parts[parts.length - 1];
+    }
+  } catch (_) {}
+  // Treat as slug (last path segment)
+  const parts = raw.split('/').filter(Boolean);
+  return parts[parts.length - 1] || '';
+}
+
+function addChannel(type) {
+  const inputId = type === 'image' ? 'img-input' : 'txt-input';
+  const arr     = type === 'image' ? S.imageChannelSlugs : S.textChannelSlugs;
+  const input   = document.getElementById(inputId);
+  const slug    = slugFrom(input.value);
+  if (!slug) return;
+  if (!arr.includes(slug)) arr.push(slug);
+  input.value = '';
+  renderChips(type);
+  updateGoBtn();
+}
+
+function removeChannel(type, slug) {
+  const arr = type === 'image' ? S.imageChannelSlugs : S.textChannelSlugs;
+  const i   = arr.indexOf(slug);
+  if (i >= 0) arr.splice(i, 1);
+  renderChips(type);
+  updateGoBtn();
+}
+
+function renderChips(type) {
+  const arr  = type === 'image' ? S.imageChannelSlugs : S.textChannelSlugs;
+  const el   = document.getElementById(type === 'image' ? 'img-chips' : 'txt-chips');
+  el.innerHTML = arr.map(slug =>
+    `<div class="chip"><span title="${slug}">${slug}</span>` +
+    `<button class="chip-x" onclick="removeChannel('${type}','${slug}')">×</button></div>`
+  ).join('');
+}
+
+function updateGoBtn() {
+  document.getElementById('btn-go').disabled =
+    S.imageChannelSlugs.length === 0 || S.textChannelSlugs.length === 0;
+}
+
+// Enter key on inputs
+document.getElementById('img-input').addEventListener('keydown', e => { if (e.key === 'Enter') addChannel('image'); });
+document.getElementById('txt-input').addEventListener('keydown', e => { if (e.key === 'Enter') addChannel('text'); });
+
+
+// ═══════════════════════════════════════════════
+// ARE.NA API
+// ═══════════════════════════════════════════════
+
+async function fetchChannelContents(slug) {
+  const headers = S.apiKey ? { Authorization: `Bearer ${S.apiKey}` } : {};
+  let page = 1, all = [], total = null;
+
+  while (true) {
+    const url = `https://api.are.na/v2/channels/${encodeURIComponent(slug)}/contents?per=100&page=${page}`;
+    const res = await fetch(url, { headers });
+    if (!res.ok) {
+      const txt = await res.text().catch(() => res.statusText);
+      throw new Error(`Channel "${slug}" – ${res.status}: ${txt.slice(0, 120)}`);
+    }
+    const data = await res.json();
+    const items = data.contents || [];
+    all = all.concat(items);
+    if (total === null) total = data.length || 0;
+    if (items.length < 100 || all.length >= total) break;
+    page++;
+  }
+  return all;
+}
+
+function extractImages(blocks, slug) {
+  return blocks
+    .filter(b => b.class === 'Image' || (b.class === 'Link' && b.image))
+    .map(b => ({
+      url: b.image?.display?.url || b.image?.large?.url || b.image?.original?.url,
+      channelSlug: slug,
+    }))
+    .filter(b => b.url);
+}
+
+function stripHtml(html) {
+  // Remove HTML tags, decode basic entities
+  return html
+    .replace(/<br\s*\/?>/gi, ' ')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function extractTexts(blocks, slug) {
+  return blocks
+    .filter(b => b.class === 'Text' && b.content)
+    .map(b => ({ content: stripHtml(b.content), channelSlug: slug }))
+    .filter(b => b.content.length > 3)
+    .filter(b => b.content.split(/\s+/).filter(w => w).length <= 20);
+}
+
+
+// ═══════════════════════════════════════════════
+// GO / LOAD
+// ═══════════════════════════════════════════════
+
+async function go() {
+  S.apiKey = document.getElementById('api-key').value.trim();
+  const statusEl = document.getElementById('status');
+  const errorEl  = document.getElementById('error-area');
+  const btn      = document.getElementById('btn-go');
+
+  btn.disabled = true;
+  errorEl.innerHTML = '';
+  S.allImages = [];
+  S.allTexts  = [];
+
+  try {
+    for (const slug of S.imageChannelSlugs) {
+      statusEl.textContent = `Fetching ${slug}…`;
+      const contents = await fetchChannelContents(slug);
+      S.allImages = S.allImages.concat(extractImages(contents, slug));
+    }
+
+    for (const slug of S.textChannelSlugs) {
+      statusEl.textContent = `Fetching ${slug}…`;
+      const contents = await fetchChannelContents(slug);
+      S.allTexts = S.allTexts.concat(extractTexts(contents, slug));
+    }
+
+    if (S.allImages.length === 0)
+      throw new Error('No images found in your image channels. Make sure the channels contain image blocks.');
+    if (S.allTexts.length === 0)
+      throw new Error('No text found in your text channels. Make sure the channels contain text blocks.');
+
+    statusEl.textContent = `${S.allImages.length} images · ${S.allTexts.length} texts`;
+    S.history    = [];
+    S.historyPos = -1;
+
+    document.getElementById('setup').style.display   = 'none';
+    document.getElementById('display').style.display = 'block';
+    initCanvas();
+    await advance(true); // first slide, no fade
+
+  } catch (err) {
+    statusEl.textContent = '';
+    errorEl.innerHTML = `<p class="error">${err.message}</p>`;
+    btn.disabled = false;
+  }
+}
+
+function backToSetup() {
+  stopPlay();
+  document.getElementById('display').style.display = 'none';
+  document.getElementById('setup').style.display   = 'flex';
+  document.getElementById('btn-go').disabled        = false;
+}
+
+
+// ═══════════════════════════════════════════════
+// CANVAS + RESIZE
+// ═══════════════════════════════════════════════
+
+const canvas = document.getElementById('mainCanvas');
+const ctx    = canvas.getContext('2d', { willReadFrequently: true });
+
+function initCanvas() {
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+}
+
+function resizeCanvas() {
+  const wrap = document.getElementById('canvas-wrap');
+  let cw = wrap.clientWidth;
+  let ch = Math.round(cw * 9 / 16);
+  if (ch > wrap.clientHeight) {
+    ch = wrap.clientHeight;
+    cw = Math.round(ch * 16 / 9);
+  }
+  canvas.width  = cw;
+  canvas.height = ch;
+  canvas.style.width  = cw + 'px';
+  canvas.style.height = ch + 'px';
+
+  if (S.loadedImg && S.currentText) {
+    renderFrame(S.loadedImg, S.currentText, S.currentColor, canvas, ctx);
+  }
+}
+
+
+// ═══════════════════════════════════════════════
+// TEXT LAYOUT + RENDERING
+// ═══════════════════════════════════════════════
+
+function wordWrap(ctx2d, text, maxWidth) {
+  const words = text.split(' ');
+  const lines = [];
+  let line    = '';
+  for (const word of words) {
+    const test = line ? line + ' ' + word : word;
+    if (ctx2d.measureText(test).width > maxWidth && line) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = test;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+function sampleBrightness(ctx2d, x, y, w, h) {
+  try {
+    const px   = ctx2d.getImageData(Math.round(x), Math.round(y), Math.round(w), Math.round(h)).data;
+    let   sum  = 0;
+    const n    = px.length / 4;
+    for (let i = 0; i < px.length; i += 4) {
+      sum += (px[i] * 0.299 + px[i+1] * 0.587 + px[i+2] * 0.114) / 255;
+    }
+    return sum / n;
+  } catch (_) {
+    return 0.5;
+  }
+}
+
+function renderFrame(img, text, color, targetCanvas, targetCtx) {
+  const c  = targetCanvas || canvas;
+  const cx = targetCtx    || ctx;
+  const cw = c.width;
+  const ch = c.height;
+
+  // Black fill
+  cx.fillStyle = '#000';
+  cx.fillRect(0, 0, cw, ch);
+
+  // Draw image as cover
+  const ia = img.naturalWidth / img.naturalHeight;
+  const ca = cw / ch;
+  let sx, sy, sw, sh;
+  if (ia > ca) {
+    sh = img.naturalHeight; sw = sh * ca;
+    sx = (img.naturalWidth - sw) / 2; sy = 0;
+  } else {
+    sw = img.naturalWidth; sh = sw / ca;
+    sx = 0; sy = (img.naturalHeight - sh) / 2;
+  }
+  cx.drawImage(img, sx, sy, sw, sh, 0, 0, cw, ch);
+
+  // ── Text layout ──
+  const upper    = text.toUpperCase();
+  const maxW     = cw * 0.78;
+
+  // Start with a larger size; reduce if too many lines
+  let fontSize = Math.round(ch * 0.088);
+  cx.font = `bold ${fontSize}px Arial, sans-serif`;
+  let lines = wordWrap(cx, upper, maxW);
+
+  if (lines.length > 2) {
+    fontSize = Math.round(ch * 0.068);
+    cx.font = `bold ${fontSize}px Arial, sans-serif`;
+    lines = wordWrap(cx, upper, maxW);
+  }
+  if (lines.length > 4) {
+    fontSize = Math.round(ch * 0.052);
+    cx.font = `bold ${fontSize}px Arial, sans-serif`;
+    lines = wordWrap(cx, upper, maxW);
+  }
+
+  const lineH       = fontSize * 1.38;
+  const totalH      = lines.length * lineH;
+  // Short text: centred around 55% down; longer: 63% down
+  const yAnchor     = ch * (lines.length <= 2 ? 0.55 : 0.63);
+  const textTop     = yAnchor - totalH / 2;
+
+  // Sample brightness in text zone
+  const sampleX = (cw - maxW) / 2;
+  const sampleY = Math.max(0, textTop - fontSize * 0.3);
+  const sampleH = Math.min(totalH + fontSize * 0.6, ch - sampleY);
+  const bright  = sampleBrightness(cx, sampleX, sampleY, maxW, sampleH);
+
+  // Apply shadow only for pale images
+  if (bright > 0.42) {
+    // Hard 2px TV-caption drop shadow
+    cx.shadowColor    = 'rgba(0,0,0,0.92)';
+    cx.shadowBlur     = 2;
+    cx.shadowOffsetX  = 2;
+    cx.shadowOffsetY  = 2;
+  } else if (bright > 0.28) {
+    cx.shadowColor    = 'rgba(0,0,0,0.7)';
+    cx.shadowBlur     = 3;
+    cx.shadowOffsetX  = 1;
+    cx.shadowOffsetY  = 1;
+  }
+  // else: dark image, no shadow needed
+
+  cx.fillStyle    = color;
+  cx.textAlign    = 'center';
+  cx.textBaseline = 'top';
+  cx.font         = `bold ${fontSize}px Arial, sans-serif`;
+
+  lines.forEach((line, i) => {
+    cx.fillText(line, cw / 2, textTop + i * lineH);
+  });
+
+  // Reset shadow
+  cx.shadowColor   = 'transparent';
+  cx.shadowBlur    = 0;
+  cx.shadowOffsetX = 0;
+  cx.shadowOffsetY = 0;
+}
+
+
+// ═══════════════════════════════════════════════
+// IMAGE LOADING
+// ═══════════════════════════════════════════════
+
+function loadImg(url) {
+  return new Promise((resolve, reject) => {
+    const img      = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload     = () => resolve(img);
+    img.onerror    = () => {
+      // Fallback without crossOrigin (canvas will be tainted but at least displays)
+      const img2  = new Image();
+      img2.onload  = () => resolve(img2);
+      img2.onerror = reject;
+      img2.src     = url;
+    };
+    img.src = url;
+  });
+}
+
+
+// ═══════════════════════════════════════════════
+// SLIDE NAVIGATION
+// ═══════════════════════════════════════════════
+
+function pickEntry() {
+  const imgObj  = S.allImages[Math.floor(Math.random() * S.allImages.length)];
+  const txtObj  = S.allTexts[Math.floor(Math.random() * S.allTexts.length)];
+  const color   = TEXT_COLORS[Math.floor(Math.random() * TEXT_COLORS.length)];
+  return { imageUrl: imgObj.url, text: txtObj.content, color };
+}
+
+async function showEntry(entry, immediate) {
+  if (S.transitioning) return;
+  S.transitioning = true;
+
+  if (!immediate) await fade(true);
+
+  let img;
+  let attempts = 0;
+  while (attempts < 5) {
+    try {
+      img = await loadImg(entry.imageUrl);
+      break;
+    } catch (_) {
+      // Bad image URL — pick a different image and update the entry
+      attempts++;
+      const fallback   = S.allImages[Math.floor(Math.random() * S.allImages.length)];
+      entry.imageUrl   = fallback.url;
+    }
+  }
+
+  if (!img) {
+    S.transitioning = false;
+    return;
+  }
+
+  S.loadedImg    = img;
+  S.currentText  = entry.text;
+  S.currentColor = entry.color;
+  renderFrame(img, entry.text, entry.color, canvas, ctx);
+
+  if (!immediate) await fade(false);
+
+  S.transitioning = false;
+  if (S.isPlaying) scheduleNext();
+}
+
+async function advance(immediate) {
+  // Move forward in history, or pick new entry
+  S.historyPos++;
+  if (S.historyPos < S.history.length) {
+    await showEntry(S.history[S.historyPos], immediate);
+  } else {
+    const entry = pickEntry();
+    S.history.push(entry);
+    await showEntry(entry, immediate);
+  }
+}
+
+async function goBack() {
+  if (S.historyPos <= 0) return;
+  S.historyPos--;
+  await showEntry(S.history[S.historyPos], false);
+}
+
+async function nextSlide() {
+  stopPlay();
+  updatePlayBtn();
+  await advance(false);
+}
+
+async function prevSlide() {
+  if (S.transitioning) return;
+  stopPlay();
+  updatePlayBtn();
+  await goBack();
+}
+
+
+// ═══════════════════════════════════════════════
+// FADE
+// ═══════════════════════════════════════════════
+
+function fade(toBlack) {
+  return new Promise(resolve => {
+    const ov = document.getElementById('fade-overlay');
+    ov.style.transition = toBlack
+      ? 'opacity 0.35s ease'
+      : 'opacity 0.55s ease';
+    ov.style.opacity = toBlack ? '1' : '0';
+    setTimeout(resolve, toBlack ? 380 : 580);
+  });
+}
+
+
+// ═══════════════════════════════════════════════
+// AUTOPLAY
+// ═══════════════════════════════════════════════
+
+function togglePlay() {
+  S.isPlaying ? stopPlay() : startPlay();
+  updatePlayBtn();
+}
+
+function startPlay() {
+  S.isPlaying = true;
+  scheduleNext();
+}
+
+function stopPlay() {
+  S.isPlaying = false;
+  if (S.playTimer) { clearTimeout(S.playTimer); S.playTimer = null; }
+}
+
+function scheduleNext() {
+  if (S.playTimer) clearTimeout(S.playTimer);
+  S.playTimer = setTimeout(async () => {
+    if (S.isPlaying) await advance(false);
+  }, S.playDelay);
+}
+
+function setSpeed(val) {
+  S.playDelay = parseInt(val) * 1000;
+  document.getElementById('speed-val').textContent = val + 's';
+}
+
+function updatePlayBtn() {
+  const btn = document.getElementById('btn-play');
+  if (S.isPlaying) {
+    btn.textContent = '⏸ Pause';
+    btn.classList.add('active');
+  } else {
+    btn.textContent = '▶ Play';
+    btn.classList.remove('active');
+  }
+}
+
+
+// ═══════════════════════════════════════════════
+// DOWNLOAD
+// ═══════════════════════════════════════════════
+
+async function downloadPNG() {
+  if (!S.loadedImg || !S.currentText) return;
+
+  const exp    = document.createElement('canvas');
+  exp.width    = 1920;
+  exp.height   = 1080;
+  const expCtx = exp.getContext('2d', { willReadFrequently: true });
+
+  try {
+    // Re-load image fresh with crossOrigin for a clean export canvas
+    const freshImg = await loadImg(S.loadedImg.src);
+    renderFrame(freshImg, S.currentText, S.currentColor, exp, expCtx);
+  } catch (_) {
+    renderFrame(S.loadedImg, S.currentText, S.currentColor, exp, expCtx);
+  }
+
+  try {
+    const link      = document.createElement('a');
+    link.download   = 'arena-hypernormalisation.png';
+    link.href       = exp.toDataURL('image/png');
+    link.click();
+  } catch (_) {
+    alert('Could not export — the image source may not allow cross-origin access. Try adding your are.na API key.');
+  }
+}
+
+
+// ═══════════════════════════════════════════════
+// CONTROLS VISIBILITY
+// ═══════════════════════════════════════════════
+
+const displayEl  = document.getElementById('display');
+const controlsEl = document.getElementById('controls');
+
+function showControls() {
+  controlsEl.classList.add('visible');
+  if (S.controlsTimer) clearTimeout(S.controlsTimer);
+  S.controlsTimer = setTimeout(hideControls, 3200);
+}
+
+function hideControls() {
+  controlsEl.classList.remove('visible');
+}
+
+displayEl.addEventListener('mousemove', showControls);
+displayEl.addEventListener('touchstart', showControls, { passive: true });
+
+// Click on canvas: toggle controls
+canvas.addEventListener('click', () => {
+  if (controlsEl.classList.contains('visible')) {
+    hideControls();
+  } else {
+    showControls();
+  }
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (document.getElementById('display').style.display === 'none') return;
+  switch (e.key) {
+    case 'ArrowRight':
+    case 'n':
+    case 'N':
+      e.preventDefault(); nextSlide(); break;
+    case 'ArrowLeft':
+    case 'p':
+    case 'P':
+      e.preventDefault(); prevSlide(); break;
+    case ' ':
+      e.preventDefault(); togglePlay(); break;
+    case 's':
+    case 'S':
+      downloadPNG(); break;
+    case 'Escape':
+      backToSetup(); break;
+  }
+  showControls();
+});
+</script>
+</body>
+</html>
