@@ -389,6 +389,74 @@ input[type=range] {
   color: rgba(255,255,255,0.5);
   min-width: 26px;
 }
+
+/* ── DEBUG PANEL ─────────────────────────────────── */
+
+#debug-panel {
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  width: 300px;
+  background: rgba(0,0,0,0.92);
+  border-left: 1px solid #2a2a2a;
+  z-index: 25;
+  overflow-y: auto;
+  padding: 52px 16px 16px;
+  font-family: monospace;
+  font-size: 11px;
+  color: #999;
+  display: none;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+#debug-panel h3 {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: #fff;
+  margin-bottom: 14px;
+  text-transform: uppercase;
+}
+
+.db-section {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #1e1e1e;
+}
+
+.db-section:last-child { border-bottom: none; }
+
+.db-label {
+  font-size: 10px;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  margin-bottom: 6px;
+}
+
+.db-val {
+  color: #ccc;
+  margin-bottom: 4px;
+}
+
+.db-big {
+  font-size: 20px;
+  color: #fff;
+  font-weight: bold;
+  letter-spacing: 0.04em;
+}
+
+.db-sub {
+  color: #777;
+  padding-left: 10px;
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.db-sub em { color: #aaa; font-style: normal; }
+.db-fresh  { color: #6ec97a; }
+.db-stale  { color: #c96e6e; }
 </style>
 </head>
 <body>
@@ -484,8 +552,15 @@ input[type=range] {
 
   <div id="fade-overlay"></div>
 
+  <!-- Debug / Pool Inspector -->
+  <div id="debug-panel">
+    <h3>Pool Inspector</h3>
+    <div id="debug-content"></div>
+  </div>
+
   <div id="controls">
     <div class="ctrl-bar-top">
+      <button class="ctrl-btn" id="btn-debug" onclick="toggleDebug()" style="margin-right:auto">◈ Stats</button>
       <button class="ctrl-btn" onclick="backToSetup()">⚙ Setup</button>
     </div>
     <div class="ctrl-bar-bottom">
@@ -560,6 +635,8 @@ const S = {
   apiKey:            '',
   allImages:         [],
   allTexts:          [],
+  imageSources:      {},   // label → count (for debug panel)
+  textSources:       {},   // label → count (for debug panel)
   imageBag:          null,
   textBag:           null,
   history:           [],
@@ -837,6 +914,8 @@ async function go() {
   errorEl.innerHTML = '';
   S.allImages    = [];
   S.allTexts     = [];
+  S.imageSources = {};
+  S.textSources  = {};
   let cacheHits  = 0, fetched = 0;
 
   try {
@@ -844,7 +923,9 @@ async function go() {
     for (const slug of S.imageChannelSlugs) {
       statusEl.textContent = `Fetching ${slug}…`;
       const { data, fromCache } = await fetchChannelContents(slug);
-      S.allImages = S.allImages.concat(extractImages(data));
+      const imgs = extractImages(data);
+      S.allImages = S.allImages.concat(imgs);
+      S.imageSources[slug] = (S.imageSources[slug] || 0) + imgs.length;
       fromCache ? cacheHits++ : fetched++;
     }
 
@@ -852,7 +933,9 @@ async function go() {
     for (const slug of S.textChannelSlugs) {
       statusEl.textContent = `Fetching ${slug}…`;
       const { data, fromCache } = await fetchChannelContents(slug);
-      S.allTexts = S.allTexts.concat(extractTexts(data));
+      const txts = extractTexts(data);
+      S.allTexts = S.allTexts.concat(txts);
+      S.textSources[slug] = (S.textSources[slug] || 0) + txts.length;
       fromCache ? cacheHits++ : fetched++;
     }
 
@@ -860,8 +943,13 @@ async function go() {
     for (const query of S.searchQueries) {
       statusEl.textContent = `Searching "${query || 'recent public blocks'}"…`;
       const { data, fromCache } = await fetchSearch(query);
-      S.allImages = S.allImages.concat(extractImages(data));
-      S.allTexts  = S.allTexts.concat(extractTexts(data));
+      const imgs = extractImages(data);
+      const txts = extractTexts(data);
+      S.allImages = S.allImages.concat(imgs);
+      S.allTexts  = S.allTexts.concat(txts);
+      const qlabel = query || '(recent public)';
+      S.imageSources[qlabel] = (S.imageSources[qlabel] || 0) + imgs.length;
+      S.textSources[qlabel]  = (S.textSources[qlabel]  || 0) + txts.length;
       fromCache ? cacheHits++ : fetched++;
     }
 
@@ -1088,6 +1176,7 @@ async function showEntry(entry, immediate) {
   if (!immediate) await fade(false);
 
   S.transitioning = false;
+  updateDebugPanel();
   if (S.isPlaying) scheduleNext();
 }
 
@@ -1378,10 +1467,112 @@ document.addEventListener('keydown', e => {
     case ' ':                               e.preventDefault(); togglePlay(); break;
     case 'm': case 'M':                                         toggleAudio(); break;
     case 's': case 'S':                                         downloadPNG(); break;
+    case 'd': case 'D':                                         toggleDebug(); break;
     case 'Escape':                                              backToSetup(); break;
   }
   showControls();
 });
+
+// ════════════════════════════════════════════════
+// DEBUG PANEL
+// ════════════════════════════════════════════════
+
+function toggleDebug() {
+  const panel = document.getElementById('debug-panel');
+  const btn   = document.getElementById('btn-debug');
+  if (panel.style.display === 'block') {
+    panel.style.display = 'none';
+    btn.classList.remove('active');
+  } else {
+    panel.style.display = 'block';
+    btn.classList.add('active');
+    updateDebugPanel();
+  }
+}
+
+function updateDebugPanel() {
+  const panel = document.getElementById('debug-panel');
+  if (panel.style.display !== 'block') return;
+
+  const imgTotal = S.imageBag ? S.imageBag._src.length : 0;
+  const imgLeft  = S.imageBag ? S.imageBag._bag.length : 0;
+  const txtTotal = S.textBag  ? S.textBag._src.length  : 0;
+  const txtLeft  = S.textBag  ? S.textBag._bag.length  : 0;
+
+  let html = '';
+
+  // Images
+  html += `<div class="db-section">`;
+  html += `<div class="db-label">Images</div>`;
+  html += `<div class="db-big">${imgTotal}</div>`;
+  html += `<div class="db-val">${imgLeft} until full repeat</div>`;
+  if (Object.keys(S.imageSources).length) {
+    for (const [src, count] of Object.entries(S.imageSources)) {
+      html += `<div class="db-sub">${escHtml(src)}: <em>${count}</em></div>`;
+    }
+  }
+  html += `</div>`;
+
+  // Texts
+  html += `<div class="db-section">`;
+  html += `<div class="db-label">Texts</div>`;
+  html += `<div class="db-big">${txtTotal}</div>`;
+  html += `<div class="db-val">${txtLeft} until full repeat</div>`;
+  if (Object.keys(S.textSources).length) {
+    for (const [src, count] of Object.entries(S.textSources)) {
+      html += `<div class="db-sub">${escHtml(src)}: <em>${count}</em></div>`;
+    }
+  }
+  html += `</div>`;
+
+  // History
+  html += `<div class="db-section">`;
+  html += `<div class="db-label">History</div>`;
+  html += `<div class="db-val">${S.history.length} slides, position ${S.historyPos + 1}</div>`;
+  html += `</div>`;
+
+  // Cache
+  const cacheInfo = getCacheInfo();
+  html += `<div class="db-section">`;
+  html += `<div class="db-label">Cache (${cacheInfo.length} entries)</div>`;
+  if (cacheInfo.length === 0) {
+    html += `<div class="db-val">Empty — will fetch fresh</div>`;
+  } else {
+    for (const { key, age, fresh } of cacheInfo) {
+      const cls = fresh ? 'db-fresh' : 'db-stale';
+      html += `<div class="db-sub ${cls}">${escHtml(key)} <em>— ${age}</em></div>`;
+    }
+  }
+  html += `</div>`;
+
+  document.getElementById('debug-content').innerHTML = html;
+}
+
+function getCacheInfo() {
+  const now = Date.now();
+  return Object.keys(localStorage)
+    .filter(k => k.startsWith(CACHE_PFX) && k !== PREFS_KEY)
+    .map(k => {
+      try {
+        const raw = localStorage.getItem(k);
+        const { t } = JSON.parse(raw);
+        const ageMs = now - t;
+        const fresh = ageMs < CACHE_TTL;
+        const h     = Math.floor(ageMs / 3600000);
+        const m     = Math.floor((ageMs % 3600000) / 60000);
+        const age   = h > 0 ? `${h}h ${m}m ago` : `${m}m ago`;
+        return { key: k.slice(CACHE_PFX.length), age, fresh };
+      } catch (_) { return null; }
+    })
+    .filter(Boolean);
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
 
 // ════════════════════════════════════════════════
 // INIT
