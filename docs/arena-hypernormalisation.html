@@ -123,7 +123,12 @@ body {
   letter-spacing: 0.1em;
   line-height: 1.5em;
   margin-bottom: 28px;
+  max-width: var(--setup-max-w);
   text-align: center;
+}
+
+.subtitle p {
+  margin-bottom: 1rem;
 }
 
 .setup-grid {
@@ -638,9 +643,11 @@ input[type=range] {
 <div id="setup">
   <h1>ARENA HYPERNORMALISATION</h1>
   <div class="subtitle">
-  <p>Pull images and text from <a href="https://www.are.na">are.na</a> to make a <a href="https://www.bbc.co.uk/webarchive/https%3A%2F%2Fwww.bbc.co.uk%2Fblogs%2Fadamcurtis%2Fentries%2F02d9ed3c-d71b-4232-ae17-67da423b5df5">strangely familiar</a> documentary critique of late capitalism.</p>
-  <p>Good for full screen ambient displays, or just staring into the void.</p>
-  <p>Just hit go, customise with your own channels, or contribue more <a href="https://www.are.na/kim-plowright/hypernormalisation-text">text</a> or <a href="https://www.are.na/kim-plowright/hypernormalisation-text">images</a>.</p>
+    
+    <p>Pull images and text from <a href="https://www.are.na">are.na</a> to make a <a href="https://www.bbc.co.uk/webarchive/https%3A%2F%2Fwww.bbc.co.uk%2Fblogs%2Fadamcurtis%2Fentries%2F02d9ed3c-d71b-4232-ae17-67da423b5df5" target="_blank" rel="noopener">strangely familiar</a> documentary critique of late capitalism. Just hit go to start. You can customise with your own channels, or contribue more <a href="https://www.are.na/kim-plowright/hypernormalisation-text" target="_blank" rel="noopener">text</a> or <a href="https://www.are.na/kim-plowright/hypernormalisation-text" target="_blank" rel="noopener">images</a> at are.na.</p>
+
+    <p> Good for full screen ambient displays, or just staring into the void. An <a href="https://mildlydiverting.github.io/are.na-toolkit/" target="_blank" rel="noopener">are.na API toy</a> by <a href="https://www.are.na/kim-plowright/channels" target="_blank" rel="noopener">Kim Plowright</a>, with a h/t to <a href="https://www.tomscott.com/infinite-adam-curtis/" target="_blank" rel="noopener">Tom Scott</a> and <a href="https://www.iamdanw.com" target="_blank" rel="noopener">Dan Williams</a>. Found a bug? Let me know on <a href="https://github.com/mildlydiverting/are.na-toolkit" target="_blank" rel="noopener">GitHub</a>.</p>
+    
   </div>
   <!-- GO BUTTON -->
   <button class="btn-go" id="btn-go" onclick="go()" disabled>Go</button>
