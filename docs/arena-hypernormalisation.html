@@ -269,6 +269,59 @@ hr.divider {
   margin-bottom: 20px;
 }
 
+/* ── Advanced settings accordion ── */
+details.advanced-accordion {
+  width: 100%;
+  max-width: 800px;
+  margin-top: 8px;
+}
+
+details.advanced-accordion > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 0;
+  user-select: none;
+  color: #666;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: bold;
+  border-top: 1px solid #1e1e1e;
+  transition: color 0.15s;
+}
+
+details.advanced-accordion > summary::-webkit-details-marker { display: none; }
+
+details.advanced-accordion > summary::before {
+  content: '▸';
+  font-size: 10px;
+  transition: transform 0.15s;
+  display: inline-block;
+}
+
+details.advanced-accordion[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+details.advanced-accordion > summary:hover { color: #aaa; }
+
+details.advanced-accordion > summary .adv-subtitle {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  font-weight: normal;
+  text-transform: none;
+  color: #444;
+}
+
+details.advanced-accordion > summary:hover .adv-subtitle { color: #666; }
+
+details.advanced-accordion .adv-body {
+  padding-top: 8px;
+}
+
 /* ── DISPLAY ─────────────────────────────────── */
 
 #display {
@@ -408,6 +461,20 @@ input[type=range] {
   -webkit-backdrop-filter: blur(4px);
 }
 
+#debug-close {
+  position: absolute;
+  top: 14px; right: 14px;
+  background: none;
+  border: 1px solid #333;
+  color: #888;
+  font-size: 14px;
+  line-height: 1;
+  padding: 3px 7px;
+  cursor: pointer;
+  border-radius: 0;
+}
+#debug-close:hover { color: #fff; border-color: #666; }
+
 #debug-panel h3 {
   font-size: 11px;
   letter-spacing: 0.18em;
@@ -517,55 +584,62 @@ input[type=range] {
     </div>
   </div>
 
-  <hr class="divider" />
+  <!-- Advanced Settings accordion: Search, Music, API key -->
+  <details class="advanced-accordion" id="advanced-settings">
+    <summary>Advanced Settings <span class="adv-subtitle">— search, music &amp; private channels</span></summary>
 
-  <!-- Search -->
-  <div class="setup-full">
-    <div class="panel-label">Or search are.na</div>
-    <p class="panel-hint">
-      Search public are.na blocks by keyword — fetches matching images and texts.
-      Add blank to pull recent public blocks. Results are pooled with your channels above.
-    </p>
-    <div class="input-row">
-      <input class="text-input" id="search-input" type="text" placeholder="e.g. landscape, machines, dreams — or leave blank for recent public blocks" />
-      <button class="btn-add" onclick="addSearch()">Add</button>
-    </div>
-    <div class="chips" id="search-chips"></div>
-  </div>
+    <div class="adv-body">
 
-  <hr class="divider" />
+      <!-- Search (v3 API requires an access token for search) -->
+      <div class="setup-full">
+        <div class="panel-label">Search are.na <span style="font-weight:normal;text-transform:none;letter-spacing:0">(requires access token)</span></div>
+        <p class="panel-hint">
+          Search are.na blocks by keyword — fetches matching images and texts, pooled with your channels above.
+          Requires an access token (v3 API). Leave blank to pull recent public blocks.
+        </p>
+        <div class="input-row">
+          <input class="text-input" id="search-input" type="text" placeholder="e.g. landscape, machines, dreams — or leave blank for recent public blocks" />
+          <button class="btn-add" onclick="addSearch()">Add</button>
+        </div>
+        <div class="chips" id="search-chips"></div>
+      </div>
 
-  <!-- Audio -->
-  <div class="setup-full">
-    <div class="panel-label">Music (optional)</div>
-    <p class="panel-hint">
-      Add a link to a SoundCloud playlist, a direct link to an MP3/OGG, or use a local MP3 file.
-    </p>
-    <div class="input-row">
-      <input class="text-input" id="audio-url-input" type="text"
-             placeholder="SoundCloud playlist URL or direct MP3/OGG link" />
-      <button class="btn-add" onclick="setAudioUrl()">Add</button>
-    </div>
-    <div class="file-row">
-      <label class="file-label-btn" for="audio-file-input">Local file…</label>
-      <input type="file" id="audio-file-input" accept="audio/*" onchange="setAudioFile(event)" />
-      <span class="file-name" id="audio-file-name">No file chosen</span>
-    </div>
-    <div id="audio-status" class="cache-note" style="margin-top:6px"></div>
-  </div>
+    
 
-  <hr class="divider" />
+      <!-- Audio -->
+      <div class="setup-full">
+        <div class="panel-label">Music (optional)</div>
+        <p class="panel-hint">
+          Add a link to a SoundCloud playlist, a direct link to an MP3/OGG, or use a local MP3 file.
+        </p>
+        <div class="input-row">
+          <input class="text-input" id="audio-url-input" type="text"
+                 placeholder="SoundCloud playlist URL or direct MP3/OGG link" />
+          <button class="btn-add" onclick="setAudioUrl()">Add</button>
+        </div>
+        <div class="file-row">
+          <label class="file-label-btn" for="audio-file-input">Local file…</label>
+          <input type="file" id="audio-file-input" accept="audio/*" onchange="setAudioFile(event)" />
+          <span class="file-name" id="audio-file-name">No file chosen</span>
+        </div>
+        <div id="audio-status" class="cache-note" style="margin-top:6px"></div>
+      </div>
 
-  <!-- API key -->
-  <div class="setup-full">
-    <div class="panel-label">Are.na Access Token <span style="font-weight:normal;text-transform:none;letter-spacing:0;font-size:12px">(optional — needed for private channels, read only)</span></div>
-    <p class="panel-hint">Get yours at <a href="https://www.are.na/developers/personal-access-tokens" target="_blank">are.na → Settings → Developers</a></p>
-    <input class="text-input" style="width:100%" id="api-key" type="password" placeholder="Paste access token here" />
-    <p class="cache-note" style="margin-top:10px">
-      Channel content is cached locally for 24 hours so you won't hammer the API.
-      <a onclick="clearAllCache()">Clear cache</a> to force a fresh fetch.
-    </p>
-  </div>
+    
+
+      <!-- API key -->
+      <div class="setup-full">
+        <div class="panel-label">Are.na Access Token <span style="font-weight:normal;text-transform:none;letter-spacing:0;font-size:12px">(needed for private channels &amp; search)</span></div>
+        <p class="panel-hint">Get yours at <a href="https://www.are.na/developers/personal-access-tokens" target="_blank">are.na → Settings → Developers</a>. Read-only access is fine.</p>
+        <input class="text-input" style="width:100%" id="api-key" type="password" placeholder="Paste access token here" />
+        <p class="cache-note" style="margin-top:10px">
+          Channel content is cached locally for 24 hours so you won't hammer the API.
+          <a onclick="clearAllCache()">Clear cache</a> to force a fresh fetch.
+        </p>
+      </div>
+
+    </div><!-- /adv-body -->
+  </details>
 
   <button class="btn-go" id="btn-go" onclick="go()" disabled>Go</button>
   <div id="status"></div>
@@ -582,6 +656,7 @@ input[type=range] {
 
   <!-- Info / Debug panel -->
   <div id="debug-panel">
+    <button id="debug-close" onclick="toggleDebug()" title="Close info panel" aria-label="Close info panel">×</button>
     <h3>Info</h3>
     <div id="debug-content"></div>
   </div>
@@ -604,6 +679,7 @@ input[type=range] {
       <button class="ctrl-btn" onclick="nextSlide()">Next ▶</button>
       <div class="ctrl-divider"></div>
       <button class="ctrl-btn" onclick="downloadPNG()">↓ Save PNG</button>
+      <button class="ctrl-btn" id="btn-fullscreen" onclick="toggleFullscreen()">⛶ Full</button>
     </div>
   </div>
 </div>
@@ -628,6 +704,24 @@ const AUTO_TOPUP_SLIDES  = 25;   // silently top up pool every N slides
 const DEFAULT_SC_PLAYLIST = 'https://soundcloud.com/mildlydiverting/sets/are-na-hypernormalisation';
 
 let slidesSinceTopUp = 0;
+
+// ── DEFAULT CHANNELS ──────────────────────────────────────────────
+// These are used on first launch (no saved prefs) so the Go button
+// is active out of the box. Edit these to change the out-of-box experience.
+// Image channels: public domain images, found photography, general visual interest.
+// Text channels: internet-era text, short titles/phrases.
+const DEFAULT_IMAGE_CHANNELS = [
+  // 'public-domain-hciljwrdeai',  // Public Domain
+  // 'found-gzgnoju0grg',          // Found
+  'awesome-qmq5luzkknk',        // Awesome
+  'koyaanisqatsi-xzjzt3tcae',   // Koyaanisqatsi
+];
+
+const DEFAULT_TEXT_CHANNELS = [
+  'extremelyinternet',          // Extremely Internet
+  'library-of-titles',          // Library of Titles
+  // 'good-sign-offs',             // Good Sign Offs
+];
 
 // ════════════════════════════════════════════════
 // SHUFFLE BAG — deals every item once before repeating
@@ -695,21 +789,13 @@ function savePrefs() {
       textChannelSlugs:  S.textChannelSlugs,
       searchQueries:     S.searchQueries,
       audioUrl:          S.audioUrl,
+      apiKey:            S.apiKey,
     }));
   } catch (_) {}
 }
 
-const DEFAULT_IMAGE_CHANNELS = [
-  'public-domain-hciljwrdeai',
-  'found-gzgnoju0grg',
-  'awesome-qmq5luzkknk',
-  'koyaanisqatsi-xzjzt3tcae',
-];
 
-const DEFAULT_TEXT_CHANNELS = [
-  'extremelyinternet',
-  'library-of-titles',
-];
+// ──────────────────────────────────────────────────────────────────
 
 function loadPrefs() {
   try {
@@ -728,6 +814,11 @@ function loadPrefs() {
     S.textChannelSlugs  = p.textChannelSlugs  || [];
     S.searchQueries     = p.searchQueries     || [];
     S.audioUrl          = p.audioUrl          || '';
+    S.apiKey            = p.apiKey            || '';
+    if (S.apiKey) {
+      const keyEl = document.getElementById('api-key');
+      if (keyEl) keyEl.value = S.apiKey;
+    }
     renderChips('image');
     renderChips('text');
     renderSearchChips();
@@ -879,25 +970,53 @@ function arenaHeaders() {
   return S.apiKey ? { Authorization: `Bearer ${S.apiKey}` } : {};
 }
 
+const FETCH_PAGE_DELAY = 150;   // ms between paginated requests (polite pacing)
+const RETRY_DELAYS     = [2000, 4000, 8000];  // backoff on 429
+
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+// Fetch wrapper: retries on 429 with backoff, honours Retry-After header
+async function fetchArena(url) {
+  for (let attempt = 0; attempt <= RETRY_DELAYS.length; attempt++) {
+    const res = await fetch(url, { headers: arenaHeaders() });
+    if (res.status !== 429) return res;  // success or a real error — caller handles it
+
+    // Rate-limited — work out how long to wait
+    const retryAfter = parseInt(res.headers.get('Retry-After') || '0', 10);
+    const wait = retryAfter > 0
+      ? retryAfter * 1000
+      : (RETRY_DELAYS[attempt] ?? RETRY_DELAYS[RETRY_DELAYS.length - 1]);
+
+    const statusEl = document.getElementById('status');
+    if (statusEl) statusEl.textContent = `Rate limited — retrying in ${Math.round(wait / 1000)}s…`;
+    await sleep(wait);
+  }
+  // All retries exhausted — do one final attempt and let the caller handle the error
+  return fetch(url, { headers: arenaHeaders() });
+}
+
 async function fetchChannelContents(slug) {
   const cacheKey = 'chan_' + slug;
   const cached   = cacheGet(cacheKey);
   if (cached) return { data: cached, fromCache: true };
 
-  let page = 1, all = [], total = null;
+  // v3 API: response is { data: [...], meta: { has_more_pages, total_count, ... } }
+  let page = 1, all = [];
   while (true) {
     const url = `https://api.are.na/v3/channels/${encodeURIComponent(slug)}/contents?per=100&page=${page}`;
-    const res  = await fetch(url, { headers: arenaHeaders() });
+    const res  = await fetchArena(url);
     if (!res.ok) {
       const txt = await res.text().catch(() => res.statusText);
       throw new Error(`Channel "${slug}" – ${res.status}: ${txt.slice(0,120)}`);
     }
-    const data  = await res.json();
-    const items = data.contents || [];
+    const json  = await res.json();
+    const items = json.data || [];
     all = all.concat(items);
-    if (total === null) total = data.length || 0;
-    if (items.length < 100 || all.length >= total) break;
+    if (!json.meta?.has_more_pages) break;
     page++;
+    await sleep(FETCH_PAGE_DELAY);
   }
   cacheSet(cacheKey, all);
   return { data: all, fromCache: false };
@@ -908,22 +1027,27 @@ async function fetchSearch(query) {
   const cached   = cacheGet(cacheKey);
   if (cached) return { data: cached, fromCache: true };
 
-  // Fetch pages of search results
-  let page = 1, all = [], total = null;
+  // v3 API search requires authentication — show a clear error if no token
+  if (!arenaHeaders().Authorization) {
+    throw new Error(`Search requires an Are.na access token in v3. Add one in ⚙ Setup.`);
+  }
+
+  // v3 API: response is { data: [...], meta: { has_more_pages, ... } }
+  let page = 1, all = [];
   while (true) {
-    const q   = query ? encodeURIComponent(query) : '';
+    const q   = query ? encodeURIComponent(query) : '*';
     const url = `https://api.are.na/v3/search?q=${q}&per=100&page=${page}`;
-    const res  = await fetch(url, { headers: arenaHeaders() });
+    const res  = await fetchArena(url);
     if (!res.ok) {
       const txt = await res.text().catch(() => res.statusText);
       throw new Error(`Search "${query || 'recent'}" – ${res.status}: ${txt.slice(0,120)}`);
     }
-    const data   = await res.json();
-    const blocks = data.blocks || [];
+    const json   = await res.json();
+    const blocks = json.data || [];
     all = all.concat(blocks);
-    if (total === null) total = (data.blocks_count || data.total || blocks.length);
-    if (blocks.length < 100 || all.length >= Math.min(total, 500)) break;
+    if (!json.meta?.has_more_pages || all.length >= 500) break;
     page++;
+    await sleep(FETCH_PAGE_DELAY);
   }
   cacheSet(cacheKey, all);
   return { data: all, fromCache: false };
@@ -943,16 +1067,18 @@ function wordCount(str) {
 }
 
 function extractImages(blocks) {
+  // v3: type field (was class), image URLs at image.src / image.large.src
   return blocks
-    .filter(b => b.class === 'Image' || (b.class === 'Link' && b.image))
-    .map(b => ({ url: b.image?.display?.url || b.image?.large?.url || b.image?.original?.url }))
+    .filter(b => b.type === 'Image' || (b.type === 'Link' && b.image))
+    .map(b => ({ url: b.image?.src || b.image?.large?.src || b.image?.medium?.src }))
     .filter(b => b.url);
 }
 
 function extractTexts(blocks) {
+  // v3: type field (was class), text content at content.plain (was b.content string)
   return blocks
-    .filter(b => b.class === 'Text' && b.content)
-    .map(b => ({ content: stripHtml(b.content) }))
+    .filter(b => b.type === 'Text' && (b.content?.plain || b.content?.markdown))
+    .map(b => ({ content: (b.content?.plain || stripHtml(b.content?.markdown || '')) }))
     .filter(b => b.content.length > 3 && wordCount(b.content) <= MAX_WORDS);
 }
 
@@ -962,6 +1088,13 @@ function extractTexts(blocks) {
 
 async function go() {
   S.apiKey = document.getElementById('api-key').value.trim();
+
+  // Prefetch SC widget immediately — loads iframe in parallel with channel fetching
+  const _prefetchScUrl = S.audioUrl.includes('soundcloud.com')
+    ? S.audioUrl
+    : (!S.audioUrl ? DEFAULT_SC_PLAYLIST : null);
+  if (_prefetchScUrl) setupSCWidget(_prefetchScUrl);
+
   const statusEl = document.getElementById('status');
   const errorEl  = document.getElementById('error-area');
   const btn      = document.getElementById('btn-go');
@@ -1284,7 +1417,7 @@ async function prevSlide() {
 function fade(toBlack) {
   return new Promise(resolve => {
     const ov = document.getElementById('fade-overlay');
-    ov.style.transition = toBlack ? 'opacity 0.01s ease' : 'opacity 0.01s ease';
+    ov.style.transition = toBlack ? 'opacity 0.05s ease' : 'opacity 0.01s ease';
     ov.style.opacity    = toBlack ? '1' : '0';
     setTimeout(resolve, toBlack ? 15 : 15);
   });
@@ -1327,6 +1460,7 @@ bgAudio.volume = 0.5;
 
 let scWidget     = null;
 let scReady      = false;
+let scSetupUrl   = null;     // URL currently loading in the SC widget (idempotency guard)
 let audioMode    = 'none';   // 'sc' | 'local' | 'none'
 let shuffleOrder = [];       // shuffled track indices
 let shufflePos   = 0;
@@ -1365,8 +1499,8 @@ function tryStartAudio() {
   if (scUrl) {
     audioMode = 'sc';
     btn.style.display = '';
-    btn.textContent   = '♪ Loading…';
-    setupSCWidget(scUrl);
+    btn.textContent   = scReady ? '♪ Mute' : '♪ Loading…';
+    setupSCWidget(scUrl);  // no-op if already loading (idempotent)
     return;
   }
 
@@ -1388,6 +1522,9 @@ function tryStartAudio() {
 }
 
 function setupSCWidget(playlistUrl) {
+  if (scSetupUrl === playlistUrl) return;  // already loading/loaded this URL
+  scSetupUrl = playlistUrl;
+
   const encoded  = encodeURIComponent(playlistUrl);
   const embedUrl = `https://w.soundcloud.com/player/?url=${encoded}` +
     `&auto_play=false&hide_related=true&show_comments=false` +
@@ -1567,6 +1704,20 @@ function toggleDebug() {
     updateDebugPanel();
   }
 }
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen().catch(() => {});
+  }
+}
+
+document.addEventListener('fullscreenchange', () => {
+  const btn = document.getElementById('btn-fullscreen');
+  if (!btn) return;
+  btn.textContent = document.fullscreenElement ? '✕ Exit Full' : '⛶ Full';
+});
 
 function updateDebugPanel() {
   const panel = document.getElementById('debug-panel');
