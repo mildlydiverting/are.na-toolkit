@@ -524,7 +524,7 @@ input[type=range] {
     <div class="panel-label">Or search are.na</div>
     <p class="panel-hint">
       Search public are.na blocks by keyword — fetches matching images and texts.
-      Leave blank to pull recent public blocks. Results are pooled with your channels above.
+      Add blank to pull recent public blocks. Results are pooled with your channels above.
     </p>
     <div class="input-row">
       <input class="text-input" id="search-input" type="text" placeholder="e.g. landscape, machines, dreams — or leave blank for recent public blocks" />
@@ -588,6 +588,7 @@ input[type=range] {
 
   <div id="controls">
     <div class="ctrl-bar-bottom">
+      <button class="ctrl-btn" id="btn-debug" onclick="toggleDebug()">◈ Info</button>
       <button class="ctrl-btn" onclick="backToSetup()">⚙ Setup</button>
       <button class="ctrl-btn" id="btn-audio" onclick="toggleAudio()" style="display:none">♪ Music</button>
       <div class="ctrl-divider"></div>
@@ -603,7 +604,6 @@ input[type=range] {
       <button class="ctrl-btn" onclick="nextSlide()">Next ▶</button>
       <div class="ctrl-divider"></div>
       <button class="ctrl-btn" onclick="downloadPNG()">↓ Save PNG</button>
-      <button class="ctrl-btn" id="btn-debug" onclick="toggleDebug()">◈ Info</button>
     </div>
   </div>
 </div>
@@ -886,7 +886,7 @@ async function fetchChannelContents(slug) {
 
   let page = 1, all = [], total = null;
   while (true) {
-    const url = `https://api.are.na/v2/channels/${encodeURIComponent(slug)}/contents?per=100&page=${page}`;
+    const url = `https://api.are.na/v3/channels/${encodeURIComponent(slug)}/contents?per=100&page=${page}`;
     const res  = await fetch(url, { headers: arenaHeaders() });
     if (!res.ok) {
       const txt = await res.text().catch(() => res.statusText);
@@ -912,7 +912,7 @@ async function fetchSearch(query) {
   let page = 1, all = [], total = null;
   while (true) {
     const q   = query ? encodeURIComponent(query) : '';
-    const url = `https://api.are.na/v2/search?q=${q}&per=100&page=${page}`;
+    const url = `https://api.are.na/v3/search?q=${q}&per=100&page=${page}`;
     const res  = await fetch(url, { headers: arenaHeaders() });
     if (!res.ok) {
       const txt = await res.text().catch(() => res.statusText);
@@ -1590,10 +1590,12 @@ function updateDebugPanel() {
     html += `<div class="db-section">`;
     html += `<div class="db-label">Now showing</div>`;
     if (S.currentImageSrc) {
-      html += `<div class="db-val"><span style="color:#777">image from</span> <a href="https://www.are.na/${escHtml(S.currentImageSrc)}" target="_blank" rel="noopener" style="color:var(--link-color)">${escHtml(S.currentImageSrc)}</a></div>`;
+      const imgUrl = sourceToArenaUrl(S.currentImageSrc);
+      html += `<div class="db-val"><span style="color:#777">image from</span> <a href="${escHtml(imgUrl)}" target="_blank" rel="noopener" style="color:var(--link-color)">${escHtml(S.currentImageSrc)}</a></div>`;
     }
     if (S.currentTextSrc) {
-      html += `<div class="db-val"><span style="color:#777">text from</span> <a href="https://www.are.na/${escHtml(S.currentTextSrc)}" target="_blank" rel="noopener" style="color:var(--link-color)">${escHtml(S.currentTextSrc)}</a></div>`;
+      const txtUrl = sourceToArenaUrl(S.currentTextSrc);
+      html += `<div class="db-val"><span style="color:#777">text from</span> <a href="${escHtml(txtUrl)}" target="_blank" rel="noopener" style="color:var(--link-color)">${escHtml(S.currentTextSrc)}</a></div>`;
     }
     html += `<div class="db-sub" style="margin-top:6px;color:#666;white-space:normal;overflow:visible">"${escHtml(S.currentText.slice(0, 120))}${S.currentText.length > 120 ? '…' : ''}"</div>`;
     if (audioMode === 'sc' && scWidget && scReady) {
@@ -1784,6 +1786,15 @@ function escHtml(str) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
+}
+
+// Build a correct are.na URL from a source tag.
+// Channel slugs are kebab-case (only [a-z0-9-]). Anything else is a search query.
+function sourceToArenaUrl(src) {
+  if (!src) return null;
+  if (src === '(recent public)') return 'https://www.are.na/explore';
+  if (/^[a-z0-9][a-z0-9-]*$/.test(src)) return `https://www.are.na/channel/${src}`;
+  return `https://www.are.na/search?q=${encodeURIComponent(src)}`;
 }
 
 // ════════════════════════════════════════════════
