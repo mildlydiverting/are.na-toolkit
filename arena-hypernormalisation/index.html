@@ -443,21 +443,19 @@ input[type=range] {
   <div class="setup-full">
     <div class="panel-label">Music (optional)</div>
     <p class="panel-hint">
-      Paste a <strong style="color:#ccc">direct MP3/OGG file URL</strong> (not a web page) or choose a local file.
-      On <a href="https://archive.org/search?query=trip+hop&and[]=mediatype%3A%22audio%22" target="_blank" style="color:#aaa">Internet Archive</a>,
-      open an item → click a track's download link → copy that .mp3 URL.
-      SoundCloud/YouTube coming soon.
+      Add a link to a SoundCloud playlist, a direct link to an MP3/OGG, or use a local MP3 file.
     </p>
     <div class="input-row">
-      <input class="text-input" id="audio-url-input" type="text" placeholder="https://archive.org/download/item-id/track.mp3" />
-      <button class="btn-add" onclick="setAudioUrl()">Set</button>
+      <input class="text-input" id="audio-url-input" type="text"
+             placeholder="SoundCloud playlist URL or direct MP3/OGG link" />
+      <button class="btn-add" onclick="setAudioUrl()">Add</button>
     </div>
     <div class="file-row">
       <label class="file-label-btn" for="audio-file-input">Local file…</label>
       <input type="file" id="audio-file-input" accept="audio/*" onchange="setAudioFile(event)" />
       <span class="file-name" id="audio-file-name">No file chosen</span>
     </div>
-    <div id="audio-status" class="cache-note"></div>
+    <div id="audio-status" class="cache-note" style="margin-top:6px"></div>
   </div>
 
   <hr class="divider" />
@@ -519,10 +517,12 @@ input[type=range] {
 // ════════════════════════════════════════════════
 
 const TEXT_COLORS  = ['#FFFFFF', '#4499FF', '#FF00CC', '#FF2222'];
-const CACHE_TTL    = 24 * 60 * 60 * 1000;  // 24 hours
+const CACHE_TTL    = 24 * 60 * 60 * 1000;
 const CACHE_PFX    = 'ahyp2_';
 const PREFS_KEY    = 'ahyp2_prefs';
 const MAX_WORDS    = 30;
+
+const DEFAULT_SC_PLAYLIST = 'https://soundcloud.com/mildlydiverting/sets/are-na-hypernormalisation';
 
 // ════════════════════════════════════════════════
 // SHUFFLE BAG — deals every item once before repeating
@@ -555,7 +555,8 @@ function shuffle(arr) {
 const S = {
   imageChannelSlugs: [],
   textChannelSlugs:  [],
-  searchQueries:     [],   // are.na search terms
+  searchQueries:     [],
+  audioUrl:          '',   // SC playlist URL or direct MP3; '' = use default SC playlist
   apiKey:            '',
   allImages:         [],
   allTexts:          [],
@@ -583,6 +584,7 @@ function savePrefs() {
       imageChannelSlugs: S.imageChannelSlugs,
       textChannelSlugs:  S.textChannelSlugs,
       searchQueries:     S.searchQueries,
+      audioUrl:          S.audioUrl,
     }));
   } catch (_) {}
 }
@@ -595,9 +597,17 @@ function loadPrefs() {
     S.imageChannelSlugs = p.imageChannelSlugs || [];
     S.textChannelSlugs  = p.textChannelSlugs  || [];
     S.searchQueries     = p.searchQueries     || [];
+    S.audioUrl          = p.audioUrl          || '';
     renderChips('image');
     renderChips('text');
     renderSearchChips();
+    // Restore audio URL display
+    if (S.audioUrl) {
+      const el = document.getElementById('audio-status');
+      if (el) el.textContent = '✓ ' + (S.audioUrl.includes('soundcloud.com')
+        ? S.audioUrl.split('/').slice(-1)[0]
+        : S.audioUrl.split('/').slice(-1)[0]);
+    }
     updateGoBtn();
   } catch (_) {}
 }
@@ -708,6 +718,7 @@ function renderSearchChips() {
            `<button class="chip-x" onclick="removeSearch('${safe}')">×</button></div>`;
   }).join('');
 }
+
 
 function updateGoBtn() {
   const hasContent =
@@ -1144,18 +1155,26 @@ function updatePlayBtn() {
 }
 
 // ════════════════════════════════════════════════
-// AUDIO
+// AUDIO — SoundCloud (shuffled) + local file fallback
 // ════════════════════════════════════════════════
 
-const bgAudio = document.getElementById('bgAudio');
-bgAudio.volume = 0.4;
+const bgAudio  = document.getElementById('bgAudio');
+bgAudio.volume = 0.5;
+
+let scWidget     = null;
+let scReady      = false;
+let audioMode    = 'none';   // 'sc' | 'local' | 'none'
+let shuffleOrder = [];       // shuffled track indices
+let shufflePos   = 0;
 
 function setAudioUrl() {
-  const url = document.getElementById('audio-url-input').value.trim();
+  const url = document.getElementById('audio-url-input').value.trim().replace(/\/$/, '');
   if (!url) return;
-  bgAudio.src = url;
-  document.getElementById('audio-status').textContent = '✓ Audio source set — will play on Go.';
+  S.audioUrl = url;
   document.getElementById('audio-url-input').value = '';
+  const label = url.split('/').filter(Boolean).slice(-1)[0] || url;
+  document.getElementById('audio-status').textContent = '✓ ' + label + ' — will play on Go.';
+  savePrefs();
 }
 
 function setAudioFile(e) {
@@ -1163,26 +1182,110 @@ function setAudioFile(e) {
   if (!file) return;
   bgAudio.src = URL.createObjectURL(file);
   document.getElementById('audio-file-name').textContent = file.name;
-  document.getElementById('audio-status').textContent    = '✓ Local file ready — will play on Go.';
+  document.getElementById('audio-status').textContent    = '✓ ' + file.name + ' — will play on Go.';
 }
 
+document.getElementById('audio-url-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') setAudioUrl();
+});
+
+// Decide which audio mode to use, then start
 function tryStartAudio() {
-  if (!bgAudio.src) return;
-  bgAudio.play().then(() => {
-    const btn = document.getElementById('btn-audio');
+  const btn = document.getElementById('btn-audio');
+
+  // SC playlist: user-set URL, default playlist, or nothing
+  const scUrl = S.audioUrl.includes('soundcloud.com')
+    ? S.audioUrl
+    : (!S.audioUrl ? DEFAULT_SC_PLAYLIST : null);
+
+  if (scUrl) {
+    audioMode = 'sc';
     btn.style.display = '';
-    btn.textContent   = '♪ Mute';
-    btn.classList.add('active');
-  }).catch(() => {
-    // Autoplay blocked — show button so user can start it
-    const btn = document.getElementById('btn-audio');
-    btn.style.display = '';
-    btn.textContent   = '♪ Play music';
-  });
+    btn.textContent   = '♪ Loading…';
+    setupSCWidget(scUrl);
+    return;
+  }
+
+  // Direct MP3/OGG URL
+  if (S.audioUrl) {
+    bgAudio.src = S.audioUrl;
+  }
+
+  if (bgAudio.src) {
+    audioMode = 'local';
+    bgAudio.play()
+      .then(() => { btn.style.display = ''; btn.textContent = '♪ Mute'; btn.classList.add('active'); })
+      .catch(() => { btn.style.display = ''; btn.textContent = '♪ Music'; });
+    return;
+  }
+
+  audioMode = 'none';
+}
+
+function setupSCWidget(playlistUrl) {
+  const encoded  = encodeURIComponent(playlistUrl);
+  const embedUrl = `https://w.soundcloud.com/player/?url=${encoded}` +
+    `&auto_play=false&hide_related=true&show_comments=false` +
+    `&show_user=false&show_reposts=false&show_teaser=false` +
+    `&show_playcount=false&buying=false&liking=false&sharing=false`;
+
+  let iframe = document.getElementById('sc-iframe');
+  if (!iframe) {
+    iframe = document.createElement('iframe');
+    iframe.id    = 'sc-iframe';
+    iframe.allow = 'autoplay';
+    iframe.style.cssText =
+      'position:fixed;bottom:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none;';
+    document.body.appendChild(iframe);
+  }
+
+  scWidget = null;
+  scReady  = false;
+
+  function initWidget() {
+    scWidget = SC.Widget(iframe);
+
+    scWidget.bind(SC.Widget.Events.READY, () => {
+      // Build a shuffled play order from all tracks in the playlist
+      scWidget.getSounds(sounds => {
+        if (!sounds || sounds.length === 0) { scReady = true; return; }
+        shuffleOrder = shuffle(Array.from({ length: sounds.length }, (_, i) => i));
+        shufflePos   = 0;
+        // Jump to first shuffled track (don't autoplay yet — user clicks ♪)
+        scWidget.skip(shuffleOrder[0]);
+        scReady = true;
+        const btn = document.getElementById('btn-audio');
+        btn.textContent = '♪ Music';
+      });
+    });
+
+    // After each track ends, advance to the next shuffled track.
+    // Re-shuffle when we exhaust the order.
+    scWidget.bind(SC.Widget.Events.FINISH, () => {
+      shufflePos++;
+      if (shufflePos >= shuffleOrder.length) {
+        shuffleOrder = shuffle(shuffleOrder);  // new shuffle, never same order twice
+        shufflePos   = 0;
+      }
+      scWidget.skip(shuffleOrder[shufflePos]);
+      setTimeout(() => scWidget.play(), 400);
+    });
+  }
+
+  if (!window.SC) {
+    const script  = document.createElement('script');
+    script.src    = 'https://w.soundcloud.com/player/api.js';
+    script.onload = () => { iframe.src = embedUrl; iframe.onload = initWidget; };
+    document.head.appendChild(script);
+  } else {
+    iframe.src    = embedUrl;
+    iframe.onload = initWidget;
+  }
 }
 
 function pauseAudio() {
-  bgAudio.pause();
+  if (audioMode === 'sc' && scWidget && scReady) scWidget.pause();
+  if (audioMode === 'local') bgAudio.pause();
   const btn = document.getElementById('btn-audio');
   btn.textContent = '♪ Music';
   btn.classList.remove('active');
@@ -1190,14 +1293,28 @@ function pauseAudio() {
 
 function toggleAudio() {
   const btn = document.getElementById('btn-audio');
-  if (bgAudio.paused) {
-    bgAudio.play().catch(() => {});
-    btn.textContent = '♪ Mute';
-    btn.classList.add('active');
-  } else {
-    bgAudio.pause();
-    btn.textContent = '♪ Music';
-    btn.classList.remove('active');
+
+  if (audioMode === 'sc' && scWidget && scReady) {
+    scWidget.isPaused(paused => {
+      if (paused) {
+        scWidget.play();
+        btn.textContent = '♪ Mute'; btn.classList.add('active');
+      } else {
+        scWidget.pause();
+        btn.textContent = '♪ Music'; btn.classList.remove('active');
+      }
+    });
+    return;
+  }
+
+  if (audioMode === 'local') {
+    if (bgAudio.paused) {
+      bgAudio.play().catch(() => {});
+      btn.textContent = '♪ Mute'; btn.classList.add('active');
+    } else {
+      bgAudio.pause();
+      btn.textContent = '♪ Music'; btn.classList.remove('active');
+    }
   }
 }
 
