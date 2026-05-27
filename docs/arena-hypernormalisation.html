@@ -3,9 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ARENA HYPERNORMALISATION</title>
+<title>Are.na Hypernormalisation</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --link-color: #bbb;
+}
+
+a { color: var(--link-color); }
+a:visited { color: var(--link-color); }
+a:active  { color: var(--link-color); }
+a:hover   { color: #fff; }
 
 body {
   background: #000;
@@ -204,12 +213,12 @@ input[type=file] { display: none; }
 }
 
 .cache-note a {
-  color: #888;
+  color: var(--link-color);
   cursor: pointer;
   text-decoration: underline;
 }
 
-.cache-note a:hover { color: #bbb; }
+.cache-note a:hover { color: #fff; }
 
 .btn-go {
   background: #fff;
@@ -369,7 +378,7 @@ hr.divider {
 }
 
 input[type=range] {
-  width: 70px;
+  width: 130px;
   accent-color: rgba(255,255,255,0.7);
   cursor: pointer;
 }
@@ -549,8 +558,8 @@ input[type=range] {
 
   <!-- API key -->
   <div class="setup-full">
-    <div class="panel-label">Are.na Access Token <span style="font-weight:normal;text-transform:none;letter-spacing:0;font-size:12px">(optional — needed for private channels)</span></div>
-    <p class="panel-hint">Get yours at are.na → Settings → Developers</p>
+    <div class="panel-label">Are.na Access Token <span style="font-weight:normal;text-transform:none;letter-spacing:0;font-size:12px">(optional — needed for private channels, read only)</span></div>
+    <p class="panel-hint">Get yours at <a href="https://www.are.na/developers/personal-access-tokens" target="_blank">are.na → Settings → Developers</a></p>
     <input class="text-input" style="width:100%" id="api-key" type="password" placeholder="Paste access token here" />
     <p class="cache-note" style="margin-top:10px">
       Channel content is cached locally for 24 hours so you won't hammer the API.
@@ -571,20 +580,16 @@ input[type=range] {
 
   <div id="fade-overlay"></div>
 
-  <!-- Debug / Pool Inspector -->
+  <!-- Info / Debug panel -->
   <div id="debug-panel">
-    <h3>Pool Inspector</h3>
+    <h3>Info</h3>
     <div id="debug-content"></div>
   </div>
 
   <div id="controls">
     <div class="ctrl-bar-bottom">
-      <button class="ctrl-btn" id="btn-debug" onclick="toggleDebug()">◈ Stats</button>
       <button class="ctrl-btn" onclick="backToSetup()">⚙ Setup</button>
-      <div style="flex:1"></div>
-      <button class="ctrl-btn" onclick="prevSlide()">◀ Prev</button>
-      <button class="ctrl-btn" id="btn-play" onclick="togglePlay()">▶ Play</button>
-      <button class="ctrl-btn" onclick="nextSlide()">Next ▶</button>
+      <button class="ctrl-btn" id="btn-audio" onclick="toggleAudio()" style="display:none">♪ Music</button>
       <div class="ctrl-divider"></div>
       <div class="speed-wrap">
         <label>Speed</label>
@@ -593,8 +598,12 @@ input[type=range] {
         <span id="speed-val">10s</span>
       </div>
       <div class="ctrl-divider"></div>
-      <button class="ctrl-btn" id="btn-audio" onclick="toggleAudio()" style="display:none">♪ Music</button>
+      <button class="ctrl-btn" onclick="prevSlide()">◀ Prev</button>
+      <button class="ctrl-btn" id="btn-play" onclick="togglePlay()">▶ Play</button>
+      <button class="ctrl-btn" onclick="nextSlide()">Next ▶</button>
+      <div class="ctrl-divider"></div>
       <button class="ctrl-btn" onclick="downloadPNG()">↓ Save PNG</button>
+      <button class="ctrl-btn" id="btn-debug" onclick="toggleDebug()">◈ Info</button>
     </div>
   </div>
 </div>
@@ -665,6 +674,9 @@ const S = {
   loadedImg:         null,
   currentText:       '',
   currentColor:      '#FFFFFF',
+  currentImageUrl:   '',
+  currentImageSrc:   '',
+  currentTextSrc:    '',
   isPlaying:         false,
   playTimer:         null,
   playDelay:         10000,
@@ -687,10 +699,30 @@ function savePrefs() {
   } catch (_) {}
 }
 
+const DEFAULT_IMAGE_CHANNELS = [
+  'public-domain-hciljwrdeai',
+  'found-gzgnoju0grg',
+  'awesome-qmq5luzkknk',
+  'koyaanisqatsi-xzjzt3tcae',
+];
+
+const DEFAULT_TEXT_CHANNELS = [
+  'extremelyinternet',
+  'library-of-titles',
+];
+
 function loadPrefs() {
   try {
     const raw = localStorage.getItem(PREFS_KEY);
-    if (!raw) return;
+    if (!raw) {
+      // No saved prefs — use defaults so Go is active out of the box
+      S.imageChannelSlugs = [...DEFAULT_IMAGE_CHANNELS];
+      S.textChannelSlugs  = [...DEFAULT_TEXT_CHANNELS];
+      renderChips('image');
+      renderChips('text');
+      updateGoBtn();
+      return;
+    }
     const p = JSON.parse(raw);
     S.imageChannelSlugs = p.imageChannelSlugs || [];
     S.textChannelSlugs  = p.textChannelSlugs  || [];
@@ -811,9 +843,9 @@ function renderSearchChips() {
   const el = document.getElementById('search-chips');
   el.innerHTML = S.searchQueries.map(q => {
     const label = q || '(recent public)';
-    const safe  = q.replace(/'/g, "\\'");
-    return `<div class="chip"><span title="${label}">${label}</span>` +
-           `<button class="chip-x" onclick="removeSearch('${safe}')">×</button></div>`;
+    // JSON.stringify safely escapes all quote types for use in an onclick attribute
+    return `<div class="chip"><span title="${label.replace(/"/g,'&quot;')}">${label}</span>` +
+           `<button class="chip-x" onclick="removeSearch(${JSON.stringify(q)})">×</button></div>`;
   }).join('');
 }
 
@@ -945,6 +977,7 @@ async function go() {
       statusEl.textContent = `Fetching ${slug}…`;
       const { data, fromCache } = await fetchChannelContents(slug);
       const imgs = extractImages(data);
+      imgs.forEach(img => img.source = slug);
       S.allImages = S.allImages.concat(imgs);
       S.imageSources[slug] = (S.imageSources[slug] || 0) + imgs.length;
       fromCache ? cacheHits++ : fetched++;
@@ -955,6 +988,7 @@ async function go() {
       statusEl.textContent = `Fetching ${slug}…`;
       const { data, fromCache } = await fetchChannelContents(slug);
       const txts = extractTexts(data);
+      txts.forEach(txt => txt.source = slug);
       S.allTexts = S.allTexts.concat(txts);
       S.textSources[slug] = (S.textSources[slug] || 0) + txts.length;
       fromCache ? cacheHits++ : fetched++;
@@ -966,9 +1000,11 @@ async function go() {
       const { data, fromCache } = await fetchSearch(query);
       const imgs = extractImages(data);
       const txts = extractTexts(data);
+      const qlabel = query || '(recent public)';
+      imgs.forEach(img => img.source = qlabel);
+      txts.forEach(txt => txt.source = qlabel);
       S.allImages = S.allImages.concat(imgs);
       S.allTexts  = S.allTexts.concat(txts);
-      const qlabel = query || '(recent public)';
       S.imageSources[qlabel] = (S.imageSources[qlabel] || 0) + imgs.length;
       S.textSources[qlabel]  = (S.textSources[qlabel]  || 0) + txts.length;
       fromCache ? cacheHits++ : fetched++;
@@ -999,6 +1035,8 @@ async function go() {
     initCanvas();
     tryStartAudio();
     await advance(true);
+    startPlay();
+    updatePlayBtn();
 
   } catch (err) {
     statusEl.textContent = '';
@@ -1164,10 +1202,14 @@ function loadImg(url) {
 // ════════════════════════════════════════════════
 
 function pickEntry() {
+  const imgItem = S.imageBag.next();
+  const txtItem = S.textBag.next();
   return {
-    imageUrl: S.imageBag.next().url,
-    text:     S.textBag.next().content,
-    color:    TEXT_COLORS[Math.floor(Math.random() * TEXT_COLORS.length)],
+    imageUrl:  imgItem.url,
+    imageSrc:  imgItem.source || '',
+    text:      txtItem.content,
+    textSrc:   txtItem.source || '',
+    color:     TEXT_COLORS[Math.floor(Math.random() * TEXT_COLORS.length)],
   };
 }
 
@@ -1189,9 +1231,12 @@ async function showEntry(entry, immediate) {
 
   if (!img) { S.transitioning = false; return; }
 
-  S.loadedImg    = img;
-  S.currentText  = entry.text;
-  S.currentColor = entry.color;
+  S.loadedImg        = img;
+  S.currentText      = entry.text;
+  S.currentColor     = entry.color;
+  S.currentImageUrl  = entry.imageUrl;
+  S.currentImageSrc  = entry.imageSrc  || '';
+  S.currentTextSrc   = entry.textSrc   || '';
   renderFrame(img, entry.text, entry.color, canvas, ctx);
 
   if (!immediate) await fade(false);
@@ -1329,9 +1374,10 @@ function tryStartAudio() {
 
   if (bgAudio.src) {
     audioMode = 'local';
+    btn.style.display = '';
     bgAudio.play()
-      .then(() => { btn.style.display = ''; btn.textContent = '♪ Mute'; btn.classList.add('active'); })
-      .catch(() => { btn.style.display = ''; btn.textContent = '♪ Music'; });
+      .then(() => { btn.textContent = '♪ Mute'; btn.classList.add('active'); })
+      .catch(() => { btn.textContent = '♪ Music'; });
     return;
   }
 
@@ -1367,11 +1413,13 @@ function setupSCWidget(playlistUrl) {
         if (!sounds || sounds.length === 0) { scReady = true; return; }
         shuffleOrder = shuffle(Array.from({ length: sounds.length }, (_, i) => i));
         shufflePos   = 0;
-        // Jump to first shuffled track (don't autoplay yet — user clicks ♪)
+        // Jump to first shuffled track and auto-play
         scWidget.skip(shuffleOrder[0]);
         scReady = true;
         const btn = document.getElementById('btn-audio');
-        btn.textContent = '♪ Music';
+        btn.textContent = '♪ Mute';
+        btn.classList.add('active');
+        setTimeout(() => scWidget.play(), 300);
       });
     });
 
@@ -1527,6 +1575,31 @@ function updateDebugPanel() {
   const txtLeft  = S.textBag  ? S.textBag._bag.length  : 0;
 
   let html = '';
+
+  // About
+  html += `<div class="db-section" style="font-size:11px;line-height:1.6;color:#aaa">`;
+  html += `<p>Pulls images and text from the <a href="https://www.are.na/developers" target="_blank" rel="noopener">are.na API</a> and combines them into a <a href="https://www.bbc.co.uk/webarchive/https%3A%2F%2Fwww.bbc.co.uk%2Fblogs%2Fadamcurtis%2Fentries%2F02d9ed3c-d71b-4232-ae17-67da423b5df5" target="_blank" rel="noopener">strangely familiar</a> documentary critique of late capitalism. h/t to <a href="https://www.tomscott.com/infinite-adam-curtis/" target="_blank" rel="noopener">Tom Scott/Dan Williams</a>.</p>`;
+  html += `<p style="margin-top:8px">An <a href="https://mildlydiverting.github.io/are.na-toolkit/" target="_blank" rel="noopener">are.na API toy</a> by <a href="https://www.are.na/kim-plowright/channels" target="_blank" rel="noopener">Kim Plowright</a>. Found a bug? Let me know on <a href="https://github.com/mildlydiverting/are.na-toolkit" target="_blank" rel="noopener">GitHub</a>.</p>`;
+  html += `</div>`;
+
+  // Current item info
+  if (S.currentText) {
+    html += `<div class="db-section">`;
+    html += `<div class="db-label">Now showing</div>`;
+    if (S.currentImageSrc) {
+      html += `<div class="db-val"><span style="color:#777">image from</span> <a href="https://www.are.na/${escHtml(S.currentImageSrc)}" target="_blank" rel="noopener" style="color:var(--link-color)">${escHtml(S.currentImageSrc)}</a></div>`;
+    }
+    if (S.currentTextSrc) {
+      html += `<div class="db-val"><span style="color:#777">text from</span> <a href="https://www.are.na/${escHtml(S.currentTextSrc)}" target="_blank" rel="noopener" style="color:var(--link-color)">${escHtml(S.currentTextSrc)}</a></div>`;
+    }
+    html += `<div class="db-sub" style="margin-top:6px;color:#666;white-space:normal;overflow:visible">"${escHtml(S.currentText.slice(0, 120))}${S.currentText.length > 120 ? '…' : ''}"</div>`;
+    if (audioMode === 'sc' && scWidget && scReady) {
+      html += `<div class="db-val" style="margin-top:4px"><span style="color:#777">music</span> <a href="${escHtml(S.audioUrl || DEFAULT_SC_PLAYLIST)}" target="_blank" rel="noopener" style="color:var(--link-color)">soundcloud playlist</a></div>`;
+    } else if (audioMode === 'local' && S.audioUrl) {
+      html += `<div class="db-val" style="margin-top:4px"><span style="color:#777">music</span> ${escHtml(S.audioUrl.split('/').slice(-1)[0])}</div>`;
+    }
+    html += `</div>`;
+  }
 
   // Refresh controls
   html += `<div class="db-section">`;
