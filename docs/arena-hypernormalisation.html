@@ -703,7 +703,8 @@ const AUTO_TOPUP_SLIDES  = 25;   // silently top up pool every N slides
 
 const DEFAULT_SC_PLAYLIST = 'https://soundcloud.com/mildlydiverting/sets/are-na-hypernormalisation';
 
-let slidesSinceTopUp = 0;
+let slidesSinceTopUp  = 0;
+let channelPageState  = {};   // { [slug]: { nextPage: number, exhausted: bool } }
 
 // ── DEFAULT CHANNELS ──────────────────────────────────────────────
 // These are used on first launch (no saved prefs) so the Go button
@@ -712,14 +713,17 @@ let slidesSinceTopUp = 0;
 // Text channels: internet-era text, short titles/phrases.
 const DEFAULT_IMAGE_CHANNELS = [
   // 'public-domain-hciljwrdeai',  // Public Domain
+  // 'public-domain-hciljwrdeai',  // Public Domain
   // 'found-gzgnoju0grg',          // Found
-  'awesome-qmq5luzkknk',        // Awesome
-  'koyaanisqatsi-xzjzt3tcae',   // Koyaanisqatsi
+  'arena-hypernormalisation-images' // Arena Hypernormalisation Images shared channel
+  // 'awesome-qmq5luzkknk',        // Awesome
+  // 'koyaanisqatsi-xzjzt3tcae',   // Koyaanisqatsi
 ];
 
 const DEFAULT_TEXT_CHANNELS = [
-  'extremelyinternet',          // Extremely Internet
-  'library-of-titles',          // Library of Titles
+  'arena-hypernormalisation-text' // Arena Hypernormalisation Text shared channel
+  //'extremelyinternet',          // Extremely Internet
+  //'library-of-titles',          // Library of Titles
   // 'good-sign-offs',             // Good Sign Offs
 ];
 
@@ -1022,6 +1026,26 @@ async function fetchChannelContents(slug) {
   return { data: all, fromCache: false };
 }
 
+// Fetch a single page of a channel; cached separately per page.
+// Used by go() (page 1) and the incremental top-up (page 2, 3, …).
+async function fetchChannelPage(slug, page) {
+  const cacheKey = `chan_${slug}_p${page}`;
+  const cached   = cacheGet(cacheKey);
+  if (cached) return { items: cached.items, hasMore: cached.hasMore, fromCache: true };
+
+  const url = `https://api.are.na/v3/channels/${encodeURIComponent(slug)}/contents?per=100&page=${page}`;
+  const res  = await fetchArena(url);
+  if (!res.ok) {
+    const txt = await res.text().catch(() => res.statusText);
+    throw new Error(`Channel "${slug}" – ${res.status}: ${txt.slice(0,120)}`);
+  }
+  const json    = await res.json();
+  const items   = json.data  || [];
+  const hasMore = !!json.meta?.has_more_pages;
+  cacheSet(cacheKey, { items, hasMore });
+  return { items, hasMore, fromCache: false };
+}
+
 async function fetchSearch(query) {
   const cacheKey = 'srch_' + (query || '__recent__');
   const cached   = cacheGet(cacheKey);
@@ -1101,29 +1125,34 @@ async function go() {
 
   btn.disabled   = true;
   errorEl.innerHTML = '';
-  S.allImages    = [];
-  S.allTexts     = [];
-  S.imageSources = {};
-  S.textSources  = {};
-  let cacheHits  = 0, fetched = 0;
+  S.allImages      = [];
+  S.allTexts       = [];
+  S.imageSources   = {};
+  S.textSources    = {};
+  channelPageState = {};   // reset pagination state for this session
+  let cacheHits    = 0, fetched = 0;
 
   try {
-    // Image channels
+    // Image channels — page 1 only; subsequent pages fetched incrementally by top-up
     for (const slug of S.imageChannelSlugs) {
       statusEl.textContent = `Fetching ${slug}…`;
-      const { data, fromCache } = await fetchChannelContents(slug);
-      const imgs = extractImages(data);
+      const { items, hasMore, fromCache } = await fetchChannelPage(slug, 1);
+      if (!channelPageState[slug])
+        channelPageState[slug] = { nextPage: 2, exhausted: !hasMore };
+      const imgs = extractImages(items);
       imgs.forEach(img => img.source = slug);
       S.allImages = S.allImages.concat(imgs);
       S.imageSources[slug] = (S.imageSources[slug] || 0) + imgs.length;
       fromCache ? cacheHits++ : fetched++;
     }
 
-    // Text channels
+    // Text channels — page 1 only
     for (const slug of S.textChannelSlugs) {
       statusEl.textContent = `Fetching ${slug}…`;
-      const { data, fromCache } = await fetchChannelContents(slug);
-      const txts = extractTexts(data);
+      const { items, hasMore, fromCache } = await fetchChannelPage(slug, 1);
+      if (!channelPageState[slug])
+        channelPageState[slug] = { nextPage: 2, exhausted: !hasMore };
+      const txts = extractTexts(items);
       txts.forEach(txt => txt.source = slug);
       S.allTexts = S.allTexts.concat(txts);
       S.textSources[slug] = (S.textSources[slug] || 0) + txts.length;
@@ -1853,80 +1882,116 @@ function purgeAllCache() {
 // silent=true suppresses the status display (used for auto top-up).
 async function refreshPool(silent) {
   const statusEl = document.getElementById('db-refresh-status');
-  if (statusEl && !silent) statusEl.innerHTML = `<span class="db-refreshing">Fetching…</span>`;
 
-  // Clear cache for active sources so fetches bypass it
-  for (const slug of [...S.imageChannelSlugs, ...S.textChannelSlugs]) {
-    localStorage.removeItem(CACHE_PFX + 'chan_' + slug);
-  }
-  for (const query of S.searchQueries) {
-    localStorage.removeItem(CACHE_PFX + 'srch_' + (query || '__recent__'));
-  }
+  if (!silent) {
+    // ── Manual "fetch fresh": reset pagination, clear per-page cache, re-fetch p1 ──
+    if (statusEl) statusEl.innerHTML = `<span class="db-refreshing">Fetching…</span>`;
 
-  const newImages  = [];
-  const newTexts   = [];
-  const newImgSrc  = {};
-  const newTxtSrc  = {};
-
-  try {
-    for (const slug of S.imageChannelSlugs) {
-      const { data } = await fetchChannelContents(slug);
-      const imgs = extractImages(data);
-      newImages.push(...imgs);
-      newImgSrc[slug] = imgs.length;
-    }
-    for (const slug of S.textChannelSlugs) {
-      const { data } = await fetchChannelContents(slug);
-      const txts = extractTexts(data);
-      newTexts.push(...txts);
-      newTxtSrc[slug] = txts.length;
+    channelPageState = {};
+    const allSlugs = [...new Set([...S.imageChannelSlugs, ...S.textChannelSlugs])];
+    for (const slug of allSlugs) {
+      Object.keys(localStorage)
+        .filter(k => k.startsWith(CACHE_PFX + 'chan_' + slug + '_p'))
+        .forEach(k => localStorage.removeItem(k));
     }
     for (const query of S.searchQueries) {
-      const { data } = await fetchSearch(query);
-      const imgs = extractImages(data);
-      const txts = extractTexts(data);
-      newImages.push(...imgs);
-      newTexts.push(...txts);
-      const ql = query || '(recent public)';
-      newImgSrc[ql] = (newImgSrc[ql] || 0) + imgs.length;
-      newTxtSrc[ql] = (newTxtSrc[ql] || 0) + txts.length;
+      localStorage.removeItem(CACHE_PFX + 'srch_' + (query || '__recent__'));
     }
-  } catch (err) {
-    if (statusEl && !silent) statusEl.textContent = '⚠ ' + err.message.slice(0, 80);
-    return;
-  }
 
-  // Find genuinely new items (not already in pool)
-  const existingImgUrls = new Set(S.allImages.map(i => i.url));
-  const existingTxtSet  = new Set(S.allTexts.map(t => t.content));
-
-  const freshImgs = dedup(newImages, 'url').filter(i => !existingImgUrls.has(i.url));
-  const freshTxts = dedup(newTexts, 'content').filter(t => !existingTxtSet.has(t.content));
-
-  if (freshImgs.length) {
-    S.allImages.push(...freshImgs);
-    if (S.imageBag) {
-      S.imageBag._src = [...S.allImages];
-      S.imageBag._bag.push(...shuffle(freshImgs));
+    const newImages = [], newTexts = [], newImgSrc = {}, newTxtSrc = {};
+    try {
+      for (const slug of S.imageChannelSlugs) {
+        const { items, hasMore } = await fetchChannelPage(slug, 1);
+        if (!channelPageState[slug])
+          channelPageState[slug] = { nextPage: 2, exhausted: !hasMore };
+        const imgs = extractImages(items);
+        imgs.forEach(img => img.source = slug);
+        newImages.push(...imgs);
+        newImgSrc[slug] = imgs.length;
+      }
+      for (const slug of S.textChannelSlugs) {
+        const { items, hasMore } = await fetchChannelPage(slug, 1);
+        if (!channelPageState[slug])
+          channelPageState[slug] = { nextPage: 2, exhausted: !hasMore };
+        const txts = extractTexts(items);
+        txts.forEach(txt => txt.source = slug);
+        newTexts.push(...txts);
+        newTxtSrc[slug] = txts.length;
+      }
+      for (const query of S.searchQueries) {
+        const { data } = await fetchSearch(query);
+        const imgs = extractImages(data);
+        const txts = extractTexts(data);
+        const ql = query || '(recent public)';
+        imgs.forEach(img => img.source = ql);
+        txts.forEach(txt => txt.source = ql);
+        newImages.push(...imgs);
+        newTexts.push(...txts);
+        newImgSrc[ql] = (newImgSrc[ql] || 0) + imgs.length;
+        newTxtSrc[ql] = (newTxtSrc[ql] || 0) + txts.length;
+      }
+    } catch (err) {
+      if (statusEl) statusEl.textContent = '⚠ ' + err.message.slice(0, 80);
+      return;
     }
-  }
-  if (freshTxts.length) {
-    S.allTexts.push(...freshTxts);
-    if (S.textBag) {
-      S.textBag._src = [...S.allTexts];
-      S.textBag._bag.push(...shuffle(freshTxts));
+
+    // Replace pool wholesale
+    S.allImages    = dedup(newImages, 'url');
+    S.allTexts     = dedup(newTexts, 'content');
+    S.imageBag     = new ShuffleBag(S.allImages);
+    S.textBag      = new ShuffleBag(S.allTexts);
+    S.imageSources = newImgSrc;
+    S.textSources  = newTxtSrc;
+
+    if (statusEl) {
+      statusEl.textContent = `${S.allImages.length} images · ${S.allTexts.length} texts`;
+      setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 4000);
     }
-  }
 
-  S.imageSources = newImgSrc;
-  S.textSources  = newTxtSrc;
+  } else {
+    // ── Auto top-up: advance each non-exhausted channel by one page, append to pool ──
+    const allSlugs = [...new Set([...S.imageChannelSlugs, ...S.textChannelSlugs])];
 
-  if (statusEl && !silent) {
-    const msg = freshImgs.length || freshTxts.length
-      ? `+${freshImgs.length} images, +${freshTxts.length} texts added`
-      : 'Pool already up to date';
-    statusEl.textContent = msg;
-    setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 4000);
+    for (const slug of allSlugs) {
+      const state = channelPageState[slug];
+      if (!state || state.exhausted) continue;
+
+      try {
+        const { items, hasMore } = await fetchChannelPage(slug, state.nextPage);
+        state.nextPage++;
+        if (!hasMore) state.exhausted = true;
+
+        const existingUrls = new Set(S.allImages.map(i => i.url));
+        const existingTxts = new Set(S.allTexts.map(t => t.content));
+
+        if (S.imageChannelSlugs.includes(slug)) {
+          const imgs = extractImages(items)
+            .map(img => ({ ...img, source: slug }))
+            .filter(img => !existingUrls.has(img.url));
+          if (imgs.length) {
+            S.allImages.push(...imgs);
+            S.imageBag._src.push(...imgs);
+            S.imageBag._bag.push(...shuffle(imgs));
+            S.imageSources[slug] = (S.imageSources[slug] || 0) + imgs.length;
+          }
+        }
+        if (S.textChannelSlugs.includes(slug)) {
+          const txts = extractTexts(items)
+            .map(txt => ({ ...txt, source: slug }))
+            .filter(txt => !existingTxts.has(txt.content));
+          if (txts.length) {
+            S.allTexts.push(...txts);
+            S.textBag._src.push(...txts);
+            S.textBag._bag.push(...shuffle(txts));
+            S.textSources[slug] = (S.textSources[slug] || 0) + txts.length;
+          }
+        }
+
+        await sleep(FETCH_PAGE_DELAY);
+      } catch (_) {
+        // Silent failure — don't interrupt playback
+      }
+    }
   }
 
   updateDebugPanel();
