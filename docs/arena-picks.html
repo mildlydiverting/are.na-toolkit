@@ -45,6 +45,9 @@
         brackets (common in link block titles) broke image syntax and
         heading parsing. Added mdSafe() to strip brackets, backticks
         and stray newlines from any text used in markdown constructs.
+  v1.10 Fix single-board bug: read board inputs from DOM in applySettings.
+        Start with 1 board slot (not 4). Remove rounded corners from
+        cards and buttons.
   v1.9  Standalone: no arena-config.js needed. Settings panel with
         token + board slugs saved in localStorage. URL parsing for
         slugs. Description line. :visited/:active link styles.
@@ -224,7 +227,6 @@
     font-weight: 500;
     padding: 7px 16px;
     border: 1px solid var(--border-btn);
-    border-radius: 8px;
     background: var(--bg-btn);
     color: var(--text-primary);
     cursor: pointer;
@@ -294,7 +296,6 @@
   .card {
     background: var(--bg-card);
     border: 1px solid var(--border-card);
-    border-radius: 12px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -355,7 +356,6 @@
     right: 7px;
     width: 28px;
     height: 28px;
-    border-radius: 50%;
     border: none;
     background: var(--lock-btn-bg);
     cursor: pointer;
@@ -441,7 +441,6 @@
     display: inline-block;
     font-size: 10px;
     padding: 2px 7px;
-    border-radius: 4px;
     margin-top: 8px;
     background: var(--bg-badge);
     color: var(--text-muted);
@@ -454,7 +453,6 @@
     background: var(--error-bg);
     border: 1px solid var(--error-border);
     padding: 1rem;
-    border-radius: 12px;
     font-size: 13px;
     color: var(--error-text);
     line-height: 1.5;
@@ -699,7 +697,7 @@ function parseArenaSlug(val) {
 }
 
 // ── Settings panel ────────────────────────────────────────────────
-let settingsBoardSlugs = ['', '', '', ''];
+let settingsBoardSlugs = [''];
 
 function toggleSettings() {
   const panel = document.getElementById('settings-panel');
@@ -768,7 +766,10 @@ document.addEventListener('DOMContentLoaded', () => {
 function applySettings() {
   const tokenInput = document.getElementById('token-input');
   const token  = tokenInput.value.trim();
-  const boards = settingsBoardSlugs.map(parseArenaSlug).filter(Boolean);
+  // Read values directly from DOM inputs to avoid any sync issues with settingsBoardSlugs
+  const boards = Array.from(
+    document.querySelectorAll('#board-inputs .settings-text-input')
+  ).map(inp => parseArenaSlug(inp.value.trim())).filter(Boolean);
 
   if (boards.length === 0) {
     document.getElementById('settings-status').textContent = 'Add at least one channel slug.';

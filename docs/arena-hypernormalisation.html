@@ -308,7 +308,7 @@ hr.divider {
   z-index: 20;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.35s ease;
+  transition: opacity 0.01s ease;
 }
 
 #controls.visible {
@@ -841,12 +841,15 @@ function removeSearch(key) {
 
 function renderSearchChips() {
   const el = document.getElementById('search-chips');
-  el.innerHTML = S.searchQueries.map(q => {
-    const label = q || '(recent public)';
-    // JSON.stringify safely escapes all quote types for use in an onclick attribute
-    return `<div class="chip"><span title="${label.replace(/"/g,'&quot;')}">${label}</span>` +
-           `<button class="chip-x" onclick="removeSearch(${JSON.stringify(q)})">×</button></div>`;
+  el.innerHTML = S.searchQueries.map((q, idx) => {
+    const label    = q || '(recent public)';
+    const labelEsc = label.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return `<div class="chip"><span title="${labelEsc}">${labelEsc}</span>` +
+           `<button class="chip-x" data-idx="${idx}">×</button></div>`;
   }).join('');
+  el.querySelectorAll('[data-idx]').forEach(btn => {
+    btn.addEventListener('click', () => removeSearch(S.searchQueries[+btn.dataset.idx]));
+  });
 }
 
 
@@ -1281,9 +1284,9 @@ async function prevSlide() {
 function fade(toBlack) {
   return new Promise(resolve => {
     const ov = document.getElementById('fade-overlay');
-    ov.style.transition = toBlack ? 'opacity 0.05s ease' : 'opacity 0.07s ease';
+    ov.style.transition = toBlack ? 'opacity 0.01s ease' : 'opacity 0.01s ease';
     ov.style.opacity    = toBlack ? '1' : '0';
-    setTimeout(resolve, toBlack ? 60 : 80);
+    setTimeout(resolve, toBlack ? 15 : 15);
   });
 }
 

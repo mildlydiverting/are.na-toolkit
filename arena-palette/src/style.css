@@ -132,26 +132,29 @@
     --accent-text:   #f5f4f0;
   }
 
-/* ── THEME TOGGLE ── */
+/* ── THEME TOGGLE — fixed top-right ── */
   .theme-toggle-row {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 100;
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    padding: 0.6rem 1.5rem 1rem;
-    flex-shrink: 0;
+    gap: 0.4rem;
   }
 
   .theme-btn {
-    background: none;
+    background: var(--surface);
     border: 1px solid var(--border);
     color: var(--surface-muted);
     font-family: var(--font);
-    font-size: 1.2rem;
-    padding: 0.3rem 0.9rem;
+    font-size: 1.1rem;
+    padding: 0.3rem 0.8rem;
     cursor: pointer;
     border-radius: var(--radius);
     transition: background 0.15s, color 0.15s, border-color 0.15s;
     letter-spacing: 0.04em;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
   }
 
   .theme-btn:hover {

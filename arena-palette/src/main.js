@@ -26,7 +26,7 @@ const NAME_LISTS = {
 // ── EXTRACTION SETTINGS ──────────────────────────────────────────────────────
 const SETTINGS_KEY = 'arena-palette-settings-v1';
 const DEFAULT_SETTINGS = {
-  colorCount:    7,
+  colorCount:    6,
   quality:      'med',
   colorSpace:   'oklch',
   ignoreWhite:   true,
@@ -992,7 +992,7 @@ function exportSlug() {
 }
 
 function colourTitle(index, hex) {
-  const name = currentColorNames[hex.toLowerCase()];
+  const name = currentColorNames[hex.slice(1).toLowerCase()];
   return name
     ? `Colour ${index + 1} — ${hex} — ${name}`
     : `Colour ${index + 1} — ${hex}`;
@@ -1031,7 +1031,7 @@ function exportHex(palette) {
   out.push('/* Palette */\n');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.toLowerCase()];
+    const name = currentColorNames[hex.slice(1).toLowerCase()];
     const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
     out.push(`/* ${swatchLabel(hex, name, pct || null)} */\n${hex}\n`);
   });
@@ -1049,7 +1049,7 @@ function exportHex(palette) {
   out.push('/* Tints and Shades */\n');
   palette.forEach((rgb) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.toLowerCase()];
+    const name = currentColorNames[hex.slice(1).toLowerCase()];
     const { tints, shades } = makeTintsShades(rgb);
     out.push(`/* ${swatchLabel(hex, name)} */`); // block header
     tints.forEach((c, ti) => {
@@ -1074,7 +1074,7 @@ function exportRgb(palette) {
   out.push('/* Palette */\n');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.toLowerCase()];
+    const name = currentColorNames[hex.slice(1).toLowerCase()];
     const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
     out.push(`/* ${swatchLabel(hex, name, pct || null)} */\nrgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})\n`);
   });
@@ -1093,7 +1093,7 @@ function exportRgb(palette) {
   out.push('/* Tints and Shades */\n');
   palette.forEach((rgb) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.toLowerCase()];
+    const name = currentColorNames[hex.slice(1).toLowerCase()];
     const { tints, shades } = makeTintsShades(rgb);
     out.push(`/* ${swatchLabel(hex, name)} */`);
     tints.forEach((c, ti) => {
@@ -1118,7 +1118,7 @@ function exportHsl(palette) {
   out.push('/* Palette */\n');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.toLowerCase()];
+    const name = currentColorNames[hex.slice(1).toLowerCase()];
     const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
     const [h,s,l] = rgbToHsl(rgb);
     out.push(`/* ${swatchLabel(hex, name, pct || null)} */\nhsl(${h}, ${s}%, ${l}%)\n`);
@@ -1139,7 +1139,7 @@ function exportHsl(palette) {
   out.push('/* Tints and Shades */\n');
   palette.forEach((rgb) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.toLowerCase()];
+    const name = currentColorNames[hex.slice(1).toLowerCase()];
     const { tints, shades } = makeTintsShades(rgb);
     out.push(`/* ${swatchLabel(hex, name)} */`);
     tints.forEach((c, ti) => {
@@ -1168,7 +1168,7 @@ function exportCss(palette) {
   varLines.push('  /* Palette */');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.toLowerCase()];
+    const name = currentColorNames[hex.slice(1).toLowerCase()];
     const slug = cssSlug(name, `color-${i + 1}`);
     const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
     const [h,s,l] = rgbToHsl(rgb);
@@ -1193,7 +1193,7 @@ function exportCss(palette) {
   varLines.push('  /* Tints & shades */');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.toLowerCase()];
+    const name = currentColorNames[hex.slice(1).toLowerCase()];
     const slug = cssSlug(name, `color-${i + 1}`);
     const { tints, shades } = makeTintsShades(rgb);
     tints.forEach((c, ti) => {
@@ -1219,7 +1219,7 @@ function exportCss(palette) {
 function exportScp(palette) {
   const paletteEntries = palette.map((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.toLowerCase()];
+    const name = currentColorNames[hex.slice(1).toLowerCase()];
     const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
     return { hex, ...(name ? { name } : {}), ...(pct ? { proportion: pct / 100 } : {}) };
   });
@@ -1231,7 +1231,7 @@ function exportScp(palette) {
 
   const tintsShades = palette.map((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.toLowerCase()];
+    const name = currentColorNames[hex.slice(1).toLowerCase()];
     const { tints, shades } = makeTintsShades(rgb);
     return {
       hex,
@@ -1316,7 +1316,7 @@ function exportAse(palette) {
   blockCount++;
   palette.forEach((rgb, i) => {
     const baseHex = rgbToHex(rgb);
-    const name    = currentColorNames[baseHex.toLowerCase()];
+    const name    = currentColorNames[baseHex.slice(1).toLowerCase()];
     const pct     = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
     blocks.push(...colourBlock(swatchLabel(baseHex, name, pct || null), rgb));
     blockCount++;
@@ -1340,7 +1340,7 @@ function exportAse(palette) {
   // 3. Tints & shades per colour
   palette.forEach((rgb, i) => {
     const baseHex = rgbToHex(rgb);
-    const name    = currentColorNames[baseHex.toLowerCase()];
+    const name    = currentColorNames[baseHex.slice(1).toLowerCase()];
     const pct     = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
 
     blocks.push(...groupStartBlock(swatchLabel(baseHex, name)));
@@ -1399,7 +1399,7 @@ function exportGpl(palette) {
   lines.push('# Base colours');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.toLowerCase()];
+    const name = currentColorNames[hex.slice(1).toLowerCase()];
     const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
     lines.push(`${rgb[0]}\t${rgb[1]}\t${rgb[2]}\t${swatchLabel(hex, name, pct || null)}`);
   });
@@ -1417,7 +1417,7 @@ function exportGpl(palette) {
   // 3. Tints & shades per colour
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.toLowerCase()];
+    const name = currentColorNames[hex.slice(1).toLowerCase()];
     const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
     lines.push(`# ${swatchLabel(hex, name, pct || null)}`);
     const { tints, shades } = makeTintsShades(rgb);
@@ -1466,7 +1466,7 @@ function exportProcreatePalette(palette) {
   // 1. Base colours
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.toLowerCase()];
+    const name = currentColorNames[hex.slice(1).toLowerCase()];
     const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
     swatches.push(makeEntry(rgb, swatchLabel(hex, name, pct || null)));
   });
@@ -1480,7 +1480,7 @@ function exportProcreatePalette(palette) {
   // 3. Tints & shades per colour
   palette.forEach((rgb) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.toLowerCase()];
+    const name = currentColorNames[hex.slice(1).toLowerCase()];
     const { tints, shades } = makeTintsShades(rgb);
 
     tints.forEach((c, ti) => {

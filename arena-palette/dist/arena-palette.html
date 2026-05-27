@@ -5,10 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Are.na Palette</title>
 <!--
-  arena-palette v1.30
+  arena-palette v1.31
   ──────────────────────────────────────────────────────────────────
   Changelog:
 
+    v1.31 (2026-05-27) — Fix colour name lookup in all export functions (#-prefix
+                         mismatch). Move theme toggle to fixed top-right corner.
+                         Default colour count changed to 6.
     v1.30 (2026-05-27) — Fix colour name lookup key (#-prefix mismatch). Remove
                          Google Fonts, use Arial stack. Default channel added.
                          Sidebar tagline. Dark/midtone/light theme toggle.
@@ -193,26 +196,29 @@
     --accent-text:   #f5f4f0;
   }
 
-/* ── THEME TOGGLE ── */
+/* ── THEME TOGGLE — fixed top-right ── */
   .theme-toggle-row {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 100;
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    padding: 0.6rem 1.5rem 1rem;
-    flex-shrink: 0;
+    gap: 0.4rem;
   }
 
   .theme-btn {
-    background: none;
+    background: var(--surface);
     border: 1px solid var(--border);
     color: var(--surface-muted);
     font-family: var(--font);
-    font-size: 1.2rem;
-    padding: 0.3rem 0.9rem;
+    font-size: 1.1rem;
+    padding: 0.3rem 0.8rem;
     cursor: pointer;
     border-radius: var(--radius);
     transition: background 0.15s, color 0.15s, border-color 0.15s;
     letter-spacing: 0.04em;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
   }
 
   .theme-btn:hover {
@@ -979,14 +985,9 @@
 
     <div class="sidebar-branding">
       <h1>are.na palette</h1>
-      <span class="version" aria-label="Version 1.30">v1.30</span>
+      <span class="version" aria-label="Version 1.31">v1.31</span>
     </div>
     <p class="sidebar-tagline">Extract colour palettes from are.na image blocks. <a href="https://mildlydiverting.github.io/are.na-toolkit/">More tools</a> by <a href="https://www.are.na/kim-plowright/channels">Kim Plowright</a>. Found a bug? <a href="https://github.com/mildlydiverting/are.na-toolkit">GitHub</a>.</p>
-    <div class="theme-toggle-row" aria-label="Colour theme">
-      <button class="theme-btn" id="theme-dark"  onclick="setTheme('dark')"     title="Dark theme">Dark</button>
-      <button class="theme-btn active" id="theme-mid" onclick="setTheme('mid')" title="Midtone theme (default)">Mid</button>
-      <button class="theme-btn" id="theme-light" onclick="setTheme('light')"    title="Light theme">Light</button>
-    </div>
 
     <!-- Channels — collapsible, open by default, auto-closes on image load -->
     <section class="channels-section" aria-labelledby="channels-heading">
@@ -1068,6 +1069,13 @@
 
 </div>
 
+<!-- Theme toggle — fixed top-right -->
+<div class="theme-toggle-row" aria-label="Colour theme">
+  <button class="theme-btn" id="theme-dark"  onclick="setTheme('dark')"     title="Dark theme">Dark</button>
+  <button class="theme-btn active" id="theme-mid" onclick="setTheme('mid')" title="Midtone theme (default)">Mid</button>
+  <button class="theme-btn" id="theme-light" onclick="setTheme('light')"    title="Light theme">Light</button>
+</div>
+
 <!-- Hidden canvas for colour extraction — display:none is functional, not presentational -->
 <canvas id="scratchCanvas" style="display:none" aria-hidden="true"></canvas>
 
@@ -1100,7 +1108,7 @@ const NAME_LISTS = {
 // ── EXTRACTION SETTINGS ──────────────────────────────────────────────────────
 const SETTINGS_KEY = 'arena-palette-settings-v1';
 const DEFAULT_SETTINGS = {
-  colorCount:    7,
+  colorCount:    6,
   quality:      'med',
   colorSpace:   'oklch',
   ignoreWhite:   true,
@@ -2066,7 +2074,7 @@ function exportSlug() {
 }
 
 function colourTitle(index, hex) {
-  const name = currentColorNames[hex.toLowerCase()];
+  const name = currentColorNames[hex.slice(1).toLowerCase()];
   return name
     ? `Colour ${index + 1} — ${hex} — ${name}`
     : `Colour ${index + 1} — ${hex}`;
@@ -2105,7 +2113,7 @@ function exportHex(palette) {
   out.push('/* Palette */\n');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.toLowerCase()];
+    const name = currentColorNames[hex.slice(1).toLowerCase()];
     const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
     out.push(`/* ${swatchLabel(hex, name, pct || null)} */\n${hex}\n`);
   });
@@ -2123,7 +2131,7 @@ function exportHex(palette) {
   out.push('/* Tints and Shades */\n');
   palette.forEach((rgb) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.toLowerCase()];
+    const name = currentColorNames[hex.slice(1).toLowerCase()];
     const { tints, shades } = makeTintsShades(rgb);
     out.push(`/* ${swatchLabel(hex, name)} */`); // block header
     tints.forEach((c, ti) => {
@@ -2148,7 +2156,7 @@ function exportRgb(palette) {
   out.push('/* Palette */\n');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.toLowerCase()];
+    const name = currentColorNames[hex.slice(1).toLowerCase()];
     const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
     out.push(`/* ${swatchLabel(hex, name, pct || null)} */\nrgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})\n`);
   });
@@ -2167,7 +2175,7 @@ function exportRgb(palette) {
   out.push('/* Tints and Shades */\n');
   palette.forEach((rgb) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.toLowerCase()];
+    const name = currentColorNames[hex.slice(1).toLowerCase()];
     const { tints, shades } = makeTintsShades(rgb);
     out.push(`/* ${swatchLabel(hex, name)} */`);
     tints.forEach((c, ti) => {
@@ -2192,7 +2200,7 @@ function exportHsl(palette) {
   out.push('/* Palette */\n');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.toLowerCase()];
+    const name = currentColorNames[hex.slice(1).toLowerCase()];
     const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
     const [h,s,l] = rgbToHsl(rgb);
     out.push(`/* ${swatchLabel(hex, name, pct || null)} */\nhsl(${h}, ${s}%, ${l}%)\n`);
@@ -2213,7 +2221,7 @@ function exportHsl(palette) {
   out.push('/* Tints and Shades */\n');
   palette.forEach((rgb) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.toLowerCase()];
+    const name = currentColorNames[hex.slice(1).toLowerCase()];
     const { tints, shades } = makeTintsShades(rgb);
     out.push(`/* ${swatchLabel(hex, name)} */`);
     tints.forEach((c, ti) => {
@@ -2242,7 +2250,7 @@ function exportCss(palette) {
   varLines.push('  /* Palette */');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.toLowerCase()];
+    const name = currentColorNames[hex.slice(1).toLowerCase()];
     const slug = cssSlug(name, `color-${i + 1}`);
     const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
     const [h,s,l] = rgbToHsl(rgb);
@@ -2267,7 +2275,7 @@ function exportCss(palette) {
   varLines.push('  /* Tints & shades */');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.toLowerCase()];
+    const name = currentColorNames[hex.slice(1).toLowerCase()];
     const slug = cssSlug(name, `color-${i + 1}`);
     const { tints, shades } = makeTintsShades(rgb);
     tints.forEach((c, ti) => {
@@ -2293,7 +2301,7 @@ function exportCss(palette) {
 function exportScp(palette) {
   const paletteEntries = palette.map((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.toLowerCase()];
+    const name = currentColorNames[hex.slice(1).toLowerCase()];
     const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
     return { hex, ...(name ? { name } : {}), ...(pct ? { proportion: pct / 100 } : {}) };
   });
@@ -2305,7 +2313,7 @@ function exportScp(palette) {
 
   const tintsShades = palette.map((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.toLowerCase()];
+    const name = currentColorNames[hex.slice(1).toLowerCase()];
     const { tints, shades } = makeTintsShades(rgb);
     return {
       hex,
@@ -2390,7 +2398,7 @@ function exportAse(palette) {
   blockCount++;
   palette.forEach((rgb, i) => {
     const baseHex = rgbToHex(rgb);
-    const name    = currentColorNames[baseHex.toLowerCase()];
+    const name    = currentColorNames[baseHex.slice(1).toLowerCase()];
     const pct     = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
     blocks.push(...colourBlock(swatchLabel(baseHex, name, pct || null), rgb));
     blockCount++;
@@ -2414,7 +2422,7 @@ function exportAse(palette) {
   // 3. Tints & shades per colour
   palette.forEach((rgb, i) => {
     const baseHex = rgbToHex(rgb);
-    const name    = currentColorNames[baseHex.toLowerCase()];
+    const name    = currentColorNames[baseHex.slice(1).toLowerCase()];
     const pct     = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
 
     blocks.push(...groupStartBlock(swatchLabel(baseHex, name)));
@@ -2473,7 +2481,7 @@ function exportGpl(palette) {
   lines.push('# Base colours');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.toLowerCase()];
+    const name = currentColorNames[hex.slice(1).toLowerCase()];
     const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
     lines.push(`${rgb[0]}\t${rgb[1]}\t${rgb[2]}\t${swatchLabel(hex, name, pct || null)}`);
   });
@@ -2491,7 +2499,7 @@ function exportGpl(palette) {
   // 3. Tints & shades per colour
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.toLowerCase()];
+    const name = currentColorNames[hex.slice(1).toLowerCase()];
     const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
     lines.push(`# ${swatchLabel(hex, name, pct || null)}`);
     const { tints, shades } = makeTintsShades(rgb);
@@ -2540,7 +2548,7 @@ function exportProcreatePalette(palette) {
   // 1. Base colours
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.toLowerCase()];
+    const name = currentColorNames[hex.slice(1).toLowerCase()];
     const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
     swatches.push(makeEntry(rgb, swatchLabel(hex, name, pct || null)));
   });
@@ -2554,7 +2562,7 @@ function exportProcreatePalette(palette) {
   // 3. Tints & shades per colour
   palette.forEach((rgb) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.toLowerCase()];
+    const name = currentColorNames[hex.slice(1).toLowerCase()];
     const { tints, shades } = makeTintsShades(rgb);
 
     tints.forEach((c, ti) => {
