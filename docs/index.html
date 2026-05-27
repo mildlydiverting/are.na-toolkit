@@ -3,1718 +3,473 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ARENA HYPERNORMALISATION</title>
+<title>Are.na Tools and Toys</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  background: #000;
-  color: #fff;
-  font-family: Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-}
-
-/* ── SETUP ─────────────────────────────────── */
-
-#setup {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 36px 28px 48px;
-}
-
-#setup h1 {
-  font-size: clamp(20px, 3vw, 36px);
-  letter-spacing: 0.2em;
-  font-weight: bold;
-  text-align: center;
-  margin-bottom: 8px;
-}
-
-.subtitle {
-  font-size: 13px;
-  color: #aaa;
-  letter-spacing: 0.1em;
-  margin-bottom: 28px;
-  text-align: center;
-}
-
-.setup-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 28px;
-  width: 100%;
-  max-width: 800px;
-  margin-bottom: 24px;
-}
-
-@media (max-width: 600px) {
-  .setup-grid { grid-template-columns: 1fr; gap: 20px; }
-}
-
-.setup-full {
-  width: 100%;
-  max-width: 800px;
-  margin-bottom: 20px;
-}
-
-.panel-label {
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  color: #aaa;
-  text-transform: uppercase;
-  margin-bottom: 8px;
-  font-weight: bold;
-}
-
-.panel-hint {
-  font-size: 13px;
-  color: #999;
-  margin-bottom: 10px;
-  line-height: 1.5;
-}
-
-.input-row {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-
-.text-input {
-  flex: 1;
-  background: #111;
-  border: 1px solid #333;
-  color: #e8e8e8;
-  padding: 11px 13px;
-  font-size: 14px;
-  font-family: Arial, sans-serif;
-  outline: none;
-  transition: border-color 0.15s;
-  letter-spacing: 0.02em;
-}
-
-.text-input:focus { border-color: #666; }
-.text-input::placeholder { color: #666; }
-
-.btn-add {
-  background: #222;
-  border: 1px solid #444;
-  color: #bbb;
-  padding: 11px 16px;
-  font-size: 13px;
-  letter-spacing: 0.12em;
-  cursor: pointer;
-  font-family: Arial, sans-serif;
-  transition: background 0.15s, color 0.15s;
-  white-space: nowrap;
-}
-
-.btn-add:hover { background: #333; color: #fff; }
-
-.btn-sm {
-  background: none;
-  border: 1px solid #333;
-  color: #888;
-  padding: 7px 12px;
-  font-size: 12px;
-  letter-spacing: 0.1em;
-  cursor: pointer;
-  font-family: Arial, sans-serif;
-  transition: color 0.15s, border-color 0.15s;
-  white-space: nowrap;
-}
-
-.btn-sm:hover { color: #fff; border-color: #666; }
-
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  min-height: 28px;
-}
-
-.chip {
-  background: #1a1a1a;
-  border: 1px solid #3a3a3a;
-  padding: 6px 10px 6px 13px;
-  font-size: 13px;
-  color: #ccc;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  max-width: 220px;
-}
-
-.chip span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.chip-x {
-  background: none;
-  border: none;
-  color: #888;
-  cursor: pointer;
-  font-size: 16px;
-  padding: 0;
-  line-height: 1;
-  flex-shrink: 0;
-  transition: color 0.1s;
-}
-
-.chip-x:hover { color: #fff; }
-
-.file-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 10px;
-}
-
-.file-label-btn {
-  background: #222;
-  border: 1px solid #444;
-  color: #bbb;
-  padding: 9px 14px;
-  font-size: 13px;
-  letter-spacing: 0.1em;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.15s, color 0.15s;
-}
-
-.file-label-btn:hover { background: #333; color: #fff; }
-
-.file-name {
-  font-size: 13px;
-  color: #888;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-input[type=file] { display: none; }
-
-.cache-note {
-  font-size: 12px;
-  color: #666;
-  margin-top: 6px;
-  line-height: 1.4;
-}
-
-.cache-note a {
-  color: #888;
-  cursor: pointer;
-  text-decoration: underline;
-}
-
-.cache-note a:hover { color: #bbb; }
-
-.btn-go {
-  background: #fff;
-  color: #000;
-  border: none;
-  padding: 13px 48px;
-  font-size: 15px;
-  letter-spacing: 0.25em;
-  cursor: pointer;
-  font-family: Arial, sans-serif;
-  font-weight: bold;
-  text-transform: uppercase;
-  transition: background 0.15s;
-  margin-top: 8px;
-}
-
-.btn-go:hover { background: #ddd; }
-
-.btn-go:disabled {
-  background: #1e1e1e;
-  color: #777;
-  cursor: not-allowed;
-}
-
-#status {
-  margin-top: 16px;
-  font-size: 13px;
-  color: #aaa;
-  letter-spacing: 0.08em;
-  min-height: 20px;
-  text-align: center;
-}
-
-.error {
-  margin-top: 12px;
-  font-size: 14px;
-  color: #ff7777;
-  max-width: 640px;
-  text-align: center;
-  line-height: 1.5;
-}
-
-hr.divider {
-  border: none;
-  border-top: 1px solid #1e1e1e;
-  width: 100%;
-  max-width: 800px;
-  margin-bottom: 20px;
-}
-
-/* ── DISPLAY ─────────────────────────────────── */
-
-#display {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: #000;
-}
-
-#canvas-wrap {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-#mainCanvas {
-  display: block;
-  image-rendering: crisp-edges;
-}
-
-#fade-overlay {
-  position: absolute;
-  inset: 0;
-  background: #000;
-  opacity: 0;
-  pointer-events: none;
-  z-index: 10;
-}
-
-/* ── CONTROLS ─────────────────────────────────── */
-
-#controls {
-  position: absolute;
-  inset: 0;
-  z-index: 20;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.35s ease;
-}
-
-#controls.visible {
-  opacity: 1;
-  pointer-events: all;
-}
-
-.ctrl-bar-bottom {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  padding: 20px 24px 24px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  background: linear-gradient(transparent 0%, rgba(0,0,0,0.65) 100%);
-}
-
-.ctrl-btn {
-  background: rgba(0,0,0,0.55);
-  border: 1px solid rgba(255,255,255,0.22);
-  color: #e0e0e0;
-  padding: 9px 15px;
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  cursor: pointer;
-  font-family: Arial, sans-serif;
-  text-transform: uppercase;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  white-space: nowrap;
-}
-
-.ctrl-btn:hover {
-  background: rgba(255,255,255,0.15);
-  border-color: rgba(255,255,255,0.5);
-  color: #fff;
-}
-
-.ctrl-btn.active {
-  background: rgba(255,255,255,0.18);
-  border-color: rgba(255,255,255,0.6);
-  color: #fff;
-}
-
-.ctrl-divider {
-  width: 1px; height: 20px;
-  background: rgba(255,255,255,0.15);
-  margin: 0 2px;
-  flex-shrink: 0;
-}
-
-.speed-wrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 4px;
-}
-
-.speed-wrap label {
-  font-size: 10px;
-  color: rgba(255,255,255,0.4);
-  letter-spacing: 0.12em;
-  white-space: nowrap;
-}
-
-input[type=range] {
-  width: 70px;
-  accent-color: rgba(255,255,255,0.7);
-  cursor: pointer;
-}
-
-#speed-val {
-  font-size: 10px;
-  color: rgba(255,255,255,0.5);
-  min-width: 26px;
-}
-
-/* ── DEBUG PANEL ─────────────────────────────────── */
-
-#debug-panel {
-  position: absolute;
-  top: 0; right: 0; bottom: 0;
-  width: 300px;
-  background: rgba(0,0,0,0.92);
-  border-left: 1px solid #2a2a2a;
-  z-index: 25;
-  overflow-y: auto;
-  padding: 52px 16px 16px;
-  font-family: monospace;
-  font-size: 11px;
-  color: #999;
-  display: none;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-}
-
-#debug-panel h3 {
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  color: #fff;
-  margin-bottom: 14px;
-  text-transform: uppercase;
-}
-
-.db-section {
-  margin-bottom: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #1e1e1e;
-}
-
-.db-section:last-child { border-bottom: none; }
-
-.db-label {
-  font-size: 10px;
-  color: #555;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  margin-bottom: 6px;
-}
-
-.db-val {
-  color: #ccc;
-  margin-bottom: 4px;
-}
-
-.db-big {
-  font-size: 20px;
-  color: #fff;
-  font-weight: bold;
-  letter-spacing: 0.04em;
-}
-
-.db-sub {
-  color: #777;
-  padding-left: 10px;
-  margin-bottom: 2px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.db-sub em { color: #aaa; font-style: normal; }
-.db-fresh  { color: #6ec97a; }
-.db-stale  { color: #c96e6e; }
-
-.db-btn {
-  background: none;
-  border: 1px solid #333;
-  color: #888;
-  padding: 5px 10px;
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  cursor: pointer;
-  font-family: monospace;
-  white-space: nowrap;
-  text-transform: uppercase;
-  transition: color 0.1s, border-color 0.1s;
-  margin-top: 2px;
-}
-.db-btn:hover { color: #fff; border-color: #666; }
-.db-btn.danger:hover { color: #ff8888; border-color: #ff8888; }
-
-.db-btn-row {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-top: 8px;
-}
-
-.db-refreshing {
-  color: #ffcc66;
-  font-style: italic;
-}
+  /* ── Colour tokens ─────────────────────────────────────────────── */
+  :root {
+    --bg-page:        #f5f4f0;
+    --bg-card:        #ffffff;
+    --bg-media:       #ede9e4;
+    --text-primary:   #1a1a18;
+    --text-secondary: #888580;
+    --text-muted:     #aaa49e;
+    --text-heading:   #888580;
+    --border-card:    #e5e3de;
+    --border-btn:     #ccc8c2;
+    --toggle-bg:      #ccc8c2;
+    --toggle-thumb:   #f5f4f0;
+    --link-color:     #1a1a18;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg-page:        #1e1d1b;
+      --bg-card:        #2a2825;
+      --bg-media:       #322f2c;
+      --text-primary:   #e8e4de;
+      --text-secondary: #9e9890;
+      --text-muted:     #6e6860;
+      --text-heading:   #6e6860;
+      --border-card:    #3a3733;
+      --border-btn:     #4a4640;
+      --toggle-bg:      #6e6860;
+      --toggle-thumb:   #1e1d1b;
+      --link-color:     #e8e4de;
+    }
+  }
+
+  body.theme-dark {
+    --bg-page:        #1e1d1b;
+    --bg-card:        #2a2825;
+    --bg-media:       #322f2c;
+    --text-primary:   #e8e4de;
+    --text-secondary: #9e9890;
+    --text-muted:     #6e6860;
+    --text-heading:   #6e6860;
+    --border-card:    #3a3733;
+    --border-btn:     #4a4640;
+    --toggle-bg:      #6e6860;
+    --toggle-thumb:   #1e1d1b;
+    --link-color:     #e8e4de;
+  }
+
+  body.theme-light {
+    --bg-page:        #f5f4f0;
+    --bg-card:        #ffffff;
+    --bg-media:       #ede9e4;
+    --text-primary:   #1a1a18;
+    --text-secondary: #888580;
+    --text-muted:     #aaa49e;
+    --text-heading:   #888580;
+    --border-card:    #e5e3de;
+    --border-btn:     #ccc8c2;
+    --toggle-bg:      #ccc8c2;
+    --toggle-thumb:   #f5f4f0;
+    --link-color:     #1a1a18;
+  }
+
+  /* ── Base ──────────────────────────────────────────────────────── */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: Arial, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica,  sans-serif;
+    background: var(--bg-page);
+    color: var(--text-primary);
+    padding: 2rem;
+    min-height: 100vh;
+    font-size: 16px;
+    transition: background 0.25s, color 0.25s;
+  }
+
+  /* ── Wrapper ───────────────────────────────────────────────────── */
+  .wrap {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  /* ── Header ────────────────────────────────────────────────────── */
+  header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    gap: 1rem;
+  }
+
+  .header-text h1 {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+    margin-bottom: 0.4rem;
+    transition: color 0.25s;
+  }
+
+  .header-text p {
+    color: var(--text-secondary);
+    line-height: 1.5;
+    transition: color 0.25s;
+  }
+
+  .header-text a {
+    color: var(--link-color);
+    transition: color 0.25s;
+  }
+
+  /* ── Theme toggle ──────────────────────────────────────────────── */
+  .theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    user-select: none;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+
+  .toggle-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    transition: color 0.25s;
+    min-width: 28px;
+    text-align: right;
+  }
+
+  .toggle-track {
+    position: relative;
+    width: 34px;
+    height: 19px;
+    background: var(--toggle-bg);
+    border-radius: 10px;
+    flex-shrink: 0;
+    transition: background 0.25s;
+  }
+
+  .toggle-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 13px;
+    height: 13px;
+    background: var(--toggle-thumb);
+    border-radius: 50%;
+    transition: transform 0.2s, background 0.25s;
+  }
+
+  body.theme-dark .toggle-thumb { transform: translateX(15px); }
+
+  /* ── Grid ──────────────────────────────────────────────────────── */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+
+  @media (max-width: 560px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  /* ── Card ──────────────────────────────────────────────────────── */
+  .card {
+    /* background: var(--bg-card); */
+    display: flex;
+    flex-direction: column;
+    transition: background 0.25s;
+  }
+
+  .card-media {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: var(--bg-media);
+    overflow: hidden;
+    transition: background 0.25s;
+  }
+
+  .card-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .card-body {
+    padding: 16px 0;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 10px;
+  }
+
+  .card-body h2 {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  .card-body h2 a {
+    color: var(--link-color);
+    text-decoration: none;
+    transition: color 0.25s;
+  }
+
+  .card-body h2 a:hover { text-decoration: underline; }
+
+  .card-body p {
+    font-size: 15px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    flex: 1;
+    transition: color 0.25s;
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 12px;
+    margin-top: 4px;
+  }
+
+  .repo-link {
+    
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .repo-link:hover { color: var(--text-secondary); }
+
+  .btn-try {
+    font-size: 13px;
+    font-weight: 500;
+    padding: 7px 16px;
+    border: 1px solid var(--border-btn);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s, border-color 0.25s, color 0.25s;
+    white-space: nowrap;
+  }
+
+  .btn-try:hover { border-color: var(--text-secondary); }
+
+  /* ── Channels note ─────────────────────────────────────────────── */
+  .channels {
+    margin-top: -16px;
+  }
+
+  .channels h3 {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-heading);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    transition: color 0.25s;
+  }
+
+  .channels p {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    margin-top: 1.2rem;
+    transition: color 0.25s;
+  }
+
+  .channels p:first-of-type { margin-top: 0; }
+
+  .channels ul {
+    
+    list-style-type: "⁃ ";
+    padding-left: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .channels li {
+    font-size: 14px;
+    margin-bottom: 0.3rem;
+    margin-top: 0.3rem;
+    line-height: 1.2;
+    color: var(--text-secondary);
+    transition: color 0.25s;
+  }
+
+  .channels a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .channels a:hover {
+    color: var(--text-primary);
+    text-decoration: underline;
+  }
+
+
+  /* ── Footer ────────────────────────────────────────────────────── */
+  footer {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding-top: 2rem;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    gap: 1rem;
+  }
+
+  .footer-text h2 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+    margin-top: 2rem;
+    margin-bottom: 0.4rem;
+    transition: color 0.25s;
+  }
+
+  .footer-text p {
+    color: var(--text-secondary);
+    line-height: 1.5;
+    transition: color 0.25s;
+  }
+
+  .footer-text a {
+    color: var(--link-color);
+    transition: color 0.25s;
+  }
 </style>
 </head>
 <body>
 
-<!-- ═══════ SETUP ═══════ -->
-<div id="setup">
-  <h1>ARENA HYPERNORMALISATION</h1>
-  <p class="subtitle">image + text from are.na channels</p>
+<div class="wrap">
 
-  <!-- Channels -->
-  <div class="setup-grid">
-    <div>
-      <div class="panel-label">Image Channels</div>
-      <p class="panel-hint">Paste an are.na URL or channel slug. Images are used as backgrounds.</p>
-      <div class="input-row">
-        <input class="text-input" id="img-input" type="text" placeholder="URL or slug" />
-        <button class="btn-add" onclick="addChannel('image')">Add</button>
+  <header>
+    <div class="header-text">
+      <h1>Are.na Tools and Toys</h1>
+      <p>Playing with the <a href="https://www.are.na/developers/explore">are.na API</a> to make small fun things. A work in progress.</p>
+    </div>
+    <div class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark">
+      <span class="toggle-label" id="toggle-label">dark</span>
+      <div class="toggle-track"><div class="toggle-thumb"></div></div>
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <!-- Card 1 -->
+    <div class="card">
+      <div class="card-media">
+        <a href="arena-hypernormalisation.html"><img src="arena-hypernormalisation3.jpg" alt="Screenshot from are.na hypernormalisation"></a>
       </div>
-      <div class="chips" id="img-chips"></div>
-    </div>
-
-    <div>
-      <div class="panel-label">Text Channels</div>
-      <p class="panel-hint">Paste an are.na URL or channel slug. Text blocks become captions.</p>
-      <div class="input-row">
-        <input class="text-input" id="txt-input" type="text" placeholder="URL or slug" />
-        <button class="btn-add" onclick="addChannel('text')">Add</button>
+      <div class="card-body">
+        <h2><a href="arena-hypernormalisation.html">Are.na Hypernormalisation</a></h2>
+        <p>Pull images and text from are.na and combine them into a strangely familiar full-screen scathing documentary critique of late capitalism. Good for ambient displays, or just staring into the void.</p>
+        <div class="card-footer">
+          <a class="repo-link" href="">↗ repo</a>
+          <a class="btn-try" href="hypernormalisation/index.html">Try it</a>
+        </div>
       </div>
-      <div class="chips" id="txt-chips"></div>
+    </div>
+
+    <!-- Card 2 -->
+    <div class="card">
+      <div class="card-media">
+        <a href="arena-palette.html"><img src="arena-palette.jpg" alt="are.na palette screenshot"></a>
+      </div>
+      <div class="card-body">
+        <h2><a href="arena-palette.html">Are.na Palette</a></h2>
+        <p>Generate colour palettes from images pulled from your favourite are.na channels. Export as hex, .ase, css, gimp or procreate palettes, or fancy pngs.</p>
+        <div class="card-footer">
+          <a class="repo-link" href="#">↗ repo</a>
+          <a class="btn-try" href="arena-palette.html">Try it</a>
+        </div>
+      </div>
+    </div>
+
+
+
+    <!-- Card 3 -->
+    <div class="card">
+      <div class="card-media">
+        <a href="https://github.com/mildlydiverting/are.na-picks"><img src="arena-picks.jpg" alt="Are.na picks screenshot"></a>
+      </div>
+      <div class="card-body">
+        <h2><a href="https://github.com/mildlydiverting/are.na-picks">Are.na Picks</a></h2>
+        <p>A homepage that shows random blocks from one or more are.na channels. Lock the ones you want to keep, then shuffle again, or export a zip file of the best combos. Good for inspiration and serendipitous juxtaposition.</p>
+        <div class="card-footer">
+          <a class="repo-link" href="https://github.com/mildlydiverting/are.na-picks">↗ repo</a>
+          <a class="btn-try" href="https://github.com/mildlydiverting/are.na-picks">Clone it</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 4 -->
+    <div class="card-body">
+      <div class="channels">
+        <h2>Good channels to play with</h2>
+        <h3>Images</h3>
+        <ul>
+          <li><a href="https://www.are.na/kim-plowright/awesome-qmq5luzkknk">https://www.are.na/kim-plowright/awesome-qmq5luzkknk</a></li>
+          <li><a href="https://www.are.na/kim-plowright/public-domain-hciljwrdeai">https://www.are.na/kim-plowright/public-domain-hciljwrdeai</a></li>
+          <li><a href="https://www.are.na/luke-harris/film-stills--3">https://www.are.na/luke-harris/film-stills--3</a></li>
+          <li><a href="https://www.are.na/charlie-humble-thomas/f-h-lloyd-steel-casting">https://www.are.na/charlie-humble-thomas/f-h-lloyd-steel-casting</a></li>
+          <li><a href="https://www.are.na/justin-sloane/calm-utopia">https://www.are.na/justin-sloane/calm-utopia</a></li>
+          <li><a href="https://www.are.na/scott-kayhan/koyaanisqatsi-xzjzt3tcae">https://www.are.na/scott-kayhan/koyaanisqatsi-xzjzt3tcae</a></li>
+        </ul>
+        <h3>Text</h3>
+        <ul>
+          <li><a href="https://www.are.na/kim-plowright/extremelyinternet">https://www.are.na/kim-plowright/extremelyinternet</a></li>
+          <li><a href="https://www.are.na/meg-miller/good-sign-offs">https://www.are.na/meg-miller/good-sign-offs</a></li>
+          <li><a href="https://www.are.na/drew-shannon-aysltwp9uqo/reading-highlights-quotes">https://www.are.na/drew-shannon-aysltwp9uqo/reading-highlights-quotes</a></li>
+          <li><a href="https://www.are.na/john-michael-boling/killer-quotes">https://www.are.na/john-michael-boling/killer-quotes</a></li>
+          <li><a href="https://www.are.na/are-na-team/portal-quotes">https://www.are.na/are-na-team/portal-quotes</a></li>
+          <li><a href="https://www.are.na/luca-raimondi/quotes-redefining-the-now">https://www.are.na/luca-raimondi/quotes-redefining-the-now</a></li>
+        </ul>
     </div>
   </div>
 
-  <hr class="divider" />
-
-  <!-- Search -->
-  <div class="setup-full">
-    <div class="panel-label">Or search are.na</div>
-    <p class="panel-hint">
-      Search public are.na blocks by keyword — fetches matching images and texts.
-      Leave blank to pull recent public blocks. Results are pooled with your channels above.
-    </p>
-    <div class="input-row">
-      <input class="text-input" id="search-input" type="text" placeholder="e.g. landscape, machines, dreams — or leave blank for recent public blocks" />
-      <button class="btn-add" onclick="addSearch()">Add</button>
-    </div>
-    <div class="chips" id="search-chips"></div>
-  </div>
-
-  <hr class="divider" />
-
-  <!-- Audio -->
-  <div class="setup-full">
-    <div class="panel-label">Music (optional)</div>
-    <p class="panel-hint">
-      Add a link to a SoundCloud playlist, a direct link to an MP3/OGG, or use a local MP3 file.
-    </p>
-    <div class="input-row">
-      <input class="text-input" id="audio-url-input" type="text"
-             placeholder="SoundCloud playlist URL or direct MP3/OGG link" />
-      <button class="btn-add" onclick="setAudioUrl()">Add</button>
-    </div>
-    <div class="file-row">
-      <label class="file-label-btn" for="audio-file-input">Local file…</label>
-      <input type="file" id="audio-file-input" accept="audio/*" onchange="setAudioFile(event)" />
-      <span class="file-name" id="audio-file-name">No file chosen</span>
-    </div>
-    <div id="audio-status" class="cache-note" style="margin-top:6px"></div>
-  </div>
-
-  <hr class="divider" />
-
-  <!-- API key -->
-  <div class="setup-full">
-    <div class="panel-label">Are.na Access Token <span style="font-weight:normal;text-transform:none;letter-spacing:0;font-size:12px">(optional — needed for private channels)</span></div>
-    <p class="panel-hint">Get yours at are.na → Settings → Developers</p>
-    <input class="text-input" style="width:100%" id="api-key" type="password" placeholder="Paste access token here" />
-    <p class="cache-note" style="margin-top:10px">
-      Channel content is cached locally for 24 hours so you won't hammer the API.
-      <a onclick="clearAllCache()">Clear cache</a> to force a fresh fetch.
-    </p>
-  </div>
-
-  <button class="btn-go" id="btn-go" onclick="go()" disabled>Go</button>
-  <div id="status"></div>
-  <div id="error-area"></div>
 </div>
 
-<!-- ═══════ DISPLAY ═══════ -->
-<div id="display">
-  <div id="canvas-wrap">
-    <canvas id="mainCanvas"></canvas>
-  </div>
-
-  <div id="fade-overlay"></div>
-
-  <!-- Debug / Pool Inspector -->
-  <div id="debug-panel">
-    <h3>Pool Inspector</h3>
-    <div id="debug-content"></div>
-  </div>
-
-  <div id="controls">
-    <div class="ctrl-bar-bottom">
-      <button class="ctrl-btn" id="btn-debug" onclick="toggleDebug()">◈ Stats</button>
-      <button class="ctrl-btn" onclick="backToSetup()">⚙ Setup</button>
-      <div style="flex:1"></div>
-      <button class="ctrl-btn" onclick="prevSlide()">◀ Prev</button>
-      <button class="ctrl-btn" id="btn-play" onclick="togglePlay()">▶ Play</button>
-      <button class="ctrl-btn" onclick="nextSlide()">Next ▶</button>
-      <div class="ctrl-divider"></div>
-      <div class="speed-wrap">
-        <label>Speed</label>
-        <input type="range" id="speed-slider" min="3" max="30" value="10"
-               oninput="setSpeed(this.value)" />
-        <span id="speed-val">10s</span>
-      </div>
-      <div class="ctrl-divider"></div>
-      <button class="ctrl-btn" id="btn-audio" onclick="toggleAudio()" style="display:none">♪ Music</button>
-      <button class="ctrl-btn" onclick="downloadPNG()">↓ Save PNG</button>
-    </div>
+<div class="footer">
+  <div class="footer-text">
+    <h2>About</h2>
+    <p>These toys were (slightly sheepishly) vibe coded by <a href="https://www.mildlydiverting.com/about">Kim Plowright</a>. Found a bug? Let me know in <a href="https://github.com/mildlydiverting/are.na-toolkit/issues">GitHub issues</a>. Be kind - I never learned to code in a way that means I could hand-build things like this, so AI agents are tiny miracles for me.</p> 
+    <p>Want to know more? Find me on <a href="https://www.are.na/kim-plowright">Are.na</a>, <a href="https://www.instagram.com/mildlydiverting/">Instagram</a>, <a href="https://bsky.app/profile/mildlydiverting.bsky.social">Bluesky</a>, get my <a href="https://www.mildlydiverting.com/newsletter">Newsletter</a> or <a href="https://www.mildlydiverting.com/classes-workshops-teaching">come to my drawing classes in Canterbury or Ramsgate, UK.</a></p>
   </div>
 </div>
 
-<!-- Hidden audio element -->
-<audio id="bgAudio" loop></audio>
+
 
 <script>
-'use strict';
-
-// ════════════════════════════════════════════════
-// CONSTANTS
-// ════════════════════════════════════════════════
-
-const TEXT_COLORS        = ['#FFFFFF', '#4499FF', '#FF00CC', '#FF2222'];
-const CACHE_TTL          = 24 * 60 * 60 * 1000;
-const CACHE_PFX          = 'ahyp2_';
-const PREFS_KEY          = 'ahyp2_prefs';
-const MAX_WORDS          = 30;
-const AUTO_TOPUP_SLIDES  = 25;   // silently top up pool every N slides
-
-const DEFAULT_SC_PLAYLIST = 'https://soundcloud.com/mildlydiverting/sets/are-na-hypernormalisation';
-
-let slidesSinceTopUp = 0;
-
-// ════════════════════════════════════════════════
-// SHUFFLE BAG — deals every item once before repeating
-// ════════════════════════════════════════════════
-
-class ShuffleBag {
-  constructor(items) {
-    this._src = [...items];
-    this._bag = [];
+  // Detect system preference on load
+  function systemDark() {
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   }
-  next() {
-    if (this._bag.length === 0) this._bag = shuffle(this._src);
-    return this._bag.pop();
+
+  function applyTheme(dark) {
+    document.body.classList.toggle('theme-dark', dark);
+    document.body.classList.toggle('theme-light', !dark);
+    document.getElementById('toggle-label').textContent = dark ? 'dark' : 'light';
   }
-}
 
-function shuffle(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
+  function toggleTheme() {
+    const isDark = document.body.classList.contains('theme-dark');
+    const next = !isDark;
+    localStorage.setItem('arena-theme', next ? 'dark' : 'light');
+    applyTheme(next);
   }
-  return a;
-}
 
-// ════════════════════════════════════════════════
-// STATE
-// ════════════════════════════════════════════════
-
-const S = {
-  imageChannelSlugs: [],
-  textChannelSlugs:  [],
-  searchQueries:     [],
-  audioUrl:          '',   // SC playlist URL or direct MP3; '' = use default SC playlist
-  apiKey:            '',
-  allImages:         [],
-  allTexts:          [],
-  imageSources:      {},   // label → count (for debug panel)
-  textSources:       {},   // label → count (for debug panel)
-  imageBag:          null,
-  textBag:           null,
-  history:           [],
-  historyPos:        -1,
-  loadedImg:         null,
-  currentText:       '',
-  currentColor:      '#FFFFFF',
-  isPlaying:         false,
-  playTimer:         null,
-  playDelay:         10000,
-  controlsTimer:     null,
-  transitioning:     false,
-};
-
-// ════════════════════════════════════════════════
-// LOCAL STORAGE — preferences
-// ════════════════════════════════════════════════
-
-function savePrefs() {
-  try {
-    localStorage.setItem(PREFS_KEY, JSON.stringify({
-      imageChannelSlugs: S.imageChannelSlugs,
-      textChannelSlugs:  S.textChannelSlugs,
-      searchQueries:     S.searchQueries,
-      audioUrl:          S.audioUrl,
-    }));
-  } catch (_) {}
-}
-
-function loadPrefs() {
-  try {
-    const raw = localStorage.getItem(PREFS_KEY);
-    if (!raw) return;
-    const p = JSON.parse(raw);
-    S.imageChannelSlugs = p.imageChannelSlugs || [];
-    S.textChannelSlugs  = p.textChannelSlugs  || [];
-    S.searchQueries     = p.searchQueries     || [];
-    S.audioUrl          = p.audioUrl          || '';
-    renderChips('image');
-    renderChips('text');
-    renderSearchChips();
-    // Restore audio URL display
-    if (S.audioUrl) {
-      const el = document.getElementById('audio-status');
-      if (el) el.textContent = '✓ ' + (S.audioUrl.includes('soundcloud.com')
-        ? S.audioUrl.split('/').slice(-1)[0]
-        : S.audioUrl.split('/').slice(-1)[0]);
-    }
-    updateGoBtn();
-  } catch (_) {}
-}
-
-// ════════════════════════════════════════════════
-// LOCAL STORAGE — block cache
-// ════════════════════════════════════════════════
-
-function cacheSet(key, value) {
-  try {
-    localStorage.setItem(CACHE_PFX + key, JSON.stringify({ v: value, t: Date.now() }));
-  } catch (_) {}
-}
-
-function cacheGet(key) {
-  try {
-    const raw = localStorage.getItem(CACHE_PFX + key);
-    if (!raw) return null;
-    const { v, t } = JSON.parse(raw);
-    if (Date.now() - t > CACHE_TTL) {
-      localStorage.removeItem(CACHE_PFX + key);
-      return null;
-    }
-    return v;
-  } catch (_) { return null; }
-}
-
-function clearAllCache() {
-  const keys = Object.keys(localStorage).filter(k => k.startsWith(CACHE_PFX));
-  keys.forEach(k => localStorage.removeItem(k));
-  document.getElementById('status').textContent = 'Cache cleared — will fetch fresh on next Go.';
-}
-
-// ════════════════════════════════════════════════
-// SETUP UI
-// ════════════════════════════════════════════════
-
-function slugFrom(raw) {
-  raw = raw.trim().replace(/\/$/, '');
-  try {
-    const u = new URL(raw.startsWith('http') ? raw : 'https://' + raw);
-    if (u.hostname.includes('are.na')) {
-      const parts = u.pathname.split('/').filter(Boolean);
-      if (parts.length >= 2) return parts[parts.length - 1];
-    }
-  } catch (_) {}
-  const parts = raw.split('/').filter(Boolean);
-  return parts[parts.length - 1] || '';
-}
-
-function addChannel(type) {
-  const id   = type === 'image' ? 'img-input' : 'txt-input';
-  const arr  = type === 'image' ? S.imageChannelSlugs : S.textChannelSlugs;
-  const input = document.getElementById(id);
-  const slug  = slugFrom(input.value);
-  if (!slug) return;
-  if (!arr.includes(slug)) arr.push(slug);
-  input.value = '';
-  renderChips(type);
-  updateGoBtn();
-  savePrefs();
-}
-
-function removeChannel(type, slug) {
-  const arr = type === 'image' ? S.imageChannelSlugs : S.textChannelSlugs;
-  const i   = arr.indexOf(slug);
-  if (i >= 0) arr.splice(i, 1);
-  renderChips(type);
-  updateGoBtn();
-  savePrefs();
-}
-
-function renderChips(type) {
-  const arr = type === 'image' ? S.imageChannelSlugs : S.textChannelSlugs;
-  const el  = document.getElementById(type === 'image' ? 'img-chips' : 'txt-chips');
-  el.innerHTML = arr.map(slug =>
-    `<div class="chip"><span title="${slug}">${slug}</span>` +
-    `<button class="chip-x" onclick="removeChannel('${type}','${slug}')">×</button></div>`
-  ).join('');
-}
-
-function addSearch() {
-  const input = document.getElementById('search-input');
-  const query = input.value.trim();
-  // Allow empty string (represents "recent public blocks")
-  const label = query || '(recent public)';
-  const key   = query;
-  if (!S.searchQueries.some(q => q === key)) S.searchQueries.push(key);
-  input.value = '';
-  renderSearchChips();
-  updateGoBtn();
-  savePrefs();
-}
-
-function removeSearch(key) {
-  S.searchQueries = S.searchQueries.filter(q => q !== key);
-  renderSearchChips();
-  updateGoBtn();
-  savePrefs();
-}
-
-function renderSearchChips() {
-  const el = document.getElementById('search-chips');
-  el.innerHTML = S.searchQueries.map(q => {
-    const label = q || '(recent public)';
-    const safe  = q.replace(/'/g, "\\'");
-    return `<div class="chip"><span title="${label}">${label}</span>` +
-           `<button class="chip-x" onclick="removeSearch('${safe}')">×</button></div>`;
-  }).join('');
-}
-
-
-function updateGoBtn() {
-  const hasContent =
-    S.imageChannelSlugs.length > 0 ||
-    S.textChannelSlugs.length > 0  ||
-    S.searchQueries.length > 0;
-  document.getElementById('btn-go').disabled = !hasContent;
-}
-
-// Enter keys
-['img-input','txt-input','search-input'].forEach(id => {
-  document.getElementById(id).addEventListener('keydown', e => {
-    if (e.key !== 'Enter') return;
-    if (id === 'img-input')    addChannel('image');
-    if (id === 'txt-input')    addChannel('text');
-    if (id === 'search-input') addSearch();
-  });
-});
-
-// ════════════════════════════════════════════════
-// ARE.NA API
-// ════════════════════════════════════════════════
-
-function arenaHeaders() {
-  return S.apiKey ? { Authorization: `Bearer ${S.apiKey}` } : {};
-}
-
-async function fetchChannelContents(slug) {
-  const cacheKey = 'chan_' + slug;
-  const cached   = cacheGet(cacheKey);
-  if (cached) return { data: cached, fromCache: true };
-
-  let page = 1, all = [], total = null;
-  while (true) {
-    const url = `https://api.are.na/v2/channels/${encodeURIComponent(slug)}/contents?per=100&page=${page}`;
-    const res  = await fetch(url, { headers: arenaHeaders() });
-    if (!res.ok) {
-      const txt = await res.text().catch(() => res.statusText);
-      throw new Error(`Channel "${slug}" – ${res.status}: ${txt.slice(0,120)}`);
-    }
-    const data  = await res.json();
-    const items = data.contents || [];
-    all = all.concat(items);
-    if (total === null) total = data.length || 0;
-    if (items.length < 100 || all.length >= total) break;
-    page++;
-  }
-  cacheSet(cacheKey, all);
-  return { data: all, fromCache: false };
-}
-
-async function fetchSearch(query) {
-  const cacheKey = 'srch_' + (query || '__recent__');
-  const cached   = cacheGet(cacheKey);
-  if (cached) return { data: cached, fromCache: true };
-
-  // Fetch pages of search results
-  let page = 1, all = [], total = null;
-  while (true) {
-    const q   = query ? encodeURIComponent(query) : '';
-    const url = `https://api.are.na/v2/search?q=${q}&per=100&page=${page}`;
-    const res  = await fetch(url, { headers: arenaHeaders() });
-    if (!res.ok) {
-      const txt = await res.text().catch(() => res.statusText);
-      throw new Error(`Search "${query || 'recent'}" – ${res.status}: ${txt.slice(0,120)}`);
-    }
-    const data   = await res.json();
-    const blocks = data.blocks || [];
-    all = all.concat(blocks);
-    if (total === null) total = (data.blocks_count || data.total || blocks.length);
-    if (blocks.length < 100 || all.length >= Math.min(total, 500)) break;
-    page++;
-  }
-  cacheSet(cacheKey, all);
-  return { data: all, fromCache: false };
-}
-
-function stripHtml(html) {
-  return html
-    .replace(/<br\s*\/?>/gi, ' ')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-    .replace(/&nbsp;/g, ' ').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
-    .replace(/\s+/g, ' ').trim();
-}
-
-function wordCount(str) {
-  return str.split(/\s+/).filter(w => w).length;
-}
-
-function extractImages(blocks) {
-  return blocks
-    .filter(b => b.class === 'Image' || (b.class === 'Link' && b.image))
-    .map(b => ({ url: b.image?.display?.url || b.image?.large?.url || b.image?.original?.url }))
-    .filter(b => b.url);
-}
-
-function extractTexts(blocks) {
-  return blocks
-    .filter(b => b.class === 'Text' && b.content)
-    .map(b => ({ content: stripHtml(b.content) }))
-    .filter(b => b.content.length > 3 && wordCount(b.content) <= MAX_WORDS);
-}
-
-// ════════════════════════════════════════════════
-// GO / LOAD
-// ════════════════════════════════════════════════
-
-async function go() {
-  S.apiKey = document.getElementById('api-key').value.trim();
-  const statusEl = document.getElementById('status');
-  const errorEl  = document.getElementById('error-area');
-  const btn      = document.getElementById('btn-go');
-
-  btn.disabled   = true;
-  errorEl.innerHTML = '';
-  S.allImages    = [];
-  S.allTexts     = [];
-  S.imageSources = {};
-  S.textSources  = {};
-  let cacheHits  = 0, fetched = 0;
-
-  try {
-    // Image channels
-    for (const slug of S.imageChannelSlugs) {
-      statusEl.textContent = `Fetching ${slug}…`;
-      const { data, fromCache } = await fetchChannelContents(slug);
-      const imgs = extractImages(data);
-      S.allImages = S.allImages.concat(imgs);
-      S.imageSources[slug] = (S.imageSources[slug] || 0) + imgs.length;
-      fromCache ? cacheHits++ : fetched++;
-    }
-
-    // Text channels
-    for (const slug of S.textChannelSlugs) {
-      statusEl.textContent = `Fetching ${slug}…`;
-      const { data, fromCache } = await fetchChannelContents(slug);
-      const txts = extractTexts(data);
-      S.allTexts = S.allTexts.concat(txts);
-      S.textSources[slug] = (S.textSources[slug] || 0) + txts.length;
-      fromCache ? cacheHits++ : fetched++;
-    }
-
-    // Search queries (mixed: add images and texts from each)
-    for (const query of S.searchQueries) {
-      statusEl.textContent = `Searching "${query || 'recent public blocks'}"…`;
-      const { data, fromCache } = await fetchSearch(query);
-      const imgs = extractImages(data);
-      const txts = extractTexts(data);
-      S.allImages = S.allImages.concat(imgs);
-      S.allTexts  = S.allTexts.concat(txts);
-      const qlabel = query || '(recent public)';
-      S.imageSources[qlabel] = (S.imageSources[qlabel] || 0) + imgs.length;
-      S.textSources[qlabel]  = (S.textSources[qlabel]  || 0) + txts.length;
-      fromCache ? cacheHits++ : fetched++;
-    }
-
-    // Deduplicate
-    S.allImages = dedup(S.allImages, 'url');
-    S.allTexts  = dedup(S.allTexts, 'content');
-
-    if (S.allImages.length === 0)
-      throw new Error('No images found. Check your channels contain image blocks, or try a search query.');
-    if (S.allTexts.length === 0)
-      throw new Error(`No short texts found (≤${MAX_WORDS} words). Check your text channels have short blocks.`);
-
-    const cacheNote = cacheHits > 0 ? ` (${cacheHits} from cache)` : '';
-    statusEl.textContent =
-      `${S.allImages.length} images · ${S.allTexts.length} texts${cacheNote}`;
-
-    S.imageBag   = new ShuffleBag(S.allImages);
-    S.textBag    = new ShuffleBag(S.allTexts);
-    S.history    = [];
-    S.historyPos = -1;
-
-    savePrefs();
-
-    document.getElementById('setup').style.display   = 'none';
-    document.getElementById('display').style.display = 'block';
-    initCanvas();
-    tryStartAudio();
-    await advance(true);
-
-  } catch (err) {
-    statusEl.textContent = '';
-    errorEl.innerHTML    = `<p class="error">${err.message}</p>`;
-    btn.disabled         = false;
-    // Scroll error into view in case the page is long
-    errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
-}
-
-function dedup(arr, key) {
-  const seen = new Set();
-  return arr.filter(item => {
-    if (seen.has(item[key])) return false;
-    seen.add(item[key]);
-    return true;
-  });
-}
-
-function backToSetup() {
-  stopPlay();
-  pauseAudio();
-  document.getElementById('display').style.display = 'none';
-  document.getElementById('setup').style.display   = 'flex';
-  document.getElementById('btn-go').disabled        = false;
-}
-
-// ════════════════════════════════════════════════
-// CANVAS + RESIZE
-// ════════════════════════════════════════════════
-
-const canvas = document.getElementById('mainCanvas');
-const ctx    = canvas.getContext('2d', { willReadFrequently: true });
-
-function initCanvas() {
-  resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
-}
-
-function resizeCanvas() {
-  const wrap = document.getElementById('canvas-wrap');
-  let cw = wrap.clientWidth;
-  let ch = Math.round(cw * 9 / 16);
-  if (ch > wrap.clientHeight) {
-    ch = wrap.clientHeight;
-    cw = Math.round(ch * 16 / 9);
-  }
-  canvas.width  = cw;
-  canvas.height = ch;
-  canvas.style.width  = cw + 'px';
-  canvas.style.height = ch + 'px';
-  if (S.loadedImg && S.currentText) {
-    renderFrame(S.loadedImg, S.currentText, S.currentColor, canvas, ctx);
-  }
-}
-
-// ════════════════════════════════════════════════
-// RENDERING
-// ════════════════════════════════════════════════
-
-function wordWrap(ctx2d, text, maxWidth) {
-  const words = text.split(' ');
-  const lines = [];
-  let line    = '';
-  for (const word of words) {
-    const test = line ? line + ' ' + word : word;
-    if (ctx2d.measureText(test).width > maxWidth && line) {
-      lines.push(line);
-      line = word;
-    } else {
-      line = test;
-    }
-  }
-  if (line) lines.push(line);
-  return lines;
-}
-
-
-function renderFrame(img, text, color, targetCanvas, targetCtx) {
-  const c  = targetCanvas || canvas;
-  const cx = targetCtx    || ctx;
-  const cw = c.width;
-  const ch = c.height;
-
-  cx.fillStyle = '#000';
-  cx.fillRect(0, 0, cw, ch);
-
-  // Cover-fit image
-  const ia = img.naturalWidth / img.naturalHeight;
-  const ca = cw / ch;
-  let sx, sy, sw, sh;
-  if (ia > ca) {
-    sh = img.naturalHeight; sw = sh * ca;
-    sx = (img.naturalWidth - sw) / 2; sy = 0;
+  // Init
+  const stored = localStorage.getItem('arena-theme');
+  if (stored) {
+    applyTheme(stored === 'dark');
   } else {
-    sw = img.naturalWidth; sh = sw / ca;
-    sx = 0; sy = (img.naturalHeight - sh) / 2;
+    applyTheme(systemDark());
   }
-  cx.drawImage(img, sx, sy, sw, sh, 0, 0, cw, ch);
-
-  // Text sizing: start large, step down only if too many lines
-  const upper = text.toUpperCase();
-  const maxW  = cw * 0.82;  // slightly wider column = fewer forced wraps
-
-  let fontSize = Math.round(ch * 0.096);  // base: ~104px at 1080p
-  cx.font = `bold ${fontSize}px Arial, sans-serif`;
-  let lines = wordWrap(cx, upper, maxW);
-
-  if (lines.length > 3) {
-    fontSize = Math.round(ch * 0.076);    // medium: ~82px
-    cx.font  = `bold ${fontSize}px Arial, sans-serif`;
-    lines    = wordWrap(cx, upper, maxW);
-  }
-  if (lines.length > 5) {
-    fontSize = Math.round(ch * 0.060);    // small: ~65px
-    cx.font  = `bold ${fontSize}px Arial, sans-serif`;
-    lines    = wordWrap(cx, upper, maxW);
-  }
-
-  const lineH   = fontSize * 1.38;
-  const totalH  = lines.length * lineH;
-  const yAnchor = ch * (lines.length <= 2 ? 0.55 : 0.63);
-  const textTop = yAnchor - totalH / 2;
-
-  // Always: crisp 2px hard black drop shadow, no blur
-  cx.shadowColor   = 'rgba(0,0,0,0.88)';
-  cx.shadowBlur    = 0;
-  cx.shadowOffsetX = 2;
-  cx.shadowOffsetY = 2;
-
-  cx.fillStyle    = color;
-  cx.textAlign    = 'center';
-  cx.textBaseline = 'top';
-  cx.font         = `bold ${fontSize}px Arial, sans-serif`;
-
-  lines.forEach((line, i) => cx.fillText(line, cw / 2, textTop + i * lineH));
-
-  cx.shadowColor = 'transparent'; cx.shadowBlur = 0;
-  cx.shadowOffsetX = 0; cx.shadowOffsetY = 0;
-}
-
-// ════════════════════════════════════════════════
-// IMAGE LOADING
-// ════════════════════════════════════════════════
-
-function loadImg(url) {
-  return new Promise((resolve, reject) => {
-    const img       = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload      = () => resolve(img);
-    img.onerror     = () => {
-      const img2   = new Image();
-      img2.onload  = () => resolve(img2);
-      img2.onerror = reject;
-      img2.src     = url;
-    };
-    img.src = url;
-  });
-}
-
-// ════════════════════════════════════════════════
-// SLIDE NAVIGATION
-// ════════════════════════════════════════════════
-
-function pickEntry() {
-  return {
-    imageUrl: S.imageBag.next().url,
-    text:     S.textBag.next().content,
-    color:    TEXT_COLORS[Math.floor(Math.random() * TEXT_COLORS.length)],
-  };
-}
-
-async function showEntry(entry, immediate) {
-  if (S.transitioning) return;
-  S.transitioning = true;
-
-  if (!immediate) await fade(true);
-
-  let img, attempts = 0;
-  while (attempts < 5) {
-    try {
-      img = await loadImg(entry.imageUrl); break;
-    } catch (_) {
-      attempts++;
-      entry.imageUrl = S.imageBag.next().url;
-    }
-  }
-
-  if (!img) { S.transitioning = false; return; }
-
-  S.loadedImg    = img;
-  S.currentText  = entry.text;
-  S.currentColor = entry.color;
-  renderFrame(img, entry.text, entry.color, canvas, ctx);
-
-  if (!immediate) await fade(false);
-
-  S.transitioning = false;
-  updateDebugPanel();
-  if (S.isPlaying) scheduleNext();
-}
-
-async function advance(immediate) {
-  S.historyPos++;
-  if (S.historyPos < S.history.length) {
-    await showEntry(S.history[S.historyPos], immediate);
-  } else {
-    const entry = pickEntry();
-    S.history.push(entry);
-    await showEntry(entry, immediate);
-    // Background pool top-up every N new slides
-    slidesSinceTopUp++;
-    if (slidesSinceTopUp >= AUTO_TOPUP_SLIDES) {
-      slidesSinceTopUp = 0;
-      refreshPool(true).catch(() => {});
-    }
-  }
-}
-
-async function nextSlide() {
-  stopPlay(); updatePlayBtn(); await advance(false);
-}
-
-async function prevSlide() {
-  if (S.transitioning || S.historyPos <= 0) return;
-  stopPlay(); updatePlayBtn();
-  S.historyPos--;
-  await showEntry(S.history[S.historyPos], false);
-}
-
-// ════════════════════════════════════════════════
-// FADE
-// ════════════════════════════════════════════════
-
-function fade(toBlack) {
-  return new Promise(resolve => {
-    const ov = document.getElementById('fade-overlay');
-    ov.style.transition = toBlack ? 'opacity 0.05s ease' : 'opacity 0.07s ease';
-    ov.style.opacity    = toBlack ? '1' : '0';
-    setTimeout(resolve, toBlack ? 60 : 80);
-  });
-}
-
-// ════════════════════════════════════════════════
-// AUTOPLAY
-// ════════════════════════════════════════════════
-
-function togglePlay()  { S.isPlaying ? stopPlay() : startPlay(); updatePlayBtn(); }
-function startPlay()   { S.isPlaying = true; scheduleNext(); }
-
-function stopPlay() {
-  S.isPlaying = false;
-  if (S.playTimer) { clearTimeout(S.playTimer); S.playTimer = null; }
-}
-
-function scheduleNext() {
-  if (S.playTimer) clearTimeout(S.playTimer);
-  S.playTimer = setTimeout(async () => { if (S.isPlaying) await advance(false); }, S.playDelay);
-}
-
-function setSpeed(val) {
-  S.playDelay = parseInt(val) * 1000;
-  document.getElementById('speed-val').textContent = val + 's';
-}
-
-function updatePlayBtn() {
-  const btn = document.getElementById('btn-play');
-  if (S.isPlaying) { btn.textContent = '⏸ Pause'; btn.classList.add('active'); }
-  else             { btn.textContent = '▶ Play';  btn.classList.remove('active'); }
-}
-
-// ════════════════════════════════════════════════
-// AUDIO — SoundCloud (shuffled) + local file fallback
-// ════════════════════════════════════════════════
-
-const bgAudio  = document.getElementById('bgAudio');
-bgAudio.volume = 0.5;
-
-let scWidget     = null;
-let scReady      = false;
-let audioMode    = 'none';   // 'sc' | 'local' | 'none'
-let shuffleOrder = [];       // shuffled track indices
-let shufflePos   = 0;
-
-function setAudioUrl() {
-  const url = document.getElementById('audio-url-input').value.trim().replace(/\/$/, '');
-  if (!url) return;
-  S.audioUrl = url;
-  document.getElementById('audio-url-input').value = '';
-  const label = url.split('/').filter(Boolean).slice(-1)[0] || url;
-  document.getElementById('audio-status').textContent = '✓ ' + label + ' — will play on Go.';
-  savePrefs();
-}
-
-function setAudioFile(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  bgAudio.src = URL.createObjectURL(file);
-  document.getElementById('audio-file-name').textContent = file.name;
-  document.getElementById('audio-status').textContent    = '✓ ' + file.name + ' — will play on Go.';
-}
-
-document.getElementById('audio-url-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') setAudioUrl();
-});
-
-// Decide which audio mode to use, then start
-function tryStartAudio() {
-  const btn = document.getElementById('btn-audio');
-
-  // SC playlist: user-set URL, default playlist, or nothing
-  const scUrl = S.audioUrl.includes('soundcloud.com')
-    ? S.audioUrl
-    : (!S.audioUrl ? DEFAULT_SC_PLAYLIST : null);
-
-  if (scUrl) {
-    audioMode = 'sc';
-    btn.style.display = '';
-    btn.textContent   = '♪ Loading…';
-    setupSCWidget(scUrl);
-    return;
-  }
-
-  // Direct MP3/OGG URL
-  if (S.audioUrl) {
-    bgAudio.src = S.audioUrl;
-  }
-
-  if (bgAudio.src) {
-    audioMode = 'local';
-    bgAudio.play()
-      .then(() => { btn.style.display = ''; btn.textContent = '♪ Mute'; btn.classList.add('active'); })
-      .catch(() => { btn.style.display = ''; btn.textContent = '♪ Music'; });
-    return;
-  }
-
-  audioMode = 'none';
-}
-
-function setupSCWidget(playlistUrl) {
-  const encoded  = encodeURIComponent(playlistUrl);
-  const embedUrl = `https://w.soundcloud.com/player/?url=${encoded}` +
-    `&auto_play=false&hide_related=true&show_comments=false` +
-    `&show_user=false&show_reposts=false&show_teaser=false` +
-    `&show_playcount=false&buying=false&liking=false&sharing=false`;
-
-  let iframe = document.getElementById('sc-iframe');
-  if (!iframe) {
-    iframe = document.createElement('iframe');
-    iframe.id    = 'sc-iframe';
-    iframe.allow = 'autoplay';
-    iframe.style.cssText =
-      'position:fixed;bottom:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none;';
-    document.body.appendChild(iframe);
-  }
-
-  scWidget = null;
-  scReady  = false;
-
-  function initWidget() {
-    scWidget = SC.Widget(iframe);
-
-    scWidget.bind(SC.Widget.Events.READY, () => {
-      // Build a shuffled play order from all tracks in the playlist
-      scWidget.getSounds(sounds => {
-        if (!sounds || sounds.length === 0) { scReady = true; return; }
-        shuffleOrder = shuffle(Array.from({ length: sounds.length }, (_, i) => i));
-        shufflePos   = 0;
-        // Jump to first shuffled track (don't autoplay yet — user clicks ♪)
-        scWidget.skip(shuffleOrder[0]);
-        scReady = true;
-        const btn = document.getElementById('btn-audio');
-        btn.textContent = '♪ Music';
-      });
-    });
-
-    // After each track ends, advance to the next shuffled track.
-    // Re-shuffle when we exhaust the order.
-    scWidget.bind(SC.Widget.Events.FINISH, () => {
-      shufflePos++;
-      if (shufflePos >= shuffleOrder.length) {
-        shuffleOrder = shuffle(shuffleOrder);  // new shuffle, never same order twice
-        shufflePos   = 0;
-      }
-      scWidget.skip(shuffleOrder[shufflePos]);
-      setTimeout(() => scWidget.play(), 400);
-    });
-  }
-
-  if (!window.SC) {
-    const script  = document.createElement('script');
-    script.src    = 'https://w.soundcloud.com/player/api.js';
-    script.onload = () => { iframe.src = embedUrl; iframe.onload = initWidget; };
-    document.head.appendChild(script);
-  } else {
-    iframe.src    = embedUrl;
-    iframe.onload = initWidget;
-  }
-}
-
-function pauseAudio() {
-  if (audioMode === 'sc' && scWidget && scReady) scWidget.pause();
-  if (audioMode === 'local') bgAudio.pause();
-  const btn = document.getElementById('btn-audio');
-  btn.textContent = '♪ Music';
-  btn.classList.remove('active');
-}
-
-function toggleAudio() {
-  const btn = document.getElementById('btn-audio');
-
-  if (audioMode === 'sc' && scWidget && scReady) {
-    scWidget.isPaused(paused => {
-      if (paused) {
-        scWidget.play();
-        btn.textContent = '♪ Mute'; btn.classList.add('active');
-      } else {
-        scWidget.pause();
-        btn.textContent = '♪ Music'; btn.classList.remove('active');
-      }
-    });
-    return;
-  }
-
-  if (audioMode === 'local') {
-    if (bgAudio.paused) {
-      bgAudio.play().catch(() => {});
-      btn.textContent = '♪ Mute'; btn.classList.add('active');
-    } else {
-      bgAudio.pause();
-      btn.textContent = '♪ Music'; btn.classList.remove('active');
-    }
-  }
-}
-
-// ════════════════════════════════════════════════
-// DOWNLOAD
-// ════════════════════════════════════════════════
-
-async function downloadPNG() {
-  if (!S.loadedImg || !S.currentText) return;
-  const exp    = document.createElement('canvas');
-  exp.width    = 1920; exp.height = 1080;
-  const expCtx = exp.getContext('2d', { willReadFrequently: true });
-
-  try {
-    const freshImg = await loadImg(S.loadedImg.src);
-    renderFrame(freshImg, S.currentText, S.currentColor, exp, expCtx);
-  } catch (_) {
-    renderFrame(S.loadedImg, S.currentText, S.currentColor, exp, expCtx);
-  }
-
-  try {
-    const link    = document.createElement('a');
-    link.download = 'arena-hypernormalisation.png';
-    link.href     = exp.toDataURL('image/png');
-    link.click();
-  } catch (_) {
-    alert('Could not export — the image may not allow cross-origin access.');
-  }
-}
-
-// ════════════════════════════════════════════════
-// CONTROLS VISIBILITY
-// ════════════════════════════════════════════════
-
-const displayEl  = document.getElementById('display');
-const controlsEl = document.getElementById('controls');
-
-function showControls() {
-  controlsEl.classList.add('visible');
-  if (S.controlsTimer) clearTimeout(S.controlsTimer);
-  S.controlsTimer = setTimeout(() => controlsEl.classList.remove('visible'), 3200);
-}
-
-displayEl.addEventListener('mousemove', showControls);
-displayEl.addEventListener('touchstart', showControls, { passive: true });
-
-canvas.addEventListener('click', () => {
-  controlsEl.classList.contains('visible')
-    ? controlsEl.classList.remove('visible')
-    : showControls();
-});
-
-document.addEventListener('keydown', e => {
-  // Never intercept when the user is typing in a form field
-  if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
-  // Only active in display mode (style.display starts as '' not 'none', so check for 'block')
-  if (document.getElementById('display').style.display !== 'block') return;
-  switch (e.key) {
-    case 'ArrowRight': case 'n': case 'N': e.preventDefault(); nextSlide(); break;
-    case 'ArrowLeft':  case 'p': case 'P': e.preventDefault(); prevSlide(); break;
-    case ' ':                               e.preventDefault(); togglePlay(); break;
-    case 'm': case 'M':                                         toggleAudio(); break;
-    case 's': case 'S':                                         downloadPNG(); break;
-    case 'd': case 'D':                                         toggleDebug(); break;
-    case 'Escape':                                              backToSetup(); break;
-  }
-  showControls();
-});
-
-// ════════════════════════════════════════════════
-// DEBUG PANEL
-// ════════════════════════════════════════════════
-
-function toggleDebug() {
-  const panel = document.getElementById('debug-panel');
-  const btn   = document.getElementById('btn-debug');
-  if (panel.style.display === 'block') {
-    panel.style.display = 'none';
-    btn.classList.remove('active');
-  } else {
-    panel.style.display = 'block';
-    btn.classList.add('active');
-    updateDebugPanel();
-  }
-}
-
-function updateDebugPanel() {
-  const panel = document.getElementById('debug-panel');
-  if (panel.style.display !== 'block') return;
-
-  const imgTotal = S.imageBag ? S.imageBag._src.length : 0;
-  const imgLeft  = S.imageBag ? S.imageBag._bag.length : 0;
-  const txtTotal = S.textBag  ? S.textBag._src.length  : 0;
-  const txtLeft  = S.textBag  ? S.textBag._bag.length  : 0;
-
-  let html = '';
-
-  // Refresh controls
-  html += `<div class="db-section">`;
-  html += `<div class="db-label">Pool</div>`;
-  html += `<div class="db-btn-row">`;
-  html += `<button class="db-btn" onclick="refreshPool(false)">↻ Fetch fresh</button>`;
-  html += `<button class="db-btn danger" onclick="purgeAllCache()">✕ Clear all cache</button>`;
-  html += `</div>`;
-  html += `<div id="db-refresh-status" class="db-val" style="margin-top:6px;min-height:16px"></div>`;
-  html += `</div>`;
-
-  // Images
-  html += `<div class="db-section">`;
-  html += `<div class="db-label">Images</div>`;
-  html += `<div class="db-big">${imgTotal}</div>`;
-  html += `<div class="db-val">${imgLeft} until full repeat</div>`;
-  if (Object.keys(S.imageSources).length) {
-    for (const [src, count] of Object.entries(S.imageSources)) {
-      html += `<div class="db-sub">${escHtml(src)}: <em>${count}</em></div>`;
-    }
-  }
-  html += `</div>`;
-
-  // Texts
-  html += `<div class="db-section">`;
-  html += `<div class="db-label">Texts</div>`;
-  html += `<div class="db-big">${txtTotal}</div>`;
-  html += `<div class="db-val">${txtLeft} until full repeat</div>`;
-  if (Object.keys(S.textSources).length) {
-    for (const [src, count] of Object.entries(S.textSources)) {
-      html += `<div class="db-sub">${escHtml(src)}: <em>${count}</em></div>`;
-    }
-  }
-  html += `</div>`;
-
-  // History
-  html += `<div class="db-section">`;
-  html += `<div class="db-label">History</div>`;
-  html += `<div class="db-val">${S.history.length} slides, position ${S.historyPos + 1}</div>`;
-  html += `</div>`;
-
-  // Cache entries
-  const cacheInfo = getCacheInfo();
-  html += `<div class="db-section">`;
-  html += `<div class="db-label">Cache (${cacheInfo.length} entries)</div>`;
-  if (cacheInfo.length === 0) {
-    html += `<div class="db-val">Empty — will fetch fresh on next load</div>`;
-  } else {
-    for (const { rawKey, key, age, fresh } of cacheInfo) {
-      const cls  = fresh ? 'db-fresh' : 'db-stale';
-      const safe = rawKey.replace(/'/g, "\\'");
-      html += `<div class="db-sub ${cls}" style="display:flex;justify-content:space-between;align-items:center;gap:6px">`;
-      html += `<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(key)} <em>— ${age}</em></span>`;
-      html += `<button class="db-btn danger" style="padding:2px 7px;flex-shrink:0" onclick="purgeCache('${safe}')">✕</button>`;
-      html += `</div>`;
-    }
-  }
-  html += `</div>`;
-
-  document.getElementById('debug-content').innerHTML = html;
-}
-
-function getCacheInfo() {
-  const now = Date.now();
-  return Object.keys(localStorage)
-    .filter(k => k.startsWith(CACHE_PFX) && k !== PREFS_KEY)
-    .map(k => {
-      try {
-        const raw = localStorage.getItem(k);
-        const { t } = JSON.parse(raw);
-        const ageMs = now - t;
-        const fresh = ageMs < CACHE_TTL;
-        const h     = Math.floor(ageMs / 3600000);
-        const m     = Math.floor((ageMs % 3600000) / 60000);
-        const age   = h > 0 ? `${h}h ${m}m ago` : `${m}m ago`;
-        return { rawKey: k, key: k.slice(CACHE_PFX.length), age, fresh };
-      } catch (_) { return null; }
-    })
-    .filter(Boolean);
-}
-
-function purgeCache(rawKey) {
-  localStorage.removeItem(rawKey);
-  updateDebugPanel();
-}
-
-function purgeAllCache() {
-  Object.keys(localStorage)
-    .filter(k => k.startsWith(CACHE_PFX) && k !== PREFS_KEY)
-    .forEach(k => localStorage.removeItem(k));
-  updateDebugPanel();
-}
-
-// Fetch fresh content for all active sources, merge new items into live bags.
-// silent=true suppresses the status display (used for auto top-up).
-async function refreshPool(silent) {
-  const statusEl = document.getElementById('db-refresh-status');
-  if (statusEl && !silent) statusEl.innerHTML = `<span class="db-refreshing">Fetching…</span>`;
-
-  // Clear cache for active sources so fetches bypass it
-  for (const slug of [...S.imageChannelSlugs, ...S.textChannelSlugs]) {
-    localStorage.removeItem(CACHE_PFX + 'chan_' + slug);
-  }
-  for (const query of S.searchQueries) {
-    localStorage.removeItem(CACHE_PFX + 'srch_' + (query || '__recent__'));
-  }
-
-  const newImages  = [];
-  const newTexts   = [];
-  const newImgSrc  = {};
-  const newTxtSrc  = {};
-
-  try {
-    for (const slug of S.imageChannelSlugs) {
-      const { data } = await fetchChannelContents(slug);
-      const imgs = extractImages(data);
-      newImages.push(...imgs);
-      newImgSrc[slug] = imgs.length;
-    }
-    for (const slug of S.textChannelSlugs) {
-      const { data } = await fetchChannelContents(slug);
-      const txts = extractTexts(data);
-      newTexts.push(...txts);
-      newTxtSrc[slug] = txts.length;
-    }
-    for (const query of S.searchQueries) {
-      const { data } = await fetchSearch(query);
-      const imgs = extractImages(data);
-      const txts = extractTexts(data);
-      newImages.push(...imgs);
-      newTexts.push(...txts);
-      const ql = query || '(recent public)';
-      newImgSrc[ql] = (newImgSrc[ql] || 0) + imgs.length;
-      newTxtSrc[ql] = (newTxtSrc[ql] || 0) + txts.length;
-    }
-  } catch (err) {
-    if (statusEl && !silent) statusEl.textContent = '⚠ ' + err.message.slice(0, 80);
-    return;
-  }
-
-  // Find genuinely new items (not already in pool)
-  const existingImgUrls = new Set(S.allImages.map(i => i.url));
-  const existingTxtSet  = new Set(S.allTexts.map(t => t.content));
-
-  const freshImgs = dedup(newImages, 'url').filter(i => !existingImgUrls.has(i.url));
-  const freshTxts = dedup(newTexts, 'content').filter(t => !existingTxtSet.has(t.content));
-
-  if (freshImgs.length) {
-    S.allImages.push(...freshImgs);
-    if (S.imageBag) {
-      S.imageBag._src = [...S.allImages];
-      S.imageBag._bag.push(...shuffle(freshImgs));
-    }
-  }
-  if (freshTxts.length) {
-    S.allTexts.push(...freshTxts);
-    if (S.textBag) {
-      S.textBag._src = [...S.allTexts];
-      S.textBag._bag.push(...shuffle(freshTxts));
-    }
-  }
-
-  S.imageSources = newImgSrc;
-  S.textSources  = newTxtSrc;
-
-  if (statusEl && !silent) {
-    const msg = freshImgs.length || freshTxts.length
-      ? `+${freshImgs.length} images, +${freshTxts.length} texts added`
-      : 'Pool already up to date';
-    statusEl.textContent = msg;
-    setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 4000);
-  }
-
-  updateDebugPanel();
-}
-
-function escHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
-
-// ════════════════════════════════════════════════
-// INIT
-// ════════════════════════════════════════════════
-
-loadPrefs();
 </script>
+
 </body>
 </html>
