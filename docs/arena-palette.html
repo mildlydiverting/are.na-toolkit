@@ -5,10 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Are.na Palette</title>
 <!--
-  arena-palette v1.28
+  arena-palette v1.30
   ──────────────────────────────────────────────────────────────────
   Changelog:
 
+    v1.30 (2026-05-27) — Fix colour name lookup key (#-prefix mismatch). Remove
+                         Google Fonts, use Arial stack. Default channel added.
+                         Sidebar tagline. Dark/midtone/light theme toggle.
     v1.29 (2026-05-25) — Remove duplicate proportion bar (keep "extracted colours"
                          only). Fix colour name lookup key (slice # prefix).
                          Extend patchColorLabels to update palette legend.
@@ -88,11 +91,10 @@
     --accent-text:   #f0f0f0;
 
     --radius: 0.2rem;
-    --font:      'Karla', system-ui, sans-serif;
+    --font:      Arial, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, sans-serif;
     --font-sans: var(--font);
-    --font-mono: 'Courier Prime', 'Courier New', monospace;
+    --font-mono: 'Courier New', Courier, monospace;
   }
-  @import url('https://fonts.googleapis.com/css2?family=Karla:wght@300;400;500;700&family=Courier+Prime:wght@400;700&display=swap');
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -156,6 +158,90 @@
     color: var(--surface-muted);
     font-family: var(--font-mono);
   }
+
+/* ── THEME CLASSES ── */
+
+  /* Dark theme */
+  body.theme-dark {
+    --bg:            #1e1d1b;
+    --surface:       #2a2825;
+    --surface2:      #322f2c;
+    --border:        #3a3733;
+    --text:          #e8e4de;
+    --muted:         #9e9890;
+    --surface-text:  #e8e4de;
+    --surface-muted: #6e6860;
+    --input-bg:      #1e1d1b;
+    --input-text:    #e8e4de;
+    --accent:        #e8e4de;
+    --accent-text:   #1e1d1b;
+  }
+
+  /* Light theme */
+  body.theme-light {
+    --bg:            #f5f4f0;
+    --surface:       #e8e3dd;
+    --surface2:      #ddd8d2;
+    --border:        #d0ccc6;
+    --text:          #1a1a18;
+    --muted:         #888580;
+    --surface-text:  #1a1a18;
+    --surface-muted: #888580;
+    --input-bg:      #ffffff;
+    --input-text:    #1a1a18;
+    --accent:        #1a1a18;
+    --accent-text:   #f5f4f0;
+  }
+
+/* ── THEME TOGGLE ── */
+  .theme-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 1.5rem 1rem;
+    flex-shrink: 0;
+  }
+
+  .theme-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--surface-muted);
+    font-family: var(--font);
+    font-size: 1.2rem;
+    padding: 0.3rem 0.9rem;
+    cursor: pointer;
+    border-radius: var(--radius);
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    letter-spacing: 0.04em;
+  }
+
+  .theme-btn:hover {
+    color: var(--surface-text);
+    border-color: var(--surface-text);
+  }
+
+  .theme-btn.active {
+    background: var(--surface2);
+    color: var(--surface-text);
+    border-color: var(--surface-text);
+  }
+
+/* ── SIDEBAR TAGLINE ── */
+  .sidebar-tagline {
+    font-size: 1.2rem;
+    color: var(--surface-muted);
+    padding: 0 1.5rem 1.2rem;
+    line-height: 1.5;
+    flex-shrink: 0;
+  }
+
+  .sidebar-tagline a {
+    color: var(--surface-muted);
+    text-decoration: underline;
+  }
+
+  .sidebar-tagline a:visited { color: var(--surface-muted); }
+  .sidebar-tagline a:hover   { color: var(--surface-text); }
 
 /* ── CHANNELS SECTION (collapsible) ── */
   .channels-section {
@@ -893,7 +979,13 @@
 
     <div class="sidebar-branding">
       <h1>are.na palette</h1>
-      <span class="version" aria-label="Version 1.29">v1.29</span>
+      <span class="version" aria-label="Version 1.30">v1.30</span>
+    </div>
+    <p class="sidebar-tagline">Extract colour palettes from are.na image blocks. <a href="https://mildlydiverting.github.io/are.na-toolkit/">More tools</a> by <a href="https://www.are.na/kim-plowright/channels">Kim Plowright</a>. Found a bug? <a href="https://github.com/mildlydiverting/are.na-toolkit">GitHub</a>.</p>
+    <div class="theme-toggle-row" aria-label="Colour theme">
+      <button class="theme-btn" id="theme-dark"  onclick="setTheme('dark')"     title="Dark theme">Dark</button>
+      <button class="theme-btn active" id="theme-mid" onclick="setTheme('mid')" title="Midtone theme (default)">Mid</button>
+      <button class="theme-btn" id="theme-light" onclick="setTheme('light')"    title="Light theme">Light</button>
     </div>
 
     <!-- Channels — collapsible, open by default, auto-closes on image load -->
@@ -982,7 +1074,7 @@
 <script>
 // ── CONFIG & STORAGE ──────────────────────────────────────────────────────────
 const STORAGE_KEY = 'arena-palette-v1';
-const DEFAULT_CHANNELS = ['', '', ''];
+const DEFAULT_CHANNELS = ['chromatic-vwdupl8d0lk'];
 const MAX_CHANNELS = 4;
 const TINT_STEPS = 3;
 const SHADE_STEPS = 3;
@@ -1086,7 +1178,7 @@ function renderChannels() {
         type="text"
         id="channel-input-${i}"
         name="channel-${i}"
-        placeholder="channel-slug"
+        placeholder="URL or slug"
         value="${slug}"
         data-idx="${i}"
         aria-label="Channel ${humanN} slug"
@@ -1161,6 +1253,26 @@ function parseArenaSlug(val) {
 tokenInput.addEventListener('input', persistState);
 
 let currentSwatchData = [];
+
+// ── THEME ─────────────────────────────────────────────────────────────────────
+const THEME_KEY = 'arena-palette-theme-v1';
+
+function setTheme(name) {
+  document.body.classList.remove('theme-dark', 'theme-mid', 'theme-light');
+  if (name !== 'mid') document.body.classList.add('theme-' + name);
+  ['dark', 'mid', 'light'].forEach(t => {
+    const btn = document.getElementById('theme-' + t);
+    if (btn) btn.classList.toggle('active', t === name);
+  });
+  try { localStorage.setItem(THEME_KEY, name); } catch(_) {}
+}
+
+(function initTheme() {
+  try {
+    const saved = localStorage.getItem(THEME_KEY) || 'mid';
+    setTheme(saved);
+  } catch(_) { setTheme('mid'); }
+})();
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 (function init() {
@@ -1483,7 +1595,7 @@ async function fetchColorNames(hexArray, list) {
     const data = await res.json();
     const map = {};
     (data.colors || []).forEach(c => {
-      if (c.requestedHex && c.name) map[c.requestedHex.toLowerCase()] = c.name;
+      if (c.requestedHex && c.name) map[c.requestedHex.replace('#', '').toLowerCase()] = c.name;
     });
     return map;
   } catch(e) {

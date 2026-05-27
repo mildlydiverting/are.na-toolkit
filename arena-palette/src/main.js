@@ -1,6 +1,6 @@
 // ── CONFIG & STORAGE ──────────────────────────────────────────────────────────
 const STORAGE_KEY = 'arena-palette-v1';
-const DEFAULT_CHANNELS = ['', '', ''];
+const DEFAULT_CHANNELS = ['chromatic-vwdupl8d0lk'];
 const MAX_CHANNELS = 4;
 const TINT_STEPS = 3;
 const SHADE_STEPS = 3;
@@ -104,7 +104,7 @@ function renderChannels() {
         type="text"
         id="channel-input-${i}"
         name="channel-${i}"
-        placeholder="channel-slug"
+        placeholder="URL or slug"
         value="${slug}"
         data-idx="${i}"
         aria-label="Channel ${humanN} slug"
@@ -179,6 +179,26 @@ function parseArenaSlug(val) {
 tokenInput.addEventListener('input', persistState);
 
 let currentSwatchData = [];
+
+// ── THEME ─────────────────────────────────────────────────────────────────────
+const THEME_KEY = 'arena-palette-theme-v1';
+
+function setTheme(name) {
+  document.body.classList.remove('theme-dark', 'theme-mid', 'theme-light');
+  if (name !== 'mid') document.body.classList.add('theme-' + name);
+  ['dark', 'mid', 'light'].forEach(t => {
+    const btn = document.getElementById('theme-' + t);
+    if (btn) btn.classList.toggle('active', t === name);
+  });
+  try { localStorage.setItem(THEME_KEY, name); } catch(_) {}
+}
+
+(function initTheme() {
+  try {
+    const saved = localStorage.getItem(THEME_KEY) || 'mid';
+    setTheme(saved);
+  } catch(_) { setTheme('mid'); }
+})();
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 (function init() {
@@ -501,7 +521,7 @@ async function fetchColorNames(hexArray, list) {
     const data = await res.json();
     const map = {};
     (data.colors || []).forEach(c => {
-      if (c.requestedHex && c.name) map[c.requestedHex.toLowerCase()] = c.name;
+      if (c.requestedHex && c.name) map[c.requestedHex.replace('#', '').toLowerCase()] = c.name;
     });
     return map;
   } catch(e) {

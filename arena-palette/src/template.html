@@ -5,10 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Are.na Palette</title>
 <!--
-  arena-palette v1.28
+  arena-palette v1.30
   ──────────────────────────────────────────────────────────────────
   Changelog:
 
+    v1.30 (2026-05-27) — Fix colour name lookup key (#-prefix mismatch). Remove
+                         Google Fonts, use Arial stack. Default channel added.
+                         Sidebar tagline. Dark/midtone/light theme toggle.
     v1.29 (2026-05-25) — Remove duplicate proportion bar (keep "extracted colours"
                          only). Fix colour name lookup key (slice # prefix).
                          Extend patchColorLabels to update palette legend.
@@ -66,7 +69,13 @@
 
     <div class="sidebar-branding">
       <h1>are.na palette</h1>
-      <span class="version" aria-label="Version 1.29">v1.29</span>
+      <span class="version" aria-label="Version 1.30">v1.30</span>
+    </div>
+    <p class="sidebar-tagline">Extract colour palettes from are.na image blocks. <a href="https://mildlydiverting.github.io/are.na-toolkit/">More tools</a> by <a href="https://www.are.na/kim-plowright/channels">Kim Plowright</a>. Found a bug? <a href="https://github.com/mildlydiverting/are.na-toolkit">GitHub</a>.</p>
+    <div class="theme-toggle-row" aria-label="Colour theme">
+      <button class="theme-btn" id="theme-dark"  onclick="setTheme('dark')"     title="Dark theme">Dark</button>
+      <button class="theme-btn active" id="theme-mid" onclick="setTheme('mid')" title="Midtone theme (default)">Mid</button>
+      <button class="theme-btn" id="theme-light" onclick="setTheme('light')"    title="Light theme">Light</button>
     </div>
 
     <!-- Channels — collapsible, open by default, auto-closes on image load -->
