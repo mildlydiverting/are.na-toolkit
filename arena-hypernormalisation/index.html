@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Are.na Hypernormalisation</title>
+<title>Are.na Hypernormalisation Machine</title>
 <meta name="description" content="Pull images and text from are.na channels and combine them into a strangely familiar documentary critique of late capitalism. Good for full-screen ambient displays, or just staring into the void.">
 <link rel="canonical" href="https://mildlydiverting.github.io/are.na-toolkit/arena-hypernormalisation.html">
 <meta property="og:type"        content="website">
@@ -19,18 +19,84 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --link-color: #bbb;
+  /* ── Typography ───────────────────────────────────── */
+  --font-sans:           Arial, sans-serif;
+  --font-mono:           monospace;
+
+  /* ── Layout ───────────────────────────────────────── */
+  --setup-max-w:         800px;
+
+  /* ── Transitions ──────────────────────────────────── */
+  --t:                   0.15s;
+
+  /* ── Backgrounds ──────────────────────────────────── */
+  --bg:                  #000;          /* page + display + fade overlay */
+  --bg-input:            #111;          /* text inputs */
+  --bg-chip:             #1a1a1a;       /* chips */
+  --bg-btn:              #222;          /* add / file buttons */
+  --bg-btn-hover:        #333;          /* add / file button hover */
+  --bg-disabled:         #1e1e1e;       /* disabled go button */
+
+  /* ── Borders ──────────────────────────────────────── */
+  --border-deep:         #1e1e1e;       /* dividers, section separators */
+  --border-panel:        #2a2a2a;       /* debug panel side */
+  --border-default:      #333;          /* inputs, small buttons */
+  --border-chip:         #3a3a3a;       /* chips */
+  --border-btn:          #444;          /* add / file buttons */
+  --border-active:       #666;          /* focus, hover states */
+
+  /* ── Text ─────────────────────────────────────────── */
+  --text-primary:        #fff;
+  --text-input:          #e8e8e8;       /* input text */
+  --text-ctrl:           #e0e0e0;       /* display control buttons */
+  --text-secondary:      #ccc;          /* chip text, debug values */
+  --text-muted:          #aaa;          /* labels, status, subtitles */
+  --text-hint:           #999;          /* panel hints, debug panel body */
+  --text-dim:            #888;          /* chip ×, small buttons, file name */
+  --text-dimmer:         #777;          /* disabled button text, debug sub */
+  --text-faint:          #666;          /* cache notes, placeholders, accordion label */
+  --text-meta:           #555;          /* debug section labels */
+  --text-adv:            #444;          /* advanced accordion subtitle */
+
+  /* ── Links ────────────────────────────────────────── */
+  --link-color:          #bbb;
+
+  /* ── Semantic ─────────────────────────────────────── */
+  --color-error:         #ff7777;
+  --color-danger:        #ff8888;
+  --color-success:       #6ec97a;
+  --color-stale:         #c96e6e;
+  --color-warning:       #ffcc66;
+
+  /* ── Go button (inverted) ─────────────────────────── */
+  --go-bg:               #fff;
+  --go-text:             #000;
+  --go-bg-hover:         #ddd;
+
+  /* ── Display overlay controls ─────────────────────── */
+  --ctrl-bg:             rgba(0,0,0,0.55);
+  --ctrl-border:         rgba(255,255,255,0.22);
+  --ctrl-bg-hover:       rgba(255,255,255,0.15);
+  --ctrl-border-hover:   rgba(255,255,255,0.5);
+  --ctrl-bg-active:      rgba(255,255,255,0.18);
+  --ctrl-border-active:  rgba(255,255,255,0.6);
+  --ctrl-divider:        rgba(255,255,255,0.15);
+  --ctrl-bar-fade:       rgba(0,0,0,0.65);
+  --debug-bg:            rgba(0,0,0,0.92);
+  --speed-label:         rgba(255,255,255,0.4);
+  --speed-val:           rgba(255,255,255,0.5);
+  --range-accent:        rgba(255,255,255,0.7);
 }
 
 a { color: var(--link-color); }
 a:visited { color: var(--link-color); }
 a:active  { color: var(--link-color); }
-a:hover   { color: #fff; }
+a:hover   { color: var(--text-primary); }
 
 body {
-  background: #000;
-  color: #fff;
-  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -53,8 +119,9 @@ body {
 
 .subtitle {
   font-size: 13px;
-  color: #aaa;
+  color: var(--text-muted);
   letter-spacing: 0.1em;
+  line-height: 1.5em;
   margin-bottom: 28px;
   text-align: center;
 }
@@ -64,7 +131,7 @@ body {
   grid-template-columns: 1fr 1fr;
   gap: 28px;
   width: 100%;
-  max-width: 800px;
+  max-width: var(--setup-max-w);
   margin-bottom: 24px;
 }
 
@@ -74,14 +141,14 @@ body {
 
 .setup-full {
   width: 100%;
-  max-width: 800px;
+  max-width: var(--setup-max-w);
   margin-bottom: 20px;
 }
 
 .panel-label {
   font-size: 11px;
   letter-spacing: 0.18em;
-  color: #aaa;
+  color: var(--text-muted);
   text-transform: uppercase;
   margin-bottom: 8px;
   font-weight: bold;
@@ -89,7 +156,7 @@ body {
 
 .panel-hint {
   font-size: 13px;
-  color: #999;
+  color: var(--text-hint);
   margin-bottom: 10px;
   line-height: 1.5;
 }
@@ -102,49 +169,49 @@ body {
 
 .text-input {
   flex: 1;
-  background: #111;
-  border: 1px solid #333;
-  color: #e8e8e8;
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  color: var(--text-input);
   padding: 11px 13px;
   font-size: 14px;
-  font-family: Arial, sans-serif;
+  font-family: var(--font-sans);
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color var(--t);
   letter-spacing: 0.02em;
 }
 
-.text-input:focus { border-color: #666; }
-.text-input::placeholder { color: #666; }
+.text-input:focus { border-color: var(--border-active); }
+.text-input::placeholder { color: var(--text-faint); }
 
 .btn-add {
-  background: #222;
-  border: 1px solid #444;
-  color: #bbb;
+  background: var(--bg-btn);
+  border: 1px solid var(--border-btn);
+  color: var(--link-color);
   padding: 11px 16px;
   font-size: 13px;
   letter-spacing: 0.12em;
   cursor: pointer;
-  font-family: Arial, sans-serif;
-  transition: background 0.15s, color 0.15s;
+  font-family: var(--font-sans);
+  transition: background var(--t), color var(--t);
   white-space: nowrap;
 }
 
-.btn-add:hover { background: #333; color: #fff; }
+.btn-add:hover { background: var(--bg-btn-hover); color: var(--text-primary); }
 
 .btn-sm {
   background: none;
-  border: 1px solid #333;
-  color: #888;
+  border: 1px solid var(--border-default);
+  color: var(--text-dim);
   padding: 7px 12px;
   font-size: 12px;
   letter-spacing: 0.1em;
   cursor: pointer;
-  font-family: Arial, sans-serif;
-  transition: color 0.15s, border-color 0.15s;
+  font-family: var(--font-sans);
+  transition: color var(--t), border-color var(--t);
   white-space: nowrap;
 }
 
-.btn-sm:hover { color: #fff; border-color: #666; }
+.btn-sm:hover { color: var(--text-primary); border-color: var(--border-active); }
 
 .chips {
   display: flex;
@@ -154,11 +221,11 @@ body {
 }
 
 .chip {
-  background: #1a1a1a;
-  border: 1px solid #3a3a3a;
+  background: var(--bg-chip);
+  border: 1px solid var(--border-chip);
   padding: 6px 10px 6px 13px;
   font-size: 13px;
-  color: #ccc;
+  color: var(--text-secondary);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -174,7 +241,7 @@ body {
 .chip-x {
   background: none;
   border: none;
-  color: #888;
+  color: var(--text-dim);
   cursor: pointer;
   font-size: 16px;
   padding: 0;
@@ -183,7 +250,7 @@ body {
   transition: color 0.1s;
 }
 
-.chip-x:hover { color: #fff; }
+.chip-x:hover { color: var(--text-primary); }
 
 .file-row {
   display: flex;
@@ -193,22 +260,22 @@ body {
 }
 
 .file-label-btn {
-  background: #222;
-  border: 1px solid #444;
-  color: #bbb;
+  background: var(--bg-btn);
+  border: 1px solid var(--border-btn);
+  color: var(--link-color);
   padding: 9px 14px;
   font-size: 13px;
   letter-spacing: 0.1em;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s, color 0.15s;
+  transition: background var(--t), color var(--t);
 }
 
-.file-label-btn:hover { background: #333; color: #fff; }
+.file-label-btn:hover { background: var(--bg-btn-hover); color: var(--text-primary); }
 
 .file-name {
   font-size: 13px;
-  color: #888;
+  color: var(--text-dim);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -218,7 +285,7 @@ input[type=file] { display: none; }
 
 .cache-note {
   font-size: 12px;
-  color: #666;
+  color: var(--text-faint);
   margin-top: 6px;
   line-height: 1.4;
 }
@@ -229,35 +296,35 @@ input[type=file] { display: none; }
   text-decoration: underline;
 }
 
-.cache-note a:hover { color: #fff; }
+.cache-note a:hover { color: var(--text-primary); }
 
 .btn-go {
-  background: #fff;
-  color: #000;
+  background: var(--go-bg);
+  color: var(--go-text);
   border: none;
   padding: 13px 48px;
   font-size: 15px;
   letter-spacing: 0.25em;
   cursor: pointer;
-  font-family: Arial, sans-serif;
+  font-family: var(--font-sans);
   font-weight: bold;
   text-transform: uppercase;
-  transition: background 0.15s;
+  transition: background var(--t);
   margin-top: 8px;
 }
 
-.btn-go:hover { background: #ddd; }
+.btn-go:hover { background: var(--go-bg-hover); }
 
 .btn-go:disabled {
-  background: #1e1e1e;
-  color: #777;
+  background: var(--bg-disabled);
+  color: var(--text-dimmer);
   cursor: not-allowed;
 }
 
 #status {
   margin-top: 16px;
   font-size: 13px;
-  color: #aaa;
+  color: var(--text-muted);
   letter-spacing: 0.08em;
   min-height: 20px;
   text-align: center;
@@ -266,7 +333,7 @@ input[type=file] { display: none; }
 .error {
   margin-top: 12px;
   font-size: 14px;
-  color: #ff7777;
+  color: var(--color-error);
   max-width: 640px;
   text-align: center;
   line-height: 1.5;
@@ -274,16 +341,16 @@ input[type=file] { display: none; }
 
 hr.divider {
   border: none;
-  border-top: 1px solid #1e1e1e;
+  border-top: 1px solid var(--border-deep);
   width: 100%;
-  max-width: 800px;
+  max-width: var(--setup-max-w);
   margin-bottom: 20px;
 }
 
 /* ── Advanced settings accordion ── */
 details.advanced-accordion {
   width: 100%;
-  max-width: 800px;
+  max-width: var(--setup-max-w);
   margin-top: 8px;
 }
 
@@ -295,13 +362,13 @@ details.advanced-accordion > summary {
   gap: 10px;
   padding: 10px 0;
   user-select: none;
-  color: #666;
+  color: var(--text-muted);
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   font-weight: bold;
-  border-top: 1px solid #1e1e1e;
-  transition: color 0.15s;
+  border-top: 1px solid var(--border-deep);
+  transition: color var(--t);
 }
 
 details.advanced-accordion > summary::-webkit-details-marker { display: none; }
@@ -309,7 +376,7 @@ details.advanced-accordion > summary::-webkit-details-marker { display: none; }
 details.advanced-accordion > summary::before {
   content: '▸';
   font-size: 10px;
-  transition: transform 0.15s;
+  transition: transform var(--t);
   display: inline-block;
 }
 
@@ -317,17 +384,17 @@ details.advanced-accordion[open] > summary::before {
   transform: rotate(90deg);
 }
 
-details.advanced-accordion > summary:hover { color: #aaa; }
+details.advanced-accordion > summary:hover { color: var(--text-primary); }
 
 details.advanced-accordion > summary .adv-subtitle {
   font-size: 11px;
   letter-spacing: 0.04em;
   font-weight: normal;
   text-transform: none;
-  color: #444;
+  color: var(--text-muted);
 }
 
-details.advanced-accordion > summary:hover .adv-subtitle { color: #666; }
+details.advanced-accordion > summary:hover .adv-subtitle { color: var(--text-primary); }
 
 details.advanced-accordion .adv-body {
   padding-top: 8px;
@@ -339,7 +406,7 @@ details.advanced-accordion .adv-body {
   display: none;
   position: fixed;
   inset: 0;
-  background: #000;
+  background: var(--bg);
 }
 
 #canvas-wrap {
@@ -358,7 +425,7 @@ details.advanced-accordion .adv-body {
 #fade-overlay {
   position: absolute;
   inset: 0;
-  background: #000;
+  background: var(--bg);
   opacity: 0;
   pointer-events: none;
   z-index: 10;
@@ -389,40 +456,40 @@ details.advanced-accordion .adv-body {
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
-  background: linear-gradient(transparent 0%, rgba(0,0,0,0.65) 100%);
+  background: linear-gradient(transparent 0%, var(--ctrl-bar-fade) 100%);
 }
 
 .ctrl-btn {
-  background: rgba(0,0,0,0.55);
-  border: 1px solid rgba(255,255,255,0.22);
-  color: #e0e0e0;
+  background: var(--ctrl-bg);
+  border: 1px solid var(--ctrl-border);
+  color: var(--ctrl-text);
   padding: 9px 15px;
   font-size: 11px;
   letter-spacing: 0.14em;
   cursor: pointer;
-  font-family: Arial, sans-serif;
+  font-family: var(--font-sans);
   text-transform: uppercase;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  transition: background var(--t), border-color var(--t), color var(--t);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   white-space: nowrap;
 }
 
 .ctrl-btn:hover {
-  background: rgba(255,255,255,0.15);
-  border-color: rgba(255,255,255,0.5);
-  color: #fff;
+  background: var(--ctrl-bg-hover);
+  border-color: var(--ctrl-border-hover);
+  color: var(--text-primary);
 }
 
 .ctrl-btn.active {
-  background: rgba(255,255,255,0.18);
-  border-color: rgba(255,255,255,0.6);
-  color: #fff;
+  background: var(--ctrl-bg-active);
+  border-color: var(--ctrl-border-active);
+  color: var(--text-primary);
 }
 
 .ctrl-divider {
   width: 1px; height: 20px;
-  background: rgba(255,255,255,0.15);
+  background: var(--ctrl-divider);
   margin: 0 2px;
   flex-shrink: 0;
 }
@@ -436,20 +503,20 @@ details.advanced-accordion .adv-body {
 
 .speed-wrap label {
   font-size: 10px;
-  color: rgba(255,255,255,0.4);
+  color: var(--speed-label);
   letter-spacing: 0.12em;
   white-space: nowrap;
 }
 
 input[type=range] {
   width: 130px;
-  accent-color: rgba(255,255,255,0.7);
+  accent-color: var(--range-accent);
   cursor: pointer;
 }
 
 #speed-val {
   font-size: 10px;
-  color: rgba(255,255,255,0.5);
+  color: var(--speed-val);
   min-width: 26px;
 }
 
@@ -459,14 +526,14 @@ input[type=range] {
   position: absolute;
   top: 0; right: 0; bottom: 0;
   width: 300px;
-  background: rgba(0,0,0,0.92);
-  border-left: 1px solid #2a2a2a;
+  background: var(--debug-bg);
+  border-left: 1px solid var(--border-panel);
   z-index: 25;
   overflow-y: auto;
   padding: 52px 16px 16px;
-  font-family: monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
-  color: #999;
+  color: var(--text-hint);
   display: none;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
@@ -476,20 +543,20 @@ input[type=range] {
   position: absolute;
   top: 14px; right: 14px;
   background: none;
-  border: 1px solid #333;
-  color: #888;
+  border: 1px solid var(--border-default);
+  color: var(--text-dim);
   font-size: 14px;
   line-height: 1;
   padding: 3px 7px;
   cursor: pointer;
   border-radius: 0;
 }
-#debug-close:hover { color: #fff; border-color: #666; }
+#debug-close:hover { color: var(--text-primary); border-color: var(--border-active); }
 
 #debug-panel h3 {
   font-size: 11px;
   letter-spacing: 0.18em;
-  color: #fff;
+  color: var(--text-primary);
   margin-bottom: 14px;
   text-transform: uppercase;
 }
@@ -497,33 +564,33 @@ input[type=range] {
 .db-section {
   margin-bottom: 16px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #1e1e1e;
+  border-bottom: 1px solid var(--border-deep);
 }
 
 .db-section:last-child { border-bottom: none; }
 
 .db-label {
   font-size: 10px;
-  color: #555;
+  color: var(--text-meta);
   text-transform: uppercase;
   letter-spacing: 0.14em;
   margin-bottom: 6px;
 }
 
 .db-val {
-  color: #ccc;
+  color: var(--text-secondary);
   margin-bottom: 4px;
 }
 
 .db-big {
   font-size: 20px;
-  color: #fff;
+  color: var(--text-primary);
   font-weight: bold;
   letter-spacing: 0.04em;
 }
 
 .db-sub {
-  color: #777;
+  color: var(--text-dimmer);
   padding-left: 10px;
   margin-bottom: 2px;
   overflow: hidden;
@@ -531,26 +598,26 @@ input[type=range] {
   white-space: nowrap;
 }
 
-.db-sub em { color: #aaa; font-style: normal; }
-.db-fresh  { color: #6ec97a; }
-.db-stale  { color: #c96e6e; }
+.db-sub em { color: var(--text-muted); font-style: normal; }
+.db-fresh  { color: var(--color-success); }
+.db-stale  { color: var(--color-stale); }
 
 .db-btn {
   background: none;
-  border: 1px solid #333;
-  color: #888;
+  border: 1px solid var(--border-default);
+  color: var(--text-dim);
   padding: 5px 10px;
   font-size: 10px;
   letter-spacing: 0.1em;
   cursor: pointer;
-  font-family: monospace;
+  font-family: var(--font-mono);
   white-space: nowrap;
   text-transform: uppercase;
   transition: color 0.1s, border-color 0.1s;
   margin-top: 2px;
 }
-.db-btn:hover { color: #fff; border-color: #666; }
-.db-btn.danger:hover { color: #ff8888; border-color: #ff8888; }
+.db-btn:hover { color: var(--text-primary); border-color: var(--border-active); }
+.db-btn.danger:hover { color: var(--color-danger); border-color: var(--color-danger); }
 
 .db-btn-row {
   display: flex;
@@ -560,7 +627,7 @@ input[type=range] {
 }
 
 .db-refreshing {
-  color: #ffcc66;
+  color: var(--color-warning);
   font-style: italic;
 }
 </style>
@@ -570,7 +637,15 @@ input[type=range] {
 <!-- ═══════ SETUP ═══════ -->
 <div id="setup">
   <h1>ARENA HYPERNORMALISATION</h1>
-  <p class="subtitle">image + text from are.na channels</p>
+  <div class="subtitle">
+  <p>Pull images and text from <a href="https://www.are.na">are.na</a> to make a <a href="https://www.bbc.co.uk/webarchive/https%3A%2F%2Fwww.bbc.co.uk%2Fblogs%2Fadamcurtis%2Fentries%2F02d9ed3c-d71b-4232-ae17-67da423b5df5">strangely familiar</a> documentary critique of late capitalism.</p>
+  <p>Good for full screen ambient displays, or just staring into the void.</p>
+  <p>Just hit go, customise with your own channels, or contribue more <a href="https://www.are.na/kim-plowright/hypernormalisation-text">text</a> or <a href="https://www.are.na/kim-plowright/hypernormalisation-text">images</a>.</p>
+  </div>
+  <!-- GO BUTTON -->
+  <button class="btn-go" id="btn-go" onclick="go()" disabled>Go</button>
+  <div id="status"></div>
+  <div id="error-area"></div>
 
   <!-- Channels -->
   <div class="setup-grid">
@@ -652,9 +727,7 @@ input[type=range] {
     </div><!-- /adv-body -->
   </details>
 
-  <button class="btn-go" id="btn-go" onclick="go()" disabled>Go</button>
-  <div id="status"></div>
-  <div id="error-area"></div>
+  
 </div>
 
 <!-- ═══════ DISPLAY ═══════ -->
