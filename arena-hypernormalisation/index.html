@@ -93,6 +93,18 @@ a:visited { color: var(--link-color); }
 a:active  { color: var(--link-color); }
 a:hover   { color: var(--text-primary); }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+
 body {
   background: var(--bg);
   color: var(--text-primary);
@@ -146,6 +158,7 @@ body {
 }
 
 .panel-label {
+  display: block;
   font-size: 11px;
   letter-spacing: 0.18em;
   color: var(--text-muted);
@@ -290,13 +303,21 @@ input[type=file] { display: none; }
   line-height: 1.4;
 }
 
-.cache-note a {
+.cache-note a, .cache-note-btn {
   color: var(--link-color);
   cursor: pointer;
   text-decoration: underline;
 }
 
-.cache-note a:hover { color: var(--text-primary); }
+.cache-note-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 12px;
+}
+
+.cache-note a:hover, .cache-note-btn:hover { color: var(--text-primary); }
 
 .btn-go {
   background: var(--go-bg);
@@ -644,29 +665,29 @@ input[type=range] {
   </div>
   <!-- GO BUTTON -->
   <button class="btn-go" id="btn-go" onclick="go()" disabled>Go</button>
-  <div id="status"></div>
-  <div id="error-area"></div>
+  <div id="status" aria-live="polite" aria-atomic="true"></div>
+  <div id="error-area" role="alert" aria-live="assertive" aria-atomic="true"></div>
 
   <!-- Channels -->
   <div class="setup-grid">
     <div>
-      <div class="panel-label">Image Channels</div>
-      <p class="panel-hint">Paste an are.na URL or channel slug. Images are used as backgrounds.</p>
+      <label class="panel-label" for="img-input">Image Channels</label>
+      <p class="panel-hint" id="img-hint">Paste an are.na URL or channel slug. Images are used as backgrounds.</p>
       <div class="input-row">
-        <input class="text-input" id="img-input" type="text" placeholder="URL or slug" />
-        <button class="btn-add" onclick="addChannel('image')">Add</button>
+        <input class="text-input" id="img-input" type="text" placeholder="URL or slug" aria-describedby="img-hint" />
+        <button class="btn-add" onclick="addChannel('image')" aria-label="Add image channel">Add</button>
       </div>
-      <div class="chips" id="img-chips"></div>
+      <div class="chips" id="img-chips" role="list" aria-label="Image channels"></div>
     </div>
 
     <div>
-      <div class="panel-label">Text Channels</div>
-      <p class="panel-hint">Paste an are.na URL or channel slug. Text blocks become captions.</p>
+      <label class="panel-label" for="txt-input">Text Channels</label>
+      <p class="panel-hint" id="txt-hint">Paste an are.na URL or channel slug. Text blocks become captions.</p>
       <div class="input-row">
-        <input class="text-input" id="txt-input" type="text" placeholder="URL or slug" />
-        <button class="btn-add" onclick="addChannel('text')">Add</button>
+        <input class="text-input" id="txt-input" type="text" placeholder="URL or slug" aria-describedby="txt-hint" />
+        <button class="btn-add" onclick="addChannel('text')" aria-label="Add text channel">Add</button>
       </div>
-      <div class="chips" id="txt-chips"></div>
+      <div class="chips" id="txt-chips" role="list" aria-label="Text channels"></div>
     </div>
   </div>
 
@@ -678,59 +699,60 @@ input[type=range] {
 
       <!-- API key -->
       <div class="setup-full">
-        <div class="panel-label">Are.na Access Token <span style="font-weight:normal;text-transform:none;letter-spacing:0;font-size:12px">(needed for private channels &amp; search)</span></div>
-        <p class="panel-hint">Get yours at <a href="https://www.are.na/developers/personal-access-tokens" target="_blank">are.na → Settings → Developers</a>. Read-only access is fine.</p>
-        <input class="text-input" style="width:100%" id="api-key" type="password" placeholder="Paste access token here" />
+        <label class="panel-label" for="api-key">Are.na Access Token <span style="font-weight:normal;text-transform:none;letter-spacing:0;font-size:12px">(needed for private channels &amp; search)</span></label>
+        <p class="panel-hint" id="api-key-hint">Get yours at <a href="https://www.are.na/developers/personal-access-tokens" target="_blank" rel="noopener">are.na → Settings → Developers</a>. Read-only access is fine.</p>
+        <input class="text-input" style="width:100%" id="api-key" type="password" placeholder="Paste access token here" aria-describedby="api-key-hint" autocomplete="off" />
         <p class="cache-note" style="margin-top:10px">
           Channel content is cached locally for 24 hours so you won't hammer the API.
-          <a onclick="clearAllCache()">Clear cache</a> to force a fresh fetch.
+          <button class="cache-note-btn" onclick="clearAllCache()">Clear cache</button> to force a fresh fetch.
         </p>
       </div>
 
       <!-- Search (v3 API requires an access token for search) -->
       <div class="setup-full">
-        <div class="panel-label">Search are.na <span style="font-weight:normal;text-transform:none;letter-spacing:0">(requires access token)</span></div>
-        <p class="panel-hint">
+        <label class="panel-label" for="search-input">Search are.na <span style="font-weight:normal;text-transform:none;letter-spacing:0">(requires access token)</span></label>
+        <p class="panel-hint" id="search-hint">
           Search are.na blocks by keyword — fetches matching images and texts, pooled with your channels above.
           Requires an access token (v3 API). Leave blank to pull recent public blocks.
         </p>
         <div class="input-row">
-          <input class="text-input" id="search-input" type="text" placeholder="e.g. landscape, machines, dreams — or leave blank for recent public blocks" />
-          <button class="btn-add" onclick="addSearch()">Add</button>
+          <input class="text-input" id="search-input" type="text" placeholder="e.g. landscape, machines, dreams — or leave blank for recent public blocks" aria-describedby="search-hint" />
+          <button class="btn-add" onclick="addSearch()" aria-label="Add search query">Add</button>
         </div>
-        <div class="chips" id="search-chips"></div>
+        <div class="chips" id="search-chips" role="list" aria-label="Search queries"></div>
       </div>
 
       <!-- Blocklist -->
       <div class="setup-full">
-        <div class="panel-label">Block blocklist</div>
-        <p class="panel-hint">
+        <label class="panel-label" for="blocklist-input">Block blocklist</label>
+        <p class="panel-hint" id="blocklist-hint">
           Paste an are.na block URL (e.g. <code>https://www.are.na/block/12345</code>) to exclude it from the canvas.
         </p>
         <div class="input-row">
-          <input class="text-input" id="blocklist-input" type="text" placeholder="https://www.are.na/block/…" />
-          <button class="btn-add" onclick="addBlocklist()">Add</button>
+          <input class="text-input" id="blocklist-input" type="text" placeholder="https://www.are.na/block/…" aria-describedby="blocklist-hint" />
+          <button class="btn-add" onclick="addBlocklist()" aria-label="Add block to blocklist">Add</button>
         </div>
-        <div class="chips" id="blocklist-chips"></div>
+        <div class="chips" id="blocklist-chips" role="list" aria-label="Blocked blocks"></div>
       </div>
 
       <!-- Audio -->
       <div class="setup-full">
-        <div class="panel-label">Music (optional)</div>
-        <p class="panel-hint">
+        <label class="panel-label" for="audio-url-input">Music (optional)</label>
+        <p class="panel-hint" id="audio-hint">
           Add a link to a SoundCloud playlist, a direct link to an MP3/OGG, or use a local MP3 file.
         </p>
         <div class="input-row">
           <input class="text-input" id="audio-url-input" type="text"
-                 placeholder="SoundCloud playlist URL or direct MP3/OGG link" />
-          <button class="btn-add" onclick="setAudioUrl()">Add</button>
+                 placeholder="SoundCloud playlist URL or direct MP3/OGG link"
+                 aria-describedby="audio-hint" />
+          <button class="btn-add" onclick="setAudioUrl()" aria-label="Set music URL">Add</button>
         </div>
         <div class="file-row">
           <label class="file-label-btn" for="audio-file-input">Local file…</label>
-          <input type="file" id="audio-file-input" accept="audio/*" onchange="setAudioFile(event)" />
-          <span class="file-name" id="audio-file-name">No file chosen</span>
+          <input type="file" id="audio-file-input" accept="audio/*" onchange="setAudioFile(event)" aria-label="Choose local audio file" />
+          <span class="file-name" id="audio-file-name" aria-live="polite">No file chosen</span>
         </div>
-        <div id="audio-status" class="cache-note" style="margin-top:6px"></div>
+        <div id="audio-status" class="cache-note" style="margin-top:6px" aria-live="polite"></div>
       </div>
 
     </div><!-- /adv-body -->
@@ -742,43 +764,44 @@ input[type=range] {
 <!-- ═══════ DISPLAY ═══════ -->
 <div id="display">
   <div id="canvas-wrap">
-    <canvas id="mainCanvas"></canvas>
+    <canvas id="mainCanvas" role="img" aria-label="Hypernormalisation slideshow canvas"></canvas>
   </div>
 
   <div id="fade-overlay"></div>
 
   <!-- Info / Debug panel -->
-  <div id="debug-panel">
-    <button id="debug-close" onclick="toggleDebug()" title="Close info panel" aria-label="Close info panel">×</button>
+  <div id="debug-panel" role="dialog" aria-label="Info panel" aria-modal="false">
+    <button id="debug-close" onclick="toggleDebug()" aria-label="Close info panel">×</button>
     <h3>Info</h3>
     <div id="debug-content"></div>
   </div>
 
   <div id="controls">
     <div class="ctrl-bar-bottom">
-      <button class="ctrl-btn" id="btn-debug" onclick="toggleDebug()">◈ Info</button>
-      <button class="ctrl-btn" onclick="backToSetup()">⚙ Setup</button>
-      <button class="ctrl-btn" id="btn-audio" onclick="toggleAudio()" style="display:none">♪ Music</button>
-      <div class="ctrl-divider"></div>
+      <button class="ctrl-btn" id="btn-debug" onclick="toggleDebug()" aria-pressed="false" aria-label="Info panel">◈ Info</button>
+      <button class="ctrl-btn" onclick="backToSetup()" aria-label="Back to setup">⚙ Setup</button>
+      <button class="ctrl-btn" id="btn-audio" onclick="toggleAudio()" aria-pressed="false" aria-label="Toggle music" style="display:none">♪ Music</button>
+      <div class="ctrl-divider" role="separator"></div>
       <div class="speed-wrap">
-        <label>Speed</label>
+        <label for="speed-slider">Speed</label>
         <input type="range" id="speed-slider" min="3" max="30" value="10"
+               aria-valuemin="3" aria-valuemax="30" aria-valuenow="10" aria-valuetext="10 seconds"
                oninput="setSpeed(this.value)" />
-        <span id="speed-val">10s</span>
+        <span id="speed-val" aria-live="polite">10s</span>
       </div>
-      <div class="ctrl-divider"></div>
-      <button class="ctrl-btn" onclick="prevSlide()">◀ Prev</button>
-      <button class="ctrl-btn" id="btn-play" onclick="togglePlay()">▶ Play</button>
-      <button class="ctrl-btn" onclick="nextSlide()">Next ▶</button>
-      <div class="ctrl-divider"></div>
-      <button class="ctrl-btn" onclick="downloadPNG()">↓ Save PNG</button>
-      <button class="ctrl-btn" id="btn-fullscreen" onclick="toggleFullscreen()">⛶ Full</button>
+      <div class="ctrl-divider" role="separator"></div>
+      <button class="ctrl-btn" onclick="prevSlide()" aria-label="Previous slide">◀ Prev</button>
+      <button class="ctrl-btn" id="btn-play" onclick="togglePlay()" aria-pressed="false" aria-label="Play slideshow">▶ Play</button>
+      <button class="ctrl-btn" onclick="nextSlide()" aria-label="Next slide">Next ▶</button>
+      <div class="ctrl-divider" role="separator"></div>
+      <button class="ctrl-btn" onclick="downloadPNG()" aria-label="Save current slide as PNG">↓ Save PNG</button>
+      <button class="ctrl-btn" id="btn-fullscreen" onclick="toggleFullscreen()" aria-pressed="false" aria-label="Toggle fullscreen">⛶ Full</button>
     </div>
   </div>
 </div>
 
 <!-- Hidden audio element -->
-<audio id="bgAudio" loop></audio>
+<audio id="bgAudio" loop aria-hidden="true"></audio>
 
 <script>
 'use strict';
@@ -1008,8 +1031,8 @@ function renderChips(type) {
   const arr = type === 'image' ? S.imageChannelSlugs : S.textChannelSlugs;
   const el  = document.getElementById(type === 'image' ? 'img-chips' : 'txt-chips');
   el.innerHTML = arr.map(slug =>
-    `<div class="chip"><span title="${slug}">${slug}</span>` +
-    `<button class="chip-x" onclick="removeChannel('${type}','${slug}')">×</button></div>`
+    `<div class="chip" role="listitem"><span title="${slug}">${slug}</span>` +
+    `<button class="chip-x" onclick="removeChannel('${type}','${slug}')" aria-label="Remove ${slug}">×</button></div>`
   ).join('');
 }
 
@@ -1038,8 +1061,8 @@ function renderSearchChips() {
   el.innerHTML = S.searchQueries.map((q, idx) => {
     const label    = q || '(recent public)';
     const labelEsc = label.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    return `<div class="chip"><span title="${labelEsc}">${labelEsc}</span>` +
-           `<button class="chip-x" data-idx="${idx}">×</button></div>`;
+    return `<div class="chip" role="listitem"><span title="${labelEsc}">${labelEsc}</span>` +
+           `<button class="chip-x" data-idx="${idx}" aria-label="Remove search query ${labelEsc}">×</button></div>`;
   }).join('');
   el.querySelectorAll('[data-idx]').forEach(btn => {
     btn.addEventListener('click', () => removeSearch(S.searchQueries[+btn.dataset.idx]));
@@ -1076,8 +1099,8 @@ function renderBlocklistChips() {
   if (!el) return;
   el.innerHTML = S.blocklist.map((id, idx) => {
     const label = `are.na/block/${id}`;
-    return `<div class="chip"><span title="${label}">${label}</span>` +
-           `<button class="chip-x" data-idx="${idx}">×</button></div>`;
+    return `<div class="chip" role="listitem"><span title="${label}">${label}</span>` +
+           `<button class="chip-x" data-idx="${idx}" aria-label="Remove blocked block ${id}">×</button></div>`;
   }).join('');
   el.querySelectorAll('[data-idx]').forEach(btn => {
     btn.addEventListener('click', () => removeBlocklist(S.blocklist[+btn.dataset.idx]));
@@ -1232,11 +1255,19 @@ function isBlocklisted(b) {
   return DEFAULT_BLOCKLIST_IDS.has(id) || S.blocklist.includes(id);
 }
 
+function blockAlt(b) {
+  // Best available description for screen readers, in priority order.
+  return b.image?.alt_text
+    || (b.title && !b.title.match(/\.(jpe?g|png|gif|webp|bmp|tiff?)$/i) ? b.title : null)
+    || b.description?.plain?.split('\n')[0]
+    || 'Image from are.na';
+}
+
 function extractImages(blocks) {
   // v3: type field (was class), image URLs at image.src / image.large.src
   return blocks
     .filter(b => (b.type === 'Image' || (b.type === 'Link' && b.image)) && !isBlocklisted(b))
-    .map(b => ({ url: b.image?.src || b.image?.large?.src || b.image?.medium?.src }))
+    .map(b => ({ url: b.image?.src || b.image?.large?.src || b.image?.medium?.src, alt: blockAlt(b) }))
     .filter(b => b.url);
 }
 
@@ -1513,6 +1544,7 @@ function pickEntry() {
   const txtItem = S.textBag.next();
   return {
     imageUrl:  imgItem.url,
+    imageAlt:  imgItem.alt  || 'Image from are.na',
     imageSrc:  imgItem.source || '',
     text:      txtItem.content,
     textSrc:   txtItem.source || '',
@@ -1545,6 +1577,11 @@ async function showEntry(entry, immediate) {
   S.currentImageSrc  = entry.imageSrc  || '';
   S.currentTextSrc   = entry.textSrc   || '';
   renderFrame(img, entry.text, entry.color, canvas, ctx);
+
+  // Update canvas accessible label with image alt + visible text
+  const altText = entry.imageAlt || 'Image from are.na';
+  const caption = entry.text ? ` — "${entry.text}"` : '';
+  canvas.setAttribute('aria-label', altText + caption);
 
   if (!immediate) await fade(false);
 
@@ -1614,12 +1651,24 @@ function scheduleNext() {
 function setSpeed(val) {
   S.playDelay = parseInt(val) * 1000;
   document.getElementById('speed-val').textContent = val + 's';
+  const slider = document.getElementById('speed-slider');
+  slider.setAttribute('aria-valuenow', val);
+  slider.setAttribute('aria-valuetext', val + ' seconds');
 }
 
 function updatePlayBtn() {
   const btn = document.getElementById('btn-play');
-  if (S.isPlaying) { btn.textContent = '⏸ Pause'; btn.classList.add('active'); }
-  else             { btn.textContent = '▶ Play';  btn.classList.remove('active'); }
+  if (S.isPlaying) {
+    btn.textContent = '⏸ Pause';
+    btn.classList.add('active');
+    btn.setAttribute('aria-pressed', 'true');
+    btn.setAttribute('aria-label', 'Pause slideshow');
+  } else {
+    btn.textContent = '▶ Play';
+    btn.classList.remove('active');
+    btn.setAttribute('aria-pressed', 'false');
+    btn.setAttribute('aria-label', 'Play slideshow');
+  }
 }
 
 // ════════════════════════════════════════════════
@@ -1757,26 +1806,25 @@ function setupSCWidget(playlistUrl) {
   }
 }
 
+function setAudioBtnState(playing) {
+  const btn = document.getElementById('btn-audio');
+  btn.textContent = playing ? '♪ Mute' : '♪ Music';
+  btn.setAttribute('aria-pressed', playing ? 'true' : 'false');
+  btn.setAttribute('aria-label', playing ? 'Mute music' : 'Play music');
+  playing ? btn.classList.add('active') : btn.classList.remove('active');
+}
+
 function pauseAudio() {
   if (audioMode === 'sc' && scWidget && scReady) scWidget.pause();
   if (audioMode === 'local') bgAudio.pause();
-  const btn = document.getElementById('btn-audio');
-  btn.textContent = '♪ Music';
-  btn.classList.remove('active');
+  setAudioBtnState(false);
 }
 
 function toggleAudio() {
-  const btn = document.getElementById('btn-audio');
-
   if (audioMode === 'sc' && scWidget && scReady) {
     scWidget.isPaused(paused => {
-      if (paused) {
-        scWidget.play();
-        btn.textContent = '♪ Mute'; btn.classList.add('active');
-      } else {
-        scWidget.pause();
-        btn.textContent = '♪ Music'; btn.classList.remove('active');
-      }
+      if (paused) { scWidget.play(); setAudioBtnState(true); }
+      else        { scWidget.pause(); setAudioBtnState(false); }
     });
     return;
   }
@@ -1784,10 +1832,10 @@ function toggleAudio() {
   if (audioMode === 'local') {
     if (bgAudio.paused) {
       bgAudio.play().catch(() => {});
-      btn.textContent = '♪ Mute'; btn.classList.add('active');
+      setAudioBtnState(true);
     } else {
       bgAudio.pause();
-      btn.textContent = '♪ Music'; btn.classList.remove('active');
+      setAudioBtnState(false);
     }
   }
 }
@@ -1865,13 +1913,13 @@ document.addEventListener('keydown', e => {
 function toggleDebug() {
   const panel = document.getElementById('debug-panel');
   const btn   = document.getElementById('btn-debug');
-  if (panel.style.display === 'block') {
-    panel.style.display = 'none';
-    btn.classList.remove('active');
-  } else {
-    panel.style.display = 'block';
-    btn.classList.add('active');
+  const open  = panel.style.display === 'block';
+  panel.style.display = open ? 'none' : 'block';
+  btn.setAttribute('aria-pressed', open ? 'false' : 'true');
+  btn.classList.toggle('active', !open);
+  if (!open) {
     updateDebugPanel();
+    document.getElementById('debug-close').focus();
   }
 }
 
@@ -1886,7 +1934,10 @@ function toggleFullscreen() {
 document.addEventListener('fullscreenchange', () => {
   const btn = document.getElementById('btn-fullscreen');
   if (!btn) return;
-  btn.textContent = document.fullscreenElement ? '✕ Exit Full' : '⛶ Full';
+  const inFull = !!document.fullscreenElement;
+  btn.textContent = inFull ? '✕ Exit Full' : '⛶ Full';
+  btn.setAttribute('aria-pressed', inFull ? 'true' : 'false');
+  btn.setAttribute('aria-label', inFull ? 'Exit fullscreen' : 'Toggle fullscreen');
 });
 
 function updateDebugPanel() {
