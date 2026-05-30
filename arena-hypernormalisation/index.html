@@ -692,6 +692,19 @@ input[type=range] {
 
     
 
+      <!-- Blocklist -->
+      <div class="setup-full">
+        <div class="panel-label">Block blocklist</div>
+        <p class="panel-hint">
+          Paste an are.na block URL (e.g. <code>https://www.are.na/block/12345</code>) to exclude it from the canvas.
+        </p>
+        <div class="input-row">
+          <input class="text-input" id="blocklist-input" type="text" placeholder="https://www.are.na/block/…" />
+          <button class="btn-add" onclick="addBlocklist()">Add</button>
+        </div>
+        <div class="chips" id="blocklist-chips"></div>
+      </div>
+
       <!-- Audio -->
       <div class="setup-full">
         <div class="panel-label">Music (optional)</div>
@@ -838,10 +851,14 @@ function shuffle(arr) {
 // STATE
 // ════════════════════════════════════════════════
 
+// Block IDs that are always excluded, regardless of user's blocklist.
+const DEFAULT_BLOCKLIST_IDS = new Set([46541568]);
+
 const S = {
   imageChannelSlugs: [],
   textChannelSlugs:  [],
   searchQueries:     [],
+  blocklist:         [],   // user-added block IDs to skip (integers)
   audioUrl:          '',   // SC playlist URL or direct MP3; '' = use default SC playlist
   apiKey:            '',
   allImages:         [],
@@ -875,6 +892,7 @@ function savePrefs() {
       imageChannelSlugs: S.imageChannelSlugs,
       textChannelSlugs:  S.textChannelSlugs,
       searchQueries:     S.searchQueries,
+      blocklist:         S.blocklist,
       audioUrl:          S.audioUrl,
       apiKey:            S.apiKey,
     }));
@@ -900,6 +918,7 @@ function loadPrefs() {
     S.imageChannelSlugs = p.imageChannelSlugs || [];
     S.textChannelSlugs  = p.textChannelSlugs  || [];
     S.searchQueries     = p.searchQueries     || [];
+    S.blocklist         = p.blocklist         || [];
     S.audioUrl          = p.audioUrl          || '';
     S.apiKey            = p.apiKey            || '';
     if (S.apiKey) {
@@ -909,6 +928,7 @@ function loadPrefs() {
     renderChips('image');
     renderChips('text');
     renderSearchChips();
+    renderBlocklistChips();
     // Restore audio URL display
     if (S.audioUrl) {
       const el = document.getElementById('audio-status');
@@ -1031,6 +1051,43 @@ function renderSearchChips() {
 }
 
 
+function blockIdFromUrl(raw) {
+  // Accept full URL or bare ID
+  const m = raw.match(/(?:are\.na\/block\/|^)(\d+)\s*$/);
+  return m ? parseInt(m[1], 10) : null;
+}
+
+function addBlocklist() {
+  const input = document.getElementById('blocklist-input');
+  const id = blockIdFromUrl(input.value.trim());
+  if (!id) { alert('Please paste a valid are.na block URL.'); return; }
+  if (!S.blocklist.includes(id)) {
+    S.blocklist.push(id);
+    savePrefs();
+    renderBlocklistChips();
+  }
+  input.value = '';
+}
+
+function removeBlocklist(id) {
+  S.blocklist = S.blocklist.filter(x => x !== id);
+  savePrefs();
+  renderBlocklistChips();
+}
+
+function renderBlocklistChips() {
+  const el = document.getElementById('blocklist-chips');
+  if (!el) return;
+  el.innerHTML = S.blocklist.map((id, idx) => {
+    const label = `are.na/block/${id}`;
+    return `<div class="chip"><span title="${label}">${label}</span>` +
+           `<button class="chip-x" data-idx="${idx}">×</button></div>`;
+  }).join('');
+  el.querySelectorAll('[data-idx]').forEach(btn => {
+    btn.addEventListener('click', () => removeBlocklist(S.blocklist[+btn.dataset.idx]));
+  });
+}
+
 function updateGoBtn() {
   const hasContent =
     S.imageChannelSlugs.length > 0 ||
@@ -1040,12 +1097,13 @@ function updateGoBtn() {
 }
 
 // Enter keys
-['img-input','txt-input','search-input'].forEach(id => {
+['img-input','txt-input','search-input','blocklist-input'].forEach(id => {
   document.getElementById(id).addEventListener('keydown', e => {
     if (e.key !== 'Enter') return;
-    if (id === 'img-input')    addChannel('image');
-    if (id === 'txt-input')    addChannel('text');
-    if (id === 'search-input') addSearch();
+    if (id === 'img-input')       addChannel('image');
+    if (id === 'txt-input')       addChannel('text');
+    if (id === 'search-input')    addSearch();
+    if (id === 'blocklist-input') addBlocklist();
   });
 });
 
@@ -1173,10 +1231,15 @@ function wordCount(str) {
   return str.split(/\s+/).filter(w => w).length;
 }
 
+function isBlocklisted(b) {
+  const id = Number(b.id);
+  return DEFAULT_BLOCKLIST_IDS.has(id) || S.blocklist.includes(id);
+}
+
 function extractImages(blocks) {
   // v3: type field (was class), image URLs at image.src / image.large.src
   return blocks
-    .filter(b => b.type === 'Image' || (b.type === 'Link' && b.image))
+    .filter(b => (b.type === 'Image' || (b.type === 'Link' && b.image)) && !isBlocklisted(b))
     .map(b => ({ url: b.image?.src || b.image?.large?.src || b.image?.medium?.src }))
     .filter(b => b.url);
 }
@@ -1184,7 +1247,7 @@ function extractImages(blocks) {
 function extractTexts(blocks) {
   // v3: type field (was class), text content at content.plain (was b.content string)
   return blocks
-    .filter(b => b.type === 'Text' && (b.content?.plain || b.content?.markdown))
+    .filter(b => b.type === 'Text' && (b.content?.plain || b.content?.markdown) && !isBlocklisted(b))
     .map(b => ({ content: (b.content?.plain || stripHtml(b.content?.markdown || '')) }))
     .filter(b => b.content.length > 3 && wordCount(b.content) <= MAX_WORDS);
 }
