@@ -1,0 +1,1 @@
+always use are.na APIv3 and add polite rate throttling

@@ -8,13 +8,13 @@ Browser tools for working with [are.na](https://www.are.na). Vanilla JS, no buil
 
 ## Are.na Hypernormalisation
 
-![Screenshot from Are.na Hypernormalisation showing a monochrome photograph with bold white text overlay reading "NOBODY KNOWS WHAT THEY ARE DOING"](docs/arena-hypernormalisation3.jpg)
+![Screenshot from Are.na Hypernormalisation showing a woman performing an acrobatic strech and the words "NOB, ITS FINE, REALLY"](docs/arena-hypernormalisation3.jpg)
 
 **[Try it](https://mildlydiverting.github.io/are.na-toolkit/arena-hypernormalisation.html)**
 
 Pull images and text from are.na channels and combine them into a strangely familiar documentary critique of late capitalism. Inspired by [Adam Curtis](https://www.bbc.co.uk/webarchive/https%3A%2F%2Fwww.bbc.co.uk%2Fblogs%2Fadamcurtis%2Fentries%2F02d9ed3c-d71b-4232-ae17-67da423b5df5), [Tom Scott](https://www.tomscott.com/infinite-adam-curtis/), and [Dan Williams](https://www.iamdanw.com).
 
-Good for full-screen ambient displays, or just staring into the void.
+Good for full-screen ambient displays, or just staring into the void. Feel free to add to the default [images](https://www.are.na/kim-plowright/hypernormalisation-images) and [text fragments](https://www.are.na/kim-plowright/hypernormalisation-text) channels on are.na.
 
 **What it does:**
 - Fetches images and short text blocks from any public are.na channels you specify
@@ -25,11 +25,56 @@ Good for full-screen ambient displays, or just staring into the void.
 - Optional SoundCloud or local audio soundtrack
 - Export any frame as a 1920×1080 PNG
 
-**Keyboard shortcuts:** `→`/`N` next · `←`/`P` prev · `Space` play/pause · `M` music · `S` save PNG · `D` info panel · `Esc` back to setup
-
-**Advanced settings** (collapsed by default): keyword search, custom audio, access token for private channels.
+**Advanced settings** (collapsed by default):access token for private channels, keyword search, block blocklist, custom audio.
 
 **File:** `arena-hypernormalisation/index.html` — single self-contained file, ~2000 lines.
+
+### Setup screen
+
+| Field | What to enter |
+|---|---|
+| Image channels | are.na channel URLs or slugs — images become backgrounds, default https://www.are.na/kim-plowright/hypernormalisation-images |
+| Text channels | are.na channel URLs or slugs — text blocks become captions, default https://www.are.na/kim-plowright/hypernormalisation-text |
+| (Advanced) Access token | Optional. Needed for private channels. Get it at [are.na → Settings → Developers](https://www.are.na/developers/personal-access-tokens). **Not saved to localStorage.** |
+| (Advanced) Search are.na | Optional. Keyword(s) to search public are.na blocks; leave blank for recent public blocks |
+| (Advanced) Music | Optional. SoundCloud playlist URL, direct MP3/OGG URL, or local audio file |
+| (Advanced) Block List | Optional. are.na block URLs - prevent display of specific blocks |
+
+Enter key submits any text field. Channels accept full URLs (`https://www.are.na/user/slug`) or bare slugs. Settings (channels, searches, audio URL) persist across sessions via `localStorage`.
+
+### Display mode
+
+#### Keyboard shortcuts
+
+| Key | Action |
+|---|---|
+| `→` or `N` | Next slide |
+| `←` or `P` | Previous slide |
+| `Space` | Play / Pause autoplay |
+| `M` | Toggle music |
+| `S` | Save PNG |
+| `D` | Toggle Info Panel |
+| `Escape` | Back to setup |
+
+#### Controls bar (bottom)
+
+Fades in on mouse movement, out after ~3 seconds. Click the canvas to toggle.
+
+`⚙ Setup` — returns to settings (stops playback and audio)  
+`◈ Info` — opens Pool Inspector panel (right side)  
+`◀ Prev` / `▶ Play` / `Next ▶` — navigation and autoplay  
+`Speed` — slider, 3–30 seconds per slide  
+`♪ Music` — toggle audio (hidden if no audio source set)  
+`↓ Save PNG` — exports current frame at 1920×1080
+
+### Info / Pool Inspector / Stats panel
+
+Shows live state of the content pool. Accessible via `◈ Info` button or `D` key.
+
+- **Pool** — "↻ Fetch fresh" button: clears cache for all active sources and re-fetches, merging only new items into the live bags without interrupting playback. "✕ Clear all cache" wipes every cached entry.
+- **Images / Texts** — total pool size, items remaining until a full repeat cycle, and per-source breakdown.
+- **History** — how many slides have been shown and current position (for back/forward).
+- **Cache entries** — each cached key with age, green (fresh) or red (expired). Each has its own `✕` delete button.
 
 ---
 
@@ -107,6 +152,28 @@ python3 arena-palette/build.py
 # copy to docs/ manually or cp arena-palette/dist/arena-palette.html docs/arena-palette.html
 ```
 
+### Are.na Hypernormalisation Fetching, Caching & Throttling
+
+- Channel content is cached in `localStorage` per channel slug + page number, with a 24-hour TTL. Stale entries are deleted on read.
+- On "Go", only **page 1** of each channel is fetched. Subsequent pages are loaded incrementally in the background.
+- Background top-up triggers every **25 slides**, silently fetching the next page of each channel and appending new images/texts to the pool.
+- Search queries are also cached per query string, same 24-hour TTL.
+- A **150ms delay** is inserted between paginated requests ("polite pacing").
+- On an HTTP **429 (rate limited)** response, retries with exponential backoff: 2s → 4s → 8s. If the server sends a `Retry-After` header, that value is used instead. After three retries it makes one final attempt and fails. The status bar shows a countdown during the wait.
+- The Info panel has a "Fetch fresh" button (manual top-up) and a "Clear all cache" button (nukes everything, re-fetches on next Go).
+- Prefs (channels, blocklist, API key, etc.) are stored separately in `localStorage` and never expire.
+
+## Are.na Hypernormalisation Music
+
+- Default audio is a hardcoded SoundCloud playlist (`soundcloud.com/mildlydiverting/sets/are-na-hypernormalisation`) 
+- You can override with: a SoundCloud playlist URL, a direct MP3/OGG URL, or a local file.
+- The SoundCloud widget loads in a hidden 1×1px iframe; the SC Widget API controls playback.
+- On load, it fetches all tracks in the playlist, **shuffles** them, and plays in shuffled order. When exhausted, reshuffles (guaranteed different order).
+- A direct MP3/OGG URL or local file plays via a standard `<audio>` element at 50% volume, looping.
+- The SC iframe starts loading **in parallel** with channel fetching (prefetched immediately on Go).
+- The ♪ Music button toggles mute/unmute; hidden if no audio is configured.
+- Returning to Setup pauses audio.
+
 ---
 
 ## Repo structure
@@ -131,4 +198,4 @@ are.na-toolkit/
 
 ---
 
-*Open source — do what you like with it. Found a bug? [Open an issue](https://github.com/mildlydiverting/are.na-toolkit/issues).*
+*Open source [https://github.com/mildlydiverting/are.na-toolkit/blob/main/LICENSE]MIT license — do what you like with it. Found a bug? [Open an issue](https://github.com/mildlydiverting/are.na-toolkit/issues).*
