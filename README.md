@@ -8,7 +8,7 @@ Browser tools for working with [are.na](https://www.are.na). Vanilla JS, no buil
 
 ## Are.na Hypernormalisation
 
-![Screenshot from Are.na Hypernormalisation showing a woman performing an acrobatic strech and the words "NOB, ITS FINE, REALLY"](docs/arena-hypernormalisation3.jpg)
+![Screenshot from Are.na Hypernormalisation showing a woman performing an acrobatic strech and the words "NO, ITS FINE, REALLY"](docs/arena-hypernormalisation3.jpg)
 
 **[Try it](https://mildlydiverting.github.io/are.na-toolkit/arena-hypernormalisation.html)**
 
@@ -25,7 +25,7 @@ Good for full-screen ambient displays, or just staring into the void. Feel free 
 - Optional SoundCloud or local audio soundtrack
 - Export any frame as a 1920×1080 PNG
 
-**Advanced settings** (collapsed by default):access token for private channels, keyword search, block blocklist, custom audio.
+**Advanced settings** (collapsed by default, in order): access token for private channels, keyword search, block blocklist, custom audio.
 
 **File:** `arena-hypernormalisation/index.html` — single self-contained file, ~2000 lines.
 
@@ -35,10 +35,10 @@ Good for full-screen ambient displays, or just staring into the void. Feel free 
 |---|---|
 | Image channels | are.na channel URLs or slugs — images become backgrounds, default https://www.are.na/kim-plowright/hypernormalisation-images |
 | Text channels | are.na channel URLs or slugs — text blocks become captions, default https://www.are.na/kim-plowright/hypernormalisation-text |
-| (Advanced) Access token | Optional. Needed for private channels. Get it at [are.na → Settings → Developers](https://www.are.na/developers/personal-access-tokens). **Not saved to localStorage.** |
-| (Advanced) Search are.na | Optional. Keyword(s) to search public are.na blocks; leave blank for recent public blocks |
-| (Advanced) Music | Optional. SoundCloud playlist URL, direct MP3/OGG URL, or local audio file |
-| (Advanced) Block List | Optional. are.na block URLs - prevent display of specific blocks |
+| (Advanced) Access token | Optional. Needed for private channels and search. Get it at [are.na → Settings → Developers](https://www.are.na/developers/personal-access-tokens). Saved to `localStorage`. |
+| (Advanced) Search are.na | Optional. Keyword(s) to search public are.na blocks; leave blank for recent public blocks. Requires access token. |
+| (Advanced) Block blocklist | Optional. Paste are.na block URLs to exclude specific blocks from the canvas. |
+| (Advanced) Music | Optional. SoundCloud playlist URL, direct MP3/OGG URL, or local audio file. Muted by default — press ♪ Music to start. |
 
 Enter key submits any text field. Channels accept full URLs (`https://www.are.na/user/slug`) or bare slugs. Settings (channels, searches, audio URL) persist across sessions via `localStorage`.
 
@@ -152,7 +152,7 @@ python3 arena-palette/build.py
 # copy to docs/ manually or cp arena-palette/dist/arena-palette.html docs/arena-palette.html
 ```
 
-### Are.na Hypernormalisation Fetching, Caching & Throttling
+### Are.na Hypernormalisation — Fetching, Caching & Throttling
 
 - Channel content is cached in `localStorage` per channel slug + page number, with a 24-hour TTL. Stale entries are deleted on read.
 - On "Go", only **page 1** of each channel is fetched. Subsequent pages are loaded incrementally in the background.
@@ -163,16 +163,31 @@ python3 arena-palette/build.py
 - The Info panel has a "Fetch fresh" button (manual top-up) and a "Clear all cache" button (nukes everything, re-fetches on next Go).
 - Prefs (channels, blocklist, API key, etc.) are stored separately in `localStorage` and never expire.
 
-## Are.na Hypernormalisation Music
+### Are.na Hypernormalisation — Music
 
-- Default audio is a hardcoded SoundCloud playlist (`soundcloud.com/mildlydiverting/sets/are-na-hypernormalisation`) 
+- Default audio is a hardcoded SoundCloud playlist (`soundcloud.com/mildlydiverting/sets/are-na-hypernormalisation`).
 - You can override with: a SoundCloud playlist URL, a direct MP3/OGG URL, or a local file.
+- **Muted by default** — the SC widget prefetches and cues the first shuffled track on Go, but does not auto-play. User must press ♪ Music.
 - The SoundCloud widget loads in a hidden 1×1px iframe; the SC Widget API controls playback.
 - On load, it fetches all tracks in the playlist, **shuffles** them, and plays in shuffled order. When exhausted, reshuffles (guaranteed different order).
 - A direct MP3/OGG URL or local file plays via a standard `<audio>` element at 50% volume, looping.
 - The SC iframe starts loading **in parallel** with channel fetching (prefetched immediately on Go).
 - The ♪ Music button toggles mute/unmute; hidden if no audio is configured.
 - Returning to Setup pauses audio.
+
+### Are.na Hypernormalisation — Block blocklist
+
+- `DEFAULT_BLOCKLIST_IDS` — a hardcoded `Set` of block IDs (integers) that are always excluded, regardless of user settings. Not shown in the UI.
+- `S.blocklist` — user-managed array of block IDs, persisted in `localStorage`. Managed via the Block blocklist section in Advanced Settings.
+- `isBlocklisted(b)` checks both before `extractImages` and `extractTexts` map their blocks.
+- Block URLs are parsed to extract the integer ID; only the ID is stored.
+
+### Are.na Hypernormalisation — Alt text & accessibility
+
+- `blockAlt(b)` builds an alt string from the v3 API response: `image.alt_text` (if set by the are.na user) → `title` (if not a bare filename like `IMG_4032.jpg`) → first line of `description.plain` → `"Image from are.na"` as fallback.
+- Image objects in `S.allImages` carry `{ url, alt, source }`.
+- History entries carry `imageAlt`. `showEntry` sets `canvas.aria-label` to `"[alt] — [caption text]"` on each slide render.
+- All form inputs are associated to visible `<label>` elements. Dynamic regions (`#status`, `#error-area`, `#audio-status`) use `aria-live`. Toggle buttons use `aria-pressed`. Chip remove buttons have descriptive `aria-label` values.
 
 ---
 
@@ -198,4 +213,4 @@ are.na-toolkit/
 
 ---
 
-*Open source [https://github.com/mildlydiverting/are.na-toolkit/blob/main/LICENSE]MIT license — do what you like with it. Found a bug? [Open an issue](https://github.com/mildlydiverting/are.na-toolkit/issues).*
+*Open source [https://github.com/mildlydiverting/are.na-toolkit/blob/main/LICENSE](MIT) license — do what you like with it. Found a bug? [Open an issue](https://github.com/mildlydiverting/are.na-toolkit/issues).*

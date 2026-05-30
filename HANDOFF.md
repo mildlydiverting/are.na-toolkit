@@ -1,6 +1,66 @@
 # Handoff — are.na toolkit, May 2026
 
-This document covers all changes made in the May 2026 session. It supersedes `arena-hypernormalisation/HANDOFF.md`, which is now outdated (references v2 API and old state structure).
+---
+
+## Session: 30 May 2026 — Hypernormalisation accessibility, blocklist, alt text
+
+### Changes: arena-hypernormalisation
+
+**Block blocklist**
+- `DEFAULT_BLOCKLIST_IDS` — hardcoded `Set` of block IDs permanently excluded (currently: `46541568`). Never shown in UI.
+- `S.blocklist` — user-managed array of block IDs, persisted in `localStorage`. UI in Advanced Settings: paste a full `are.na/block/…` URL, shown as removable chips.
+- `isBlocklisted(b)` — checks both sets before `extractImages` / `extractTexts` map their blocks.
+
+**Accessibility pass**
+- All `<div class="panel-label">` → `<label class="panel-label" for="…">` with `display:block`
+- All inputs gained `aria-describedby` pointing to hint paragraphs (which got IDs)
+- `#status` → `aria-live="polite"`; `#error-area` → `role="alert" aria-live="assertive"`
+- `#audio-status`, `#audio-file-name`, `#speed-val` → `aria-live="polite"`
+- Chip containers: `role="list"` + `aria-label`; each chip: `role="listitem"`; each × button: descriptive `aria-label`
+- Canvas: `role="img"` + `aria-label` (updated per slide — see alt text below)
+- Debug panel: `role="dialog"` + `aria-label`; focus moves to close button on open
+- Speed slider: `aria-valuemin/max/now/text` set on init and updated on change
+- Toggle buttons (`btn-play`, `btn-audio`, `btn-debug`, `btn-fullscreen`): `aria-pressed` kept in sync; `aria-label` updated to reflect current action
+- `<a onclick="clearAllCache()">` → `<button class="cache-note-btn">` (keyboard-focusable, styled identically via CSS)
+- `<audio>` → `aria-hidden="true"`; external links got `rel="noopener"`
+
+**Alt text from are.na API**
+- `blockAlt(b)` — picks best available text: `image.alt_text` → `title` (if not a bare filename) → first line of `description.plain` → `"Image from are.na"`
+- `extractImages` now maps `{ url, alt }` instead of `{ url }`
+- `pickEntry` passes `imageAlt` into history entries
+- `showEntry` sets `canvas.aria-label` to `"[alt] — [caption text]"` on each slide render
+
+**UI tweaks**
+- Advanced settings reordered: API key → Search → Blocklist → Music
+- `#status` min-height increased (48px) to hold status messages without layout jump
+- Accordion `margin-top` increased (8px → 24px) for breathing room below Go button
+- Music now **muted by default** on Go — SC widget prefetches and cues first shuffled track but does not auto-play; user must press ♪ Music. Same for local/MP3 mode.
+
+**Docs**
+- `arena-hypernormalisation/HANDOFF.md` replaced with a one-line pointer (this file + README are the canonical reference)
+
+### S object — current shape (additions since last session)
+```js
+S.blocklist      // number[] — user block IDs to skip; persisted
+// allImages items now carry:
+// { url, alt, source }
+// history entries now carry:
+// { imageUrl, imageAlt, imageSrc, text, textSrc, color }
+```
+
+### Known issues — updated
+- `fetchChannelContents` (old all-pages paginator) still present, now unused — remove on next pass
+- Search with no token: v3 requires auth even for public content; error message is clear but UX friction. Could show a warning badge on accordion when search queries saved but no token set
+- SoundCloud 30-second preview cap — platform limitation, not fixable without SC auth
+- CORS on PNG export — some are.na hosts restrict cross-origin; export may fail or produce blank canvas
+- localStorage quota — 5–10MB browser limit; "Clear all cache" in Info panel frees it
+- Bug (low) - if a user has added their own channels and removed the two defaults, then clears cache and removes all their channels from setup, the go button greys out - you have to re-add content. Look at a sensible workaround, like button to reselt to defaults?
+
+---
+
+## Session: May 2026 — API migration, pagination, major refactor
+
+This document covers all changes made in the May 2026 session.
 
 ---
 
@@ -152,24 +212,26 @@ OG images use the screenshots in `docs/` via absolute `mildlydiverting.github.io
 
 ## Current state: `channelPageState` and state object
 
-The hypernormalisation state object `S` now includes:
+The hypernormalisation state object `S` (current as of 30 May 2026):
 ```js
 const S = {
   imageChannelSlugs,  // string[]
   textChannelSlugs,   // string[]
   searchQueries,      // string[] ('' = recent public)
+  blocklist,          // number[] — user block IDs to skip; persisted
   audioUrl,           // string — persisted
-  apiKey,             // string — persisted (new this session)
-  allImages,          // {url, source}[]
+  apiKey,             // string — persisted
+  allImages,          // {url, alt, source}[]
   allTexts,           // {content, source}[]
   imageSources,       // {label: count}
   textSources,        // {label: count}
   imageBag,           // ShuffleBag
   textBag,            // ShuffleBag
-  history,            // entry[]
+  history,            // {imageUrl, imageAlt, imageSrc, text, textSrc, color}[]
   historyPos,         // number
   loadedImg,          // HTMLImageElement
   currentText,        // string
+  currentImageUrl,    // string
   currentImageSrc,    // string — source label (for info panel link)
   currentTextSrc,     // string — source label (for info panel link)
   currentColor,       // hex string
@@ -194,12 +256,7 @@ let audioMode        = 'none'; // 'sc' | 'local' | 'none'
 
 ## Deferred / known issues
 
-- **SoundCloud 30-second preview cap** — third-party uploaded tracks are capped at 30s for unauthenticated widget users. Platform limitation, not fixable without SC auth.
-- **CORS on PNG export** — some are.na image hosts set restrictive CORS headers; export may fail or produce a blank canvas. Not fixable without a proxy.
-- **localStorage quota** — with many large channels the 24h cache can fill the 5–10MB browser quota. "Clear all cache" in the Info panel frees it.
-- **Search with no token** — v3 search requires auth even for public content. The error message is clear but it's a UX friction point. Could consider showing a warning badge on the accordion when search queries are saved but no token is set.
-- **`fetchChannelContents` (old paginator)** — still present in the file, now unused. Can be removed on the next pass.
-- **Hypernormalisation HANDOFF.md** — `arena-hypernormalisation/HANDOFF.md` is outdated. Superseded by this document. Can be replaced with a brief pointer.
+See updated list in the 30 May 2026 session above.
 
 ---
 
