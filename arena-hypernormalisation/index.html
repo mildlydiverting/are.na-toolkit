@@ -326,7 +326,7 @@ input[type=file] { display: none; }
   font-size: 13px;
   color: var(--text-muted);
   letter-spacing: 0.08em;
-  min-height: 20px;
+  min-height: 48px;
   text-align: center;
 }
 
@@ -351,7 +351,7 @@ hr.divider {
 details.advanced-accordion {
   width: 100%;
   max-width: var(--setup-max-w);
-  margin-top: 8px;
+  margin-top: 24px;
 }
 
 details.advanced-accordion > summary {
@@ -676,6 +676,17 @@ input[type=range] {
 
     <div class="adv-body">
 
+      <!-- API key -->
+      <div class="setup-full">
+        <div class="panel-label">Are.na Access Token <span style="font-weight:normal;text-transform:none;letter-spacing:0;font-size:12px">(needed for private channels &amp; search)</span></div>
+        <p class="panel-hint">Get yours at <a href="https://www.are.na/developers/personal-access-tokens" target="_blank">are.na → Settings → Developers</a>. Read-only access is fine.</p>
+        <input class="text-input" style="width:100%" id="api-key" type="password" placeholder="Paste access token here" />
+        <p class="cache-note" style="margin-top:10px">
+          Channel content is cached locally for 24 hours so you won't hammer the API.
+          <a onclick="clearAllCache()">Clear cache</a> to force a fresh fetch.
+        </p>
+      </div>
+
       <!-- Search (v3 API requires an access token for search) -->
       <div class="setup-full">
         <div class="panel-label">Search are.na <span style="font-weight:normal;text-transform:none;letter-spacing:0">(requires access token)</span></div>
@@ -689,8 +700,6 @@ input[type=range] {
         </div>
         <div class="chips" id="search-chips"></div>
       </div>
-
-    
 
       <!-- Blocklist -->
       <div class="setup-full">
@@ -722,19 +731,6 @@ input[type=range] {
           <span class="file-name" id="audio-file-name">No file chosen</span>
         </div>
         <div id="audio-status" class="cache-note" style="margin-top:6px"></div>
-      </div>
-
-    
-
-      <!-- API key -->
-      <div class="setup-full">
-        <div class="panel-label">Are.na Access Token <span style="font-weight:normal;text-transform:none;letter-spacing:0;font-size:12px">(needed for private channels &amp; search)</span></div>
-        <p class="panel-hint">Get yours at <a href="https://www.are.na/developers/personal-access-tokens" target="_blank">are.na → Settings → Developers</a>. Read-only access is fine.</p>
-        <input class="text-input" style="width:100%" id="api-key" type="password" placeholder="Paste access token here" />
-        <p class="cache-note" style="margin-top:10px">
-          Channel content is cached locally for 24 hours so you won't hammer the API.
-          <a onclick="clearAllCache()">Clear cache</a> to force a fresh fetch.
-        </p>
       </div>
 
     </div><!-- /adv-body -->
@@ -1674,7 +1670,7 @@ function tryStartAudio() {
   if (scUrl) {
     audioMode = 'sc';
     btn.style.display = '';
-    btn.textContent   = scReady ? '♪ Mute' : '♪ Loading…';
+    btn.textContent   = '♪ Music';
     setupSCWidget(scUrl);  // no-op if already loading (idempotent)
     return;
   }
@@ -1687,9 +1683,9 @@ function tryStartAudio() {
   if (bgAudio.src) {
     audioMode = 'local';
     btn.style.display = '';
-    bgAudio.play()
-      .then(() => { btn.textContent = '♪ Mute'; btn.classList.add('active'); })
-      .catch(() => { btn.textContent = '♪ Music'; });
+    btn.textContent = '♪ Music';
+    btn.classList.remove('active');
+    // Do not auto-play — user must press ♪ Music
     return;
   }
 
@@ -1728,13 +1724,12 @@ function setupSCWidget(playlistUrl) {
         if (!sounds || sounds.length === 0) { scReady = true; return; }
         shuffleOrder = shuffle(Array.from({ length: sounds.length }, (_, i) => i));
         shufflePos   = 0;
-        // Jump to first shuffled track and auto-play
+        // Cue first shuffled track but do not auto-play — user must press ♪ Music
         scWidget.skip(shuffleOrder[0]);
         scReady = true;
         const btn = document.getElementById('btn-audio');
-        btn.textContent = '♪ Mute';
-        btn.classList.add('active');
-        setTimeout(() => scWidget.play(), 300);
+        btn.textContent = '♪ Music';
+        btn.classList.remove('active');
       });
     });
 
