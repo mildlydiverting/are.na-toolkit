@@ -1054,11 +1054,17 @@ async function shuffle() {
     });
   } else {
     const cards = Array.from(grid.children);
-    const toRefresh = cards.filter(c => !c.classList.contains('is-locked'));
-    const results = await Promise.allSettled(
+    const lockedCards = cards.filter(c => c.classList.contains('is-locked'));
+    const lockedSlugs = new Set(lockedCards.map(c => c.dataset.slug));
+
+    // Unlocked cards whose channel is still configured get refreshed in place.
+    const toRefresh = cards.filter(c =>
+      !c.classList.contains('is-locked') && allSlugs.includes(c.dataset.slug)
+    );
+    const refreshResults = await Promise.allSettled(
       toRefresh.map(c => fetchRandomBlock(c.dataset.slug))
     );
-    results.forEach((result, i) => {
+    refreshResults.forEach((result, i) => {
       const oldCard = toRefresh[i];
       const index   = parseInt(oldCard.dataset.index, 10);
       const slug    = oldCard.dataset.slug;
@@ -1066,6 +1072,26 @@ async function shuffle() {
         ? buildCard(result.value, index)
         : buildErrorCard(slug, result.reason.message);
       grid.replaceChild(newCard, oldCard);
+    });
+
+    // Cards for channels no longer in settings get dropped (unless locked).
+    cards.forEach(c => {
+      if (!c.classList.contains('is-locked') && !allSlugs.includes(c.dataset.slug)) {
+        c.remove();
+      }
+    });
+
+    // Channels newly added in settings (not covered by a locked or
+    // refreshed card) get a brand new card appended.
+    const coveredSlugs = new Set([...lockedSlugs, ...toRefresh.map(c => c.dataset.slug)]);
+    const newSlugs = allSlugs.filter(slug => !coveredSlugs.has(slug));
+    const newResults = await Promise.allSettled(newSlugs.map(fetchRandomBlock));
+    newResults.forEach((result, i) => {
+      grid.appendChild(
+        result.status === 'fulfilled'
+          ? buildCard(result.value, grid.children.length)
+          : buildErrorCard(newSlugs[i], result.reason.message)
+      );
     });
   }
 
