@@ -46,3 +46,6 @@ dist/*.html.bak
 .idea/
 *.swp
 *.swo
+
+# ─── Claude Code worktrees ───
+.claude/worktrees/
