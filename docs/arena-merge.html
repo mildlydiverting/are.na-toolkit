@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Are.na Merge — combine two channels</title>
+<meta name="description" content="Merge all blocks from one are.na channel into another. Runs in your browser, your token stays local.">
+<link rel="canonical" href="https://mildlydiverting.github.io/are.na-toolkit/arena-merge.html">
+<meta property="og:type"        content="website">
+<meta property="og:url"         content="https://mildlydiverting.github.io/are.na-toolkit/arena-merge.html">
+<meta property="og:title"       content="Are.na Merge">
+<meta property="og:description" content="Merge all blocks from one are.na channel into another. Runs in your browser, your token stays local.">
+<meta property="og:image"       content="https://mildlydiverting.github.io/are.na-toolkit/arena-merge.jpg">
+<meta name="twitter:card"        content="summary_large_image">
+<meta name="twitter:title"       content="Are.na Merge">
+<meta name="twitter:description" content="Merge all blocks from one are.na channel into another.">
+<meta name="twitter:image"       content="https://mildlydiverting.github.io/are.na-toolkit/arena-merge.jpg">
+<style>
+/* ──────────────────────────────────────────────────────────────
+   Design tokens — change here, never hard-code in rules below
+   ────────────────────────────────────────────────────────────── */
+:root {
+  /* Typography */
+  --font-sans:        Arial, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, sans-serif;
+  --font-mono:        "Courier New", Courier, monospace;
+
+  --fs-xs:            11px;
+  --fs-sm:            13px;
+  --fs-md:            14px;
+  --fs-base:          15px;
+  --fs-lg:            16px;
+  --fs-xl:            20px;
+  --fs-2xl:           24px;
+
+  --fw-regular:       400;
+  --fw-medium:        500;
+  --fw-semibold:      600;
+
+  --lh-tight:         1.3;
+  --lh-base:          1.5;
+  --lh-loose:         1.6;
+
+  --tracking-tight:   -0.01em;
+  --tracking-loose:   0.03em;
+  --tracking-caps:    0.1em;
+
+  /* Spacing scale */
+  --space-1:          0.25rem;   /*  4px */
+  --space-2:          0.5rem;    /*  8px */
+  --space-3:          0.75rem;   /* 12px */
+  --space-4:          1rem;      /* 16px */
+  --space-5:          1.5rem;    /* 24px */
+  --space-6:          2rem;      /* 32px */
+  --space-7:          3rem;      /* 48px */
+
+  /* Shape */
+  --radius-sm:        2px;
+  --radius-md:        4px;
+  --radius-pill:      9999px;
+  --hairline:         1px;
+
+  /* Transitions */
+  --t-fast:           0.15s;
+  --t-base:           0.25s;
+
+  /* Layout */
+  --rail-w:           170px;
+  --content-max-w:    680px;
+  --page-pad-x:       2rem;
+  --page-pad-y:       2rem;
+  --control-h:        36px;
+
+  /* Colours — light default (matches toolkit index) */
+  --bg-page:          #f5f4f0;
+  --bg-card:          #ffffff;
+  --bg-input:         #ffffff;
+  --bg-sunken:        #ede9e4;
+  --bg-media:         #ede9e4;
+
+  --text-primary:     #1a1a18;
+  --text-secondary:   #6a6660;
+  --text-muted:       #888580;
+  --text-heading:     #888580;
+  --text-faint:       #aaa49e;
+
+  --border-card:      #e5e3de;
+  --border-input:     #ccc8c2;
+  --border-strong:    #aaa49e;
+  --border-focus:     #1a1a18;
+
+  --link-color:       #1a1a18;
+
+  --toggle-bg:        #ccc8c2;
+  --toggle-thumb:     #f5f4f0;
+
+  /* Semantic */
+  --color-success:    #4a7c4f;
+  --color-error:      #a04040;
+  --color-warning:    #a07020;
+
+  /* Primary action — inverted */
+  --btn-primary-bg:    #1a1a18;
+  --btn-primary-text:  #f5f4f0;
+  --btn-primary-hover: #333331;
+
+  /* Step rail */
+  --rail-dot:          #ccc8c2;
+  --rail-dot-active:   #1a1a18;
+  --rail-dot-done:     #6a6660;
+  --rail-line:         #e5e3de;
+}
+
+body.theme-dark {
+  --bg-page:          #1e1d1b;
+  --bg-card:          #2a2825;
+  --bg-input:         #1e1d1b;
+  --bg-sunken:        #322f2c;
+  --bg-media:         #322f2c;
+
+  --text-primary:     #e8e4de;
+  --text-secondary:   #9e9890;
+  --text-muted:       #7e7870;
+  --text-heading:     #7e7870;
+  --text-faint:       #5e5a54;
+
+  --border-card:      #3a3733;
+  --border-input:     #4a4640;
+  --border-strong:    #6e6860;
+  --border-focus:     #e8e4de;
+
+  --link-color:       #e8e4de;
+
+  --toggle-bg:        #4a4640;
+  --toggle-thumb:     #e8e4de;
+
+  --color-success:    #88b088;
+  --color-error:      #d08080;
+  --color-warning:    #c89860;
+
+  --btn-primary-bg:    #e8e4de;
+  --btn-primary-text:  #1e1d1b;
+  --btn-primary-hover: #ccc8c2;
+
+  --rail-dot:          #4a4640;
+  --rail-dot-active:   #e8e4de;
+  --rail-dot-done:     #9e9890;
+  --rail-line:         #3a3733;
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Base
+   ────────────────────────────────────────────────────────────── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--fs-lg);
+  line-height: var(--lh-base);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  padding: var(--page-pad-y) var(--page-pad-x);
+  min-height: 100vh;
+  transition: background var(--t-base), color var(--t-base);
+}
+
+a {
+  color: var(--link-color);
+  transition: color var(--t-base);
+}
+a:visited, a:active { color: var(--link-color); }
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Page shell
+   ────────────────────────────────────────────────────────────── */
+.wrap { max-width: 980px; margin: 0 auto; }
+
+header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-6);
+  gap: var(--space-4);
+}
+
+.header-text h1 {
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.header-text p {
+  color: var(--text-secondary);
+  font-size: var(--fs-base);
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+  margin-top: var(--space-1);
+}
+
+.toggle-label {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  min-width: 28px;
+  text-align: right;
+  transition: color var(--t-base);
+}
+
+.toggle-track {
+  position: relative;
+  width: 34px;
+  height: 19px;
+  background: var(--toggle-bg);
+  border-radius: var(--radius-pill);
+  transition: background var(--t-base);
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 13px;
+  height: 13px;
+  background: var(--toggle-thumb);
+  border-radius: 50%;
+  transition: transform var(--t-fast), background var(--t-base);
+}
+
+body.theme-dark .toggle-thumb { transform: translateX(15px); }
+
+/* ──────────────────────────────────────────────────────────────
+   Layout — rail + content
+   ────────────────────────────────────────────────────────────── */
+.layout {
+  display: grid;
+  grid-template-columns: var(--rail-w) 1fr;
+  gap: var(--space-6);
+  align-items: start;
+}
+
+@media (max-width: 720px) {
+  .layout { grid-template-columns: 1fr; gap: var(--space-4); }
+  .rail { order: -1; }
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Step rail
+   ────────────────────────────────────────────────────────────── */
+.rail { position: sticky; top: var(--space-5); }
+
+.steps {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+@media (max-width: 720px) {
+  .steps { flex-direction: row; flex-wrap: wrap; gap: var(--space-2); }
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  color: var(--text-faint);
+  padding: var(--space-1) 0;
+  transition: color var(--t-fast);
+}
+
+.step-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--rail-dot);
+  flex-shrink: 0;
+  transition: background var(--t-fast);
+}
+
+.step.is-active {
+  color: var(--text-primary);
+  font-weight: var(--fw-medium);
+}
+.step.is-active .step-dot { background: var(--rail-dot-active); }
+
+.step.is-done { color: var(--text-secondary); }
+.step.is-done .step-dot { background: var(--rail-dot-done); }
+
+/* ──────────────────────────────────────────────────────────────
+   Panels
+   ────────────────────────────────────────────────────────────── */
+.content { max-width: var(--content-max-w); }
+
+.panel {
+  padding-bottom: var(--space-6);
+}
+
+.panel-title {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-3);
+  letter-spacing: var(--tracking-tight);
+}
+
+.panel-intro {
+  color: var(--text-secondary);
+  font-size: var(--fs-base);
+  margin-bottom: var(--space-4);
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Form controls
+   ────────────────────────────────────────────────────────────── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.field-label {
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: var(--fw-medium);
+}
+
+.field-hint {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  line-height: var(--lh-base);
+}
+
+.text-input {
+  background: var(--bg-input);
+  border: var(--hairline) solid var(--border-input);
+  color: var(--text-primary);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--fs-md);
+  font-family: var(--font-sans);
+  height: var(--control-h);
+  width: 100%;
+  outline: none;
+  border-radius: var(--radius-sm);
+  transition: border-color var(--t-fast);
+}
+
+.text-input:focus { border-color: var(--border-focus); }
+
+.input-row {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.input-row .text-input { flex: 1; }
+
+/* ──────────────────────────────────────────────────────────────
+   Buttons
+   ────────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  background: var(--bg-card);
+  border: var(--hairline) solid var(--border-input);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  padding: 0 var(--space-4);
+  height: var(--control-h);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: border-color var(--t-fast), background var(--t-fast), color var(--t-fast);
+  white-space: nowrap;
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--border-strong);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--btn-primary-bg);
+  border-color: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--btn-primary-hover);
+  border-color: var(--btn-primary-hover);
+}
+
+.btn-sm {
+  height: calc(var(--control-h) - 8px);
+  padding: 0 var(--space-3);
+  font-size: var(--fs-sm);
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Status, feedback
+   ────────────────────────────────────────────────────────────── */
+.status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  margin-top: var(--space-2);
+}
+
+.status.is-ok    { color: var(--color-success); }
+.status.is-err   { color: var(--color-error); }
+.status.is-warn  { color: var(--color-warning); }
+
+.card {
+  background: var(--bg-card);
+  border: var(--hairline) solid var(--border-card);
+  padding: var(--space-4);
+  border-radius: var(--radius-sm);
+  margin-top: var(--space-3);
+}
+
+.card-title {
+  font-size: var(--fs-base);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.card-meta {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.thumbs {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+@media (max-width: 480px) {
+  .thumbs { grid-template-columns: repeat(3, 1fr); }
+}
+
+.thumb {
+  aspect-ratio: 1 / 1;
+  background: var(--bg-media);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-1);
+  text-align: center;
+  line-height: var(--lh-tight);
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Options checkboxes
+   ────────────────────────────────────────────────────────────── */
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  cursor: pointer;
+}
+
+.check input {
+  margin-top: 3px;
+  cursor: pointer;
+  accent-color: var(--text-primary);
+}
+
+.check-label {
+  font-size: var(--fs-md);
+  color: var(--text-primary);
+  line-height: var(--lh-base);
+}
+
+.check-sub {
+  display: block;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Transfer / progress
+   ────────────────────────────────────────────────────────────── */
+.summary-box {
+  background: var(--bg-sunken);
+  padding: var(--space-4);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-4);
+  font-size: var(--fs-base);
+  color: var(--text-primary);
+  line-height: var(--lh-loose);
+}
+
+.summary-box strong { font-weight: var(--fw-semibold); }
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.progress {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: var(--hairline) solid var(--border-card);
+}
+
+.progress-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: var(--space-2);
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+}
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--bg-sunken);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--text-primary);
+  width: 0;
+  transition: width var(--t-fast);
+}
+
+.counters {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+@media (max-width: 480px) {
+  .counters { grid-template-columns: repeat(2, 1fr); }
+}
+
+.counter {
+  padding: var(--space-3);
+  background: var(--bg-sunken);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+
+.counter-val {
+  display: block;
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.counter-label {
+  display: block;
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: var(--space-1);
+}
+
+.log-details {
+  margin-top: var(--space-4);
+}
+
+.log-details summary {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: var(--space-2) 0;
+}
+
+.log {
+  margin-top: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  background: var(--bg-sunken);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.log-line {
+  padding: 2px 0;
+  color: var(--text-secondary);
+  line-height: var(--lh-tight);
+}
+
+.log-line.is-ok   { color: var(--color-success); }
+.log-line.is-warn { color: var(--color-warning); }
+.log-line.is-err  { color: var(--color-error); }
+
+/* ──────────────────────────────────────────────────────────────
+   Footer
+   ────────────────────────────────────────────────────────────── */
+footer {
+  margin-top: var(--space-7);
+  padding-top: var(--space-5);
+  border-top: var(--hairline) solid var(--border-card);
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+footer p { margin-bottom: var(--space-2); }
+
+/* Hide inactive panels (JS toggles .is-visible) */
+.panel { display: none; }
+.panel.is-visible { display: block; }
+</style>
+</head>
+
+<body class="theme-light">
+
+<div class="wrap">
+
+  <header>
+    <div class="header-text">
+      <h1>Are.na Merge</h1>
+      <p>Add every block from one channel into another, in one go.</p>
+    </div>
+    <div class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark" role="button" tabindex="0">
+      <span class="toggle-label" id="toggle-label">dark</span>
+      <div class="toggle-track"><div class="toggle-thumb"></div></div>
+    </div>
+  </header>
+
+  <div class="layout">
+
+    <nav class="rail" aria-label="Steps">
+      <ol class="steps" id="steps">
+        <li class="step is-active" data-step="connect"><span class="step-dot"></span>Connect</li>
+        <li class="step" data-step="source"><span class="step-dot"></span>Source</li>
+        <li class="step" data-step="destination"><span class="step-dot"></span>Destination</li>
+        <li class="step" data-step="options"><span class="step-dot"></span>Options</li>
+        <li class="step" data-step="transfer"><span class="step-dot"></span>Transfer</li>
+      </ol>
+    </nav>
+
+    <main class="content">
+
+      <!-- ─────────── 1. CONNECT ─────────── -->
+      <section class="panel is-visible" data-panel="connect" aria-labelledby="h-connect">
+        <h2 class="panel-title" id="h-connect">Connect to are.na</h2>
+        <p class="panel-intro">
+          Create a <a href="https://www.are.na/settings/personal-access-tokens" target="_blank" rel="noopener">personal access token</a>
+          with <strong>read and write</strong> ticked, then paste it below. The token stays in your browser only.
+        </p>
+
+        <div class="field">
+          <label class="field-label" for="token">Personal access token</label>
+          <div class="input-row">
+            <input type="password" id="token" class="text-input" placeholder="paste it here" spellcheck="false" autocomplete="off">
+            <button type="button" class="btn" id="connect-btn">Connect</button>
+          </div>
+          <label class="check">
+            <input type="checkbox" id="remember">
+            <span class="check-label">Remember on this computer
+              <span class="check-sub">Unticked, it is forgotten when you close the tab.</span>
+            </span>
+          </label>
+          <div class="status" id="connect-status" hidden></div>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="connect-continue" disabled>Continue →</button>
+        </div>
+      </section>
+
+      <!-- ─────────── 2. SOURCE ─────────── -->
+      <section class="panel" data-panel="source" aria-labelledby="h-source">
+        <h2 class="panel-title" id="h-source">Source channel</h2>
+        <p class="panel-intro">The channel you want to copy blocks <strong>from</strong>. Paste a slug or full are.na URL.</p>
+
+        <div class="field">
+          <label class="field-label" for="source-input">Source channel</label>
+          <div class="input-row">
+            <input type="text" id="source-input" class="text-input" placeholder="e.g. my-channel-slug or https://www.are.na/user/channel" spellcheck="false">
+            <button type="button" class="btn" id="source-check">Check</button>
+          </div>
+          <div class="status" id="source-status" hidden></div>
+        </div>
+
+        <div id="source-preview" hidden></div>
+
+        <div class="actions">
+          <button type="button" class="btn" data-nav="connect">← Back</button>
+          <button type="button" class="btn btn-primary" id="source-continue" disabled>Continue →</button>
+        </div>
+      </section>
+
+      <!-- ─────────── 3. DESTINATION ─────────── -->
+      <section class="panel" data-panel="destination" aria-labelledby="h-dest">
+        <h2 class="panel-title" id="h-dest">Destination channel</h2>
+        <p class="panel-intro">The channel to add blocks <strong>into</strong>. You must own it or be a collaborator.</p>
+
+        <div class="field">
+          <label class="field-label" for="dest-input">Destination channel</label>
+          <div class="input-row">
+            <input type="text" id="dest-input" class="text-input" placeholder="e.g. my-channel-slug or https://www.are.na/user/channel" spellcheck="false">
+            <button type="button" class="btn" id="dest-check">Check</button>
+          </div>
+          <div class="status" id="dest-status" hidden></div>
+        </div>
+
+        <div id="dest-preview" hidden></div>
+
+        <div class="actions">
+          <button type="button" class="btn" data-nav="source">← Back</button>
+          <button type="button" class="btn btn-primary" id="dest-continue" disabled>Continue →</button>
+        </div>
+      </section>
+
+      <!-- ─────────── 4. OPTIONS ─────────── -->
+      <section class="panel" data-panel="options" aria-labelledby="h-options">
+        <h2 class="panel-title" id="h-options">Options</h2>
+        <p class="panel-intro">Choose how the merge runs.</p>
+
+        <div class="field">
+          <label class="check">
+            <input type="checkbox" id="opt-dryrun" checked>
+            <span class="check-label">Simulate first (recommended)
+              <span class="check-sub">Shows what would happen without changing anything on are.na.</span>
+            </span>
+          </label>
+
+          <label class="check">
+            <input type="checkbox" id="opt-delete-source">
+            <span class="check-label">Remove blocks from source after merging
+              <span class="check-sub">The blocks themselves survive — only their connection to the source channel goes.</span>
+            </span>
+          </label>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn" data-nav="destination">← Back</button>
+          <button type="button" class="btn btn-primary" id="options-continue">Continue →</button>
+        </div>
+      </section>
+
+      <!-- ─────────── 5. TRANSFER ─────────── -->
+      <section class="panel" data-panel="transfer" aria-labelledby="h-transfer">
+        <h2 class="panel-title" id="h-transfer">Review and transfer</h2>
+
+        <div class="summary-box" id="transfer-summary"></div>
+
+        <div class="actions" id="transfer-actions">
+          <button type="button" class="btn" data-nav="options">← Back</button>
+          <button type="button" class="btn btn-primary" id="start-btn">Transfer</button>
+        </div>
+
+        <div class="progress" id="progress" hidden aria-live="polite">
+          <div class="progress-head">
+            <span id="progress-phase">Preparing…</span>
+            <span id="progress-count"></span>
+          </div>
+          <div class="progress-bar" role="progressbar" aria-label="Progress" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+
+          <div class="counters">
+            <div class="counter"><span class="counter-val" id="count-added">0</span><span class="counter-label">Added</span></div>
+            <div class="counter"><span class="counter-val" id="count-skipped">0</span><span class="counter-label">Already there</span></div>
+            <div class="counter"><span class="counter-val" id="count-removed">0</span><span class="counter-label">Removed</span></div>
+            <div class="counter"><span class="counter-val" id="count-failed">0</span><span class="counter-label">Failed</span></div>
+          </div>
+
+          <details class="log-details">
+            <summary>Details</summary>
+            <div class="log" id="log"></div>
+          </details>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <footer>
+    <p>Runs in your browser. Your are.na access is only sent to <code>api.are.na</code>. Part of <a href="index.html">Are.na Tools and Toys</a> by <a href="https://www.mildlydiverting.com/about">Kim Plowright</a>.</p>
+    <p><a href="https://github.com/mildlydiverting/are.na-toolkit">Source on GitHub</a></p>
+  </footer>
+
+</div>
+
+<script>
+'use strict';
+
+/* ────────────────────────────────────────────────────────────────
+   State
+   ──────────────────────────────────────────────────────────────── */
+const S = {
+  token: null,
+  user: null,       // { id, slug, full_name }
+  source: null,     // { id, slug, title, length, contents: [...] }
+  dest: null,       // { id, slug, title, length, writable: bool, existing_block_ids: Set }
+  opts: { dryRun: true, deleteFromSource: false },
+};
+
+const API = 'https://api.are.na/v3';
+const READ_GAP = 150;   // ms between read requests
+const WRITE_GAP = 600;  // ms between write requests (safer)
+const BACKOFF = [2000, 4000, 8000];
+const STORAGE_KEY = 'arena-merge-token';
+
+/* ────────────────────────────────────────────────────────────────
+   Theme
+   ──────────────────────────────────────────────────────────────── */
+function toggleTheme() {
+  const isDark = document.body.classList.contains('theme-dark');
+  applyTheme(!isDark);
+  localStorage.setItem('arena-merge-theme', !isDark ? 'dark' : 'light');
+}
+
+function applyTheme(dark) {
+  document.body.classList.toggle('theme-dark', dark);
+  document.body.classList.toggle('theme-light', !dark);
+  document.getElementById('toggle-label').textContent = dark ? 'dark' : 'light';
+}
+
+(function initTheme() {
+  const stored = localStorage.getItem('arena-merge-theme');
+  if (stored) applyTheme(stored === 'dark');
+  else applyTheme(window.matchMedia?.('(prefers-color-scheme: dark)').matches);
+})();
+
+/* ────────────────────────────────────────────────────────────────
+   Navigation between steps
+   ──────────────────────────────────────────────────────────────── */
+const STEP_ORDER = ['connect', 'source', 'destination', 'options', 'transfer'];
+
+function goTo(stepName) {
+  document.querySelectorAll('.panel').forEach(p => {
+    p.classList.toggle('is-visible', p.dataset.panel === stepName);
+  });
+  const idx = STEP_ORDER.indexOf(stepName);
+  document.querySelectorAll('.step').forEach(s => {
+    const sIdx = STEP_ORDER.indexOf(s.dataset.step);
+    s.classList.toggle('is-active', sIdx === idx);
+    s.classList.toggle('is-done', sIdx < idx);
+  });
+  const panel = document.querySelector(`.panel[data-panel="${stepName}"]`);
+  const h = panel?.querySelector('.panel-title');
+  if (h) { h.setAttribute('tabindex', '-1'); h.focus(); }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.querySelectorAll('[data-nav]').forEach(btn => {
+  btn.addEventListener('click', () => goTo(btn.dataset.nav));
+});
+
+/* ────────────────────────────────────────────────────────────────
+   Status helpers
+   ──────────────────────────────────────────────────────────────── */
+function setStatus(id, text, kind) {
+  const el = document.getElementById(id);
+  if (!text) { el.hidden = true; return; }
+  el.hidden = false;
+  el.textContent = text;
+  el.className = 'status' + (kind ? ' is-' + kind : '');
+}
+
+/* ────────────────────────────────────────────────────────────────
+   API client
+   ──────────────────────────────────────────────────────────────── */
+let lastWrite = 0;
+let lastRead = 0;
+
+async function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function arenaFetch(method, path, body) {
+  const kind = method === 'GET' ? 'read' : 'write';
+  const gap = kind === 'write' ? WRITE_GAP : READ_GAP;
+  const last = kind === 'write' ? lastWrite : lastRead;
+  const wait = last + gap - Date.now();
+  if (wait > 0) await sleep(wait);
+  if (kind === 'write') lastWrite = Date.now(); else lastRead = Date.now();
+
+  const url = API + path;
+  let attempt = 0;
+  for (;;) {
+    const res = await fetch(url, {
+      method,
+      headers: {
+        'Authorization': 'Bearer ' + S.token,
+        'Accept': 'application/json',
+        ...(body ? { 'Content-Type': 'application/json' } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+      credentials: 'omit',
+      referrerPolicy: 'no-referrer',
+    });
+
+    if (res.status === 429) {
+      const retryAfter = Number(res.headers.get('retry-after'));
+      const wait = retryAfter > 0 ? retryAfter * 1000 : (BACKOFF[attempt] || 8000);
+      attempt++;
+      if (attempt > BACKOFF.length) throw new ArenaError(429, 'Rate limited — try again shortly.');
+      await sleep(wait);
+      continue;
+    }
+
+    const text = await res.text();
+    let data = null;
+    try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+
+    if (!res.ok) {
+      const msg = data?.details?.message || data?.message || data?.error || `are.na error ${res.status}`;
+      throw new ArenaError(res.status, msg, data);
+    }
+    return data;
+  }
+}
+
+class ArenaError extends Error {
+  constructor(status, message, body) {
+    super(message);
+    this.status = status;
+    this.body = body;
+  }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   Connect
+   ──────────────────────────────────────────────────────────────── */
+const tokenInput = document.getElementById('token');
+const connectBtn = document.getElementById('connect-btn');
+const connectContinue = document.getElementById('connect-continue');
+const remember = document.getElementById('remember');
+
+(function loadToken() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    tokenInput.value = saved;
+    remember.checked = true;
+  }
+})();
+
+connectBtn.addEventListener('click', doConnect);
+tokenInput.addEventListener('keydown', e => { if (e.key === 'Enter') doConnect(); });
+
+async function doConnect() {
+  const token = tokenInput.value.trim();
+  if (!token) { setStatus('connect-status', 'Paste a token first.', 'err'); return; }
+  S.token = token;
+  setStatus('connect-status', 'Checking token…');
+  connectBtn.disabled = true;
+  try {
+    const me = await arenaFetch('GET', '/me');
+    S.user = { id: me.id, slug: me.slug, full_name: me.full_name };
+    const writable = await checkWriteAccess();
+    if (!writable) {
+      setStatus('connect-status', 'This token is read-only. Create a new one with the "write" scope ticked.', 'err');
+      connectContinue.disabled = true;
+    } else {
+      setStatus('connect-status', `Connected as ${me.full_name || me.slug}.`, 'ok');
+      connectContinue.disabled = false;
+      if (remember.checked) localStorage.setItem(STORAGE_KEY, token);
+      else localStorage.removeItem(STORAGE_KEY);
+    }
+  } catch (err) {
+    setStatus('connect-status', `Couldn't connect: ${err.message}`, 'err');
+    connectContinue.disabled = true;
+  } finally {
+    connectBtn.disabled = false;
+  }
+}
+
+async function checkWriteAccess() {
+  try {
+    await arenaFetch('DELETE', '/connections/0');
+    return true;
+  } catch (err) {
+    if (err.status === 403) return false;
+    if (err.status === 404) return true;
+    throw err;
+  }
+}
+
+remember.addEventListener('change', () => {
+  if (!remember.checked) localStorage.removeItem(STORAGE_KEY);
+  else if (S.token) localStorage.setItem(STORAGE_KEY, S.token);
+});
+
+connectContinue.addEventListener('click', () => goTo('source'));
+
+/* ────────────────────────────────────────────────────────────────
+   Slug parsing — accept slug or full URL
+   ──────────────────────────────────────────────────────────────── */
+function parseSlug(input) {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+  const m = trimmed.match(/^https?:\/\/(?:www\.)?are\.na\/[^\/]+\/([^\/\?#]+)/i);
+  if (m) return decodeURIComponent(m[1]);
+  return trimmed;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   Fetch a whole channel's contents (all pages)
+   ──────────────────────────────────────────────────────────────── */
+async function fetchAllContents(slug, { sort = 'position_asc' } = {}) {
+  const all = [];
+  let page = 1;
+  for (;;) {
+    const res = await arenaFetch('GET',
+      `/channels/${encodeURIComponent(slug)}/contents?per=100&page=${page}&sort=${sort}`);
+    const items = res?.data || res?.contents || [];
+    all.push(...items);
+    const more = res?.meta?.has_more_pages ?? (items.length === 100);
+    if (!more || items.length === 0) break;
+    page++;
+    if (page > 500) break;
+  }
+  return all;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   Source
+   ──────────────────────────────────────────────────────────────── */
+const sourceInput = document.getElementById('source-input');
+const sourceCheck = document.getElementById('source-check');
+const sourceContinue = document.getElementById('source-continue');
+const sourcePreview = document.getElementById('source-preview');
+
+sourceCheck.addEventListener('click', doCheckSource);
+sourceInput.addEventListener('keydown', e => { if (e.key === 'Enter') doCheckSource(); });
+
+async function doCheckSource() {
+  const slug = parseSlug(sourceInput.value);
+  if (!slug) { setStatus('source-status', 'Paste a slug or URL.', 'err'); return; }
+  setStatus('source-status', 'Fetching channel…');
+  sourceCheck.disabled = true;
+  sourceContinue.disabled = true;
+  sourcePreview.hidden = true;
+  try {
+    const ch = await arenaFetch('GET', `/channels/${encodeURIComponent(slug)}`);
+    setStatus('source-status', 'Fetching blocks…');
+    const contents = await fetchAllContents(slug);
+    S.source = { id: ch.id, slug: ch.slug, title: ch.title, length: contents.length, contents };
+    renderPreview(sourcePreview, ch, contents);
+    setStatus('source-status', `Found ${contents.length} block${contents.length === 1 ? '' : 's'}.`, 'ok');
+    sourceContinue.disabled = contents.length === 0;
+  } catch (err) {
+    setStatus('source-status', `Couldn't load: ${err.message}`, 'err');
+    S.source = null;
+  } finally {
+    sourceCheck.disabled = false;
+  }
+}
+
+function renderPreview(container, channel, contents) {
+  container.hidden = false;
+  const thumbs = contents.slice(0, 10).map(renderThumb).join('');
+  container.innerHTML = `
+    <div class="card">
+      <div class="card-title">${esc(channel.title)}</div>
+      <div class="card-meta">by ${esc(channel.user?.full_name || channel.user?.slug || 'unknown')} · ${contents.length} block${contents.length === 1 ? '' : 's'}</div>
+      ${thumbs ? `<div class="thumbs">${thumbs}</div>` : ''}
+    </div>`;
+}
+
+function renderThumb(item) {
+  if (item.class === 'Image' || item.class === 'Media' || item.class === 'Attachment') {
+    const src = item.image?.thumb?.url || item.image?.square?.url || item.image?.display?.url;
+    if (src) return `<div class="thumb"><img src="${esc(src)}" alt="" loading="lazy"></div>`;
+  }
+  if (item.class === 'Link') {
+    const src = item.image?.thumb?.url || item.image?.square?.url;
+    if (src) return `<div class="thumb"><img src="${esc(src)}" alt="" loading="lazy"></div>`;
+    return `<div class="thumb">${esc(truncate(item.title || item.source?.url || 'link', 24))}</div>`;
+  }
+  if (item.class === 'Text') {
+    return `<div class="thumb">${esc(truncate(item.content_html?.replace(/<[^>]+>/g, '') || item.content || 'text', 40))}</div>`;
+  }
+  if (item.class === 'Channel' || item.type === 'Channel') {
+    return `<div class="thumb">↳ ${esc(truncate(item.title || 'channel', 24))}</div>`;
+  }
+  return `<div class="thumb">${esc(item.class || item.type || 'block')}</div>`;
+}
+
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function truncate(s, n) { s = String(s ?? ''); return s.length > n ? s.slice(0, n - 1) + '…' : s; }
+
+sourceContinue.addEventListener('click', () => goTo('destination'));
+
+/* ────────────────────────────────────────────────────────────────
+   Destination
+   ──────────────────────────────────────────────────────────────── */
+const destInput = document.getElementById('dest-input');
+const destCheck = document.getElementById('dest-check');
+const destContinue = document.getElementById('dest-continue');
+const destPreview = document.getElementById('dest-preview');
+
+destCheck.addEventListener('click', doCheckDest);
+destInput.addEventListener('keydown', e => { if (e.key === 'Enter') doCheckDest(); });
+
+async function doCheckDest() {
+  const slug = parseSlug(destInput.value);
+  if (!slug) { setStatus('dest-status', 'Paste a slug or URL.', 'err'); return; }
+  if (S.source && slug === S.source.slug) {
+    setStatus('dest-status', 'Source and destination are the same channel.', 'err');
+    return;
+  }
+  setStatus('dest-status', 'Fetching channel…');
+  destCheck.disabled = true;
+  destContinue.disabled = true;
+  destPreview.hidden = true;
+  try {
+    const ch = await arenaFetch('GET', `/channels/${encodeURIComponent(slug)}`);
+    console.log('[arena-merge] destination channel response:', ch);
+    // Try several field shapes — are.na v3 docs don't nail down which are included.
+    const ownerId = ch.user?.id ?? ch.user_id ?? ch.owner_id;
+    const collabIds = (ch.collaborators || []).map(c => c?.id ?? c?.user_id).filter(x => x != null);
+    const writable = ownerId === S.user.id || collabIds.includes(S.user.id);
+    setStatus('dest-status', 'Fetching current contents…');
+    const contents = await fetchAllContents(slug);
+    const existingIds = new Set(contents.map(it => it.id));
+    S.dest = { id: ch.id, slug: ch.slug, title: ch.title, length: contents.length, writable, existing_block_ids: existingIds };
+    renderPreview(destPreview, ch, contents);
+    if (!writable) {
+      const diag = `owner id=${ownerId ?? '?'}, your id=${S.user.id}, collaborators=[${collabIds.join(',') || 'none seen'}]`;
+      setStatus('dest-status',
+        `Couldn't confirm you have write access to "${ch.title}". The API returned: ${diag}. Full response is in the DevTools console. You can still continue — if you really don't have access, the merge will fail with a clear error.`, 'warn');
+      destContinue.disabled = false;
+    } else {
+      setStatus('dest-status', `Found ${contents.length} block${contents.length === 1 ? '' : 's'}. You can write to this channel.`, 'ok');
+      destContinue.disabled = false;
+    }
+  } catch (err) {
+    setStatus('dest-status', `Couldn't load: ${err.message}`, 'err');
+    S.dest = null;
+  } finally {
+    destCheck.disabled = false;
+  }
+}
+
+destContinue.addEventListener('click', () => goTo('options'));
+
+/* ────────────────────────────────────────────────────────────────
+   Options
+   ──────────────────────────────────────────────────────────────── */
+document.getElementById('opt-dryrun').addEventListener('change', e => { S.opts.dryRun = e.target.checked; });
+document.getElementById('opt-delete-source').addEventListener('change', e => { S.opts.deleteFromSource = e.target.checked; });
+
+document.getElementById('options-continue').addEventListener('click', () => {
+  renderTransferSummary();
+  goTo('transfer');
+});
+
+/* ────────────────────────────────────────────────────────────────
+   Transfer
+   ──────────────────────────────────────────────────────────────── */
+const startBtn = document.getElementById('start-btn');
+
+function renderTransferSummary() {
+  const toAdd = S.source.contents.filter(it => !S.dest.existing_block_ids.has(it.id)).length;
+  const skipped = S.source.length - toAdd;
+  const bits = [];
+  bits.push(`Add <strong>${toAdd}</strong> block${toAdd === 1 ? '' : 's'} from <strong>${esc(S.source.title)}</strong> into <strong>${esc(S.dest.title)}</strong>.`);
+  if (skipped > 0) bits.push(`<br>${skipped} already there — those will be skipped.`);
+  if (S.opts.deleteFromSource) bits.push(`<br>Then remove them from <strong>${esc(S.source.title)}</strong>.`);
+  if (S.opts.dryRun) bits.push(`<br><em>Simulation only — nothing on are.na will change.</em>`);
+  document.getElementById('transfer-summary').innerHTML = bits.join(' ');
+  startBtn.textContent = S.opts.dryRun ? 'Run simulation' : 'Transfer';
+}
+
+startBtn.addEventListener('click', runTransfer);
+
+async function runTransfer() {
+  startBtn.disabled = true;
+  document.getElementById('progress').hidden = false;
+
+  const counts = { added: 0, skipped: 0, removed: 0, failed: 0 };
+  const toProcess = S.source.contents;
+  const total = toProcess.length + (S.opts.deleteFromSource ? toProcess.length : 0);
+  let done = 0;
+
+  updatePhase(S.opts.dryRun ? 'Simulating merge…' : 'Merging…');
+  log('info', `Starting ${S.opts.dryRun ? 'simulation' : 'transfer'}: ${toProcess.length} block${toProcess.length === 1 ? '' : 's'}.`);
+
+  const addedBlocks = [];
+
+  for (const item of toProcess) {
+    try {
+      if (S.dest.existing_block_ids.has(item.id)) {
+        counts.skipped++;
+        log('info', `Skipped (already there): ${describeBlock(item)}`);
+      } else if (S.opts.dryRun) {
+        counts.added++;
+        addedBlocks.push(item);
+        log('ok', `Would add: ${describeBlock(item)}`);
+      } else {
+        await arenaFetch('POST', '/connections', {
+          connectable_id: item.id,
+          connectable_type: (item.type === 'Channel' || item.class === 'Channel') ? 'Channel' : 'Block',
+          channel_ids: [S.dest.id],
+        });
+        counts.added++;
+        addedBlocks.push(item);
+        log('ok', `Added: ${describeBlock(item)}`);
+      }
+    } catch (err) {
+      if (err.status === 422) {
+        counts.skipped++;
+        log('info', `Already there: ${describeBlock(item)}`);
+      } else {
+        counts.failed++;
+        log('err', `Failed to add ${describeBlock(item)}: ${err.message}`);
+      }
+    }
+    done++;
+    updateCounts(counts, done, total);
+  }
+
+  if (S.opts.deleteFromSource) {
+    updatePhase(S.opts.dryRun ? 'Simulating removal from source…' : 'Removing from source…');
+    for (const item of addedBlocks) {
+      const connId = item.connection?.id;
+      if (!connId) {
+        counts.failed++;
+        log('err', `Can't remove — no connection id for ${describeBlock(item)}`);
+        done++;
+        updateCounts(counts, done, total);
+        continue;
+      }
+      try {
+        if (S.opts.dryRun) {
+          counts.removed++;
+          log('ok', `Would remove from source: ${describeBlock(item)}`);
+        } else {
+          await arenaFetch('DELETE', `/connections/${connId}`);
+          counts.removed++;
+          log('ok', `Removed from source: ${describeBlock(item)}`);
+        }
+      } catch (err) {
+        counts.failed++;
+        log('err', `Failed to remove ${describeBlock(item)}: ${err.message}`);
+      }
+      done++;
+      updateCounts(counts, done, total);
+    }
+  }
+
+  updatePhase(S.opts.dryRun ? 'Simulation complete.' : 'Transfer complete.');
+  log('ok', `Done. Added ${counts.added}, skipped ${counts.skipped}, removed ${counts.removed}, failed ${counts.failed}.`);
+  startBtn.disabled = false;
+  startBtn.textContent = S.opts.dryRun ? 'Run simulation again' : 'Transfer again';
+}
+
+function describeBlock(item) {
+  const kind = item.class || item.type || 'block';
+  const title = item.title || item.generated_title || item.content?.slice(0, 40) || '';
+  return title ? `${kind} "${truncate(title, 40)}"` : `${kind} #${item.id}`;
+}
+
+function updateCounts(c, done, total) {
+  document.getElementById('count-added').textContent = c.added;
+  document.getElementById('count-skipped').textContent = c.skipped;
+  document.getElementById('count-removed').textContent = c.removed;
+  document.getElementById('count-failed').textContent = c.failed;
+  document.getElementById('progress-count').textContent = `${done} / ${total}`;
+  const pct = total === 0 ? 100 : Math.round((done / total) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+}
+
+function updatePhase(label) {
+  document.getElementById('progress-phase').textContent = label;
+}
+
+function log(level, message) {
+  const line = document.createElement('div');
+  line.className = 'log-line is-' + level;
+  line.textContent = message;
+  const logEl = document.getElementById('log');
+  logEl.appendChild(line);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+</script>
+</body>
+</html>
