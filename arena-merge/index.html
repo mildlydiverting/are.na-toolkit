@@ -840,6 +840,8 @@ footer p { margin-bottom: var(--space-2); }
 const S = {
   token: null,
   user: null,       // { id, slug, full_name }
+  myChannels: [],   // [{ id, slug, title, visibility, length }]
+  myChannelIds: null, // Set of channel ids; null = not yet loaded
   source: null,     // { id, slug, title, length, contents: [...] }
   dest: null,       // { id, slug, title, length, writable: bool, existing_block_ids: Set }
   opts: { dryRun: true, deleteFromSource: false },
@@ -1003,10 +1005,12 @@ async function doConnect() {
       setStatus('connect-status', 'This token is read-only. Create a new one with the "write" scope ticked.', 'err');
       connectContinue.disabled = true;
     } else {
-      setStatus('connect-status', `Connected as ${me.full_name || me.slug}.`, 'ok');
-      connectContinue.disabled = false;
       if (remember.checked) localStorage.setItem(STORAGE_KEY, token);
       else localStorage.removeItem(STORAGE_KEY);
+      setStatus('connect-status', `Connected as ${me.full_name || me.slug}. Loading your channels…`);
+      await loadMyChannels();
+      setStatus('connect-status', `Connected as ${me.full_name || me.slug}. Found ${S.myChannels.length} of your channel${S.myChannels.length === 1 ? '' : 's'}.`, 'ok');
+      connectContinue.disabled = false;
     }
   } catch (err) {
     setStatus('connect-status', `Couldn't connect: ${err.message}`, 'err');
@@ -1026,6 +1030,43 @@ async function checkWriteAccess() {
     if (err.status === 404) return true;
     throw err;
   }
+}
+
+// Load the user's own channels so we can check destination ownership.
+// The GET /channels/{id} response doesn't include an owner field, so this list
+// is the only reliable way to know which channels the user can write to.
+async function loadMyChannels() {
+  try {
+    const all = await listUserContents({ type: 'Channel' });
+    S.myChannels = all
+      .filter(ch => ch && ch.state !== 'deleted')
+      .map(ch => ({
+        id: ch.id,
+        slug: ch.slug,
+        title: ch.title,
+        visibility: ch.visibility,
+        length: ch.length ?? ch.counts?.contents ?? null,
+      }));
+    S.myChannelIds = new Set(S.myChannels.map(c => c.id));
+    console.log('[arena-merge] loaded', S.myChannels.length, 'of your channels');
+  } catch (err) {
+    console.warn('[arena-merge] couldn\'t load your channels list:', err);
+    S.myChannels = [];
+    S.myChannelIds = new Set();
+  }
+}
+
+async function listUserContents(query = {}) {
+  const all = [];
+  for (let page = 1; page <= 50; page++) {
+    const qs = new URLSearchParams({ ...query, per: '100', page: String(page) }).toString();
+    const res = await arenaFetch('GET', `/users/${encodeURIComponent(S.user.id)}/contents?${qs}`);
+    const items = res?.data || res?.contents || [];
+    all.push(...items);
+    const more = res?.meta?.has_more_pages ?? (items.length === 100);
+    if (!more || items.length === 0) break;
+  }
+  return all;
 }
 
 remember.addEventListener('change', () => {
@@ -1162,19 +1203,18 @@ async function doCheckDest() {
   try {
     const ch = await arenaFetch('GET', `/channels/${encodeURIComponent(slug)}`);
     console.log('[arena-merge] destination channel response:', ch);
-    // Try several field shapes — are.na v3 docs don't nail down which are included.
-    const ownerId = ch.user?.id ?? ch.user_id ?? ch.owner_id;
-    const collabIds = (ch.collaborators || []).map(c => c?.id ?? c?.user_id).filter(x => x != null);
-    const writable = ownerId === S.user.id || collabIds.includes(S.user.id);
+    // The channel response has no owner field, so we check against the user's own
+    // channels list that was loaded at Connect time.
+    const inMyChannels = S.myChannelIds?.has(ch.id) ?? false;
+    const writable = inMyChannels;
     setStatus('dest-status', 'Fetching current contents…');
     const contents = await fetchAllContents(slug);
     const existingIds = new Set(contents.map(it => it.id));
     S.dest = { id: ch.id, slug: ch.slug, title: ch.title, length: contents.length, writable, existing_block_ids: existingIds };
     renderPreview(destPreview, ch, contents);
     if (!writable) {
-      const diag = `owner id=${ownerId ?? '?'}, your id=${S.user.id}, collaborators=[${collabIds.join(',') || 'none seen'}]`;
       setStatus('dest-status',
-        `Couldn't confirm you have write access to "${ch.title}". The API returned: ${diag}. Full response is in the DevTools console. You can still continue — if you really don't have access, the merge will fail with a clear error.`, 'warn');
+        `"${ch.title}" isn't among your ${S.myChannels.length} channels. If you collaborate on it, you can still continue — the merge will fail with a clear error if you don't have access.`, 'warn');
       destContinue.disabled = false;
     } else {
       setStatus('dest-status', `Found ${contents.length} block${contents.length === 1 ? '' : 's'}. You can write to this channel.`, 'ok');
