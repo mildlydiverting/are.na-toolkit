@@ -284,7 +284,36 @@ body.theme-dark .toggle-thumb { transform: translateX(15px); }
   color: var(--text-faint);
   padding: var(--space-1) 0;
   transition: color var(--t-fast);
+  background: none;
+  border: none;
+  font-family: var(--font-sans);
+  cursor: default;
+  text-align: left;
+  width: 100%;
 }
+
+.step.is-visited {
+  cursor: pointer;
+}
+
+.step.is-visited:hover {
+  color: var(--text-primary);
+}
+
+/* Vertical connector line between step dots */
+.steps { position: relative; list-style: none; margin: 0; padding: 0; }
+.steps li { position: relative; }
+.steps li:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 4px; /* under centre of 10px dot */
+  top: 50%;
+  height: 100%;
+  width: 1px;
+  background: var(--border-input);
+  z-index: 0;
+}
+.step-dot { position: relative; z-index: 1; }
 
 .step-dot {
   width: 10px;
@@ -653,6 +682,196 @@ footer {
 
 footer p { margin-bottom: var(--space-2); }
 
+/* ──────────────────────────────────────────────────────────────
+   Account chip (shown after connect)
+   ────────────────────────────────────────────────────────────── */
+.account-chip[hidden] { display: none !important; }
+
+.account-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--bg-sunken);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-4);
+}
+
+.account-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  flex-shrink: 0;
+}
+
+.account-text {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+}
+
+.account-text strong {
+  color: var(--text-primary);
+  font-weight: var(--fw-semibold);
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: var(--hairline);
+}
+
+.btn-link:hover { color: var(--text-primary); }
+
+.field-aside {
+  margin-top: var(--space-2);
+  font-size: var(--fs-sm);
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Picker dialog
+   ────────────────────────────────────────────────────────────── */
+dialog.picker {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: var(--hairline) solid var(--border-card);
+  border-radius: var(--radius-sm);
+  padding: 0;
+  width: min(var(--content-max-w), calc(100vw - 2rem));
+  max-height: calc(100vh - 4rem);
+  margin: auto;
+  overflow: hidden;
+}
+
+dialog.picker[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+dialog.picker::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.picker-head {
+  padding: var(--space-4);
+  border-bottom: var(--hairline) solid var(--border-card);
+}
+
+.picker-head h3 {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+  margin-bottom: var(--space-3);
+  color: var(--text-primary);
+}
+
+.picker-filter {
+  width: 100%;
+  background: var(--bg-input);
+  border: var(--hairline) solid var(--border-input);
+  color: var(--text-primary);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--fs-md);
+  font-family: var(--font-sans);
+  height: var(--control-h);
+  border-radius: var(--radius-sm);
+  outline: none;
+}
+
+.picker-filter:focus { border-color: var(--border-focus); }
+
+.picker-list {
+  list-style: none;
+  overflow-y: auto;
+  flex: 1;
+  padding: var(--space-2) 0;
+  min-height: 200px;
+  max-height: 50vh;
+}
+
+.picker-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  transition: background var(--t-fast);
+}
+
+.picker-item:hover,
+.picker-item:focus {
+  background: var(--bg-sunken);
+  outline: none;
+}
+
+.picker-item-title {
+  display: block;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.picker-item-meta {
+  display: block;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.picker-item-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.picker-vis {
+  flex-shrink: 0;
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 2px 6px;
+  border: var(--hairline) solid var(--border-input);
+  border-radius: var(--radius-sm);
+}
+
+.picker-empty {
+  padding: var(--space-5);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.picker-foot {
+  padding: var(--space-3) var(--space-4);
+  border-top: var(--hairline) solid var(--border-card);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
 /* Hide inactive panels (JS toggles .is-visible) */
 .panel { display: none; }
 .panel.is-visible { display: block; }
@@ -678,11 +897,11 @@ footer p { margin-bottom: var(--space-2); }
 
     <nav class="rail" aria-label="Steps">
       <ol class="steps" id="steps">
-        <li class="step is-active" data-step="connect"><span class="step-dot"></span>Connect</li>
-        <li class="step" data-step="source"><span class="step-dot"></span>Source</li>
-        <li class="step" data-step="destination"><span class="step-dot"></span>Destination</li>
-        <li class="step" data-step="options"><span class="step-dot"></span>Options</li>
-        <li class="step" data-step="transfer"><span class="step-dot"></span>Transfer</li>
+        <li><button type="button" class="step is-active is-visited" data-step="connect"><span class="step-dot"></span>Connect</button></li>
+        <li><button type="button" class="step" data-step="source"><span class="step-dot"></span>Source</button></li>
+        <li><button type="button" class="step" data-step="destination"><span class="step-dot"></span>Destination</button></li>
+        <li><button type="button" class="step" data-step="options"><span class="step-dot"></span>Options</button></li>
+        <li><button type="button" class="step" data-step="transfer"><span class="step-dot"></span>Transfer</button></li>
       </ol>
     </nav>
 
@@ -711,6 +930,12 @@ footer p { margin-bottom: var(--space-2); }
           <div class="status" id="connect-status" hidden></div>
         </div>
 
+        <div class="account-chip" id="account-chip" hidden>
+          <div class="account-avatar" id="account-avatar">KP</div>
+          <div class="account-text" id="account-text"></div>
+          <button type="button" class="btn-link" id="disconnect-btn">Disconnect</button>
+        </div>
+
         <div class="actions">
           <button type="button" class="btn btn-primary" id="connect-continue" disabled>Continue →</button>
         </div>
@@ -724,9 +949,10 @@ footer p { margin-bottom: var(--space-2); }
         <div class="field">
           <label class="field-label" for="source-input">Source channel</label>
           <div class="input-row">
-            <input type="text" id="source-input" class="text-input" placeholder="e.g. my-channel-slug or https://www.are.na/user/channel" spellcheck="false">
+            <input type="text" id="source-input" class="text-input" placeholder="slug or https://www.are.na/user/channel" spellcheck="false">
             <button type="button" class="btn" id="source-check">Check</button>
           </div>
+          <div class="field-aside"><button type="button" class="btn-link" data-pick="source">↳ or pick from your channels</button></div>
           <div class="status" id="source-status" hidden></div>
         </div>
 
@@ -746,9 +972,10 @@ footer p { margin-bottom: var(--space-2); }
         <div class="field">
           <label class="field-label" for="dest-input">Destination channel</label>
           <div class="input-row">
-            <input type="text" id="dest-input" class="text-input" placeholder="e.g. my-channel-slug or https://www.are.na/user/channel" spellcheck="false">
+            <input type="text" id="dest-input" class="text-input" placeholder="slug or https://www.are.na/user/channel" spellcheck="false">
             <button type="button" class="btn" id="dest-check">Check</button>
           </div>
+          <div class="field-aside"><button type="button" class="btn-link" data-pick="dest">↳ or pick from your channels</button></div>
           <div class="status" id="dest-status" hidden></div>
         </div>
 
@@ -796,6 +1023,7 @@ footer p { margin-bottom: var(--space-2); }
         <div class="actions" id="transfer-actions">
           <button type="button" class="btn" data-nav="options">← Back</button>
           <button type="button" class="btn btn-primary" id="start-btn">Transfer</button>
+          <button type="button" class="btn btn-primary" id="start-real-btn" hidden>Run full transfer now</button>
         </div>
 
         <div class="progress" id="progress" hidden aria-live="polite">
@@ -814,6 +1042,8 @@ footer p { margin-bottom: var(--space-2); }
             <div class="counter"><span class="counter-val" id="count-failed">0</span><span class="counter-label">Failed</span></div>
           </div>
 
+          <div class="card" id="finish-summary" hidden></div>
+
           <details class="log-details">
             <summary>Details</summary>
             <div class="log" id="log"></div>
@@ -831,6 +1061,18 @@ footer p { margin-bottom: var(--space-2); }
 
 </div>
 
+<!-- Channel picker dialog -->
+<dialog class="picker" id="picker" aria-labelledby="picker-title">
+  <div class="picker-head">
+    <h3 id="picker-title">Pick a channel</h3>
+    <input type="search" class="picker-filter" id="picker-filter" placeholder="Filter by name or slug" aria-label="Filter channels">
+  </div>
+  <ul class="picker-list" id="picker-list" role="listbox"></ul>
+  <div class="picker-foot">
+    <button type="button" class="btn" id="picker-cancel">Cancel</button>
+  </div>
+</dialog>
+
 <script>
 'use strict';
 
@@ -845,6 +1087,7 @@ const S = {
   source: null,     // { id, slug, title, length, contents: [...] }
   dest: null,       // { id, slug, title, length, writable: bool, existing_block_ids: Set }
   opts: { dryRun: true, deleteFromSource: false },
+  pickerTarget: null, // 'source' or 'dest' when picker is open
 };
 
 const API = 'https://api.are.na/v3';
@@ -878,16 +1121,19 @@ function applyTheme(dark) {
    Navigation between steps
    ──────────────────────────────────────────────────────────────── */
 const STEP_ORDER = ['connect', 'source', 'destination', 'options', 'transfer'];
+let maxVisitedStep = 0;
 
 function goTo(stepName) {
   document.querySelectorAll('.panel').forEach(p => {
     p.classList.toggle('is-visible', p.dataset.panel === stepName);
   });
   const idx = STEP_ORDER.indexOf(stepName);
+  maxVisitedStep = Math.max(maxVisitedStep, idx);
   document.querySelectorAll('.step').forEach(s => {
     const sIdx = STEP_ORDER.indexOf(s.dataset.step);
     s.classList.toggle('is-active', sIdx === idx);
     s.classList.toggle('is-done', sIdx < idx);
+    s.classList.toggle('is-visited', sIdx <= maxVisitedStep);
   });
   const panel = document.querySelector(`.panel[data-panel="${stepName}"]`);
   const h = panel?.querySelector('.panel-title');
@@ -897,6 +1143,15 @@ function goTo(stepName) {
 
 document.querySelectorAll('[data-nav]').forEach(btn => {
   btn.addEventListener('click', () => goTo(btn.dataset.nav));
+});
+
+// Clickable step rail — only visited steps
+document.querySelectorAll('.step').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.classList.contains('is-visited')) {
+      goTo(btn.dataset.step);
+    }
+  });
 });
 
 /* ────────────────────────────────────────────────────────────────
@@ -1005,9 +1260,10 @@ async function doConnect() {
     } else {
       if (remember.checked) localStorage.setItem(STORAGE_KEY, token);
       else localStorage.removeItem(STORAGE_KEY);
-      setStatus('connect-status', `Connected as ${me.full_name || me.slug}. Loading your channels…`);
+      setStatus('connect-status', `Loading your channels…`);
       await loadMyChannels();
-      setStatus('connect-status', `Connected as ${me.full_name || me.slug}. Found ${S.myChannels.length} of your channel${S.myChannels.length === 1 ? '' : 's'}.`, 'ok');
+      setStatus('connect-status', null);
+      showAccountChip();
       connectContinue.disabled = false;
     }
   } catch (err) {
@@ -1064,6 +1320,118 @@ async function listUserContents(query = {}) {
     if (!more || items.length === 0) break;
   }
   return all;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   Account chip
+   ──────────────────────────────────────────────────────────────── */
+function showAccountChip() {
+  const chip = document.getElementById('account-chip');
+  const avatar = document.getElementById('account-avatar');
+  const text = document.getElementById('account-text');
+  const name = S.user.full_name || S.user.slug;
+  const initials = (name || '?').split(/\s+/).map(s => s[0]).join('').slice(0, 2).toUpperCase();
+  avatar.textContent = initials;
+  text.innerHTML = `Signed in as <strong>${esc(name)}</strong><br><span style="font-size:var(--fs-xs);color:var(--text-muted)">${S.myChannels.length} of your channel${S.myChannels.length === 1 ? '' : 's'} loaded</span>`;
+  chip.hidden = false;
+}
+
+function hideAccountChip() {
+  document.getElementById('account-chip').hidden = true;
+}
+
+document.getElementById('disconnect-btn').addEventListener('click', () => {
+  localStorage.removeItem(STORAGE_KEY);
+  S.token = null;
+  S.user = null;
+  S.myChannels = [];
+  S.myChannelIds = null;
+  tokenInput.value = '';
+  remember.checked = false;
+  hideAccountChip();
+  setStatus('connect-status', 'Disconnected.', 'ok');
+  connectContinue.disabled = true;
+});
+
+/* ────────────────────────────────────────────────────────────────
+   Channel picker dialog
+   ──────────────────────────────────────────────────────────────── */
+const pickerDialog = document.getElementById('picker');
+const pickerFilter = document.getElementById('picker-filter');
+const pickerList = document.getElementById('picker-list');
+const pickerTitle = document.getElementById('picker-title');
+
+document.querySelectorAll('[data-pick]').forEach(btn => {
+  btn.addEventListener('click', () => openPicker(btn.dataset.pick));
+});
+
+document.getElementById('picker-cancel').addEventListener('click', () => pickerDialog.close());
+
+pickerFilter.addEventListener('input', () => renderPickerList(pickerFilter.value));
+
+// Close on backdrop click
+pickerDialog.addEventListener('click', e => {
+  const rect = pickerDialog.getBoundingClientRect();
+  if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
+    pickerDialog.close();
+  }
+});
+
+function openPicker(target) {
+  if (!S.myChannels.length) {
+    alert('Your channels list is empty or still loading. Try connecting again.');
+    return;
+  }
+  S.pickerTarget = target;
+  pickerTitle.textContent = target === 'source' ? 'Pick a source channel' : 'Pick a destination channel';
+  pickerFilter.value = '';
+  renderPickerList('');
+  pickerDialog.showModal();
+  setTimeout(() => pickerFilter.focus(), 50);
+}
+
+function renderPickerList(filter) {
+  const q = filter.toLowerCase().trim();
+  const matches = q
+    ? S.myChannels.filter(c =>
+        (c.title || '').toLowerCase().includes(q) ||
+        (c.slug || '').toLowerCase().includes(q))
+    : S.myChannels;
+
+  if (!matches.length) {
+    pickerList.innerHTML = `<li class="picker-empty">No channels match "${esc(filter)}"</li>`;
+    return;
+  }
+
+  pickerList.innerHTML = matches.map(c => `
+    <li>
+      <button type="button" class="picker-item" data-slug="${esc(c.slug)}">
+        <div class="picker-item-body">
+          <span class="picker-item-title">${esc(c.title || c.slug)}</span>
+          <span class="picker-item-meta">${c.length ?? '?'} block${c.length === 1 ? '' : 's'} · ${esc(c.slug)}</span>
+        </div>
+        ${c.visibility && c.visibility !== 'public' ? `<span class="picker-vis">${esc(c.visibility)}</span>` : ''}
+      </button>
+    </li>`).join('');
+
+  pickerList.querySelectorAll('.picker-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const slug = btn.dataset.slug;
+      pickerDialog.close();
+      choosePicked(slug);
+    });
+  });
+}
+
+function choosePicked(slug) {
+  if (S.pickerTarget === 'source') {
+    sourceInput.value = slug;
+    doCheckSource();
+  } else if (S.pickerTarget === 'dest') {
+    destInput.value = slug;
+    doCheckDest();
+  }
+  S.pickerTarget = null;
 }
 
 remember.addEventListener('change', () => {
@@ -1227,7 +1595,14 @@ destContinue.addEventListener('click', () => goTo('options'));
 /* ────────────────────────────────────────────────────────────────
    Options
    ──────────────────────────────────────────────────────────────── */
-document.getElementById('opt-dryrun').addEventListener('change', e => { S.opts.dryRun = e.target.checked; });
+document.getElementById('opt-dryrun').addEventListener('change', e => {
+  S.opts.dryRun = e.target.checked;
+  // Hide the "run full transfer" button if user toggles dry-run back on
+  if (e.target.checked) {
+    startRealBtn.hidden = true;
+    startBtn.classList.add('btn-primary');
+  }
+});
 document.getElementById('opt-delete-source').addEventListener('change', e => { S.opts.deleteFromSource = e.target.checked; });
 
 document.getElementById('options-continue').addEventListener('click', () => {
@@ -1254,8 +1629,22 @@ function renderTransferSummary() {
 
 startBtn.addEventListener('click', runTransfer);
 
+const startRealBtn = document.getElementById('start-real-btn');
+startRealBtn.addEventListener('click', () => {
+  S.opts.dryRun = false;
+  document.getElementById('opt-dryrun').checked = false;
+  startRealBtn.hidden = true;
+  renderTransferSummary();
+  runTransfer();
+});
+
 async function runTransfer() {
   startBtn.disabled = true;
+  startRealBtn.hidden = true;
+  // Restore button hierarchy to initial state for a fresh run
+  startBtn.classList.add('btn-primary');
+  startRealBtn.classList.add('btn-primary');
+  document.getElementById('finish-summary').hidden = true;
   document.getElementById('progress').hidden = false;
 
   const counts = { added: 0, skipped: 0, removed: 0, failed: 0 };
@@ -1333,6 +1722,37 @@ async function runTransfer() {
   log('ok', `Done. Added ${counts.added}, skipped ${counts.skipped}, removed ${counts.removed}, failed ${counts.failed}.`);
   startBtn.disabled = false;
   startBtn.textContent = S.opts.dryRun ? 'Run simulation again' : 'Transfer again';
+  renderFinishSummary(counts);
+}
+
+function renderFinishSummary(counts) {
+  const box = document.getElementById('finish-summary');
+  const destUrl = `https://www.are.na/${S.user.slug}/${S.dest.slug}`;
+  const srcUrl = `https://www.are.na/${S.source.contents[0]?.user?.slug || S.user.slug}/${S.source.slug}`;
+
+  if (S.opts.dryRun) {
+    box.innerHTML = `
+      <div class="card-title">Simulation complete</div>
+      <div class="card-meta">${counts.added} would be added, ${counts.skipped} already there, ${counts.failed} failed. Nothing on are.na has changed.</div>
+      <div style="margin-top:var(--space-3);color:var(--text-primary);font-size:var(--fs-sm)">If that looks right, run the full transfer:</div>`;
+    box.hidden = false;
+    startRealBtn.hidden = false;
+    // Shift hierarchy: real-transfer becomes primary, re-run simulation becomes secondary
+    startBtn.classList.remove('btn-primary');
+    startRealBtn.classList.add('btn-primary');
+  } else {
+    box.innerHTML = `
+      <div class="card-title">Transfer complete</div>
+      <div class="card-meta" style="margin-bottom:var(--space-3)">${counts.added} added · ${counts.skipped} already there · ${counts.removed} removed · ${counts.failed} failed</div>
+      <div style="display:flex;gap:var(--space-3);flex-wrap:wrap">
+        <a href="${destUrl}" target="_blank" rel="noopener" class="btn">View <strong style="margin-left:4px">${esc(S.dest.title)}</strong> on are.na →</a>
+        <a href="${srcUrl}" target="_blank" rel="noopener" class="btn">View source channel →</a>
+      </div>`;
+    box.hidden = false;
+    startRealBtn.hidden = true;
+    // After a real transfer, startBtn offers only a repeat — secondary is enough
+    startBtn.classList.remove('btn-primary');
+  }
 }
 
 function describeBlock(item) {
