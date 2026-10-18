@@ -1006,6 +1006,13 @@ dialog.picker::backdrop {
               <span class="check-sub">The blocks themselves survive — only their connection to the source channel goes.</span>
             </span>
           </label>
+
+          <label class="check">
+            <input type="checkbox" id="opt-quiet">
+            <span class="check-label">Quiet mode: hide destination during transfer
+              <span class="check-sub">Temporarily sets the destination to private so followers aren't notified for each block, then restores its original status at the end. Skipped on simulations and when the channel is already private.</span>
+            </span>
+          </label>
         </div>
 
         <div class="actions">
@@ -1055,7 +1062,7 @@ dialog.picker::backdrop {
   </div>
 
   <footer>
-    <p>Runs in your browser. Your are.na access is only sent to <code>api.are.na</code>. Part of <a href="index.html">Are.na Tools and Toys</a> by <a href="https://www.mildlydiverting.com/about">Kim Plowright</a>.</p>
+    <p>Runs in your browser. Your are.na access is only sent to <code>api.are.na</code>. Part of <a href="../index.html">Are.na Tools and Toys</a> by <a href="https://www.mildlydiverting.com/about">Kim Plowright</a>.</p>
     <p><a href="https://github.com/mildlydiverting/are.na-toolkit">Source on GitHub</a></p>
   </footer>
 
@@ -1086,7 +1093,7 @@ const S = {
   myChannelIds: null, // Set of channel ids; null = not yet loaded
   source: null,     // { id, slug, title, length, contents: [...] }
   dest: null,       // { id, slug, title, length, writable: bool, existing_block_ids: Set }
-  opts: { dryRun: true, deleteFromSource: false },
+  opts: { dryRun: true, deleteFromSource: false, quietMode: false },
   pickerTarget: null, // 'source' or 'dest' when picker is open
 };
 
@@ -1135,6 +1142,7 @@ function goTo(stepName) {
     s.classList.toggle('is-done', sIdx < idx);
     s.classList.toggle('is-visited', sIdx <= maxVisitedStep);
   });
+  // Focus the heading of the new panel for a11y
   const panel = document.querySelector(`.panel[data-panel="${stepName}"]`);
   const h = panel?.querySelector('.panel-title');
   if (h) { h.setAttribute('tabindex', '-1'); h.focus(); }
@@ -1233,6 +1241,7 @@ const connectBtn = document.getElementById('connect-btn');
 const connectContinue = document.getElementById('connect-continue');
 const remember = document.getElementById('remember');
 
+// Preload saved token
 (function loadToken() {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
@@ -1274,6 +1283,7 @@ async function doConnect() {
   }
 }
 
+// to-arena's trick: a DELETE /connections/0 returns 403 for read-only, 404 for write-capable.
 async function checkWriteAccess() {
   try {
     await arenaFetch('DELETE', '/connections/0');
@@ -1447,8 +1457,10 @@ connectContinue.addEventListener('click', () => goTo('source'));
 function parseSlug(input) {
   const trimmed = input.trim();
   if (!trimmed) return null;
+  // Full URL: https://www.are.na/user/channel-slug
   const m = trimmed.match(/^https?:\/\/(?:www\.)?are\.na\/[^\/]+\/([^\/\?#]+)/i);
   if (m) return decodeURIComponent(m[1]);
+  // Bare slug
   return trimmed;
 }
 
@@ -1461,12 +1473,13 @@ async function fetchAllContents(slug, { sort = 'position_asc' } = {}) {
   for (;;) {
     const res = await arenaFetch('GET',
       `/channels/${encodeURIComponent(slug)}/contents?per=100&page=${page}&sort=${sort}`);
+    // v3 lists paginate under .data; some endpoints use .contents.
     const items = res?.data || res?.contents || [];
     all.push(...items);
     const more = res?.meta?.has_more_pages ?? (items.length === 100);
     if (!more || items.length === 0) break;
     page++;
-    if (page > 500) break;
+    if (page > 500) break; // safety
   }
   return all;
 }
@@ -1572,7 +1585,7 @@ async function doCheckDest() {
     setStatus('dest-status', 'Fetching current contents…');
     const contents = await fetchAllContents(slug);
     const existingIds = new Set(contents.map(it => it.id));
-    S.dest = { id: ch.id, slug: ch.slug, title: ch.title, length: contents.length, writable, existing_block_ids: existingIds };
+    S.dest = { id: ch.id, slug: ch.slug, title: ch.title, status: ch.status, length: contents.length, writable, existing_block_ids: existingIds };
     renderPreview(destPreview, ch, contents);
     if (!writable) {
       setStatus('dest-status',
@@ -1605,6 +1618,8 @@ document.getElementById('opt-dryrun').addEventListener('change', e => {
 });
 document.getElementById('opt-delete-source').addEventListener('change', e => { S.opts.deleteFromSource = e.target.checked; });
 
+document.getElementById('opt-quiet').addEventListener('change', e => { S.opts.quietMode = e.target.checked; });
+
 document.getElementById('options-continue').addEventListener('click', () => {
   renderTransferSummary();
   goTo('transfer');
@@ -1622,6 +1637,9 @@ function renderTransferSummary() {
   bits.push(`Add <strong>${toAdd}</strong> block${toAdd === 1 ? '' : 's'} from <strong>${esc(S.source.title)}</strong> into <strong>${esc(S.dest.title)}</strong>.`);
   if (skipped > 0) bits.push(`<br>${skipped} already there — those will be skipped.`);
   if (S.opts.deleteFromSource) bits.push(`<br>Then remove them from <strong>${esc(S.source.title)}</strong>.`);
+  if (S.opts.quietMode && !S.opts.dryRun && S.dest.status !== 'private') {
+    bits.push(`<br>Destination will be set to <strong>private</strong> during the transfer and restored to <strong>${esc(S.dest.status)}</strong> at the end.`);
+  }
   if (S.opts.dryRun) bits.push(`<br><em>Simulation only — nothing on are.na will change.</em>`);
   document.getElementById('transfer-summary').innerHTML = bits.join(' ');
   startBtn.textContent = S.opts.dryRun ? 'Run simulation' : 'Transfer';
@@ -1655,7 +1673,27 @@ async function runTransfer() {
   updatePhase(S.opts.dryRun ? 'Simulating merge…' : 'Merging…');
   log('info', `Starting ${S.opts.dryRun ? 'simulation' : 'transfer'}: ${toProcess.length} block${toProcess.length === 1 ? '' : 's'}.`);
 
-  const addedBlocks = [];
+  // Quiet mode: hide destination during transfer, restore afterwards.
+  // Only applies to a real transfer, and only when the channel isn't already private.
+  let privacyFlipped = false;
+  const originalStatus = S.dest.status;
+  if (S.opts.quietMode && !S.opts.dryRun) {
+    if (originalStatus === 'private') {
+      log('info', `Quiet mode: destination is already private, nothing to hide.`);
+    } else {
+      try {
+        updatePhase('Making destination private…');
+        await arenaFetch('PUT', `/channels/${encodeURIComponent(S.dest.slug)}`, { status: 'private' });
+        privacyFlipped = true;
+        log('ok', `Set destination to private (was ${originalStatus}). Will restore at the end.`);
+        updatePhase(S.opts.dryRun ? 'Simulating merge…' : 'Merging…');
+      } catch (err) {
+        log('err', `Couldn't set destination to private: ${err.message}. Continuing without quiet mode — followers may be notified.`);
+      }
+    }
+  }
+
+  const addedBlocks = []; // for the delete pass
 
   for (const item of toProcess) {
     try {
@@ -1718,6 +1756,17 @@ async function runTransfer() {
     }
   }
 
+  // Quiet mode: restore the destination's original status.
+  if (privacyFlipped) {
+    try {
+      updatePhase(`Restoring destination to ${originalStatus}…`);
+      await arenaFetch('PUT', `/channels/${encodeURIComponent(S.dest.slug)}`, { status: originalStatus });
+      log('ok', `Restored destination to ${originalStatus}.`);
+    } catch (err) {
+      log('err', `Couldn't restore destination to ${originalStatus}: ${err.message}. The channel is still private — set it back on are.na when you can.`);
+    }
+  }
+
   updatePhase(S.opts.dryRun ? 'Simulation complete.' : 'Transfer complete.');
   log('ok', `Done. Added ${counts.added}, skipped ${counts.skipped}, removed ${counts.removed}, failed ${counts.failed}.`);
   startBtn.disabled = false;
@@ -1731,6 +1780,7 @@ function renderFinishSummary(counts) {
   const srcUrl = `https://www.are.na/${S.source.contents[0]?.user?.slug || S.user.slug}/${S.source.slug}`;
 
   if (S.opts.dryRun) {
+    // After simulation: offer to run the real thing
     box.innerHTML = `
       <div class="card-title">Simulation complete</div>
       <div class="card-meta">${counts.added} would be added, ${counts.skipped} already there, ${counts.failed} failed. Nothing on are.na has changed.</div>
@@ -1741,6 +1791,7 @@ function renderFinishSummary(counts) {
     startBtn.classList.remove('btn-primary');
     startRealBtn.classList.add('btn-primary');
   } else {
+    // After real transfer: show channel link
     box.innerHTML = `
       <div class="card-title">Transfer complete</div>
       <div class="card-meta" style="margin-bottom:var(--space-3)">${counts.added} added · ${counts.skipped} already there · ${counts.removed} removed · ${counts.failed} failed</div>
