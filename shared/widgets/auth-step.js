@@ -23,6 +23,13 @@ export function describeConnectError(err) {
   return "Couldn't reach are.na. Check your connection and try again.";
 }
 
+function statusRow(label, message) {
+  const row = document.createElement('div');
+  Object.assign(row.style, { display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', alignItems: 'center' });
+  row.append(window.ArenaToolkit.Badge({ variant: 'alert', children: label }), message);
+  return row;
+}
+
 function node(tag, text, style) {
   const n = document.createElement(tag);
   if (text != null) n.textContent = text;
@@ -84,7 +91,7 @@ export function createAuthStep({
   async function connect(rawToken) {
     const token = String(rawToken || '').trim();
     if (!token) {
-      render(ATK.Badge({ variant: 'alert', children: 'Paste a token first.' }));
+      render(statusRow('No token', 'Paste a token first.'));
       return null;
     }
     render(ATK.Badge({ children: 'Checking…' }));
@@ -93,7 +100,7 @@ export function createAuthStep({
       user = await client.getCurrentUser();
     } catch (err) {
       client.setToken(null);
-      render(ATK.Badge({ variant: 'alert', children: describeConnectError(err) }));
+      render(statusRow('Couldn\'t connect', describeConnectError(err)));
       return null;
     }
     saveToken(storage, token, storageKey);

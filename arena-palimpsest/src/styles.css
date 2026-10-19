@@ -57,3 +57,54 @@ body {
 }
 
 .muted { color: var(--text-muted); }
+
+.input-bar__hint:empty { display: none; }
+
+.stack { display: flex; flex-direction: column; gap: var(--space-3); }
+.stack > p { margin: 0; }
+
+.block-head {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+.block-head__thumb { flex: 0 0 160px; width: 160px; }
+.block-head .kv { flex: 1; min-width: 0; }
+
+/* Label/value rows: the shape v2 swaps value cells to inputs in. */
+.kv {
+  width: 100%;
+  border-collapse: collapse;
+}
+.kv th,
+.kv td {
+  padding: var(--space-1) var(--space-2);
+  border-top: 1px solid var(--border-card);
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+.kv tr:first-child th,
+.kv tr:first-child td { border-top: 0; }
+.kv th {
+  width: 9em;
+  font: var(--text-ui-strong);
+  color: var(--text-muted);
+}
+.kv__inline { display: inline-flex; flex-wrap: wrap; gap: var(--space-2); align-items: baseline; }
+.prewrap { white-space: pre-wrap; }
+
+.metadata__title {
+  margin: 0 0 var(--space-1);
+  font: var(--text-ui-strong);
+  color: var(--text-heading);
+}
+.metadata > p { margin: 0; }
+
+@media (max-width: 600px) {
+  .block-head { flex-direction: column; }
+  .block-head__thumb { flex-basis: auto; width: 160px; }
+  .kv th { width: 6em; }
+}
+
+.input-bar__hint { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
