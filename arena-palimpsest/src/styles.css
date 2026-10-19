@@ -90,6 +90,7 @@ body {
   width: 9em;
   font: var(--text-ui-strong);
   color: var(--text-muted);
+  overflow-wrap: break-word; /* labels wrap between words, never mid-word */
 }
 .kv__inline { display: inline-flex; flex-wrap: wrap; gap: var(--space-2); align-items: baseline; }
 .prewrap { white-space: pre-wrap; }
@@ -104,7 +105,7 @@ body {
 @media (max-width: 600px) {
   .block-head { flex-direction: column; }
   .block-head__thumb { flex-basis: auto; width: 160px; }
-  .kv th { width: 6em; }
+  .kv th { width: 7em; }
 }
 
 .input-bar__hint { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
