@@ -24,3 +24,26 @@ export function userUrl(user) {
 export function blockUrl(id) {
   return `https://www.are.na/block/${id}`;
 }
+
+// Channel owners can be users or groups. Groups have no profile page we can link to safely.
+export function ownerLabel(owner) {
+  if (!owner) return '(unknown)';
+  return owner.type === 'Group' ? `${owner.name || owner.slug} (group)` : userHandle(owner);
+}
+
+export function ownerUrl(owner) {
+  return owner?.type === 'Group' ? null : userUrl(owner);
+}
+
+export function channelUrl(channel) {
+  if (!channel?.slug) return null;
+  const owner = channel.owner;
+  return owner?.type !== 'Group' && owner?.slug
+    ? `https://www.are.na/${encodeURIComponent(owner.slug)}/${encodeURIComponent(channel.slug)}`
+    : `https://www.are.na/channel/${encodeURIComponent(channel.slug)}`;
+}
+
+// Existing Badge variants only: public reads green, private reads red, closed stays quiet.
+export function visibilityVariant(visibility) {
+  return { public: 'success', private: 'private' }[visibility] || 'default';
+}

@@ -187,7 +187,10 @@
     return thumb ? h('div', { className: 'block-head__thumb' }, thumb) : null;
   }
 
+  let connectedCell = null;
+
   function renderBlock(block) {
+    connectedCell = h('span', { className: 'muted' }, 'loading…');
     const fields = [
       ['ID', h('span', { className: 'kv__inline' }, [
         String(block.id), copyLink(String(block.id)), extLink('open on are.na', blockUrl(block.id)),
@@ -202,6 +205,7 @@
       ['Visibility', [block.visibility, block.state && block.state !== 'available' ? block.state : null].filter(Boolean).join(', ')],
       ['Created', formatDate(block.created_at)],
       ['Updated', formatDate(block.updated_at)],
+      ['Connected to', connectedCell],
     ];
     const thumb = blockThumb(block);
     return ATK.Card({
@@ -211,6 +215,65 @@
         metadataSection(block.metadata),
       ]),
     });
+  }
+
+  function channelRow(ch) {
+    const counts = ch.counts || {};
+    const url = channelUrl(ch);
+    const ownerHref = ownerUrl(ch.owner);
+    const fields = [
+      ['Channel', url ? extLink(ch.title, url) : ch.title],
+      ['Slug', ch.slug],
+      ['ID', String(ch.id)],
+      ['Owner', ownerHref ? extLink(ownerLabel(ch.owner), ownerHref) : ownerLabel(ch.owner)],
+      ['Visibility', ch.visibility],
+      ['Description', ch.description?.markdown ? h('div', { className: 'prewrap' }, ch.description.markdown.trim()) : null],
+      ['Blocks', counts.blocks],
+      ['Contents', counts.contents],
+      ['Collaborators', counts.collaborators],
+      ['Created', formatDate(ch.created_at)],
+      ['Updated', formatDate(ch.updated_at)],
+    ];
+    return h('details', { className: 'disclosure' }, [
+      h('summary', null, [
+        h('span', { className: 'disclosure__title' }, ch.title || ch.slug),
+        ATK.Badge({ variant: visibilityVariant(ch.visibility), children: ch.visibility || 'unknown' }),
+        h('span', { className: 'muted' }, `by ${ownerLabel(ch.owner)}`),
+      ]),
+      h('div', { className: 'disclosure__body stack' }, [kvTable(fields), metadataSection(ch.metadata)]),
+    ]);
+  }
+
+  async function loadConnections(id, run) {
+    const list = h('div', { className: 'disclosure-list' }, h('p', { className: 'muted' }, 'Loading channels…'));
+    const note = h('p', { className: 'muted' },
+      "are.na doesn't show connection details (position, who connected it, when, or connection metadata) from a block's side, so this lists the channels themselves.");
+    const card = ATK.Card({ title: 'Connected channels', children: h('div', { className: 'stack' }, [note, list]) });
+    const title = card.querySelector('.atk-card__title');
+    els.resultPane.append(card);
+
+    let seen = 0;
+    try {
+      await client.getBlockConnections(id, {
+        onPage: (items, meta) => {
+          if (run !== inspectRun) return;
+          if (!seen) list.replaceChildren();
+          seen += items.length;
+          items.forEach((ch) => list.append(channelRow(ch)));
+          title.textContent = `Connected channels (${meta?.total_count ?? seen})`;
+        },
+      });
+      if (run !== inspectRun) return;
+      if (!seen) {
+        list.replaceChildren(h('p', { className: 'muted' }, 'Not connected to any channel you can see.'));
+        title.textContent = 'Connected channels (0)';
+      }
+      connectedCell.textContent = `${seen} channel${seen === 1 ? '' : 's'}`;
+    } catch (err) {
+      if (run !== inspectRun) return;
+      list.replaceChildren(h('p', null, `Couldn't load the channels: ${describeConnectError(err)}`));
+      connectedCell.textContent = 'unknown';
+    }
   }
 
   function messageCard(title, ...kids) {
@@ -251,6 +314,7 @@
       const block = await client.getBlock(id);
       if (run !== inspectRun) return;
       els.resultPane.replaceChildren(renderBlock(block));
+      await loadConnections(id, run);
     } catch (err) {
       if (run !== inspectRun) return;
       els.resultPane.replaceChildren(renderBlockError(id, err));

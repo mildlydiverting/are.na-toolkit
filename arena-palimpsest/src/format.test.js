@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { formatDate, metadataEntries, userHandle, userUrl, blockUrl } from './format.js';
+import {
+  formatDate, metadataEntries, userHandle, userUrl, blockUrl,
+  ownerLabel, ownerUrl, channelUrl, visibilityVariant,
+} from './format.js';
 
 describe('formatDate', () => {
   it('keeps the date part of an ISO timestamp', () => expect(formatDate('2024-03-15T10:30:00Z')).toBe('2024-03-15'));
@@ -31,4 +34,32 @@ describe('users and urls', () => {
     expect(userUrl(undefined)).toBeNull();
   });
   it('builds a block url', () => expect(blockUrl(13857023)).toBe('https://www.are.na/block/13857023'));
+});
+
+describe('channels and owners', () => {
+  const kim = { type: 'User', slug: 'kim-plowright', name: 'Kim Plowright' };
+  const group = { type: 'Group', slug: 'a-group', name: 'A Group' };
+
+  it('labels users and groups', () => {
+    expect(ownerLabel(kim)).toBe('@kim-plowright');
+    expect(ownerLabel(group)).toBe('A Group (group)');
+    expect(ownerLabel(null)).toBe('(unknown)');
+  });
+
+  it('links users but not groups', () => {
+    expect(ownerUrl(kim)).toBe('https://www.are.na/kim-plowright');
+    expect(ownerUrl(group)).toBeNull();
+  });
+
+  it('builds channel urls', () => {
+    expect(channelUrl({ slug: 'found', owner: kim })).toBe('https://www.are.na/kim-plowright/found');
+    expect(channelUrl({ slug: 'found', owner: group })).toBe('https://www.are.na/channel/found');
+    expect(channelUrl({})).toBeNull();
+  });
+
+  it('maps visibility to existing badge variants', () => {
+    expect(visibilityVariant('public')).toBe('success');
+    expect(visibilityVariant('private')).toBe('private');
+    expect(visibilityVariant('closed')).toBe('default');
+  });
 });
