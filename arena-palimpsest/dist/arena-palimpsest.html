@@ -1,0 +1,1649 @@
+<!doctype html>
+<html lang="en-GB" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Arena Palimpsest</title>
+
+<style>
+/* Arena Toolkit — generated from tokens.json */
+:root, [data-theme="light"] {
+  --surface-page: #ffffff; /* Page background. are.na --colors-background / gray0. */
+  --surface-card: #f7f7f7; /* Content cards. Lifts above surface-page. are.na gray1. */
+  --surface-media: #ededed; /* Behind thumbnails and image placeholders. are.na gray2. */
+  --surface-sunken: #ededed; /* Inset or quiet panels. Shares gray2 with surface-media on purpose. */
+  --border-card: #ededed; /* Hairline between cards and page. 1px solid. are.na gray2. */
+  --border-input: #dedede; /* Default input border. Visible but quiet. are.na gray3. */
+  --border-strong: #999999; /* Divider or border that carries weight. are.na gray4. */
+  --border-focus: #000000; /* Focus ring. are.na --colors-foreground / gray7. */
+  --text-primary: #000000; /* Body text and primary labels. are.na --colors-foreground / gray7. */
+  --text-secondary: #333333; /* Supporting text. Links. are.na --colors-link / gray6. */
+  --text-muted: #696969; /* Low-emphasis text. Labels above fields, status lines. are.na --colors-slate / gray5. */
+  --text-faint: #999999; /* Placeholders and disabled text. Never for text that must be read. are.na gray4. */
+  --text-heading: #333333; /* Section headings. Deliberately a touch quieter than text-primary. are.na gray6. */
+  --accent-primary: #00075f; /* Primary call-to-action background. are.na --colors-brandDark / blue3 — always the high-contrast opposite of the page: deep navy on light themes, near-white or pale indigo on dark themes. */
+  --accent-focus: #3d46c2; /* Focus ring and current selection. are.na --colors-focus / blue2. Dawn uses a dustier, more muted indigo. */
+  --accent-success: #238020; /* Positive status, confirmation. are.na --colors-channelPublic3 / green3. */
+  --accent-notification: #a87253; /* Soft notification brown. are.na --colors-notification. Dawn is the warmest. */
+  --accent-private: #b93d3d; /* Private channel marker. are.na --colors-channelPrivate3 / red3. Light / Dark are red; Dawn / Dusk shift to rose pink. */
+  --accent-alert: #e15100; /* Warnings, destructive-action confirmations, errors. are.na --colors-alert. */
+  --channel-open: #b4d6b3; /* Resting border on an open (public) channel block. are.na --colors-channelPublic2 / green2. Hover deepens to accent-success. */
+  --channel-private: #dfbebe; /* Resting border on a private channel block. are.na --colors-channelPrivate2 / red2. Hover deepens to accent-private. */
+  --shadow-soft: 0 0 20px rgba(0, 0, 0, 0.08); /* Elevated card. Modal. Dropdown. */
+  --shadow-ambient: 0 0 34px rgba(0, 0, 0, 0.05); /* Very subtle ground shadow. Hover lift. */
+}
+[data-theme="dark"] {
+  --surface-page: #000000;
+  --surface-card: #1a1a1a;
+  --surface-media: #333333;
+  --surface-sunken: #333333;
+  --border-card: #333333;
+  --border-input: #4f4f4f;
+  --border-strong: #696969;
+  --border-focus: #ffffff;
+  --text-primary: #ffffff;
+  --text-secondary: #e5e5e5;
+  --text-muted: #b2b2b2;
+  --text-faint: #696969;
+  --text-heading: #e5e5e5;
+  --accent-primary: #e2dfe9;
+  --accent-focus: #5e6dee;
+  --accent-success: #98dc89;
+  --accent-notification: #ac7556;
+  --accent-private: #eb6864;
+  --accent-alert: #ff7a30;
+  --channel-open: #2a4c29;
+  --channel-private: #412020;
+}
+[data-theme="dawn"] {
+  --surface-page: #f5f1f0;
+  --surface-card: #eae6e5;
+  --surface-media: #e0dbda;
+  --surface-sunken: #e0dbda;
+  --border-card: #e0dbda;
+  --border-input: #cac5c4;
+  --border-strong: #aaa4a3;
+  --border-focus: #342c2a;
+  --text-primary: #342c2a;
+  --text-secondary: #4a4240;
+  --text-muted: #7f7977;
+  --text-faint: #aaa4a3;
+  --text-heading: #4a4240;
+  --accent-primary: #00075f;
+  --accent-focus: #8082c5;
+  --accent-success: #238020;
+  --accent-notification: #b47e5f;
+  --accent-private: #c95d9e;
+  --accent-alert: #d6540b;
+  --channel-open: #c0d5bc;
+  --channel-private: #eaccdb;
+}
+[data-theme="dusk"] {
+  --surface-page: #16171e;
+  --surface-card: #24222c;
+  --surface-media: #342e38;
+  --surface-sunken: #342e38;
+  --border-card: #342e38;
+  --border-input: #4f4756;
+  --border-strong: #81738c;
+  --border-focus: #e7dbf0;
+  --text-primary: #e7dbf0;
+  --text-secondary: #d5cade;
+  --text-muted: #a798b3;
+  --text-faint: #81738c;
+  --text-heading: #d5cade;
+  --accent-primary: #c1c4ea;
+  --accent-focus: #5e6dee;
+  --accent-success: #98dc89;
+  --accent-notification: #ac7556;
+  --accent-private: #cb76a9;
+  --accent-alert: #ff7a30;
+  --channel-open: #2a4c29;
+  --channel-private: #432f41;
+}
+:root {
+  --space-nudge: 2px; /* Micro adjustment. Code chip vertical padding, 2px baseline shifts. Not step zero — a named special-purpose value in are.na. */
+  --space-1: 5px; /* Tight spacing within a related group. Gap between inline elements. */
+  --space-2: 10px; /* Small gaps between controls. Button icon-to-text gap. Horizontal padding on compact inputs. */
+  --space-3: 15px; /* The workhorse. Default padding. Card interior. Grid gutters. */
+  --space-4: 20px; /* Section spacing. Headroom around a block. Toast padding. */
+  --space-5: 25px; /* Modest section break. */
+  --space-6: 35px; /* Large section break. Between major regions. */
+  --space-7: 45px; /* Big section break. */
+  --space-8: 65px; /* Page-level gaps. Padding of modal containers. */
+  --space-9: 80px; /* Hero and marketing structure. */
+  --space-10: 100px; /* Very large spacing. Marketing-only. */
+  --space-11: 130px; /* Page-level marketing hero padding. */
+  --radius-sm: 3px; /* The default. Buttons, inputs, cards, media, thumbnails, badges — essentially everything. are.na --radii-1. */
+  --radius-round: 50%; /* Perfect circles. Avatars, dot indicators. are.na --radii-round. */
+  --radius-pill: 9999px; /* Full pills. Audio scrubbers, progress tracks, segmented controls — NOT badges in are.na. are.na --radii-pill. */
+  --font-sans: "Areal", Arial, Helvetica, sans-serif;
+  --font-serif: "Times New Roman", Times, serif;
+  --font-mono: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --text-h1: 700 28px/35px var(--font-sans);
+  --text-h2: 400 24px/30px var(--font-sans);
+  --text-h3: 700 19.2px/28px var(--font-sans);
+  --text-h4: 400 19.2px/23px var(--font-sans);
+  --text-body-lg: 400 16px/23px var(--font-sans);
+  --text-body: 400 14.4px/21px var(--font-sans);
+  --text-body-sm: 400 12.5px/17px var(--font-sans);
+  --text-ui: 400 16px/20px var(--font-sans);
+  --text-ui-strong: 700 14.4px/20px var(--font-sans);
+  --text-link-sm: 700 12.5px/16px var(--font-sans);
+  --text-caption: 600 10px/12px var(--font-sans);
+  --text-prose: 400 16px/24px var(--font-serif);
+}
+.h1 {
+  font-family: var(--font-sans);
+  font-size: 28px;
+  line-height: 35px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.h2 {
+  font-family: var(--font-sans);
+  font-size: 24px;
+  line-height: 30px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.h3 {
+  font-family: var(--font-sans);
+  font-size: 19.2px;
+  line-height: 28px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.h4 {
+  font-family: var(--font-sans);
+  font-size: 19.2px;
+  line-height: 23px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.body-lg {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 23px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.body {
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  line-height: 21px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.body-sm {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 17px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.ui {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 20px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.ui-strong {
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  line-height: 20px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.link-sm {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 16px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.caption {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  line-height: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.prose {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+</style>
+<style>
+/* ArenaToolkit — component styles. All colours route through tokens.css so themes flip automatically. */
+
+.atk-btn {
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  line-height: 1;
+  font-weight: 700;
+  padding: 0 var(--space-3);
+  height: 36px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+  box-sizing: border-box;
+}
+.atk-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.atk-btn--primary {
+  background: var(--accent-primary);
+  color: var(--surface-page);
+  border-color: var(--accent-primary);
+}
+.atk-btn--primary:hover:not(:disabled) {
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+}
+
+.atk-btn--secondary {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: var(--border-strong);
+}
+.atk-btn--secondary:hover:not(:disabled) {
+  color: var(--text-primary);
+  border-color: var(--text-primary);
+}
+
+.atk-btn--ghost {
+  background: var(--surface-card);
+  color: var(--text-secondary);
+}
+.atk-btn--ghost:hover:not(:disabled) {
+  background: var(--surface-media);
+  color: var(--text-primary);
+}
+
+.atk-btn--sm {
+  font-size: 12.5px;
+  height: 28px;
+  padding: 0 var(--space-2);
+}
+
+/* Input */
+.atk-input {
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  line-height: 1.2;
+  font-weight: 400;
+  padding: 0 var(--space-2);
+  height: 36px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-input);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.atk-input:hover { border-color: var(--border-strong); }
+.atk-input:focus { border-color: var(--border-focus); }
+.atk-input::placeholder { color: var(--text-faint); }
+.atk-input:disabled {
+  color: var(--text-faint);
+  background: var(--surface-sunken);
+  cursor: not-allowed;
+}
+
+/* Link */
+.atk-link {
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+.atk-link:hover { color: var(--text-primary); }
+
+.atk-link--muted {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-weight: 400;
+}
+.atk-link--muted:hover { color: var(--text-primary); }
+
+/* Card */
+.atk-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  line-height: 21px;
+}
+.atk-card__title {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 20px;
+  margin: 0 0 var(--space-1) 0;
+}
+.atk-card__body { color: var(--text-secondary); }
+
+/* Badge — matches are.na's .c-eZIjnL: 3px radius chip, mono, 10px uppercase. */
+.atk-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
+  white-space: nowrap;
+  vertical-align: middle;
+  background: var(--surface-card);
+  color: var(--text-muted);
+}
+.atk-badge--private {
+  background: var(--accent-private);
+  color: var(--surface-page);
+}
+.atk-badge--success {
+  background: var(--accent-success);
+  color: var(--surface-page);
+}
+.atk-badge--alert {
+  background: var(--accent-alert);
+  color: var(--surface-page);
+}
+.atk-badge--focus {
+  background: var(--accent-focus);
+  color: var(--surface-page);
+}
+
+/* Block — matches are.na's channel-grid block pattern. Four variants: image, attachment, text, channel.
+   Blocks are always square and SPACIOUS — ~260–320px in the real UI, laid out on a repeat(auto-fill, minmax(260px, 1fr)) grid. */
+.atk-block {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-page);
+  overflow: hidden;
+  box-sizing: border-box;
+  aspect-ratio: 1 / 1;
+  min-width: 180px;
+}
+
+/* image + attachment: no border, image fills */
+.atk-block--image,
+.atk-block--attachment {
+  padding: 0;
+  background: var(--surface-media);
+}
+.atk-block--image > img,
+.atk-block--attachment > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* text: hairline border, generous padding, content top-left aligned, supports inline markup */
+.atk-block--text {
+  border: 1px solid var(--border-card);
+  padding: var(--space-3);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+.atk-block--text strong,
+.atk-block--text b { font-weight: 700; }
+.atk-block--text em,
+.atk-block--text i { font-style: italic; }
+.atk-block--text a {
+  color: var(--text-primary);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Fading text wrapper — mirrors are.na's .c-ftzJsE-gidtAM-direction-vertical.
+   Overflow fades to transparent over the bottom third of the block so long
+   text goes soft rather than hard-clipping, and action buttons overlay cleanly. */
+.atk-block__text-fade {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to top, transparent 0%, #000 33%);
+          mask-image: linear-gradient(to top, transparent 0%, #000 33%);
+}
+.atk-block__text-fade > p { margin: 0 0 var(--space-2) 0; }
+.atk-block__text-fade > p:last-child { margin-bottom: 0; }
+
+/* channel: 2px border, content centred. Three colour variants matching are.na's channel states.
+   Default (variant 'channel') is the closed/neutral look. */
+.atk-block--channel,
+.atk-block--channel-closed,
+.atk-block--channel-open,
+.atk-block--channel-private {
+  border-width: 2px;
+  border-style: solid;
+  padding: var(--space-3);
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  transition: border-color 120ms ease;
+}
+
+/* Closed / default — grey. */
+.atk-block--channel,
+.atk-block--channel-closed {
+  border-color: var(--border-input);
+}
+.atk-block--channel:hover,
+.atk-block--channel:focus-within,
+.atk-block--channel-closed:hover,
+.atk-block--channel-closed:focus-within {
+  border-color: var(--text-secondary);
+}
+
+/* Open — green. Soft resting border, deep hover. Text takes the strong green. */
+.atk-block--channel-open {
+  border-color: var(--channel-open);
+  color: var(--accent-success);
+}
+.atk-block--channel-open:hover,
+.atk-block--channel-open:focus-within {
+  border-color: var(--accent-success);
+}
+
+/* Private — red/pink border and text. */
+.atk-block--channel-private {
+  border-color: var(--channel-private);
+  color: var(--accent-private);
+}
+.atk-block--channel-private:hover,
+.atk-block--channel-private:focus-within {
+  border-color: var(--accent-private);
+}
+
+/* Channel body stack — title / byline / meta, centred */
+.atk-block__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  max-width: 100%;
+}
+.atk-block__title {
+  font-size: 24px;
+  line-height: 1.25;
+  font-weight: 400;
+  color: inherit;
+}
+.atk-block__byline {
+  font-size: 14.4px;
+  line-height: 1.35;
+  font-weight: 700;
+  color: inherit;
+  margin-top: var(--space-1);
+}
+.atk-block__meta {
+  font-size: 14.4px;
+  line-height: 1.35;
+  font-weight: 400;
+  color: inherit;
+}
+
+/* Label — small chip, bottom-right. e.g. "PDF" on attachment blocks. */
+.atk-block__label {
+  position: absolute;
+  right: var(--space-2);
+  bottom: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: var(--surface-card);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+/* Actions row — hover-revealed. Mirrors are.na's .c-hRIxJA pattern. */
+.atk-block__actions {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(2px);
+  transition: opacity 150ms ease, transform 150ms ease, visibility 150ms;
+  pointer-events: none;
+}
+.atk-block:hover .atk-block__actions,
+.atk-block:focus-within .atk-block__actions {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Individual action button — bare text until hovered, then picks up border */
+.atk-block__action {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  height: 28px;
+  padding: 0 var(--space-2);
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  font-weight: 700;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+.atk-block__action:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-card);
+}
+.atk-block__action:focus-visible {
+  border-color: var(--border-focus);
+  outline: none;
+}
+
+/* Badge — filled brand & nsfw variants (NEW / BETA / API / NSFW chips) */
+.atk-badge--brand {
+  background: var(--accent-primary);
+  color: var(--surface-page);
+}
+.atk-badge--nsfw {
+  background: var(--accent-notification);
+  color: var(--surface-page);
+}
+
+/* ────────────────────────────────────────────────────────────
+   Modal — centred panel on a dimmed, blurred backdrop
+   ──────────────────────────────────────────────────────────── */
+.atk-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+  -webkit-backdrop-filter: blur(8px);
+          backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  z-index: 100;
+  font-family: var(--font-sans);
+}
+.atk-modal {
+  background: var(--surface-card);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.12);
+  width: 100%;
+  max-width: 460px;
+  max-height: calc(100vh - var(--space-6));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.atk-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border-card);
+  font-size: 14.4px;
+  font-weight: 400;
+  color: var(--text-primary);
+}
+.atk-modal__close {
+  all: unset;
+  cursor: pointer;
+  color: var(--text-muted);
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+}
+.atk-modal__close:hover { color: var(--text-primary); }
+.atk-modal__body {
+  padding: var(--space-3);
+  overflow: auto;
+  font-size: 14.4px;
+  color: var(--text-primary);
+  line-height: 1.45;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.atk-modal__footer {
+  padding: var(--space-3);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+/* ────────────────────────────────────────────────────────────
+   Menu — floating action list (icon + label + optional shortcut)
+   ──────────────────────────────────────────────────────────── */
+.atk-menu {
+  background: var(--surface-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.08);
+  padding: var(--space-1) 0;
+  min-width: 200px;
+  font-family: var(--font-sans);
+  display: inline-block;
+}
+.atk-menu__item {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  font-size: 14.4px;
+  font-weight: 700;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background-color 100ms ease;
+}
+.atk-menu__item:hover,
+.atk-menu__item:focus-visible {
+  background: var(--surface-sunken);
+}
+.atk-menu__icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--text-muted);
+}
+.atk-menu__icon svg { width: 100%; height: 100%; }
+.atk-menu__label { flex: 1; min-width: 0; }
+.atk-menu__shortcut { margin-left: auto; }
+.atk-menu__separator {
+  height: 1px;
+  background: var(--border-card);
+  margin: var(--space-1) 0;
+}
+
+/* ────────────────────────────────────────────────────────────
+   KeyChip — a single keyboard shortcut key
+   ──────────────────────────────────────────────────────────── */
+.atk-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+/* ────────────────────────────────────────────────────────────
+   Select — same shape as Input, with a chevron
+   ──────────────────────────────────────────────────────────── */
+.atk-select {
+  display: block;
+  width: 100%;
+  min-height: 36px;
+  padding: 0 30px 0 var(--space-2);
+  background-color: var(--surface-card);
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  color: var(--text-primary);
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+  outline: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M3 4.5 L6 7.5 L9 4.5' stroke='%23696969' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
+  box-sizing: border-box;
+  transition: border-color 120ms ease;
+}
+.atk-select:hover { border-color: var(--border-strong); }
+.atk-select:focus { border-color: var(--border-focus); }
+.atk-select:disabled {
+  color: var(--text-faint);
+  background-color: var(--surface-sunken);
+  cursor: not-allowed;
+}
+
+/* ────────────────────────────────────────────────────────────
+   Textarea — multi-line input, same visual as Input
+   ──────────────────────────────────────────────────────────── */
+.atk-textarea {
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  line-height: 1.45;
+  font-weight: 400;
+  padding: var(--space-2);
+  min-height: 100px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-input);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  transition: border-color 120ms ease;
+}
+.atk-textarea:hover { border-color: var(--border-strong); }
+.atk-textarea:focus { border-color: var(--border-focus); }
+.atk-textarea::placeholder { color: var(--text-faint); }
+.atk-textarea:disabled {
+  color: var(--text-faint);
+  background: var(--surface-sunken);
+  cursor: not-allowed;
+}
+
+/* ────────────────────────────────────────────────────────────
+   Tabs — underline-active horizontal nav
+   ──────────────────────────────────────────────────────────── */
+.atk-tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-4);
+  border-bottom: 1px solid var(--border-card);
+  font-family: var(--font-sans);
+}
+.atk-tabs__tab {
+  all: unset;
+  padding: var(--space-2) 0;
+  font-size: 14.4px;
+  font-weight: 400;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 1px solid transparent;
+  margin-bottom: -1px;
+  transition: color 120ms ease, border-color 120ms ease;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.atk-tabs__tab:hover { color: var(--text-primary); }
+.atk-tabs__tab[aria-selected="true"] {
+  color: var(--text-primary);
+  font-weight: 700;
+  border-bottom-color: var(--text-primary);
+}
+.atk-tabs__count {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+/* ────────────────────────────────────────────────────────────
+   Stepper — vertical process indicator, dot on a track
+   ──────────────────────────────────────────────────────────── */
+.atk-stepper {
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-sans);
+  position: relative;
+}
+/* One continuous line down the gutter — runs from the first dot to the last. */
+.atk-stepper::before {
+  content: "";
+  position: absolute;
+  left: 10px;        /* centred in the 20px track column */
+  top: 17px;         /* aligns with first dot centre */
+  bottom: 17px;      /* aligns with last dot centre */
+  width: 1px;
+  background: var(--border-input);
+  z-index: 0;
+}
+.atk-stepper__item {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: var(--space-2);
+  padding: var(--space-1) 0 var(--space-2) 0;
+  position: relative;
+  z-index: 1;
+}
+.atk-stepper__track {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  padding-top: 8px;
+}
+.atk-stepper__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--border-strong);
+  position: relative;
+  z-index: 1;
+}
+.atk-stepper__item.is-upcoming .atk-stepper__dot {
+  background: var(--border-input);
+}
+.atk-stepper__item.is-current .atk-stepper__dot {
+  background: var(--text-primary);
+  width: 9px;
+  height: 9px;
+}
+.atk-stepper__label {
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--text-muted);
+  line-height: 1.25;
+}
+.atk-stepper__item.is-current .atk-stepper__label {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+.atk-stepper__item.is-done .atk-stepper__label {
+  color: var(--text-primary);
+}
+.atk-stepper__description {
+  font-size: 14.4px;
+  color: var(--text-primary);
+  margin-top: var(--space-1);
+  line-height: 1.45;
+  font-weight: 400;
+}
+
+</style>
+<style>
+/* Tool-local layout only. Everything else comes from shared/ui. */
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--surface-page);
+  color: var(--text-primary);
+  font: var(--text-body);
+}
+
+.palimpsest-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3);
+  border-bottom: 1px solid var(--border-card);
+}
+
+.palimpsest-header h1 {
+  margin: 0;
+  font: var(--text-h3);
+  color: var(--text-heading);
+}
+
+.palimpsest-main {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-3) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.input-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.input-bar label {
+  font: var(--text-ui-strong);
+  color: var(--text-muted);
+}
+
+.input-bar__row {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.input-bar__row .atk-input { flex: 1; min-width: 0; }
+
+.result-pane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.muted { color: var(--text-muted); }
+
+</style>
+</head>
+<body>
+  <header class="palimpsest-header" id="header">
+    <!-- title and auth status mount here -->
+  </header>
+
+  <main class="palimpsest-main">
+    <section class="input-bar" id="input-bar">
+      <!-- Input + Inspect button -->
+    </section>
+
+    <section class="result-pane" id="result-pane" aria-live="polite">
+      <!-- Block / Connections / Channels sections render here -->
+    </section>
+  </main>
+
+<script>
+/* ArenaToolkit — component bundle. Classic script, assigns window.ArenaToolkit. */
+(function () {
+  'use strict';
+
+  function el(tag, attrs, kids) {
+    var node = document.createElement(tag);
+    if (attrs) {
+      for (var k in attrs) {
+        if (!Object.prototype.hasOwnProperty.call(attrs, k)) continue;
+        var v = attrs[k];
+        if (v == null || v === false) continue;
+        if (k === 'className') node.className = v;
+        else if (k === 'style' && typeof v === 'object') Object.assign(node.style, v);
+        else if (k.indexOf('on') === 0 && typeof v === 'function') {
+          node.addEventListener(k.slice(2).toLowerCase(), v);
+        } else if (v === true) {
+          node.setAttribute(k, '');
+        } else {
+          node.setAttribute(k, String(v));
+        }
+      }
+    }
+    if (kids == null) return node;
+    if (!Array.isArray(kids)) kids = [kids];
+    for (var i = 0; i < kids.length; i++) {
+      var c = kids[i];
+      if (c == null) continue;
+      if (typeof c === 'string' || typeof c === 'number') {
+        node.appendChild(document.createTextNode(String(c)));
+      } else {
+        node.appendChild(c);
+      }
+    }
+    return node;
+  }
+
+  function Button(opts) {
+    opts = opts || {};
+    var cls = ['atk-btn', 'atk-btn--' + (opts.variant || 'primary')];
+    if (opts.size === 'sm') cls.push('atk-btn--sm');
+    return el('button', {
+      className: cls.join(' '),
+      type: opts.type || 'button',
+      disabled: opts.disabled || null,
+      onclick: opts.onClick
+    }, opts.children);
+  }
+
+  function Input(opts) {
+    opts = opts || {};
+    var node = el('input', {
+      className: 'atk-input',
+      type: opts.type || 'text',
+      placeholder: opts.placeholder || null,
+      name: opts.name || null,
+      disabled: opts.disabled || null,
+      oninput: opts.onInput
+    });
+    if (opts.value != null) node.value = opts.value;
+    return node;
+  }
+
+  function Link(opts) {
+    opts = opts || {};
+    var cls = ['atk-link'];
+    if (opts.variant === 'muted') cls.push('atk-link--muted');
+    return el('a', {
+      className: cls.join(' '),
+      href: opts.href || '#'
+    }, opts.children);
+  }
+
+  function Card(opts) {
+    opts = opts || {};
+    var kids = [];
+    if (opts.title) kids.push(el('div', { className: 'atk-card__title' }, opts.title));
+    kids.push(el('div', { className: 'atk-card__body' }, opts.children));
+    return el('div', { className: 'atk-card' }, kids);
+  }
+
+  function Badge(opts) {
+    opts = opts || {};
+    var cls = ['atk-badge'];
+    if (opts.variant && opts.variant !== 'default') cls.push('atk-badge--' + opts.variant);
+    return el('span', { className: cls.join(' ') }, opts.children);
+  }
+
+  function Block(opts) {
+    opts = opts || {};
+    var variant = opts.variant || 'text';
+    var cls = ['atk-block', 'atk-block--' + variant];
+    var kids = [];
+
+    // Image (image / attachment variants)
+    if (opts.src) {
+      kids.push(el('img', { src: opts.src, alt: opts.alt || '' }));
+    }
+
+    // Text variant: content IS the block body — children or html, with inline markup allowed.
+    // Channel variant: structured title / byline / meta, centred.
+    if (variant === 'text') {
+      var textWrap;
+      if (opts.html != null) {
+        textWrap = el('div', { className: 'atk-block__text-fade' });
+        textWrap.innerHTML = opts.html;
+      } else {
+        textWrap = el('div', { className: 'atk-block__text-fade' }, opts.children);
+      }
+      kids.push(textWrap);
+    } else if (variant === 'channel' || variant.indexOf('channel-') === 0) {
+      var body = [];
+      if (opts.title) body.push(el('div', { className: 'atk-block__title' }, opts.title));
+      if (opts.byline) body.push(el('div', { className: 'atk-block__byline' }, opts.byline));
+      if (opts.meta) body.push(el('div', { className: 'atk-block__meta' }, opts.meta));
+      if (body.length) kids.push(el('div', { className: 'atk-block__content' }, body));
+    }
+
+    // Label (bottom-right chip, e.g. "PDF")
+    if (opts.label) {
+      kids.push(el('span', { className: 'atk-block__label' }, opts.label));
+    }
+
+    // Hover-revealed actions row
+    if (opts.actions && opts.actions.length) {
+      var actionNodes = opts.actions.map(function (a) {
+        var tag = a.href ? 'a' : 'button';
+        var attrs = {
+          className: 'atk-block__action',
+          href: a.href || null,
+          type: a.href ? null : 'button',
+          onclick: a.onClick
+        };
+        return el(tag, attrs, a.label);
+      });
+      kids.push(el('div', { className: 'atk-block__actions' }, actionNodes));
+    }
+
+    return el('div', { className: cls.join(' ') }, kids);
+  }
+
+  function KeyChip(opts) {
+    opts = opts || {};
+    return el('kbd', { className: 'atk-key' }, opts.children);
+  }
+
+  function Menu(opts) {
+    opts = opts || {};
+    var menu = el('div', { className: 'atk-menu', role: 'menu' });
+    (opts.items || []).forEach(function (item) {
+      if (item.separator) {
+        menu.appendChild(el('div', { className: 'atk-menu__separator' }));
+        return;
+      }
+      var tag = item.href ? 'a' : 'button';
+      var kids = [];
+      if (item.icon) kids.push(el('span', { className: 'atk-menu__icon' }, item.icon));
+      kids.push(el('span', { className: 'atk-menu__label' }, item.label));
+      if (item.shortcut) {
+        kids.push(el('span', { className: 'atk-menu__shortcut' },
+          KeyChip({ children: item.shortcut })));
+      }
+      menu.appendChild(el(tag, {
+        className: 'atk-menu__item',
+        href: item.href || null,
+        type: item.href ? null : 'button',
+        role: 'menuitem',
+        onclick: item.onClick
+      }, kids));
+    });
+    return menu;
+  }
+
+  function Modal(opts) {
+    opts = opts || {};
+    var backdrop = el('div', { className: 'atk-modal__backdrop', role: 'dialog', 'aria-modal': 'true' });
+    var panel = el('div', { className: 'atk-modal' });
+
+    function close(e) {
+      if (opts.onClose) opts.onClose(e);
+      if (backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
+    }
+
+    if (opts.title) {
+      var closeBtn = el('button', {
+        className: 'atk-modal__close',
+        type: 'button',
+        onclick: close,
+        'aria-label': 'Close'
+      }, '×');
+      panel.appendChild(el('div', { className: 'atk-modal__header' }, [
+        el('span', null, opts.title),
+        closeBtn
+      ]));
+    }
+    if (opts.children != null) {
+      panel.appendChild(el('div', { className: 'atk-modal__body' }, opts.children));
+    }
+    if (opts.footer != null) {
+      panel.appendChild(el('div', { className: 'atk-modal__footer' }, opts.footer));
+    }
+
+    backdrop.appendChild(panel);
+    backdrop.addEventListener('click', function (e) {
+      if (e.target === backdrop) close(e);
+    });
+    return backdrop;
+  }
+
+  function Select(opts) {
+    opts = opts || {};
+    var attrs = {
+      className: 'atk-select',
+      name: opts.name || null,
+      disabled: opts.disabled || null,
+      onchange: opts.onChange
+    };
+    var options = (opts.options || []).map(function (o) {
+      if (typeof o === 'string') o = { value: o, label: o };
+      var optAttrs = { value: o.value };
+      if (o.value === opts.value) optAttrs.selected = '';
+      return el('option', optAttrs, o.label);
+    });
+    return el('select', attrs, options);
+  }
+
+  function Textarea(opts) {
+    opts = opts || {};
+    var node = el('textarea', {
+      className: 'atk-textarea',
+      placeholder: opts.placeholder || null,
+      name: opts.name || null,
+      rows: opts.rows || null,
+      disabled: opts.disabled || null,
+      oninput: opts.onInput
+    });
+    if (opts.value != null) node.value = opts.value;
+    return node;
+  }
+
+  function Tabs(opts) {
+    opts = opts || {};
+    var tabs = el('div', { className: 'atk-tabs', role: 'tablist' });
+    var items = opts.items || [];
+    items.forEach(function (t, idx) {
+      var isActive = (opts.value != null)
+        ? (t.value === opts.value)
+        : (idx === 0);
+      var kids = [t.label];
+      if (t.count != null) {
+        kids.push(el('span', { className: 'atk-tabs__count' }, String(t.count)));
+      }
+      tabs.appendChild(el('button', {
+        className: 'atk-tabs__tab',
+        type: 'button',
+        role: 'tab',
+        'aria-selected': isActive ? 'true' : 'false',
+        onclick: function (e) {
+          if (opts.onChange) opts.onChange(t.value, e);
+        }
+      }, kids));
+    });
+    return tabs;
+  }
+
+  function Stepper(opts) {
+    opts = opts || {};
+    var root = el('div', { className: 'atk-stepper' });
+    (opts.items || []).forEach(function (step) {
+      var state = step.state || 'upcoming';
+      var item = el('div', { className: 'atk-stepper__item is-' + state });
+      item.appendChild(el('div', { className: 'atk-stepper__track' },
+        el('span', { className: 'atk-stepper__dot' })));
+      var body = el('div', { className: 'atk-stepper__body' },
+        el('div', { className: 'atk-stepper__label' }, step.label));
+      if (step.description && state === 'current') {
+        body.appendChild(el('div', { className: 'atk-stepper__description' }, step.description));
+      }
+      item.appendChild(body);
+      root.appendChild(item);
+    });
+    return root;
+  }
+
+  window.ArenaToolkit = {
+    Button: Button,
+    Input: Input,
+    Link: Link,
+    Card: Card,
+    Badge: Badge,
+    Block: Block,
+    Modal: Modal,
+    Menu: Menu,
+    KeyChip: KeyChip,
+    Select: Select,
+    Textarea: Textarea,
+    Tabs: Tabs,
+    Stepper: Stepper,
+    _el: el
+  };
+}());
+
+</script>
+<script>
+// Read-only are.na v3 client. Endpoints checked against https://api.are.na/v3/openapi.json.
+// Write methods are added by the first tool that needs them.
+const ARENA_API_BASE = 'https://api.are.na/v3';
+
+class ArenaError extends Error {
+  constructor(status, message, body) {
+    super(message);
+    this.name = 'ArenaError';
+    this.status = status;
+    this.body = body;
+  }
+}
+
+// throttle: the function from createThrottle(); omit in tests to call fetch directly.
+function createArenaClient({ token = null, fetchImpl = (...a) => globalThis.fetch(...a), throttle = null, base = ARENA_API_BASE } = {}) {
+  let currentToken = token;
+
+  async function request(path, params = {}) {
+    const url = new URL(base + path);
+    for (const [k, v] of Object.entries(params)) {
+      if (v != null) url.searchParams.set(k, String(v));
+    }
+    const doFetch = () => fetchImpl(url.toString(), {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        ...(currentToken ? { Authorization: `Bearer ${currentToken}` } : {}),
+      },
+      credentials: 'omit',
+      referrerPolicy: 'no-referrer',
+    });
+    const res = throttle ? await throttle(doFetch) : await doFetch();
+
+    const text = await res.text();
+    let data = null;
+    try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+
+    if (!res.ok) {
+      const msg = data?.details?.message || data?.error || `are.na error ${res.status}`;
+      throw new ArenaError(res.status, msg, data);
+    }
+    return data;
+  }
+
+  // Follows meta.has_more_pages and returns every item in `data`. onPage(items, meta) fires per page.
+  async function paginate(path, params = {}, { per = 100, onPage = null } = {}) {
+    const all = [];
+    for (let page = 1; ; page++) {
+      const body = await request(path, { ...params, page, per });
+      const items = body?.data || [];
+      all.push(...items);
+      if (onPage) onPage(items, body?.meta);
+      if (!body?.meta?.has_more_pages) return all;
+    }
+  }
+
+  return {
+    setToken(t) { currentToken = t || null; },
+    request,
+    paginate,
+    getCurrentUser: () => request('/me'),
+    getBlock: id => request(`/blocks/${encodeURIComponent(id)}`),
+    getBlockConnections: (id, opts = {}) => paginate(`/blocks/${encodeURIComponent(id)}/connections`, {}, opts),
+    getChannel: idOrSlug => request(`/channels/${encodeURIComponent(idOrSlug)}`),
+  };
+}
+
+</script>
+<script>
+// Polite pacing for are.na: 150 ms between requests, and on 429 back off [2, 4, 8] s,
+// honouring Retry-After. Wraps a function that returns a fetch Response.
+const THROTTLE_GAP_MS = 150;
+const THROTTLE_BACKOFF_S = [2, 4, 8];
+
+// onWait(seconds, attempt) is called before each backoff sleep, so the UI can say so.
+function createThrottle({
+  gap = THROTTLE_GAP_MS,
+  backoff = THROTTLE_BACKOFF_S,
+  sleep = ms => new Promise(r => setTimeout(r, ms)),
+  now = () => Date.now(),
+  onWait = null,
+} = {}) {
+  let nextSlot = 0;
+
+  // Reserve the next start time synchronously, so concurrent callers queue up in order.
+  async function takeSlot() {
+    const start = Math.max(now(), nextSlot);
+    nextSlot = start + gap;
+    const wait = start - now();
+    if (wait > 0) await sleep(wait);
+  }
+
+  return async function throttled(doFetch) {
+    for (let attempt = 0; ; attempt++) {
+      await takeSlot();
+      const res = await doFetch();
+      if (res.status !== 429 || attempt >= backoff.length) return res;
+      const retryAfter = Number(res.headers?.get?.('retry-after'));
+      const seconds = retryAfter > 0 ? retryAfter : backoff[attempt];
+      if (onWait) onWait(seconds, attempt + 1);
+      await sleep(seconds * 1000);
+    }
+  };
+}
+
+</script>
+<script>
+// PAT connect widget: paste a token, test it against /me, remember it in localStorage.
+// Built only from ArenaToolkit components. Read-only for now; a write-scope check
+// (see arena-merge's checkWriteAccess) is added when the first writing tool adopts this.
+const AUTH_STORAGE_KEY = 'arena_toolkit_pat';
+const AUTH_TOKEN_URL = 'https://www.are.na/settings/personal-access-tokens';
+
+function readSavedToken(storage, key = AUTH_STORAGE_KEY) {
+  try { return storage.getItem(key) || null; } catch { return null; }
+}
+
+function saveToken(storage, token, key = AUTH_STORAGE_KEY) {
+  try { storage.setItem(key, token); } catch { /* private window or blocked storage: carry on unsaved */ }
+}
+
+function clearToken(storage, key = AUTH_STORAGE_KEY) {
+  try { storage.removeItem(key); } catch { /* nothing to clear */ }
+}
+
+function describeConnectError(err) {
+  if (err?.status === 401) return "are.na didn't recognise that token. Check it was copied whole.";
+  if (err?.status === 429) return 'are.na is asking us to slow down. Try again in a minute.';
+  if (err?.status) return `are.na said: ${err.message}`;
+  return "Couldn't reach are.na. Check your connection and try again.";
+}
+
+function node(tag, text, style) {
+  const n = document.createElement(tag);
+  if (text != null) n.textContent = text;
+  if (style) Object.assign(n.style, style);
+  return n;
+}
+
+// client: from createArenaClient(). onChange(user | null) fires on connect and disconnect.
+function createAuthStep({
+  client,
+  storage = globalThis.localStorage,
+  storageKey = AUTH_STORAGE_KEY,
+  onChange = null,
+} = {}) {
+  const ATK = window.ArenaToolkit;
+  let user = null;
+
+  const element = node('div', null, { display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' });
+
+  function render(statusNode) {
+    element.replaceChildren();
+    if (user) {
+      const row = node('div', null, { display: 'flex', alignItems: 'center', gap: 'var(--space-2)' });
+      row.append(
+        ATK.Badge({ variant: 'success', children: `Connected as @${user.slug}` }),
+        ATK.Button({ variant: 'ghost', size: 'sm', children: 'Disconnect', onClick: disconnect }),
+      );
+      element.append(row);
+      return;
+    }
+
+    const intro = node('p', null, { margin: 0 });
+    intro.append(
+      'Paste a ',
+      ATK.Link({ href: AUTH_TOKEN_URL, children: 'personal access token' }),
+      ' with read access. That is all this tool needs. Some content, including private channels, only shows up once you are connected.',
+    );
+    intro.querySelector('a').target = '_blank';
+    intro.querySelector('a').rel = 'noopener';
+
+    const input = ATK.Input({ type: 'password', placeholder: 'Paste your token here' });
+    input.autocomplete = 'off';
+    input.spellcheck = false;
+    input.style.flex = '1';
+    const submit = () => connect(input.value);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+
+    const row = node('div', null, { display: 'flex', gap: 'var(--space-2)' });
+    row.append(input, ATK.Button({ variant: 'primary', children: 'Connect', onClick: submit }));
+
+    const note = node('p', 'Your token stays in this browser and is only ever sent to are.na.', {
+      margin: 0, color: 'var(--text-muted)', font: 'var(--text-body-sm)',
+    });
+
+    element.append(intro, row, note);
+    if (statusNode) element.append(statusNode);
+  }
+
+  async function connect(rawToken) {
+    const token = String(rawToken || '').trim();
+    if (!token) {
+      render(ATK.Badge({ variant: 'alert', children: 'Paste a token first.' }));
+      return null;
+    }
+    render(ATK.Badge({ children: 'Checking…' }));
+    client.setToken(token);
+    try {
+      user = await client.getCurrentUser();
+    } catch (err) {
+      client.setToken(null);
+      render(ATK.Badge({ variant: 'alert', children: describeConnectError(err) }));
+      return null;
+    }
+    saveToken(storage, token, storageKey);
+    render();
+    if (onChange) onChange(user);
+    return user;
+  }
+
+  // Re-connect with a saved token, if there is one. Returns the user or null.
+  async function restore() {
+    const saved = readSavedToken(storage, storageKey);
+    if (!saved) { render(); return null; }
+    const result = await connect(saved);
+    if (!result) clearToken(storage, storageKey);
+    return result;
+  }
+
+  function disconnect() {
+    user = null;
+    client.setToken(null);
+    clearToken(storage, storageKey);
+    render();
+    if (onChange) onChange(null);
+  }
+
+  render();
+  return { element, connect, restore, disconnect, getUser: () => user };
+}
+
+</script>
+<script>
+// Arena Palimpsest: inspect a block's metadata, connections and channels (read-only).
+// Plain DOM, built from ArenaToolkit components. No framework.
+(function () {
+  const ATK = window.ArenaToolkit;
+
+  const THEMES = ['light', 'dark', 'dawn', 'dusk'];
+
+  // ?theme=dawn forces a theme (handy for checking all four); otherwise follow the system.
+  function applyTheme() {
+    const asked = new URLSearchParams(location.search).get('theme');
+    const theme = THEMES.includes(asked)
+      ? asked
+      : (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+  }
+
+  function h(tag, attrs, kids) {
+    return ATK._el(tag, attrs, kids);
+  }
+
+  const throttle = createThrottle({ onWait: (s) => showWait(s) });
+  const client = createArenaClient({ throttle });
+
+  const els = {
+    header: document.getElementById('header'),
+    inputBar: document.getElementById('input-bar'),
+    resultPane: document.getElementById('result-pane'),
+  };
+
+  /* ── Rate-limit feedback ─────────────────────────────────────── */
+  let waitBanner = null;
+  function showWait(seconds) {
+    if (!waitBanner) {
+      waitBanner = h('p', { className: 'muted', role: 'status' });
+      els.inputBar.append(waitBanner);
+    }
+    waitBanner.textContent = `Waiting ${seconds}s for rate limit…`;
+    setTimeout(() => { waitBanner?.remove(); waitBanner = null; }, seconds * 1000);
+  }
+
+  /* ── Header and Connect ──────────────────────────────────────── */
+  const authSlot = h('div', { className: 'palimpsest-header__auth' });
+  let connectModal = null;
+
+  const auth = createAuthStep({
+    client,
+    onChange: (user) => {
+      renderAuthSlot(user);
+      if (user) closeConnect();
+    },
+  });
+
+  function openConnect() {
+    if (connectModal) return;
+    connectModal = ATK.Modal({
+      title: 'Connect to are.na',
+      children: auth.element,
+      onClose: () => { connectModal = null; },
+    });
+    document.body.append(connectModal);
+  }
+
+  function closeConnect() {
+    connectModal?.remove();
+    connectModal = null;
+  }
+
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeConnect(); });
+
+  function renderAuthSlot(user) {
+    authSlot.replaceChildren(
+      user
+        ? ATK.Badge({ variant: 'success', children: `Connected as @${user.slug}` })
+        : ATK.Link({ children: 'Connect →' }),
+    );
+    const link = authSlot.querySelector('a');
+    if (link) link.addEventListener('click', (e) => { e.preventDefault(); openConnect(); });
+  }
+
+  function mountHeader() {
+    els.header.append(h('h1', null, 'Arena Palimpsest'), authSlot);
+    renderAuthSlot(null);
+  }
+
+  /* ── Input bar ───────────────────────────────────────────────── */
+  function mountInputBar() {
+    const input = ATK.Input({
+      placeholder: 'Paste a block URL or ID (e.g. 13857023 or https://www.are.na/block/13857023)',
+    });
+    input.id = 'block-input';
+    input.autocomplete = 'off';
+    input.spellcheck = false;
+
+    const button = ATK.Button({ variant: 'primary', children: 'Inspect', onClick: () => inspect(input.value) });
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') inspect(input.value); });
+
+    els.inputBar.append(
+      h('label', { for: 'block-input' }, 'Block to inspect'),
+      h('div', { className: 'input-bar__row' }, [input, button]),
+    );
+  }
+
+  /* ── Result pane ─────────────────────────────────────────────── */
+  function renderPlaceholder() {
+    els.resultPane.replaceChildren(
+      ATK.Card({
+        title: 'Nothing inspected yet',
+        children: h('p', { className: 'muted' }, 'Paste a block URL or ID above to see its fields, metadata and connections.'),
+      }),
+    );
+  }
+
+  function inspect(raw) {
+    // Wired up in the next phase.
+    void raw;
+  }
+
+  /* ── Start ───────────────────────────────────────────────────── */
+  applyTheme();
+  mountHeader();
+  mountInputBar();
+  renderPlaceholder();
+  auth.restore();
+})();
+
+</script>
+</body>
+</html>
