@@ -1,4 +1,4 @@
-// Builds every tool that has a build.js. Usage: node scripts/build-all.js [--dev] [--docs]
+// Builds every tool that has a build.js. Usage: node scripts/build-all.js [--docs]
 import { readdirSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';

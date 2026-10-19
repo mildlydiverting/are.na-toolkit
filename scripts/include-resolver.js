@@ -1,6 +1,10 @@
 // Resolves <!-- @include path --> markers in a tool's src/index.html.
-// Spec: _claude/toolkit-architecture-plan.md §5.
-import { readFileSync, writeFileSync, mkdirSync, copyFileSync, existsSync } from 'node:fs';
+// Spec: _claude/toolkit-architecture-plan.md §5, with two changes:
+//  - Source .js files are ES modules (so Vitest can import them). When inlined into a
+//    classic <script>, `export` keywords and `import … from` lines are stripped; every
+//    included file then shares one global scope.
+//  - There is no link-the-sources dev mode. `--watch` rebuilds on save instead.
+import { readFileSync, writeFileSync, mkdirSync, copyFileSync, existsSync, watch } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -20,6 +24,18 @@ function read(file, spec) {
   return readFileSync(file, 'utf8');
 }
 
+// ES module source -> classic-script source.
+export function stripModuleSyntax(text, spec = 'script') {
+  if (/^export\s+default\b/m.test(text)) {
+    throw new Error(`@include "${spec}": "export default" can't be inlined; use a named export`);
+  }
+  return text
+    .replace(/^import\b[\s\S]*?\bfrom\s+['"][^'"]+['"];?[ \t]*\n?/gm, '')
+    .replace(/^import\s+['"][^'"]+['"];?[ \t]*\n?/gm, '')
+    .replace(/^export\s*\{[^}]*\};?[ \t]*\n?/gm, '')
+    .replace(/^export\s+(?=(?:async\s+)?(?:function|class|const|let|var)\b)/gm, '');
+}
+
 // Inlined CSS/JS can't contain its own closing tag, or the page breaks.
 function assertSafe(text, closing, spec) {
   if (text.toLowerCase().includes(closing)) {
@@ -27,49 +43,59 @@ function assertSafe(text, closing, spec) {
   }
 }
 
-// dev: link to the source files instead of inlining. outDir is where the dev page will be written.
-export function resolveIncludes(html, { srcDir, repoRoot = REPO_ROOT, dev = false, outDir } = {}) {
+export function resolveIncludes(html, { srcDir, repoRoot = REPO_ROOT } = {}) {
   return html.replace(MARKER, (_, spec) => {
     const file = resolveSource(spec, srcDir, repoRoot);
     const ext = path.extname(spec).toLowerCase();
-    if (dev && (ext === '.css' || ext === '.js')) {
-      if (!existsSync(file)) throw new Error(`@include "${spec}" not found (looked for ${file})`);
-      const href = path.relative(outDir, file).split(path.sep).join('/');
-      return ext === '.css'
-        ? `<link rel="stylesheet" href="${href}">`
-        : `<script src="${href}"></script>`;
-    }
     const text = read(file, spec);
     if (ext === '.css') {
       assertSafe(text, '</style', spec);
       return `<style>\n${text}\n</style>`;
     }
     if (ext === '.js') {
-      assertSafe(text, '</script', spec);
-      return `<script>\n${text}\n</script>`;
+      const code = stripModuleSyntax(text, spec);
+      assertSafe(code, '</script', spec);
+      return `<script>\n${code}\n</script>`;
     }
     if (ext === '.html') return text;
     throw new Error(`@include "${spec}": unsupported extension "${ext}"`);
   });
 }
 
-// Builds toolDir/src/index.html into toolDir/dist/<name>.html (or <name>.dev.html).
-// docs: also copy the built file to docs/ (GitHub Pages). Never done for dev builds.
-export function buildTool(toolDir, { dev = false, docs = false, repoRoot = REPO_ROOT } = {}) {
+// Builds toolDir/src/index.html into toolDir/dist/<name>.html.
+// docs: also copy the built file to docs/ (GitHub Pages).
+export function buildTool(toolDir, { docs = false, repoRoot = REPO_ROOT } = {}) {
   const name = path.basename(toolDir);
   const srcDir = path.join(toolDir, 'src');
   const outDir = path.join(toolDir, 'dist');
-  const outFile = path.join(outDir, dev ? `${name}.dev.html` : `${name}.html`);
+  const outFile = path.join(outDir, `${name}.html`);
 
-  const html = resolveIncludes(read(path.join(srcDir, 'index.html'), 'src/index.html'), {
-    srcDir, repoRoot, dev, outDir,
-  });
+  const html = resolveIncludes(read(path.join(srcDir, 'index.html'), 'src/index.html'), { srcDir, repoRoot });
   mkdirSync(outDir, { recursive: true });
   writeFileSync(outFile, html);
 
-  if (docs && !dev) {
-    const docsFile = path.join(repoRoot, 'docs', `${name}.html`);
-    copyFileSync(outFile, docsFile);
-  }
+  if (docs) copyFileSync(outFile, path.join(repoRoot, 'docs', `${name}.html`));
   return outFile;
+}
+
+// Entry point for a tool's build.js: node build.js [--docs] [--watch]
+export function runCli(toolDir, argv = process.argv.slice(2), repoRoot = REPO_ROOT) {
+  const docs = argv.includes('--docs');
+  const run = () => {
+    try {
+      console.log(`Built ${path.relative(repoRoot, buildTool(toolDir, { docs, repoRoot }))}`);
+    } catch (err) {
+      console.error(err.message);
+      if (!argv.includes('--watch')) process.exit(1);
+    }
+  };
+  run();
+  if (!argv.includes('--watch')) return;
+
+  let timer;
+  const rebuild = () => { clearTimeout(timer); timer = setTimeout(run, 100); };
+  for (const dir of [path.join(toolDir, 'src'), path.join(repoRoot, 'shared')]) {
+    if (existsSync(dir)) watch(dir, { recursive: true }, rebuild);
+  }
+  console.log('Watching src/ and shared/ for changes…');
 }
