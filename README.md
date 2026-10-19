@@ -120,11 +120,51 @@ A random-block browser for are.na channels. Good for creative inspiration, seren
 
 ---
 
+## Are.na Merge
+
+![Are.na logos, merging](docs/arena-merge.png)
+
+**[Try it](https://mildlydiverting.github.io/are.na-toolkit/arena-merge.html)**
+
+Add every block from one channel into another in one go. For tidying up your own channels.
+
+**What it does:**
+- Walks you through connecting, picking a source channel, picking a destination, and setting options
+- Optional dry-run, so you can see what would happen first
+- Optional remove-from-source, to make it a move rather than a copy
+- Needs a personal access token with **write** access. The token stays in your browser
+
+**File:** `arena-merge/index.html` — standalone single file.
+
+---
+
+## Are.na Palimpsest
+
+![Screenshot from Are.na Palimpsest showing a block's fields, its metadata, and the channel it is connected to](docs/arena-palimpsest-preview.jpg)
+
+**[Try it](https://mildlydiverting.github.io/are.na-toolkit/arena-palimpsest.html)**
+
+Paste a block URL or ID and see everything are.na knows about it. Handy for finding out what other tools have written onto your blocks. Read-only.
+
+**What it does:**
+- Shows the block's own fields: title, description, source, owner, dates, visibility
+- Lists every metadata key and value on the block
+- Lists the channels the block is connected to, each with its own fields and metadata
+- Keeps your last ten lookups as chips
+- Works without a token for public blocks. A read-only token unlocks private channels
+- Follows your system theme, or add `?theme=light`, `dark`, `dawn` or `dusk` to the URL
+
+are.na doesn't expose connection details (position, who connected a block, when) from a block's side, so you see the channels themselves.
+
+**Build:** built from `arena-palimpsest/src/` by `node arena-palimpsest/build.js`. See `arena-palimpsest/README.md`.
+
+---
+
 ## Technical notes
 
-All three tools share the same constraints:
+All the tools share the same constraints:
 
-- **Vanilla JS only** — no npm, no bundler, no backend
+- **Vanilla JS only** — no framework, no backend. Most tools are hand-written single files. Palimpsest is built from `src/` and shared code in `shared/` by a small Node script, and still ships as one HTML file
 - **Single HTML files** — open directly in a browser or serve with `python3 -m http.server`
 - **are.na REST API v3** — `https://api.are.na/v3/` — all API calls use v3 exclusively
 - **localStorage** — channel preferences, access tokens, and fetched content (24h TTL) are all stored client-side
@@ -142,7 +182,7 @@ CORS on canvas export requires the page to be served (not opened as `file://`).
 
 ### are.na access token
 
-Required only for private channels and keyword search (v3 API restriction). Get one at [are.na → Settings → Developers](https://www.are.na/developers/personal-access-tokens). Read-only access is sufficient.
+Required only for private channels and keyword search (v3 API restriction). Get one at [are.na → Settings → Developers](https://www.are.na/developers/personal-access-tokens). Read-only access is sufficient, except for Merge, which needs write access. Palimpsest works without a token for public blocks.
 
 ### Palette build
 
@@ -150,6 +190,16 @@ Required only for private channels and keyword search (v3 API restriction). Get 
 python3 arena-palette/build.py
 # → arena-palette/dist/arena-palette.html
 # copy to docs/ manually or cp arena-palette/dist/arena-palette.html docs/arena-palette.html
+```
+
+### Palimpsest build and tests
+
+```bash
+npm install                                  # once
+npm test                                     # Vitest, for the pure logic and shared code
+node arena-palimpsest/build.js               # src/ → arena-palimpsest/dist/arena-palimpsest.html
+node arena-palimpsest/build.js --watch       # rebuild on save
+node arena-palimpsest/build.js --docs        # also copy to docs/ for GitHub Pages
 ```
 
 ### Are.na Hypernormalisation — Fetching, Caching & Throttling
@@ -200,13 +250,26 @@ are.na-toolkit/
 │   ├── arena-hypernormalisation.html
 │   ├── arena-palette.html
 │   ├── arena-picks.html
-│   └── *.jpg                      # Screenshots
+│   ├── arena-merge.html
+│   ├── arena-palimpsest.html
+│   └── *.jpg, *.png               # Screenshots
 ├── arena-hypernormalisation/
 │   └── index.html                 # Single-file tool
 ├── arena-palette/
 │   ├── src/                       # Source files (template, JS, CSS)
 │   ├── dist/                      # Built output
 │   └── build.py                   # Concat builder
+├── arena-merge/
+│   └── index.html                 # Single-file tool
+├── arena-palimpsest/
+│   ├── src/                       # Source files (shell, JS, CSS, tests)
+│   ├── dist/                      # Built output
+│   └── build.js                   # Uses scripts/include-resolver.js
+├── shared/                        # Code shared by tools on the build pipeline
+│   ├── ui/                        # Arena Toolkit design system bundle
+│   ├── api/                       # are.na client and request throttle
+│   └── widgets/                   # Connect (token) widget
+├── scripts/                       # @include resolver, build-all
 └── are.na-picks/                  # Sibling repo (submodule or separate clone)
     └── index.html
 ```
