@@ -1,0 +1,211 @@
+/* Arena Toolkit — generated from tokens.json */
+:root, [data-theme="light"] {
+  --surface-page: #ffffff; /* Page background. are.na --colors-background / gray0. */
+  --surface-card: #f7f7f7; /* Content cards. Lifts above surface-page. are.na gray1. */
+  --surface-media: #ededed; /* Behind thumbnails and image placeholders. are.na gray2. */
+  --surface-sunken: #ededed; /* Inset or quiet panels. Shares gray2 with surface-media on purpose. */
+  --border-card: #ededed; /* Hairline between cards and page. 1px solid. are.na gray2. */
+  --border-input: #dedede; /* Default input border. Visible but quiet. are.na gray3. */
+  --border-strong: #999999; /* Divider or border that carries weight. are.na gray4. */
+  --border-focus: #000000; /* Focus ring. are.na --colors-foreground / gray7. */
+  --text-primary: #000000; /* Body text and primary labels. are.na --colors-foreground / gray7. */
+  --text-secondary: #333333; /* Supporting text. Links. are.na --colors-link / gray6. */
+  --text-muted: #696969; /* Low-emphasis text. Labels above fields, status lines. are.na --colors-slate / gray5. */
+  --text-faint: #999999; /* Placeholders and disabled text. Never for text that must be read. are.na gray4. */
+  --text-heading: #333333; /* Section headings. Deliberately a touch quieter than text-primary. are.na gray6. */
+  --accent-primary: #00075f; /* Primary call-to-action background. are.na --colors-brandDark / blue3 — always the high-contrast opposite of the page: deep navy on light themes, near-white or pale indigo on dark themes. */
+  --accent-focus: #3d46c2; /* Focus ring and current selection. are.na --colors-focus / blue2. Dawn uses a dustier, more muted indigo. */
+  --accent-success: #238020; /* Positive status, confirmation. are.na --colors-channelPublic3 / green3. */
+  --accent-notification: #a87253; /* Soft notification brown. are.na --colors-notification. Dawn is the warmest. */
+  --accent-private: #b93d3d; /* Private channel marker. are.na --colors-channelPrivate3 / red3. Light / Dark are red; Dawn / Dusk shift to rose pink. */
+  --accent-alert: #e15100; /* Warnings, destructive-action confirmations, errors. are.na --colors-alert. */
+  --channel-open: #b4d6b3; /* Resting border on an open (public) channel block. are.na --colors-channelPublic2 / green2. Hover deepens to accent-success. */
+  --channel-private: #dfbebe; /* Resting border on a private channel block. are.na --colors-channelPrivate2 / red2. Hover deepens to accent-private. */
+  --shadow-soft: 0 0 20px rgba(0, 0, 0, 0.08); /* Elevated card. Modal. Dropdown. */
+  --shadow-ambient: 0 0 34px rgba(0, 0, 0, 0.05); /* Very subtle ground shadow. Hover lift. */
+}
+[data-theme="dark"] {
+  --surface-page: #000000;
+  --surface-card: #1a1a1a;
+  --surface-media: #333333;
+  --surface-sunken: #333333;
+  --border-card: #333333;
+  --border-input: #4f4f4f;
+  --border-strong: #696969;
+  --border-focus: #ffffff;
+  --text-primary: #ffffff;
+  --text-secondary: #e5e5e5;
+  --text-muted: #b2b2b2;
+  --text-faint: #696969;
+  --text-heading: #e5e5e5;
+  --accent-primary: #e2dfe9;
+  --accent-focus: #5e6dee;
+  --accent-success: #98dc89;
+  --accent-notification: #ac7556;
+  --accent-private: #eb6864;
+  --accent-alert: #ff7a30;
+  --channel-open: #2a4c29;
+  --channel-private: #412020;
+}
+[data-theme="dawn"] {
+  --surface-page: #f5f1f0;
+  --surface-card: #eae6e5;
+  --surface-media: #e0dbda;
+  --surface-sunken: #e0dbda;
+  --border-card: #e0dbda;
+  --border-input: #cac5c4;
+  --border-strong: #aaa4a3;
+  --border-focus: #342c2a;
+  --text-primary: #342c2a;
+  --text-secondary: #4a4240;
+  --text-muted: #7f7977;
+  --text-faint: #aaa4a3;
+  --text-heading: #4a4240;
+  --accent-primary: #00075f;
+  --accent-focus: #8082c5;
+  --accent-success: #238020;
+  --accent-notification: #b47e5f;
+  --accent-private: #c95d9e;
+  --accent-alert: #d6540b;
+  --channel-open: #c0d5bc;
+  --channel-private: #eaccdb;
+}
+[data-theme="dusk"] {
+  --surface-page: #16171e;
+  --surface-card: #24222c;
+  --surface-media: #342e38;
+  --surface-sunken: #342e38;
+  --border-card: #342e38;
+  --border-input: #4f4756;
+  --border-strong: #81738c;
+  --border-focus: #e7dbf0;
+  --text-primary: #e7dbf0;
+  --text-secondary: #d5cade;
+  --text-muted: #a798b3;
+  --text-faint: #81738c;
+  --text-heading: #d5cade;
+  --accent-primary: #c1c4ea;
+  --accent-focus: #5e6dee;
+  --accent-success: #98dc89;
+  --accent-notification: #ac7556;
+  --accent-private: #cb76a9;
+  --accent-alert: #ff7a30;
+  --channel-open: #2a4c29;
+  --channel-private: #432f41;
+}
+:root {
+  --space-nudge: 2px; /* Micro adjustment. Code chip vertical padding, 2px baseline shifts. Not step zero — a named special-purpose value in are.na. */
+  --space-1: 5px; /* Tight spacing within a related group. Gap between inline elements. */
+  --space-2: 10px; /* Small gaps between controls. Button icon-to-text gap. Horizontal padding on compact inputs. */
+  --space-3: 15px; /* The workhorse. Default padding. Card interior. Grid gutters. */
+  --space-4: 20px; /* Section spacing. Headroom around a block. Toast padding. */
+  --space-5: 25px; /* Modest section break. */
+  --space-6: 35px; /* Large section break. Between major regions. */
+  --space-7: 45px; /* Big section break. */
+  --space-8: 65px; /* Page-level gaps. Padding of modal containers. */
+  --space-9: 80px; /* Hero and marketing structure. */
+  --space-10: 100px; /* Very large spacing. Marketing-only. */
+  --space-11: 130px; /* Page-level marketing hero padding. */
+  --radius-sm: 3px; /* The default. Buttons, inputs, cards, media, thumbnails, badges — essentially everything. are.na --radii-1. */
+  --radius-round: 50%; /* Perfect circles. Avatars, dot indicators. are.na --radii-round. */
+  --radius-pill: 9999px; /* Full pills. Audio scrubbers, progress tracks, segmented controls — NOT badges in are.na. are.na --radii-pill. */
+  --font-sans: "Areal", Arial, Helvetica, sans-serif;
+  --font-serif: "Times New Roman", Times, serif;
+  --font-mono: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --text-h1: 700 28px/35px var(--font-sans);
+  --text-h2: 400 24px/30px var(--font-sans);
+  --text-h3: 700 19.2px/28px var(--font-sans);
+  --text-h4: 400 19.2px/23px var(--font-sans);
+  --text-body-lg: 400 16px/23px var(--font-sans);
+  --text-body: 400 14.4px/21px var(--font-sans);
+  --text-body-sm: 400 12.5px/17px var(--font-sans);
+  --text-ui: 400 16px/20px var(--font-sans);
+  --text-ui-strong: 700 14.4px/20px var(--font-sans);
+  --text-link-sm: 700 12.5px/16px var(--font-sans);
+  --text-caption: 600 10px/12px var(--font-sans);
+  --text-prose: 400 16px/24px var(--font-serif);
+}
+.h1 {
+  font-family: var(--font-sans);
+  font-size: 28px;
+  line-height: 35px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.h2 {
+  font-family: var(--font-sans);
+  font-size: 24px;
+  line-height: 30px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.h3 {
+  font-family: var(--font-sans);
+  font-size: 19.2px;
+  line-height: 28px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.h4 {
+  font-family: var(--font-sans);
+  font-size: 19.2px;
+  line-height: 23px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.body-lg {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 23px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.body {
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  line-height: 21px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.body-sm {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 17px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.ui {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 20px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.ui-strong {
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  line-height: 20px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.link-sm {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 16px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.caption {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  line-height: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.prose {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+  letter-spacing: 0;
+}

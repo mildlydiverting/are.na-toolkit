@@ -1,0 +1,681 @@
+/* ArenaToolkit — component styles. All colours route through tokens.css so themes flip automatically. */
+
+.atk-btn {
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  line-height: 1;
+  font-weight: 700;
+  padding: 0 var(--space-3);
+  height: 36px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+  box-sizing: border-box;
+}
+.atk-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.atk-btn--primary {
+  background: var(--accent-primary);
+  color: var(--surface-page);
+  border-color: var(--accent-primary);
+}
+.atk-btn--primary:hover:not(:disabled) {
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+}
+
+.atk-btn--secondary {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: var(--border-strong);
+}
+.atk-btn--secondary:hover:not(:disabled) {
+  color: var(--text-primary);
+  border-color: var(--text-primary);
+}
+
+.atk-btn--ghost {
+  background: var(--surface-card);
+  color: var(--text-secondary);
+}
+.atk-btn--ghost:hover:not(:disabled) {
+  background: var(--surface-media);
+  color: var(--text-primary);
+}
+
+.atk-btn--sm {
+  font-size: 12.5px;
+  height: 28px;
+  padding: 0 var(--space-2);
+}
+
+/* Input */
+.atk-input {
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  line-height: 1.2;
+  font-weight: 400;
+  padding: 0 var(--space-2);
+  height: 36px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-input);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.atk-input:hover { border-color: var(--border-strong); }
+.atk-input:focus { border-color: var(--border-focus); }
+.atk-input::placeholder { color: var(--text-faint); }
+.atk-input:disabled {
+  color: var(--text-faint);
+  background: var(--surface-sunken);
+  cursor: not-allowed;
+}
+
+/* Link */
+.atk-link {
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+.atk-link:hover { color: var(--text-primary); }
+
+.atk-link--muted {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-weight: 400;
+}
+.atk-link--muted:hover { color: var(--text-primary); }
+
+/* Card */
+.atk-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  line-height: 21px;
+}
+.atk-card__title {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 20px;
+  margin: 0 0 var(--space-1) 0;
+}
+.atk-card__body { color: var(--text-secondary); }
+
+/* Badge — matches are.na's .c-eZIjnL: 3px radius chip, mono, 10px uppercase. */
+.atk-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
+  white-space: nowrap;
+  vertical-align: middle;
+  background: var(--surface-card);
+  color: var(--text-muted);
+}
+.atk-badge--private {
+  background: var(--accent-private);
+  color: var(--surface-page);
+}
+.atk-badge--success {
+  background: var(--accent-success);
+  color: var(--surface-page);
+}
+.atk-badge--alert {
+  background: var(--accent-alert);
+  color: var(--surface-page);
+}
+.atk-badge--focus {
+  background: var(--accent-focus);
+  color: var(--surface-page);
+}
+
+/* Block — matches are.na's channel-grid block pattern. Four variants: image, attachment, text, channel.
+   Blocks are always square and SPACIOUS — ~260–320px in the real UI, laid out on a repeat(auto-fill, minmax(260px, 1fr)) grid. */
+.atk-block {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-page);
+  overflow: hidden;
+  box-sizing: border-box;
+  aspect-ratio: 1 / 1;
+  min-width: 180px;
+}
+
+/* image + attachment: no border, image fills */
+.atk-block--image,
+.atk-block--attachment {
+  padding: 0;
+  background: var(--surface-media);
+}
+.atk-block--image > img,
+.atk-block--attachment > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* text: hairline border, generous padding, content top-left aligned, supports inline markup */
+.atk-block--text {
+  border: 1px solid var(--border-card);
+  padding: var(--space-3);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+.atk-block--text strong,
+.atk-block--text b { font-weight: 700; }
+.atk-block--text em,
+.atk-block--text i { font-style: italic; }
+.atk-block--text a {
+  color: var(--text-primary);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Fading text wrapper — mirrors are.na's .c-ftzJsE-gidtAM-direction-vertical.
+   Overflow fades to transparent over the bottom third of the block so long
+   text goes soft rather than hard-clipping, and action buttons overlay cleanly. */
+.atk-block__text-fade {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to top, transparent 0%, #000 33%);
+          mask-image: linear-gradient(to top, transparent 0%, #000 33%);
+}
+.atk-block__text-fade > p { margin: 0 0 var(--space-2) 0; }
+.atk-block__text-fade > p:last-child { margin-bottom: 0; }
+
+/* channel: 2px border, content centred. Three colour variants matching are.na's channel states.
+   Default (variant 'channel') is the closed/neutral look. */
+.atk-block--channel,
+.atk-block--channel-closed,
+.atk-block--channel-open,
+.atk-block--channel-private {
+  border-width: 2px;
+  border-style: solid;
+  padding: var(--space-3);
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  transition: border-color 120ms ease;
+}
+
+/* Closed / default — grey. */
+.atk-block--channel,
+.atk-block--channel-closed {
+  border-color: var(--border-input);
+}
+.atk-block--channel:hover,
+.atk-block--channel:focus-within,
+.atk-block--channel-closed:hover,
+.atk-block--channel-closed:focus-within {
+  border-color: var(--text-secondary);
+}
+
+/* Open — green. Soft resting border, deep hover. Text takes the strong green. */
+.atk-block--channel-open {
+  border-color: var(--channel-open);
+  color: var(--accent-success);
+}
+.atk-block--channel-open:hover,
+.atk-block--channel-open:focus-within {
+  border-color: var(--accent-success);
+}
+
+/* Private — red/pink border and text. */
+.atk-block--channel-private {
+  border-color: var(--channel-private);
+  color: var(--accent-private);
+}
+.atk-block--channel-private:hover,
+.atk-block--channel-private:focus-within {
+  border-color: var(--accent-private);
+}
+
+/* Channel body stack — title / byline / meta, centred */
+.atk-block__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  max-width: 100%;
+}
+.atk-block__title {
+  font-size: 24px;
+  line-height: 1.25;
+  font-weight: 400;
+  color: inherit;
+}
+.atk-block__byline {
+  font-size: 14.4px;
+  line-height: 1.35;
+  font-weight: 700;
+  color: inherit;
+  margin-top: var(--space-1);
+}
+.atk-block__meta {
+  font-size: 14.4px;
+  line-height: 1.35;
+  font-weight: 400;
+  color: inherit;
+}
+
+/* Label — small chip, bottom-right. e.g. "PDF" on attachment blocks. */
+.atk-block__label {
+  position: absolute;
+  right: var(--space-2);
+  bottom: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: var(--surface-card);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+/* Actions row — hover-revealed. Mirrors are.na's .c-hRIxJA pattern. */
+.atk-block__actions {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(2px);
+  transition: opacity 150ms ease, transform 150ms ease, visibility 150ms;
+  pointer-events: none;
+}
+.atk-block:hover .atk-block__actions,
+.atk-block:focus-within .atk-block__actions {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Individual action button — bare text until hovered, then picks up border */
+.atk-block__action {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  height: 28px;
+  padding: 0 var(--space-2);
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  font-weight: 700;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+.atk-block__action:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-card);
+}
+.atk-block__action:focus-visible {
+  border-color: var(--border-focus);
+  outline: none;
+}
+
+/* Badge — filled brand & nsfw variants (NEW / BETA / API / NSFW chips) */
+.atk-badge--brand {
+  background: var(--accent-primary);
+  color: var(--surface-page);
+}
+.atk-badge--nsfw {
+  background: var(--accent-notification);
+  color: var(--surface-page);
+}
+
+/* ────────────────────────────────────────────────────────────
+   Modal — centred panel on a dimmed, blurred backdrop
+   ──────────────────────────────────────────────────────────── */
+.atk-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+  -webkit-backdrop-filter: blur(8px);
+          backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  z-index: 100;
+  font-family: var(--font-sans);
+}
+.atk-modal {
+  background: var(--surface-card);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.12);
+  width: 100%;
+  max-width: 460px;
+  max-height: calc(100vh - var(--space-6));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.atk-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border-card);
+  font-size: 14.4px;
+  font-weight: 400;
+  color: var(--text-primary);
+}
+.atk-modal__close {
+  all: unset;
+  cursor: pointer;
+  color: var(--text-muted);
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+}
+.atk-modal__close:hover { color: var(--text-primary); }
+.atk-modal__body {
+  padding: var(--space-3);
+  overflow: auto;
+  font-size: 14.4px;
+  color: var(--text-primary);
+  line-height: 1.45;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.atk-modal__footer {
+  padding: var(--space-3);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+/* ────────────────────────────────────────────────────────────
+   Menu — floating action list (icon + label + optional shortcut)
+   ──────────────────────────────────────────────────────────── */
+.atk-menu {
+  background: var(--surface-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.08);
+  padding: var(--space-1) 0;
+  min-width: 200px;
+  font-family: var(--font-sans);
+  display: inline-block;
+}
+.atk-menu__item {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  font-size: 14.4px;
+  font-weight: 700;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background-color 100ms ease;
+}
+.atk-menu__item:hover,
+.atk-menu__item:focus-visible {
+  background: var(--surface-sunken);
+}
+.atk-menu__icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--text-muted);
+}
+.atk-menu__icon svg { width: 100%; height: 100%; }
+.atk-menu__label { flex: 1; min-width: 0; }
+.atk-menu__shortcut { margin-left: auto; }
+.atk-menu__separator {
+  height: 1px;
+  background: var(--border-card);
+  margin: var(--space-1) 0;
+}
+
+/* ────────────────────────────────────────────────────────────
+   KeyChip — a single keyboard shortcut key
+   ──────────────────────────────────────────────────────────── */
+.atk-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+/* ────────────────────────────────────────────────────────────
+   Select — same shape as Input, with a chevron
+   ──────────────────────────────────────────────────────────── */
+.atk-select {
+  display: block;
+  width: 100%;
+  min-height: 36px;
+  padding: 0 30px 0 var(--space-2);
+  background-color: var(--surface-card);
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  color: var(--text-primary);
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+  outline: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M3 4.5 L6 7.5 L9 4.5' stroke='%23696969' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
+  box-sizing: border-box;
+  transition: border-color 120ms ease;
+}
+.atk-select:hover { border-color: var(--border-strong); }
+.atk-select:focus { border-color: var(--border-focus); }
+.atk-select:disabled {
+  color: var(--text-faint);
+  background-color: var(--surface-sunken);
+  cursor: not-allowed;
+}
+
+/* ────────────────────────────────────────────────────────────
+   Textarea — multi-line input, same visual as Input
+   ──────────────────────────────────────────────────────────── */
+.atk-textarea {
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  line-height: 1.45;
+  font-weight: 400;
+  padding: var(--space-2);
+  min-height: 100px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-input);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  transition: border-color 120ms ease;
+}
+.atk-textarea:hover { border-color: var(--border-strong); }
+.atk-textarea:focus { border-color: var(--border-focus); }
+.atk-textarea::placeholder { color: var(--text-faint); }
+.atk-textarea:disabled {
+  color: var(--text-faint);
+  background: var(--surface-sunken);
+  cursor: not-allowed;
+}
+
+/* ────────────────────────────────────────────────────────────
+   Tabs — underline-active horizontal nav
+   ──────────────────────────────────────────────────────────── */
+.atk-tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-4);
+  border-bottom: 1px solid var(--border-card);
+  font-family: var(--font-sans);
+}
+.atk-tabs__tab {
+  all: unset;
+  padding: var(--space-2) 0;
+  font-size: 14.4px;
+  font-weight: 400;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 1px solid transparent;
+  margin-bottom: -1px;
+  transition: color 120ms ease, border-color 120ms ease;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.atk-tabs__tab:hover { color: var(--text-primary); }
+.atk-tabs__tab[aria-selected="true"] {
+  color: var(--text-primary);
+  font-weight: 700;
+  border-bottom-color: var(--text-primary);
+}
+.atk-tabs__count {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+/* ────────────────────────────────────────────────────────────
+   Stepper — vertical process indicator, dot on a track
+   ──────────────────────────────────────────────────────────── */
+.atk-stepper {
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-sans);
+  position: relative;
+}
+/* One continuous line down the gutter — runs from the first dot to the last. */
+.atk-stepper::before {
+  content: "";
+  position: absolute;
+  left: 10px;        /* centred in the 20px track column */
+  top: 17px;         /* aligns with first dot centre */
+  bottom: 17px;      /* aligns with last dot centre */
+  width: 1px;
+  background: var(--border-input);
+  z-index: 0;
+}
+.atk-stepper__item {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: var(--space-2);
+  padding: var(--space-1) 0 var(--space-2) 0;
+  position: relative;
+  z-index: 1;
+}
+.atk-stepper__track {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  padding-top: 8px;
+}
+.atk-stepper__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--border-strong);
+  position: relative;
+  z-index: 1;
+}
+.atk-stepper__item.is-upcoming .atk-stepper__dot {
+  background: var(--border-input);
+}
+.atk-stepper__item.is-current .atk-stepper__dot {
+  background: var(--text-primary);
+  width: 9px;
+  height: 9px;
+}
+.atk-stepper__label {
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--text-muted);
+  line-height: 1.25;
+}
+.atk-stepper__item.is-current .atk-stepper__label {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+.atk-stepper__item.is-done .atk-stepper__label {
+  color: var(--text-primary);
+}
+.atk-stepper__description {
+  font-size: 14.4px;
+  color: var(--text-primary);
+  margin-top: var(--space-1);
+  line-height: 1.45;
+  font-weight: 400;
+}
