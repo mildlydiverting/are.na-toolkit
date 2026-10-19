@@ -39,6 +39,10 @@ shared/arena-config.js
 
 # Build artefacts — dist is committed, but not credentials
 dist/*.html.bak
+**/dist/*.dev.html
+
+# Node
+node_modules/
 
 
 # ─── Editors ─────────────────────────────────────────────────────────────────

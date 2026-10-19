@@ -1,0 +1,15 @@
+{
+  "name": "are.na-toolkit",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build-all.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui"
+  },
+  "devDependencies": {
+    "@vitest/ui": "^5.0.5",
+    "vitest": "^5.0.5"
+  }
+}
