@@ -1035,6 +1035,28 @@ body {
 .disclosure__title { font: var(--text-ui-strong); }
 .disclosure__body { padding: var(--space-1) var(--space-2) var(--space-2); }
 
+.history { display: flex; flex-wrap: wrap; gap: var(--space-1); align-items: center; }
+.history:empty { display: none; }
+
+.chip-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+.chip-button:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; border-radius: var(--radius-sm); }
+
+.palimpsest-header__auth { position: relative; }
+.auth-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: var(--space-1);
+  z-index: 10;
+}
+
 </style>
 </head>
 <body>
@@ -1672,6 +1694,34 @@ function visibilityVariant(visibility) {
 
 </script>
 <script>
+// Lookup history: most recent first, deduped by id, capped.
+const HISTORY_CAP = 10;
+
+function updateHistory(list, entry, cap = HISTORY_CAP) {
+  const rest = (Array.isArray(list) ? list : []).filter((e) => e && e.id !== entry.id);
+  return [entry, ...rest].slice(0, cap);
+}
+
+// Whatever came out of storage: keep only entries with a numeric id.
+function cleanHistory(raw) {
+  return (Array.isArray(raw) ? raw : [])
+    .filter((e) => e && Number.isInteger(e.id))
+    .slice(0, HISTORY_CAP);
+}
+
+function readJson(storage, key, fallback) {
+  try {
+    const text = storage.getItem(key);
+    return text == null ? fallback : JSON.parse(text);
+  } catch { return fallback; }
+}
+
+function writeJson(storage, key, value) {
+  try { storage.setItem(key, JSON.stringify(value)); } catch { /* storage blocked: carry on unsaved */ }
+}
+
+</script>
+<script>
 // Arena Palimpsest: inspect a block's metadata, connections and channels (read-only).
 // Plain DOM, built from ArenaToolkit components. No framework.
 (function () {
@@ -1703,13 +1753,15 @@ function visibilityVariant(visibility) {
 
   /* ── Rate-limit feedback ─────────────────────────────────────── */
   let waitBanner = null;
+  let waitTimer = null;
   function showWait(seconds) {
     if (!waitBanner) {
       waitBanner = h('p', { className: 'muted', role: 'status' });
       els.inputBar.append(waitBanner);
     }
-    waitBanner.textContent = `Waiting ${seconds}s for rate limit…`;
-    setTimeout(() => { waitBanner?.remove(); waitBanner = null; }, seconds * 1000);
+    waitBanner.textContent = `Waiting ${seconds}s for are.na's rate limit…`;
+    clearTimeout(waitTimer);
+    waitTimer = setTimeout(() => { waitBanner?.remove(); waitBanner = null; }, seconds * 1000 + 500);
   }
 
   /* ── Header and Connect ──────────────────────────────────────── */
@@ -1739,16 +1791,38 @@ function visibilityVariant(visibility) {
     connectModal = null;
   }
 
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeConnect(); });
+  let menuEl = null;
+  function closeMenu() {
+    menuEl?.remove();
+    menuEl = null;
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { closeConnect(); closeMenu(); }
+  });
+  document.addEventListener('click', (e) => {
+    if (menuEl && !authSlot.contains(e.target)) closeMenu();
+  });
+
+  function toggleMenu() {
+    if (menuEl) { closeMenu(); return; }
+    menuEl = h('div', { className: 'auth-menu' }, ATK.Menu({
+      items: [{ label: 'Disconnect', onClick: () => { closeMenu(); auth.disconnect(); } }],
+    }));
+    authSlot.append(menuEl);
+  }
 
   function renderAuthSlot(user) {
-    authSlot.replaceChildren(
-      user
-        ? ATK.Badge({ variant: 'success', children: `Connected as @${user.slug}` })
-        : ATK.Link({ children: 'Connect →' }),
-    );
-    const link = authSlot.querySelector('a');
-    if (link) link.addEventListener('click', (e) => { e.preventDefault(); openConnect(); });
+    closeMenu();
+    if (!user) {
+      const link = ATK.Link({ children: 'Connect →' });
+      link.addEventListener('click', (e) => { e.preventDefault(); openConnect(); });
+      authSlot.replaceChildren(link);
+      return;
+    }
+    const chip = h('button', { className: 'chip-button', type: 'button', 'aria-haspopup': 'menu', onClick: toggleMenu },
+      ATK.Badge({ variant: 'success', children: `Connected as @${user.slug} ⌄` }));
+    authSlot.replaceChildren(chip);
   }
 
   function mountHeader() {
@@ -1760,6 +1834,9 @@ function visibilityVariant(visibility) {
   let inputEl = null;
   let inspectBtn = null;
   let hintSlot = null;
+  let historySlot = null;
+  const HISTORY_KEY = 'arena_palimpsest_history';
+  const LAST_INPUT_KEY = 'arena_palimpsest_last_input';
 
   function mountInputBar() {
     inputEl = ATK.Input({
@@ -1772,12 +1849,39 @@ function visibilityVariant(visibility) {
     inspectBtn = ATK.Button({ variant: 'primary', children: 'Inspect', onClick: () => inspect(inputEl.value) });
     inputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') inspect(inputEl.value); });
     hintSlot = h('div', { className: 'input-bar__hint', role: 'alert' });
+    historySlot = h('div', { className: 'history' });
+
+    inputEl.value = readJson(localStorage, LAST_INPUT_KEY, '') || '';
 
     els.inputBar.append(
       h('label', { for: 'block-input' }, 'Block to inspect'),
       h('div', { className: 'input-bar__row' }, [inputEl, inspectBtn]),
       hintSlot,
+      historySlot,
     );
+    renderHistory();
+  }
+
+  /* ── History ─────────────────────────────────────────────────── */
+  function renderHistory() {
+    const list = cleanHistory(readJson(localStorage, HISTORY_KEY, []));
+    if (!list.length) { historySlot.replaceChildren(); return; }
+    historySlot.replaceChildren(
+      h('span', { className: 'muted' }, 'Recent:'),
+      ...list.map((entry) => h('button', {
+        className: 'chip-button',
+        type: 'button',
+        title: entry.title || `Block ${entry.id}`,
+        onClick: () => { inputEl.value = String(entry.id); inspect(inputEl.value); },
+      }, ATK.Badge({ children: String(entry.id) }))),
+    );
+  }
+
+  function remember(raw, block) {
+    writeJson(localStorage, LAST_INPUT_KEY, raw);
+    const entry = { id: block.id, title: block.title || '', at: new Date().toISOString() };
+    writeJson(localStorage, HISTORY_KEY, updateHistory(cleanHistory(readJson(localStorage, HISTORY_KEY, [])), entry));
+    renderHistory();
   }
 
   function setHint(text) {
@@ -1988,6 +2092,7 @@ function visibilityVariant(visibility) {
       const block = await client.getBlock(id);
       if (run !== inspectRun) return;
       els.resultPane.replaceChildren(renderBlock(block));
+      remember(raw, block);
       await loadConnections(id, run);
     } catch (err) {
       if (run !== inspectRun) return;

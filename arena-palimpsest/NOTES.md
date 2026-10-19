@@ -3,7 +3,7 @@
 Interim notes, written mid-build. Rewritten at ship. Plan: `_claude/arena-palimpsest-build-plan.md`.
 
 ## Status
-Phases 0 to 3 done and committed (tooling, shared layer, scaffold, input and Block section, connected channels). Phase 4 onwards: see the plan's §12.
+Phases 0 to 4 done and committed (tooling, shared layer, scaffold, input and Block section, connected channels, polish). Phase 5 onwards: see the plan's §12.
 
 ## Decisions made during the build
 - **Source files are ES modules** (so Vitest can import them). `scripts/include-resolver.js` strips `export` and `import … from` when inlining into classic `<script>` tags, so everything shares one global scope. Top-level names must be unique across included files. `export default` is refused.
