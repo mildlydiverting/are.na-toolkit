@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en-GB" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Are.na Duplicate Finder</title>
+
+  <!-- @include shared/ui/tokens.css -->
+  <!-- @include shared/ui/bundle.css -->
+  <!-- @include ./styles.css -->
+</head>
+<body>
+  <header class="dupes-header" id="header">
+    <!-- breadcrumb and theme chooser mount here -->
+  </header>
+
+  <main class="dupes-main">
+    <div class="page-title">
+      <h1>Are.na Duplicate Finder</h1>
+      <p class="lede">Find blocks you have saved more than once, pick the one to keep, and tidy up the rest.</p>
+    </div>
+
+    <div class="dupes-layout">
+      <aside class="step-rail" id="step-rail" aria-label="Steps"></aside>
+      <section class="step-pane" id="step-pane" aria-live="polite"></section>
+    </div>
+  </main>
+
+  <!-- @include shared/ui/bundle.js -->
+  <!-- @include shared/api/arena-client.js -->
+  <!-- @include shared/api/throttle.js -->
+  <!-- @include shared/api/url-normalise.js -->
+  <!-- @include shared/widgets/auth-step.js -->
+  <!-- @include ./clustering.js -->
+  <!-- @include ./app.js -->
+</body>
+</html>

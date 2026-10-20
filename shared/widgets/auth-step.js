@@ -1,6 +1,6 @@
 // PAT connect widget: paste a token, test it against /me, remember it in localStorage.
-// Built only from ArenaToolkit components. Read-only for now; a write-scope check
-// (see arena-merge's checkWriteAccess) is added when the first writing tool adopts this.
+// Built only from ArenaToolkit components. Pass requireWrite for tools that change things:
+// the token is then checked for write scope before it is accepted or saved.
 export const AUTH_STORAGE_KEY = 'arena_toolkit_pat';
 export const AUTH_TOKEN_URL = 'https://www.are.na/settings/personal-access-tokens';
 
@@ -23,6 +23,19 @@ export function describeConnectError(err) {
   return "Couldn't reach are.na. Check your connection and try again.";
 }
 
+// DELETE /connections/0 never matches anything: 403 means a read-only token, 404 means write is allowed.
+// (The trick arena-merge and to-arena use; nothing is changed either way.)
+export async function checkWriteAccess(client) {
+  try {
+    await client.deleteConnection(0);
+    return true;
+  } catch (err) {
+    if (err?.status === 403) return false;
+    if (err?.status === 404) return true;
+    throw err;
+  }
+}
+
 function statusRow(label, message) {
   const row = document.createElement('div');
   Object.assign(row.style, { display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', alignItems: 'center' });
@@ -43,6 +56,7 @@ export function createAuthStep({
   storage = globalThis.localStorage,
   storageKey = AUTH_STORAGE_KEY,
   onChange = null,
+  requireWrite = false,
 } = {}) {
   const ATK = window.ArenaToolkit;
   let user = null;
@@ -65,7 +79,9 @@ export function createAuthStep({
     intro.append(
       'Paste a ',
       ATK.Link({ href: AUTH_TOKEN_URL, children: 'personal access token' }),
-      ' with read access. That is all this tool needs. Some content, including private channels, only shows up once you are connected.',
+      requireWrite
+        ? ' with the write scope ticked. This tool changes your account: it adds and removes connections and edits blocks, so a read-only token will not work.'
+        : ' with read access. That is all this tool needs. Some content, including private channels, only shows up once you are connected.',
     );
     intro.querySelector('a').target = '_blank';
     intro.querySelector('a').rel = 'noopener';
@@ -102,6 +118,23 @@ export function createAuthStep({
       client.setToken(null);
       render(statusRow('Couldn\'t connect', describeConnectError(err)));
       return null;
+    }
+    if (requireWrite) {
+      let writable = false;
+      try {
+        writable = await checkWriteAccess(client);
+      } catch (err) {
+        client.setToken(null);
+        user = null;
+        render(statusRow('Couldn\'t connect', describeConnectError(err)));
+        return null;
+      }
+      if (!writable) {
+        client.setToken(null);
+        user = null;
+        render(statusRow('Read-only token', 'This token can\'t write. Create a new one with the write scope ticked.'));
+        return null;
+      }
     }
     saveToken(storage, token, storageKey);
     render();

@@ -1,0 +1,91 @@
+/* Tool-local layout only. Everything else comes from shared/ui. */
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--surface-page);
+  color: var(--text-primary);
+  font: var(--text-body);
+}
+
+.dupes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+}
+
+.crumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font: var(--text-ui-strong);
+  color: var(--text-heading);
+}
+.crumbs li + li::before {
+  content: "/";
+  margin-right: var(--space-1);
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.page-title h1 {
+  margin: 0;
+  font: 700 44px/52px var(--font-sans);
+  letter-spacing: -0.01em;
+  color: var(--text-heading);
+  text-wrap: balance;
+}
+.lede {
+  max-width: 34em;
+  margin: var(--space-3) 0 0;
+  font: 400 20px/30px var(--font-sans);
+}
+
+.dupes-main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.dupes-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: var(--space-8);
+  align-items: start;
+}
+
+.step-rail .atk-stepper__item { cursor: pointer; }
+.step-rail .atk-stepper__item.is-locked { cursor: default; opacity: 0.6; }
+
+.step-pane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+.step-pane h2 {
+  margin: 0;
+  font: var(--text-ui-strong);
+  color: var(--text-heading);
+}
+.step-pane p { margin: 0; }
+
+.step-nav {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: space-between;
+}
+
+.muted { color: var(--text-muted); }
+
+@media (max-width: 720px) {
+  .dupes-layout { grid-template-columns: 1fr; gap: var(--space-4); }
+}

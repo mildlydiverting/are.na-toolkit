@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { readSavedToken, saveToken, clearToken, describeConnectError, AUTH_STORAGE_KEY } from './auth-step.js';
+import { checkWriteAccess, readSavedToken, saveToken, clearToken, describeConnectError, AUTH_STORAGE_KEY } from './auth-step.js';
 
 function fakeStorage(initial = {}) {
   const data = { ...initial };
@@ -56,5 +56,26 @@ describe('describeConnectError', () => {
 
   it('treats a status-less error as a network failure', () => {
     expect(describeConnectError(new TypeError('Failed to fetch'))).toMatch(/reach are\.na/);
+  });
+});
+
+describe('checkWriteAccess', () => {
+  const failing = status => ({ deleteConnection: async () => { throw Object.assign(new Error('x'), { status }); } });
+
+  it('is true on 404 (nothing to delete, but allowed to try)', async () => {
+    expect(await checkWriteAccess(failing(404))).toBe(true);
+  });
+
+  it('is false on 403 (read-only token)', async () => {
+    expect(await checkWriteAccess(failing(403))).toBe(false);
+  });
+
+  it('is true if the call somehow succeeds', async () => {
+    expect(await checkWriteAccess({ deleteConnection: async () => null })).toBe(true);
+  });
+
+  it('rethrows anything else, such as 401 or a network error', async () => {
+    await expect(checkWriteAccess(failing(401))).rejects.toMatchObject({ status: 401 });
+    await expect(checkWriteAccess({ deleteConnection: async () => { throw new TypeError('offline'); } })).rejects.toThrow('offline');
   });
 });
