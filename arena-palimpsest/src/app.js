@@ -1,18 +1,7 @@
-// Arena Palimpsest: inspect a block's metadata, connections and channels (read-only).
+// Are.na Palimpsest: inspect a block's metadata, connections and channels (read-only).
 // Plain DOM, built from ArenaToolkit components. No framework.
 (function () {
   const ATK = window.ArenaToolkit;
-
-  const THEMES = ['light', 'dark', 'dawn', 'dusk'];
-
-  // ?theme=dawn forces a theme (handy for checking all four); otherwise follow the system.
-  function applyTheme() {
-    const asked = new URLSearchParams(location.search).get('theme');
-    const theme = THEMES.includes(asked)
-      ? asked
-      : (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    document.documentElement.setAttribute('data-theme', theme);
-  }
 
   function h(tag, attrs, kids) {
     return ATK._el(tag, attrs, kids);
@@ -102,7 +91,13 @@
   }
 
   function mountHeader() {
-    els.header.append(h('h1', null, 'Arena Palimpsest'), authSlot);
+    const crumbs = h('nav', { className: 'crumbs', 'aria-label': 'Breadcrumb' },
+      h('ol', null, [
+        h('li', null, ATK.Link({ variant: 'muted', href: 'index.html', children: 'Are.na Tools' })),
+        h('li', { 'aria-current': 'page' }, 'Are.na Palimpsest'),
+      ]));
+    const end = h('div', { className: 'palimpsest-header__end' }, [authSlot, ATK.ThemeChooser()]);
+    els.header.append(crumbs, end);
     renderAuthSlot(null);
   }
 
@@ -167,10 +162,7 @@
   /* ── Result pane ─────────────────────────────────────────────── */
   function renderPlaceholder() {
     els.resultPane.replaceChildren(
-      ATK.Card({
-        title: 'Nothing inspected yet',
-        children: h('p', { className: 'muted' }, 'Paste a block URL or ID above to see its fields, metadata and connections.'),
-      }),
+      h('p', { className: 'muted' }, 'Nothing inspected yet. Paste a block URL or ID above to see its fields, metadata and connections.'),
     );
   }
 
@@ -238,7 +230,7 @@
     } else if (block.type === 'Attachment') {
       thumb = ATK.Block({ variant: 'attachment', label: (block.attachment?.file_extension || '').toUpperCase() || null });
     }
-    return thumb ? h('div', { className: 'block-head__thumb' }, thumb) : null;
+    return thumb ? h('div', { className: 'block-frame__thumb' }, thumb) : null;
   }
 
   let connectedCell = null;
@@ -262,14 +254,17 @@
       ['Connected to', connectedCell],
     ];
     const thumb = blockThumb(block);
-    return ATK.Card({
-      title: `Block ${block.id}`,
-      children: h('div', { className: 'stack' }, [
-        h('div', { className: 'block-head' }, [thumb, kvTable(fields)]),
-        metadataSection(block.metadata),
-      ]),
-    });
+    const frame = h('div', { className: 'block-frame', 'data-visibility': block.visibility || 'unknown' }, [
+      h('h2', { className: 'block-frame__title' }, `Block ${block.id}`),
+      thumb,
+    ]);
+    return h('div', { className: 'block-layout' }, [
+      frame,
+      h('div', { className: 'block-data' }, [kvTable(fields), metadataSection(block.metadata)]),
+    ]);
   }
+
+  const CARET_SVG = '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l4 4 4-4"/></svg>';
 
   function channelRow(ch) {
     const counts = ch.counts || {};
@@ -288,13 +283,19 @@
       ['Created', formatDate(ch.created_at)],
       ['Updated', formatDate(ch.updated_at)],
     ];
-    return h('details', { className: 'disclosure' }, [
+    const caret = h('span', { className: 'disclosure__caret', 'aria-hidden': 'true' });
+    caret.innerHTML = CARET_SVG; // static markup, no user input
+    const count = formatCount(counts.contents ?? counts.blocks);
+    return h('details', { className: 'disclosure', 'data-visibility': ch.visibility || 'unknown' }, [
       h('summary', null, [
-        h('span', { className: 'disclosure__title' }, ch.title || ch.slug),
         ATK.Badge({ variant: visibilityVariant(ch.visibility), children: ch.visibility || 'unknown' }),
-        h('span', { className: 'muted' }, `by ${ownerLabel(ch.owner)}`),
+        h('span', { className: 'disclosure__title' }, ch.title || ch.slug),
+        count ? h('span', { className: 'disclosure__count', title: 'Blocks in this channel' }, count) : null,
+        h('span', { title: 'Metadata entries' }, ATK.Badge({ children: String(metadataEntries(ch.metadata).length) })),
+        h('span', { className: 'disclosure__owner' }, ownerLabel(ch.owner)),
+        caret,
       ]),
-      h('div', { className: 'disclosure__body stack' }, [kvTable(fields), metadataSection(ch.metadata)]),
+      h('div', { className: 'disclosure__body stack' }, [metadataSection(ch.metadata), kvTable(fields)]),
     ]);
   }
 
@@ -306,6 +307,25 @@
     const title = card.querySelector('.atk-card__title');
     els.resultPane.append(card);
 
+    // Rows are built once and re-ordered in place, so panels you have opened stay open.
+    const channels = [];
+    const rows = new Map();
+    let mode = 'default';
+    const sortSelect = ATK.Select({
+      options: CHANNEL_SORTS,
+      value: mode,
+      onChange: (e) => { mode = e.target.value; renderOrder(); },
+    });
+    sortSelect.id = 'channel-sort';
+    const toolbar = h('div', { className: 'toolbar', hidden: true }, [
+      h('label', { for: 'channel-sort' }, 'Sort'),
+      sortSelect,
+    ]);
+    note.after(toolbar);
+    function renderOrder() {
+      sortChannels(channels, mode).forEach((ch) => list.append(rows.get(ch)));
+    }
+
     let seen = 0;
     try {
       await client.getBlockConnections(id, {
@@ -313,7 +333,9 @@
           if (run !== inspectRun) return;
           if (!seen) list.replaceChildren();
           seen += items.length;
-          items.forEach((ch) => list.append(channelRow(ch)));
+          items.forEach((ch) => { channels.push(ch); rows.set(ch, channelRow(ch)); });
+          renderOrder();
+          toolbar.hidden = seen < 2;
           title.textContent = `Connected channels (${meta?.total_count ?? seen})`;
         },
       });
@@ -379,7 +401,6 @@
   }
 
   /* ── Start ───────────────────────────────────────────────────── */
-  applyTheme();
   mountHeader();
   mountInputBar();
   renderPlaceholder();

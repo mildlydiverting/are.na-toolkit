@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Arena Palimpsest</title>
+  <title>Are.na Palimpsest</title>
 
 <style>
 /* Arena Toolkit — generated from tokens.json */
@@ -714,6 +714,45 @@
 }
 
 /* ────────────────────────────────────────────────────────────
+   ThemeChooser — palette button that opens a Menu of themes
+   ──────────────────────────────────────────────────────────── */
+.atk-theme-chooser {
+  position: relative;
+  display: inline-flex;
+}
+.atk-theme-chooser__button {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color 100ms ease, color 100ms ease;
+}
+.atk-theme-chooser__button:hover,
+.atk-theme-chooser__button[aria-expanded="true"] {
+  background: var(--surface-sunken);
+  color: var(--text-primary);
+}
+.atk-theme-chooser__button:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+.atk-theme-chooser__button svg { width: 20px; height: 20px; }
+.atk-theme-chooser__popover {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: var(--space-1);
+  z-index: 10;
+}
+.atk-theme-chooser .atk-menu { min-width: 160px; }
+
+/* ────────────────────────────────────────────────────────────
    KeyChip — a single keyboard shortcut key
    ──────────────────────────────────────────────────────────── */
 .atk-key {
@@ -920,19 +959,48 @@ body {
   justify-content: space-between;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-3);
-  border-bottom: 1px solid var(--border-card);
 }
 
-.palimpsest-header h1 {
+.palimpsest-header__end {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.crumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
   margin: 0;
-  font: var(--text-h3);
+  padding: 0;
+  list-style: none;
+  font: var(--text-ui-strong);
   color: var(--text-heading);
+}
+.crumbs li + li::before {
+  content: "/";
+  margin-right: var(--space-1);
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.page-title h1 {
+  margin: 0;
+  font: 700 44px/52px var(--font-sans);
+  letter-spacing: -0.01em;
+  color: var(--text-heading);
+  text-wrap: balance;
+}
+.lede {
+  max-width: 34em;
+  margin: var(--space-3) 0 0;
+  font: 400 20px/30px var(--font-sans);
 }
 
 .palimpsest-main {
   max-width: 860px;
   margin: 0 auto;
-  padding: var(--space-4) var(--space-3) var(--space-8);
+  padding: var(--space-8) var(--space-3);
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
@@ -969,22 +1037,43 @@ body {
 .stack { display: flex; flex-direction: column; gap: var(--space-3); }
 .stack > p { margin: 0; }
 
-.block-head {
-  display: flex;
-  gap: var(--space-3);
-  align-items: flex-start;
+/* Main block: a bordered frame (title + image, like an are.na block) beside the text column. */
+.block-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 5fr) 7fr;
+  gap: var(--space-5);
+  align-items: start;
 }
-.block-head__thumb { flex: 0 0 160px; width: 160px; }
-.block-head .kv { flex: 1; min-width: 0; }
+.block-frame {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 2px solid var(--text-secondary);
+  border-radius: var(--radius-sm);
+}
+.block-frame[data-visibility="private"] { border-color: var(--accent-private); }
+.block-frame[data-visibility="orphan"] {
+  border-style: dotted;
+  border-color: color-mix(in srgb, var(--text-secondary) 40%, transparent);
+}
+.block-frame__title { margin: 0; font: var(--text-ui-strong); color: var(--text-heading); }
+.block-frame__thumb { width: 100%; }
+.block-frame .atk-block { width: 100%; min-width: 0; }
+.block-data .kv th { width: 10.5em; }
+.disclosure__body .metadata .kv th { width: 8em; }
+.metadata .kv th { overflow-wrap: anywhere; } /* long metadata keys may break mid-word */
+.block-data { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
 
 /* Label/value rows: the shape v2 swaps value cells to inputs in. */
 .kv {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed; /* same label column in every table, so values line up */
 }
 .kv th,
 .kv td {
-  padding: var(--space-1) var(--space-2);
+  padding: var(--space-2);
   border-top: 1px solid var(--border-card);
   text-align: left;
   vertical-align: top;
@@ -994,6 +1083,7 @@ body {
 .kv tr:first-child td { border-top: 0; }
 .kv th {
   width: 9em;
+  padding-left: 0; /* labels sit flush with the headings above */
   font: var(--text-ui-strong);
   color: var(--text-muted);
   overflow-wrap: break-word; /* labels wrap between words, never mid-word */
@@ -1008,22 +1098,48 @@ body {
 }
 .metadata > p { margin: 0; }
 
+@media (max-width: 700px) {
+  .block-layout { grid-template-columns: 1fr; }
+  .disclosure > .disclosure__body { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 600px) {
-  .block-head { flex-direction: column; }
-  .block-head__thumb { flex-basis: auto; width: 160px; }
+  .page-title h1 { font-size: 32px; line-height: 38px; }
+  .lede { font-size: 18px; line-height: 26px; }
   .kv th { width: 7em; }
 }
 
 .input-bar__hint { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
 
+.toolbar { display: flex; align-items: center; gap: var(--space-2); }
+.toolbar[hidden] { display: none; }
+.toolbar .atk-select { width: auto; min-width: 14em; }
+.toolbar label { font: var(--text-ui-strong); color: var(--text-muted); }
 .disclosure-list { display: flex; flex-direction: column; gap: var(--space-1); }
 .disclosure-list > p { margin: 0; }
 
+/* Channel rows: a coloured bar per channel, border on hover, caret to open. */
 .disclosure {
-  border: 1px solid var(--border-card);
+  --bar: var(--surface-sunken);
+  --bar-ink: var(--text-secondary);
+  --bar-border: var(--border-strong);
+  border: 1px solid transparent;
   border-radius: var(--radius-sm);
-  background: var(--surface-page);
 }
+.disclosure[data-visibility="public"] {
+  --bar: color-mix(in srgb, var(--accent-success) 6%, var(--surface-page));
+  --bar-ink: var(--accent-success);
+  --bar-border: var(--accent-success);
+}
+.disclosure[data-visibility="private"] {
+  --bar: color-mix(in srgb, var(--accent-private) 6%, var(--surface-page));
+  --bar-ink: var(--accent-private);
+  --bar-border: var(--accent-private);
+}
+.disclosure:hover,
+.disclosure[open],
+.disclosure:focus-within { border-color: var(--bar-border); }
+
 .disclosure > summary {
   display: flex;
   flex-wrap: wrap;
@@ -1031,10 +1147,35 @@ body {
   align-items: center;
   padding: var(--space-2);
   cursor: pointer;
+  list-style: none;
+  font: var(--text-body-lg);
+  color: var(--bar-ink);
+  background: var(--bar);
+  border-radius: var(--radius-sm);
 }
+.disclosure > summary::-webkit-details-marker { display: none; }
 .disclosure > summary:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
-.disclosure__title { font: var(--text-ui-strong); }
-.disclosure__body { padding: var(--space-1) var(--space-2) var(--space-2); }
+
+.disclosure__caret {
+  display: inline-flex;
+  flex: none;
+}
+.disclosure[open] .disclosure__caret { transform: rotate(180deg); }
+.disclosure__title { font: inherit; }
+/* Badges on a bar: a tiny step off the bar colour, dark text. */
+.disclosure > summary .atk-badge {
+  background: color-mix(in srgb, var(--bar) 97%, var(--text-primary));
+  color: var(--bar-ink);
+}
+.disclosure__count { font-variant-numeric: tabular-nums; }
+.disclosure__owner { margin-left: auto; }
+.disclosure > .disclosure__body {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: var(--space-5);
+  padding: var(--space-2) var(--space-2) var(--space-3);
+  color: var(--text-primary);
+}
 
 .history { display: flex; flex-wrap: wrap; gap: var(--space-1); align-items: center; }
 .history:empty { display: none; }
@@ -1058,14 +1199,22 @@ body {
   z-index: 10;
 }
 
+/* No card backgrounds in this tool. */
+.palimpsest-main .atk-card { background: transparent; }
+
 </style>
 </head>
 <body>
   <header class="palimpsest-header" id="header">
-    <!-- title and auth status mount here -->
+    <!-- breadcrumb, connection status and theme chooser mount here -->
   </header>
 
   <main class="palimpsest-main">
+    <div class="page-title">
+      <h1>Are.na Palimpsest</h1>
+      <p class="lede">See everything the API knows about a block: its fields, its metadata and the channels it is connected to.</p>
+    </div>
+
     <section class="input-bar" id="input-bar">
       <!-- Input + Inspect button -->
     </section>
@@ -1359,7 +1508,123 @@ body {
     return root;
   }
 
+  /* ── ThemeChooser ──────────────────────────────────────────────
+     Palette button + Menu of themes. Sets data-theme on <html> and
+     remembers the choice in localStorage, shared by every tool on the
+     same origin. Order of precedence: ?theme= (not saved) > saved > system. */
+
+  var THEME_KEY = 'arena_toolkit_theme';
+  var THEME_OPTIONS = [
+    { id: 'light', label: 'Light' },
+    { id: 'dusk', label: 'Dusk' },
+    { id: 'dark', label: 'Dark' },
+    { id: 'dawn', label: 'Dawn' }
+  ];
+
+  // Palette: the system's own Icons/Theme.svg (Phosphor), inlined so it takes the text colour.
+  var PALETTE_SVG =
+    '<svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M200.77,53.89A103.27,103.27,0,0,0,128,24h-1.07A104,104,0,0,0,24,128c0,43,26.58,79.06,69.36,94.17A32,32,0,0,0,136,192a16,16,0,0,1,16-16h46.21a31.81,31.81,0,0,0,31.2-24.88,104.43,104.43,0,0,0,2.59-24A103.28,103.28,0,0,0,200.77,53.89Zm13,93.71A15.89,15.89,0,0,1,198.21,160H152a32,32,0,0,0-32,32,16,16,0,0,1-21.31,15.07C62.49,194.3,40,164,40,128a88,88,0,0,1,87.09-88h.9a88.35,88.35,0,0,1,88,87.25A88.86,88.86,0,0,1,213.81,147.6ZM140,76a12,12,0,1,1-12-12A12,12,0,0,1,140,76ZM96,100A12,12,0,1,1,84,88,12,12,0,0,1,96,100Zm0,56a12,12,0,1,1-12-12A12,12,0,0,1,96,156Zm88-56a12,12,0,1,1-12-12A12,12,0,0,1,184,100Z"/></svg>';
+  var CHECK_SVG =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+  function svgSpan(markup) {
+    var span = el('span');
+    span.innerHTML = markup; // static strings above, never user input
+    return span;
+  }
+
+  // Pure: which theme applies. asked = ?theme=, saved = localStorage value.
+  function resolveTheme(opts) {
+    opts = opts || {};
+    var ids = (opts.themes || THEME_OPTIONS).map(function (t) { return t.id || t; });
+    if (ids.indexOf(opts.asked) !== -1) return opts.asked;
+    if (ids.indexOf(opts.saved) !== -1) return opts.saved;
+    var wanted = opts.prefersDark ? 'dark' : 'light';
+    return ids.indexOf(wanted) !== -1 ? wanted : ids[0];
+  }
+
+  function ThemeChooser(opts) {
+    opts = opts || {};
+    var themes = opts.themes || THEME_OPTIONS;
+    var key = opts.storageKey || THEME_KEY;
+
+    function read() { try { return localStorage.getItem(key); } catch (e) { return null; } }
+    function write(value) { try { localStorage.setItem(key, value); } catch (e) { /* private mode */ } }
+    function apply(id) { document.documentElement.setAttribute('data-theme', id); }
+
+    var current = resolveTheme({
+      themes: themes,
+      asked: new URLSearchParams(location.search).get('theme'),
+      saved: read(),
+      prefersDark: !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    });
+    apply(current);
+
+    var root = el('div', { className: 'atk-theme-chooser' });
+    var button = el('button', {
+      className: 'atk-theme-chooser__button',
+      type: 'button',
+      title: 'Theme',
+      'aria-label': 'Choose theme',
+      'aria-haspopup': 'menu',
+      'aria-expanded': 'false'
+    }, svgSpan(PALETTE_SVG));
+    var popover = null;
+
+    function close(returnFocus) {
+      if (!popover) return;
+      popover.remove();
+      popover = null;
+      button.setAttribute('aria-expanded', 'false');
+      if (returnFocus) button.focus();
+    }
+
+    function choose(id) {
+      current = id;
+      apply(id);
+      write(id);
+      close(true);
+      if (typeof opts.onChange === 'function') opts.onChange(id);
+    }
+
+    function open() {
+      var menu = Menu({
+        items: themes.map(function (t) {
+          return {
+            label: t.label,
+            icon: t.id === current ? svgSpan(CHECK_SVG) : el('span'),
+            onClick: function () { choose(t.id); }
+          };
+        })
+      });
+      var items = Array.prototype.slice.call(menu.querySelectorAll('.atk-menu__item'));
+      items.forEach(function (item, i) {
+        item.setAttribute('role', 'menuitemradio');
+        item.setAttribute('aria-checked', String(themes[i].id === current));
+      });
+      menu.addEventListener('keydown', function (e) {
+        var i = items.indexOf(document.activeElement);
+        if (e.key === 'ArrowDown') { e.preventDefault(); items[(i + 1) % items.length].focus(); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
+      });
+      popover = el('div', { className: 'atk-theme-chooser__popover' }, menu);
+      root.appendChild(popover);
+      button.setAttribute('aria-expanded', 'true');
+      var selected = items[themes.map(function (t) { return t.id; }).indexOf(current)];
+      (selected || items[0]).focus();
+    }
+
+    button.addEventListener('click', function () { if (popover) close(); else open(); });
+    document.addEventListener('click', function (e) { if (popover && !root.contains(e.target)) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && popover) close(true); });
+
+    root.appendChild(button);
+    return root;
+  }
+  ThemeChooser.resolve = resolveTheme;
+
   window.ArenaToolkit = {
+    ThemeChooser: ThemeChooser,
     Button: Button,
     Input: Input,
     Link: Link,
@@ -1693,6 +1958,46 @@ function visibilityVariant(visibility) {
   return { public: 'success', private: 'private' }[visibility] || 'default';
 }
 
+// Compact count for a row: 169 -> "169", 1234 -> "1.2k", 10400 -> "10k", 2500000 -> "2.5m".
+function formatCount(n) {
+  if (typeof n !== 'number' || !Number.isFinite(n) || n < 0) return '';
+  const trim = (x) => String(Math.round(x * 10) / 10);
+  if (n < 1000) return String(Math.round(n));
+  if (n < 10000) return `${trim(n / 1000)}k`;
+  if (n < 1000000) return `${Math.round(n / 1000)}k`;
+  return `${trim(n / 1000000)}m`;
+}
+
+// Order for the connected-channels list. "recent"/"oldest" use the channel's created date.
+// Anything else (including "default") keeps are.na's own order. Ties keep their original order.
+const CHANNEL_SORTS = [
+  { value: 'default', label: 'Default order' },
+  { value: 'recent', label: 'Most recent first' },
+  { value: 'oldest', label: 'Oldest first' },
+  { value: 'blocks', label: 'Most blocks' },
+  { value: 'metadata', label: 'Most metadata' },
+];
+
+function sortChannels(channels, mode) {
+  const time = (ch) => { const t = Date.parse(ch.created_at); return Number.isNaN(t) ? null : t; };
+  const blocks = (ch) => ch.counts?.contents ?? ch.counts?.blocks ?? 0;
+  const meta = (ch) => metadataEntries(ch.metadata).length;
+  const byDate = (dir) => (a, b) => {
+    const x = time(a), y = time(b);
+    if (x === null && y === null) return 0;
+    if (x === null) return 1; // undated channels go last either way
+    if (y === null) return -1;
+    return dir * (x - y);
+  };
+  const compare = {
+    recent: byDate(-1),
+    oldest: byDate(1),
+    blocks: (a, b) => blocks(b) - blocks(a),
+    metadata: (a, b) => meta(b) - meta(a),
+  }[mode];
+  return compare ? [...channels].sort(compare) : [...channels];
+}
+
 </script>
 <script>
 // Lookup history: most recent first, deduped by id, capped.
@@ -1723,21 +2028,10 @@ function writeJson(storage, key, value) {
 
 </script>
 <script>
-// Arena Palimpsest: inspect a block's metadata, connections and channels (read-only).
+// Are.na Palimpsest: inspect a block's metadata, connections and channels (read-only).
 // Plain DOM, built from ArenaToolkit components. No framework.
 (function () {
   const ATK = window.ArenaToolkit;
-
-  const THEMES = ['light', 'dark', 'dawn', 'dusk'];
-
-  // ?theme=dawn forces a theme (handy for checking all four); otherwise follow the system.
-  function applyTheme() {
-    const asked = new URLSearchParams(location.search).get('theme');
-    const theme = THEMES.includes(asked)
-      ? asked
-      : (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    document.documentElement.setAttribute('data-theme', theme);
-  }
 
   function h(tag, attrs, kids) {
     return ATK._el(tag, attrs, kids);
@@ -1827,7 +2121,13 @@ function writeJson(storage, key, value) {
   }
 
   function mountHeader() {
-    els.header.append(h('h1', null, 'Arena Palimpsest'), authSlot);
+    const crumbs = h('nav', { className: 'crumbs', 'aria-label': 'Breadcrumb' },
+      h('ol', null, [
+        h('li', null, ATK.Link({ variant: 'muted', href: 'index.html', children: 'Are.na Tools' })),
+        h('li', { 'aria-current': 'page' }, 'Are.na Palimpsest'),
+      ]));
+    const end = h('div', { className: 'palimpsest-header__end' }, [authSlot, ATK.ThemeChooser()]);
+    els.header.append(crumbs, end);
     renderAuthSlot(null);
   }
 
@@ -1892,10 +2192,7 @@ function writeJson(storage, key, value) {
   /* ── Result pane ─────────────────────────────────────────────── */
   function renderPlaceholder() {
     els.resultPane.replaceChildren(
-      ATK.Card({
-        title: 'Nothing inspected yet',
-        children: h('p', { className: 'muted' }, 'Paste a block URL or ID above to see its fields, metadata and connections.'),
-      }),
+      h('p', { className: 'muted' }, 'Nothing inspected yet. Paste a block URL or ID above to see its fields, metadata and connections.'),
     );
   }
 
@@ -1963,7 +2260,7 @@ function writeJson(storage, key, value) {
     } else if (block.type === 'Attachment') {
       thumb = ATK.Block({ variant: 'attachment', label: (block.attachment?.file_extension || '').toUpperCase() || null });
     }
-    return thumb ? h('div', { className: 'block-head__thumb' }, thumb) : null;
+    return thumb ? h('div', { className: 'block-frame__thumb' }, thumb) : null;
   }
 
   let connectedCell = null;
@@ -1987,14 +2284,17 @@ function writeJson(storage, key, value) {
       ['Connected to', connectedCell],
     ];
     const thumb = blockThumb(block);
-    return ATK.Card({
-      title: `Block ${block.id}`,
-      children: h('div', { className: 'stack' }, [
-        h('div', { className: 'block-head' }, [thumb, kvTable(fields)]),
-        metadataSection(block.metadata),
-      ]),
-    });
+    const frame = h('div', { className: 'block-frame', 'data-visibility': block.visibility || 'unknown' }, [
+      h('h2', { className: 'block-frame__title' }, `Block ${block.id}`),
+      thumb,
+    ]);
+    return h('div', { className: 'block-layout' }, [
+      frame,
+      h('div', { className: 'block-data' }, [kvTable(fields), metadataSection(block.metadata)]),
+    ]);
   }
+
+  const CARET_SVG = '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l4 4 4-4"/></svg>';
 
   function channelRow(ch) {
     const counts = ch.counts || {};
@@ -2013,13 +2313,19 @@ function writeJson(storage, key, value) {
       ['Created', formatDate(ch.created_at)],
       ['Updated', formatDate(ch.updated_at)],
     ];
-    return h('details', { className: 'disclosure' }, [
+    const caret = h('span', { className: 'disclosure__caret', 'aria-hidden': 'true' });
+    caret.innerHTML = CARET_SVG; // static markup, no user input
+    const count = formatCount(counts.contents ?? counts.blocks);
+    return h('details', { className: 'disclosure', 'data-visibility': ch.visibility || 'unknown' }, [
       h('summary', null, [
-        h('span', { className: 'disclosure__title' }, ch.title || ch.slug),
         ATK.Badge({ variant: visibilityVariant(ch.visibility), children: ch.visibility || 'unknown' }),
-        h('span', { className: 'muted' }, `by ${ownerLabel(ch.owner)}`),
+        h('span', { className: 'disclosure__title' }, ch.title || ch.slug),
+        count ? h('span', { className: 'disclosure__count', title: 'Blocks in this channel' }, count) : null,
+        h('span', { title: 'Metadata entries' }, ATK.Badge({ children: String(metadataEntries(ch.metadata).length) })),
+        h('span', { className: 'disclosure__owner' }, ownerLabel(ch.owner)),
+        caret,
       ]),
-      h('div', { className: 'disclosure__body stack' }, [kvTable(fields), metadataSection(ch.metadata)]),
+      h('div', { className: 'disclosure__body stack' }, [metadataSection(ch.metadata), kvTable(fields)]),
     ]);
   }
 
@@ -2031,6 +2337,25 @@ function writeJson(storage, key, value) {
     const title = card.querySelector('.atk-card__title');
     els.resultPane.append(card);
 
+    // Rows are built once and re-ordered in place, so panels you have opened stay open.
+    const channels = [];
+    const rows = new Map();
+    let mode = 'default';
+    const sortSelect = ATK.Select({
+      options: CHANNEL_SORTS,
+      value: mode,
+      onChange: (e) => { mode = e.target.value; renderOrder(); },
+    });
+    sortSelect.id = 'channel-sort';
+    const toolbar = h('div', { className: 'toolbar', hidden: true }, [
+      h('label', { for: 'channel-sort' }, 'Sort'),
+      sortSelect,
+    ]);
+    note.after(toolbar);
+    function renderOrder() {
+      sortChannels(channels, mode).forEach((ch) => list.append(rows.get(ch)));
+    }
+
     let seen = 0;
     try {
       await client.getBlockConnections(id, {
@@ -2038,7 +2363,9 @@ function writeJson(storage, key, value) {
           if (run !== inspectRun) return;
           if (!seen) list.replaceChildren();
           seen += items.length;
-          items.forEach((ch) => list.append(channelRow(ch)));
+          items.forEach((ch) => { channels.push(ch); rows.set(ch, channelRow(ch)); });
+          renderOrder();
+          toolbar.hidden = seen < 2;
           title.textContent = `Connected channels (${meta?.total_count ?? seen})`;
         },
       });
@@ -2104,7 +2431,6 @@ function writeJson(storage, key, value) {
   }
 
   /* ── Start ───────────────────────────────────────────────────── */
-  applyTheme();
   mountHeader();
   mountInputBar();
   renderPlaceholder();

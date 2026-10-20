@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   formatDate, metadataEntries, userHandle, userUrl, blockUrl,
-  ownerLabel, ownerUrl, channelUrl, visibilityVariant,
+  ownerLabel, ownerUrl, channelUrl, visibilityVariant, formatCount, sortChannels,
 } from './format.js';
 
 describe('formatDate', () => {
@@ -61,5 +61,53 @@ describe('channels and owners', () => {
     expect(visibilityVariant('public')).toBe('success');
     expect(visibilityVariant('private')).toBe('private');
     expect(visibilityVariant('closed')).toBe('default');
+  });
+});
+
+describe('formatCount', () => {
+  it('leaves small numbers alone', () => {
+    expect(formatCount(0)).toBe('0');
+    expect(formatCount(169)).toBe('169');
+    expect(formatCount(999)).toBe('999');
+  });
+  it('compacts thousands and millions', () => {
+    expect(formatCount(1234)).toBe('1.2k');
+    expect(formatCount(2000)).toBe('2k');
+    expect(formatCount(10400)).toBe('10k');
+    expect(formatCount(2500000)).toBe('2.5m');
+  });
+  it('returns an empty string for missing or invalid counts', () => {
+    expect(formatCount(undefined)).toBe('');
+    expect(formatCount(null)).toBe('');
+    expect(formatCount(NaN)).toBe('');
+    expect(formatCount(-1)).toBe('');
+  });
+});
+
+describe('sortChannels', () => {
+  const a = { id: 1, created_at: '2025-01-01T00:00:00Z', counts: { contents: 5 }, metadata: {} };
+  const b = { id: 2, created_at: '2026-06-01T00:00:00Z', counts: { contents: 500 }, metadata: { k: 'v', j: 'w' } };
+  const c = { id: 3, created_at: '2024-03-01T00:00:00Z', counts: { blocks: 50 }, metadata: { k: 'v' } };
+  const undated = { id: 4, counts: { contents: 1 }, metadata: {} };
+  const ids = (list) => list.map((x) => x.id);
+
+  it('keeps the original order by default and for unknown modes', () => {
+    expect(ids(sortChannels([a, b, c], 'default'))).toEqual([1, 2, 3]);
+    expect(ids(sortChannels([a, b, c], 'nonsense'))).toEqual([1, 2, 3]);
+  });
+  it('sorts by created date, undated channels last either way', () => {
+    expect(ids(sortChannels([undated, a, b, c], 'recent'))).toEqual([2, 1, 3, 4]);
+    expect(ids(sortChannels([undated, a, b, c], 'oldest'))).toEqual([3, 1, 2, 4]);
+  });
+  it('sorts by block count, falling back to counts.blocks', () => {
+    expect(ids(sortChannels([a, b, c], 'blocks'))).toEqual([2, 3, 1]);
+  });
+  it('sorts by number of metadata entries, ties keep original order', () => {
+    expect(ids(sortChannels([a, undated, c, b], 'metadata'))).toEqual([2, 3, 1, 4]);
+  });
+  it('does not mutate the input', () => {
+    const input = [a, b, c];
+    sortChannels(input, 'blocks');
+    expect(ids(input)).toEqual([1, 2, 3]);
   });
 });

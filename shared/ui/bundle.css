@@ -492,6 +492,45 @@
 }
 
 /* ────────────────────────────────────────────────────────────
+   ThemeChooser — palette button that opens a Menu of themes
+   ──────────────────────────────────────────────────────────── */
+.atk-theme-chooser {
+  position: relative;
+  display: inline-flex;
+}
+.atk-theme-chooser__button {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color 100ms ease, color 100ms ease;
+}
+.atk-theme-chooser__button:hover,
+.atk-theme-chooser__button[aria-expanded="true"] {
+  background: var(--surface-sunken);
+  color: var(--text-primary);
+}
+.atk-theme-chooser__button:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+.atk-theme-chooser__button svg { width: 20px; height: 20px; }
+.atk-theme-chooser__popover {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: var(--space-1);
+  z-index: 10;
+}
+.atk-theme-chooser .atk-menu { min-width: 160px; }
+
+/* ────────────────────────────────────────────────────────────
    KeyChip — a single keyboard shortcut key
    ──────────────────────────────────────────────────────────── */
 .atk-key {

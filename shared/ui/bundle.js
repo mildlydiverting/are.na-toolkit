@@ -281,7 +281,123 @@
     return root;
   }
 
+  /* ── ThemeChooser ──────────────────────────────────────────────
+     Palette button + Menu of themes. Sets data-theme on <html> and
+     remembers the choice in localStorage, shared by every tool on the
+     same origin. Order of precedence: ?theme= (not saved) > saved > system. */
+
+  var THEME_KEY = 'arena_toolkit_theme';
+  var THEME_OPTIONS = [
+    { id: 'light', label: 'Light' },
+    { id: 'dusk', label: 'Dusk' },
+    { id: 'dark', label: 'Dark' },
+    { id: 'dawn', label: 'Dawn' }
+  ];
+
+  // Palette: the system's own Icons/Theme.svg (Phosphor), inlined so it takes the text colour.
+  var PALETTE_SVG =
+    '<svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M200.77,53.89A103.27,103.27,0,0,0,128,24h-1.07A104,104,0,0,0,24,128c0,43,26.58,79.06,69.36,94.17A32,32,0,0,0,136,192a16,16,0,0,1,16-16h46.21a31.81,31.81,0,0,0,31.2-24.88,104.43,104.43,0,0,0,2.59-24A103.28,103.28,0,0,0,200.77,53.89Zm13,93.71A15.89,15.89,0,0,1,198.21,160H152a32,32,0,0,0-32,32,16,16,0,0,1-21.31,15.07C62.49,194.3,40,164,40,128a88,88,0,0,1,87.09-88h.9a88.35,88.35,0,0,1,88,87.25A88.86,88.86,0,0,1,213.81,147.6ZM140,76a12,12,0,1,1-12-12A12,12,0,0,1,140,76ZM96,100A12,12,0,1,1,84,88,12,12,0,0,1,96,100Zm0,56a12,12,0,1,1-12-12A12,12,0,0,1,96,156Zm88-56a12,12,0,1,1-12-12A12,12,0,0,1,184,100Z"/></svg>';
+  var CHECK_SVG =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+  function svgSpan(markup) {
+    var span = el('span');
+    span.innerHTML = markup; // static strings above, never user input
+    return span;
+  }
+
+  // Pure: which theme applies. asked = ?theme=, saved = localStorage value.
+  function resolveTheme(opts) {
+    opts = opts || {};
+    var ids = (opts.themes || THEME_OPTIONS).map(function (t) { return t.id || t; });
+    if (ids.indexOf(opts.asked) !== -1) return opts.asked;
+    if (ids.indexOf(opts.saved) !== -1) return opts.saved;
+    var wanted = opts.prefersDark ? 'dark' : 'light';
+    return ids.indexOf(wanted) !== -1 ? wanted : ids[0];
+  }
+
+  function ThemeChooser(opts) {
+    opts = opts || {};
+    var themes = opts.themes || THEME_OPTIONS;
+    var key = opts.storageKey || THEME_KEY;
+
+    function read() { try { return localStorage.getItem(key); } catch (e) { return null; } }
+    function write(value) { try { localStorage.setItem(key, value); } catch (e) { /* private mode */ } }
+    function apply(id) { document.documentElement.setAttribute('data-theme', id); }
+
+    var current = resolveTheme({
+      themes: themes,
+      asked: new URLSearchParams(location.search).get('theme'),
+      saved: read(),
+      prefersDark: !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    });
+    apply(current);
+
+    var root = el('div', { className: 'atk-theme-chooser' });
+    var button = el('button', {
+      className: 'atk-theme-chooser__button',
+      type: 'button',
+      title: 'Theme',
+      'aria-label': 'Choose theme',
+      'aria-haspopup': 'menu',
+      'aria-expanded': 'false'
+    }, svgSpan(PALETTE_SVG));
+    var popover = null;
+
+    function close(returnFocus) {
+      if (!popover) return;
+      popover.remove();
+      popover = null;
+      button.setAttribute('aria-expanded', 'false');
+      if (returnFocus) button.focus();
+    }
+
+    function choose(id) {
+      current = id;
+      apply(id);
+      write(id);
+      close(true);
+      if (typeof opts.onChange === 'function') opts.onChange(id);
+    }
+
+    function open() {
+      var menu = Menu({
+        items: themes.map(function (t) {
+          return {
+            label: t.label,
+            icon: t.id === current ? svgSpan(CHECK_SVG) : el('span'),
+            onClick: function () { choose(t.id); }
+          };
+        })
+      });
+      var items = Array.prototype.slice.call(menu.querySelectorAll('.atk-menu__item'));
+      items.forEach(function (item, i) {
+        item.setAttribute('role', 'menuitemradio');
+        item.setAttribute('aria-checked', String(themes[i].id === current));
+      });
+      menu.addEventListener('keydown', function (e) {
+        var i = items.indexOf(document.activeElement);
+        if (e.key === 'ArrowDown') { e.preventDefault(); items[(i + 1) % items.length].focus(); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
+      });
+      popover = el('div', { className: 'atk-theme-chooser__popover' }, menu);
+      root.appendChild(popover);
+      button.setAttribute('aria-expanded', 'true');
+      var selected = items[themes.map(function (t) { return t.id; }).indexOf(current)];
+      (selected || items[0]).focus();
+    }
+
+    button.addEventListener('click', function () { if (popover) close(); else open(); });
+    document.addEventListener('click', function (e) { if (popover && !root.contains(e.target)) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && popover) close(true); });
+
+    root.appendChild(button);
+    return root;
+  }
+  ThemeChooser.resolve = resolveTheme;
+
   window.ArenaToolkit = {
+    ThemeChooser: ThemeChooser,
     Button: Button,
     Input: Input,
     Link: Link,
