@@ -80,7 +80,7 @@ The visual language for every tool. **The master is a claude.ai artifact**: <htt
 3. `arena-uploader/handoff - pinterest scraper are.na migration tool.md` — Python tool state
 4. `CLAUDE.md` — the hard rules
 5. `shared/ui/README.md` — how the design system is kept in step with its artifact
-6. `_claude/` plan documents: `arena-palimpsest-build-plan.md` (the v1 plan, with an "As built" section at the top), `arena-palimpsest-v2-editing-and-tagging-plan.md` (what comes next), `arena-duplicate-finder-build-plan.md`, `toolkit-architecture-plan.md`
+6. `_claude/` plan documents (only the two Palimpsest plans are committed; the duplicate-finder, architecture and extraction-candidates plans are kept **local** by Kim's choice, so on another machine they may be missing, and Project knowledge holds copies): `arena-palimpsest-build-plan.md` (the v1 plan, with an "As built" section at the top), `arena-palimpsest-v2-editing-and-tagging-plan.md` (what comes next), `arena-duplicate-finder-build-plan.md`, `toolkit-architecture-plan.md`
 
 Author channels on are.na: <https://www.are.na/kim-plowright/channels>. Default content channels: `hypernormalisation-images`, `hypernormalisation-text`.
 
