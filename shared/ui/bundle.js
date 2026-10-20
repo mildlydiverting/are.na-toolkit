@@ -75,7 +75,7 @@
     var kids = [];
     if (opts.title) kids.push(el('div', { className: 'atk-card__title' }, opts.title));
     kids.push(el('div', { className: 'atk-card__body' }, opts.children));
-    return el('div', { className: 'atk-card' }, kids);
+    return el('div', { className: opts.variant === 'filled' ? 'atk-card atk-card--filled' : 'atk-card' }, kids);
   }
 
   function Badge(opts) {
@@ -396,7 +396,75 @@
   }
   ThemeChooser.resolve = resolveTheme;
 
+  /* ── ChannelRow / ChannelList ──────────────────────────────────
+     A channel as a coloured bar: badge, name, block count, metadata count,
+     owner, caret. Opens (a <details>) to show whatever you pass as children.
+     ChannelList stacks rows and adds an optional sort menu; sorting itself
+     is yours: re-order with list.setRows(). */
+
+  var CHEVRON_SVG =
+    '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>';
+
+  function ChannelRow(opts) {
+    opts = opts || {};
+    var visibility = opts.visibility || 'closed';
+    var badgeVariant = { public: 'success', private: 'private' }[visibility] || 'default';
+    var caret = svgSpan(CHEVRON_SVG);
+    caret.className = 'atk-channel-row__caret';
+    var summary = el('summary', null, [
+      Badge({ variant: badgeVariant, children: visibility }),
+      el('span', { className: 'atk-channel-row__title' }, opts.title),
+      opts.count != null
+        ? el('span', { className: 'atk-channel-row__count', title: 'Blocks in this channel' }, String(opts.count))
+        : null,
+      opts.metadataCount != null
+        ? el('span', { title: 'Metadata entries' }, Badge({ children: String(opts.metadataCount) }))
+        : null,
+      opts.owner ? el('span', { className: 'atk-channel-row__owner' }, opts.owner) : null,
+      caret
+    ]);
+    return el('details', {
+      className: 'atk-channel-row',
+      'data-visibility': visibility,
+      open: opts.open ? true : null
+    }, [summary, el('div', { className: 'atk-channel-row__body' }, opts.children)]);
+  }
+
+  var channelListCount = 0;
+
+  function ChannelList(opts) {
+    opts = opts || {};
+    var root = el('div', { className: 'atk-channel-list' });
+    var rowsEl = el('div', { className: 'atk-channel-list__rows' });
+    var toolbar = null;
+    if (opts.sorts && opts.sorts.length) {
+      var select = Select({
+        options: opts.sorts,
+        value: opts.sortValue || opts.sorts[0].value,
+        onChange: function (e) { if (opts.onSort) opts.onSort(e.target.value); }
+      });
+      select.id = 'atk-channel-sort-' + (++channelListCount);
+      toolbar = el('div', { className: 'atk-channel-list__toolbar', hidden: true }, [
+        el('label', { for: select.id }, opts.sortLabel || 'Sort'),
+        select
+      ]);
+      root.appendChild(toolbar);
+    }
+    root.appendChild(rowsEl);
+
+    // Replace the list's contents. Rows you pass again are moved, not rebuilt, so open rows stay open.
+    // The sort menu shows once there are two or more. A single node (a message) works too.
+    root.setRows = function (nodes) {
+      rowsEl.replaceChildren.apply(rowsEl, nodes);
+      if (toolbar) toolbar.hidden = nodes.length < 2;
+    };
+    root.setRows(opts.rows || []);
+    return root;
+  }
+
   window.ArenaToolkit = {
+    ChannelRow: ChannelRow,
+    ChannelList: ChannelList,
     ThemeChooser: ThemeChooser,
     Button: Button,
     Input: Input,

@@ -1,0 +1,38 @@
+<!-- @dsCard group="Lists" height=250 -->
+<!doctype html>
+<html>
+<head><style>
+  body { margin: 0; padding: 15px; background: var(--surface-page); font-family: var(--font-sans); }
+</style></head>
+<body>
+<div id="root"></div>
+<script>
+  var atk = window.ArenaToolkit;
+  var data = [
+    { title: 'Quirky Finds', visibility: 'closed', count: 84, owner: '@shravan-rajagopal' },
+    { title: 'Design', visibility: 'public', count: 516, owner: '@brannon-wellington' },
+    { title: 'Studio notes', visibility: 'private', count: 12, owner: '@kim-plowright' },
+    { title: 'found', visibility: 'closed', count: 10400, owner: '@kim-plowright' }
+  ];
+  var rows = new Map();
+  data.forEach(function (c) {
+    rows.set(c, atk.ChannelRow({
+      title: c.title, visibility: c.visibility, count: c.count >= 10000 ? '10k' : String(c.count),
+      metadataCount: 0, owner: c.owner,
+      children: [atk._el('p', null, 'No metadata set'), atk._el('p', null, 'Channel details go here.')]
+    }));
+  });
+  var sorters = {
+    'default': function () { return 0; },
+    blocks: function (a, b) { return b.count - a.count; },
+    title: function (a, b) { return a.title.localeCompare(b.title); }
+  };
+  var list = atk.ChannelList({
+    sorts: [{ value: 'default', label: 'Default order' }, { value: 'blocks', label: 'Most blocks' }, { value: 'title', label: 'Name A–Z' }],
+    onSort: function (mode) { list.setRows(data.slice().sort(sorters[mode]).map(function (c) { return rows.get(c); })); }
+  });
+  list.setRows(data.map(function (c) { return rows.get(c); }));
+  document.getElementById('root').appendChild(list);
+</script>
+</body>
+</html>

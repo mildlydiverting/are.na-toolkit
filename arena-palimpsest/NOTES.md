@@ -5,7 +5,7 @@ v1 shipped (read-only). Plan: `_claude/arena-palimpsest-build-plan.md`. User doc
 ## Shape
 - `src/index.html` is the shell with `@include` markers. `app.js` does fetch orchestration and rendering. `parse-input.js`, `format.js` and `history.js` are pure and tested. `styles.css` holds layout only; everything visual comes from `shared/ui/` (Arena Toolkit).
 - Build: `node build.js` (`--watch`, `--docs`). `dist/arena-palimpsest.html` is committed; `--docs` copies it to `docs/`.
-- `shared/ui/bundle.js` and `bundle.css` now differ from the design-system artifact by the ThemeChooser addition. Until it is published back, a re-sync of the artifact would overwrite it.
+- `shared/ui/bundle.js` and `bundle.css` match the design-system artifact (published 2026-10-20: ThemeChooser, ChannelRow, ChannelList, unfilled Card). Change the artifact and the toolkit together, or a re-sync will overwrite the difference.
 - Shared code used: `shared/ui/*`, `shared/api/arena-client.js` and `throttle.js`, `shared/widgets/auth-step.js`.
 
 ## Decisions made during the build
@@ -17,9 +17,9 @@ v1 shipped (read-only). Plan: `_claude/arena-palimpsest-build-plan.md`. User doc
 - **Theme chooser** is the `ArenaToolkit.ThemeChooser` component (palette button in the header). Precedence: `?theme=` (not saved) > saved choice (`arena_toolkit_theme`, shared across tools) > system. Docs and preview are in `shared/ui/ThemeChooser/`.
 - **Header** is navigation only: breadcrumb "Are.na Tools / Are.na Palimpsest" on the left, Connect and the theme chooser on the right, no border. The page title and a one-line intro sit in `<main>`. The empty state is plain text, not a Card.
 - **Main block** is a bordered frame (title + image) beside the text column. Border: public grey, private red, orphan dotted at 40%. Metadata sits in the same column and the `.kv` tables share one label width so values line up.
-- **Channel rows** are coloured bars (grey closed, green public, red private; the ink and the open-state border follow the colour). Order: badge, name, block count, metadata-count badge, owner, caret. Open panel: heading bar tinted, body on the page colour, metadata (2fr) before channel data (3fr). Tints are 6% so green/red text stays near AA (public badge is 4.35:1 in Light).
-- **Sort** (`CHANNEL_SORTS` / `sortChannels` in `format.js`): default, most recent, oldest, most blocks, most metadata. Dates are the channel's `created_at` (connection dates are not available). Rows are built once and re-ordered, so open panels stay open.
-- **No card backgrounds** in this tool (`.palimpsest-main .atk-card`); `shared/ui` still has one.
+- **Channel rows** are the shared `ChannelRow` and `ChannelList` components (docs in `shared/ui/ChannelRow/` and `shared/ui/ChannelList/`). Colour follows visibility; the open panel is metadata (2fr) then data (3fr). Tint is 6% so green/red text stays near AA (public badge 4.35:1 in Light).
+- **Sort** (`CHANNEL_SORTS` / `sortChannels` in `format.js`): default, most recent, oldest, most blocks, most metadata. Dates are the channel's `created_at` (connection dates are not available). Rows are built once and re-ordered with `list.setRows()`, so open panels stay open.
+- **Cards are unfilled** by default in the design system now (`variant: 'filled'` for the old look).
 - **Sections 2 and 3 of the plan are merged** into one "Connected channels (n)" section (see below).
 
 ## API facts (https://api.are.na/v3/openapi.json is the reliable reference)

@@ -43,11 +43,6 @@ export function channelUrl(channel) {
     : `https://www.are.na/channel/${encodeURIComponent(channel.slug)}`;
 }
 
-// Existing Badge variants only: public reads green, private reads red, closed stays quiet.
-export function visibilityVariant(visibility) {
-  return { public: 'success', private: 'private' }[visibility] || 'default';
-}
-
 // Compact count for a row: 169 -> "169", 1234 -> "1.2k", 10400 -> "10k", 2500000 -> "2.5m".
 export function formatCount(n) {
   if (typeof n !== 'number' || !Number.isFinite(n) || n < 0) return '';

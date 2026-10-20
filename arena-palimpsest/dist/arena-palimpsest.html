@@ -323,7 +323,7 @@
 
 /* Card */
 .atk-card {
-  background: var(--surface-card);
+  background: transparent;
   border: 1px solid var(--border-card);
   border-radius: var(--radius-sm);
   padding: var(--space-3);
@@ -332,6 +332,8 @@
   font-size: 14.4px;
   line-height: 21px;
 }
+/* Cards are unfilled by default; opt in with variant: 'filled'. */
+.atk-card--filled { background: var(--surface-card); }
 .atk-card__title {
   font-size: 16px;
   font-weight: 700;
@@ -714,6 +716,87 @@
 }
 
 /* ────────────────────────────────────────────────────────────
+   ChannelRow / ChannelList — a channel as a coloured bar that opens
+   ──────────────────────────────────────────────────────────── */
+.atk-channel-row {
+  --bar: var(--surface-sunken);
+  --bar-ink: var(--text-secondary);
+  --bar-border: var(--border-strong);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+}
+.atk-channel-row[data-visibility="public"] {
+  --bar: color-mix(in srgb, var(--accent-success) 6%, var(--surface-page));
+  --bar-ink: var(--accent-success);
+  --bar-border: var(--accent-success);
+}
+.atk-channel-row[data-visibility="private"] {
+  --bar: color-mix(in srgb, var(--accent-private) 6%, var(--surface-page));
+  --bar-ink: var(--accent-private);
+  --bar-border: var(--accent-private);
+}
+.atk-channel-row:hover,
+.atk-channel-row[open],
+.atk-channel-row:focus-within { border-color: var(--bar-border); }
+
+.atk-channel-row > summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-2);
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 23px;
+  font-weight: 400;
+  color: var(--bar-ink);
+  background: var(--bar);
+  border-radius: var(--radius-sm);
+}
+.atk-channel-row > summary::-webkit-details-marker { display: none; }
+.atk-channel-row > summary:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+/* Badges on a bar: a tiny step off the bar colour, in the bar's ink. */
+.atk-channel-row > summary .atk-badge {
+  background: color-mix(in srgb, var(--bar) 97%, var(--text-primary));
+  color: var(--bar-ink);
+}
+.atk-channel-row__count { font-variant-numeric: tabular-nums; }
+.atk-channel-row__owner { margin-left: auto; }
+.atk-channel-row__caret { display: inline-flex; flex: none; margin-left: auto; }
+.atk-channel-row__owner + .atk-channel-row__caret { margin-left: 0; }
+.atk-channel-row[open] .atk-channel-row__caret { transform: rotate(180deg); }
+.atk-channel-row__caret svg { width: 16px; height: 16px; }
+
+/* Open panel: children are laid out as columns (2:3), stacking on narrow screens. */
+.atk-channel-row__body {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: var(--space-5);
+  padding: var(--space-2) var(--space-2) var(--space-3);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  line-height: 21px;
+}
+@media (max-width: 700px) {
+  .atk-channel-row__body { grid-template-columns: 1fr; }
+}
+
+.atk-channel-list { display: flex; flex-direction: column; gap: var(--space-2); }
+.atk-channel-list__rows { display: flex; flex-direction: column; gap: var(--space-1); }
+.atk-channel-list__toolbar { display: flex; align-items: center; gap: var(--space-2); }
+.atk-channel-list__toolbar[hidden] { display: none; }
+.atk-channel-list__toolbar label {
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.atk-channel-list__toolbar .atk-select { width: auto; min-width: 14em; }
+
+/* ────────────────────────────────────────────────────────────
    ThemeChooser — palette button that opens a Menu of themes
    ──────────────────────────────────────────────────────────── */
 .atk-theme-chooser {
@@ -1037,7 +1120,7 @@ body {
 .stack { display: flex; flex-direction: column; gap: var(--space-3); }
 .stack > p { margin: 0; }
 
-/* Main block: a bordered frame (title + image, like an are.na block) beside the text column. */
+/* Main block: the block itself (border = visibility) with its ID as a caption, beside the text column. */
 .block-layout {
   display: grid;
   grid-template-columns: minmax(240px, 5fr) 7fr;
@@ -1047,22 +1130,27 @@ body {
 .block-frame {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-3);
+  gap: var(--space-2);
+}
+.block-frame__thumb {
+  overflow: hidden;
   border: 2px solid var(--text-secondary);
   border-radius: var(--radius-sm);
 }
-.block-frame[data-visibility="private"] { border-color: var(--accent-private); }
-.block-frame[data-visibility="orphan"] {
+.block-frame[data-visibility="private"] .block-frame__thumb { border-color: var(--accent-private); }
+.block-frame[data-visibility="orphan"] .block-frame__thumb {
   border-style: dotted;
   border-color: color-mix(in srgb, var(--text-secondary) 40%, transparent);
 }
-.block-frame__title { margin: 0; font: var(--text-ui-strong); color: var(--text-heading); }
-.block-frame__thumb { width: 100%; }
 .block-frame .atk-block { width: 100%; min-width: 0; }
-.block-data .kv th { width: 10.5em; }
-.disclosure__body .metadata .kv th { width: 8em; }
-.metadata .kv th { overflow-wrap: anywhere; } /* long metadata keys may break mid-word */
+.block-frame .atk-block--text { border: 0; } /* one border, not two */
+.block-frame__title {
+  margin: 0;
+  font: var(--text-body);
+  color: var(--text-muted);
+  text-align: center;
+}
+.block-frame__link { text-align: center; margin-top: calc(-1 * var(--space-1)); }
 .block-data { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
 
 /* Label/value rows: the shape v2 swaps value cells to inputs in. */
@@ -1100,7 +1188,6 @@ body {
 
 @media (max-width: 700px) {
   .block-layout { grid-template-columns: 1fr; }
-  .disclosure > .disclosure__body { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 600px) {
@@ -1111,71 +1198,7 @@ body {
 
 .input-bar__hint { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
 
-.toolbar { display: flex; align-items: center; gap: var(--space-2); }
-.toolbar[hidden] { display: none; }
-.toolbar .atk-select { width: auto; min-width: 14em; }
-.toolbar label { font: var(--text-ui-strong); color: var(--text-muted); }
-.disclosure-list { display: flex; flex-direction: column; gap: var(--space-1); }
-.disclosure-list > p { margin: 0; }
-
-/* Channel rows: a coloured bar per channel, border on hover, caret to open. */
-.disclosure {
-  --bar: var(--surface-sunken);
-  --bar-ink: var(--text-secondary);
-  --bar-border: var(--border-strong);
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-}
-.disclosure[data-visibility="public"] {
-  --bar: color-mix(in srgb, var(--accent-success) 6%, var(--surface-page));
-  --bar-ink: var(--accent-success);
-  --bar-border: var(--accent-success);
-}
-.disclosure[data-visibility="private"] {
-  --bar: color-mix(in srgb, var(--accent-private) 6%, var(--surface-page));
-  --bar-ink: var(--accent-private);
-  --bar-border: var(--accent-private);
-}
-.disclosure:hover,
-.disclosure[open],
-.disclosure:focus-within { border-color: var(--bar-border); }
-
-.disclosure > summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  align-items: center;
-  padding: var(--space-2);
-  cursor: pointer;
-  list-style: none;
-  font: var(--text-body-lg);
-  color: var(--bar-ink);
-  background: var(--bar);
-  border-radius: var(--radius-sm);
-}
-.disclosure > summary::-webkit-details-marker { display: none; }
-.disclosure > summary:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
-
-.disclosure__caret {
-  display: inline-flex;
-  flex: none;
-}
-.disclosure[open] .disclosure__caret { transform: rotate(180deg); }
-.disclosure__title { font: inherit; }
-/* Badges on a bar: a tiny step off the bar colour, dark text. */
-.disclosure > summary .atk-badge {
-  background: color-mix(in srgb, var(--bar) 97%, var(--text-primary));
-  color: var(--bar-ink);
-}
-.disclosure__count { font-variant-numeric: tabular-nums; }
-.disclosure__owner { margin-left: auto; }
-.disclosure > .disclosure__body {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
-  gap: var(--space-5);
-  padding: var(--space-2) var(--space-2) var(--space-3);
-  color: var(--text-primary);
-}
+.atk-channel-list__rows > p { margin: 0; }
 
 .history { display: flex; flex-wrap: wrap; gap: var(--space-1); align-items: center; }
 .history:empty { display: none; }
@@ -1198,9 +1221,6 @@ body {
   margin-top: var(--space-1);
   z-index: 10;
 }
-
-/* No card backgrounds in this tool. */
-.palimpsest-main .atk-card { background: transparent; }
 
 </style>
 </head>
@@ -1302,7 +1322,7 @@ body {
     var kids = [];
     if (opts.title) kids.push(el('div', { className: 'atk-card__title' }, opts.title));
     kids.push(el('div', { className: 'atk-card__body' }, opts.children));
-    return el('div', { className: 'atk-card' }, kids);
+    return el('div', { className: opts.variant === 'filled' ? 'atk-card atk-card--filled' : 'atk-card' }, kids);
   }
 
   function Badge(opts) {
@@ -1623,7 +1643,75 @@ body {
   }
   ThemeChooser.resolve = resolveTheme;
 
+  /* ── ChannelRow / ChannelList ──────────────────────────────────
+     A channel as a coloured bar: badge, name, block count, metadata count,
+     owner, caret. Opens (a <details>) to show whatever you pass as children.
+     ChannelList stacks rows and adds an optional sort menu; sorting itself
+     is yours: re-order with list.setRows(). */
+
+  var CHEVRON_SVG =
+    '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>';
+
+  function ChannelRow(opts) {
+    opts = opts || {};
+    var visibility = opts.visibility || 'closed';
+    var badgeVariant = { public: 'success', private: 'private' }[visibility] || 'default';
+    var caret = svgSpan(CHEVRON_SVG);
+    caret.className = 'atk-channel-row__caret';
+    var summary = el('summary', null, [
+      Badge({ variant: badgeVariant, children: visibility }),
+      el('span', { className: 'atk-channel-row__title' }, opts.title),
+      opts.count != null
+        ? el('span', { className: 'atk-channel-row__count', title: 'Blocks in this channel' }, String(opts.count))
+        : null,
+      opts.metadataCount != null
+        ? el('span', { title: 'Metadata entries' }, Badge({ children: String(opts.metadataCount) }))
+        : null,
+      opts.owner ? el('span', { className: 'atk-channel-row__owner' }, opts.owner) : null,
+      caret
+    ]);
+    return el('details', {
+      className: 'atk-channel-row',
+      'data-visibility': visibility,
+      open: opts.open ? true : null
+    }, [summary, el('div', { className: 'atk-channel-row__body' }, opts.children)]);
+  }
+
+  var channelListCount = 0;
+
+  function ChannelList(opts) {
+    opts = opts || {};
+    var root = el('div', { className: 'atk-channel-list' });
+    var rowsEl = el('div', { className: 'atk-channel-list__rows' });
+    var toolbar = null;
+    if (opts.sorts && opts.sorts.length) {
+      var select = Select({
+        options: opts.sorts,
+        value: opts.sortValue || opts.sorts[0].value,
+        onChange: function (e) { if (opts.onSort) opts.onSort(e.target.value); }
+      });
+      select.id = 'atk-channel-sort-' + (++channelListCount);
+      toolbar = el('div', { className: 'atk-channel-list__toolbar', hidden: true }, [
+        el('label', { for: select.id }, opts.sortLabel || 'Sort'),
+        select
+      ]);
+      root.appendChild(toolbar);
+    }
+    root.appendChild(rowsEl);
+
+    // Replace the list's contents. Rows you pass again are moved, not rebuilt, so open rows stay open.
+    // The sort menu shows once there are two or more. A single node (a message) works too.
+    root.setRows = function (nodes) {
+      rowsEl.replaceChildren.apply(rowsEl, nodes);
+      if (toolbar) toolbar.hidden = nodes.length < 2;
+    };
+    root.setRows(opts.rows || []);
+    return root;
+  }
+
   window.ArenaToolkit = {
+    ChannelRow: ChannelRow,
+    ChannelList: ChannelList,
     ThemeChooser: ThemeChooser,
     Button: Button,
     Input: Input,
@@ -1953,11 +2041,6 @@ function channelUrl(channel) {
     : `https://www.are.na/channel/${encodeURIComponent(channel.slug)}`;
 }
 
-// Existing Badge variants only: public reads green, private reads red, closed stays quiet.
-function visibilityVariant(visibility) {
-  return { public: 'success', private: 'private' }[visibility] || 'default';
-}
-
 // Compact count for a row: 169 -> "169", 1234 -> "1.2k", 10400 -> "10k", 2500000 -> "2.5m".
 function formatCount(n) {
   if (typeof n !== 'number' || !Number.isFinite(n) || n < 0) return '';
@@ -2269,7 +2352,7 @@ function writeJson(storage, key, value) {
     connectedCell = h('span', { className: 'muted' }, 'loading…');
     const fields = [
       ['ID', h('span', { className: 'kv__inline' }, [
-        String(block.id), copyLink(String(block.id)), extLink('open on are.na', blockUrl(block.id)),
+        String(block.id), copyLink(String(block.id)),
       ])],
       ['Class', block.type],
       ['Title', block.title],
@@ -2285,16 +2368,15 @@ function writeJson(storage, key, value) {
     ];
     const thumb = blockThumb(block);
     const frame = h('div', { className: 'block-frame', 'data-visibility': block.visibility || 'unknown' }, [
-      h('h2', { className: 'block-frame__title' }, `Block ${block.id}`),
       thumb,
+      h('h2', { className: 'block-frame__title' }, `Block ${block.id}`),
+      h('div', { className: 'block-frame__link' }, extLink('open on are.na', blockUrl(block.id))),
     ]);
     return h('div', { className: 'block-layout' }, [
       frame,
-      h('div', { className: 'block-data' }, [kvTable(fields), metadataSection(block.metadata)]),
+      h('div', { className: 'block-data' }, [metadataSection(block.metadata), kvTable(fields)]),
     ]);
   }
-
-  const CARET_SVG = '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l4 4 4-4"/></svg>';
 
   function channelRow(ch) {
     const counts = ch.counts || {};
@@ -2313,71 +2395,51 @@ function writeJson(storage, key, value) {
       ['Created', formatDate(ch.created_at)],
       ['Updated', formatDate(ch.updated_at)],
     ];
-    const caret = h('span', { className: 'disclosure__caret', 'aria-hidden': 'true' });
-    caret.innerHTML = CARET_SVG; // static markup, no user input
-    const count = formatCount(counts.contents ?? counts.blocks);
-    return h('details', { className: 'disclosure', 'data-visibility': ch.visibility || 'unknown' }, [
-      h('summary', null, [
-        ATK.Badge({ variant: visibilityVariant(ch.visibility), children: ch.visibility || 'unknown' }),
-        h('span', { className: 'disclosure__title' }, ch.title || ch.slug),
-        count ? h('span', { className: 'disclosure__count', title: 'Blocks in this channel' }, count) : null,
-        h('span', { title: 'Metadata entries' }, ATK.Badge({ children: String(metadataEntries(ch.metadata).length) })),
-        h('span', { className: 'disclosure__owner' }, ownerLabel(ch.owner)),
-        caret,
-      ]),
-      h('div', { className: 'disclosure__body stack' }, [metadataSection(ch.metadata), kvTable(fields)]),
-    ]);
+    return ATK.ChannelRow({
+      title: ch.title || ch.slug,
+      visibility: ch.visibility || 'unknown',
+      count: formatCount(counts.contents ?? counts.blocks),
+      metadataCount: metadataEntries(ch.metadata).length,
+      owner: ownerLabel(ch.owner),
+      children: [metadataSection(ch.metadata), kvTable(fields)],
+    });
   }
 
   async function loadConnections(id, run) {
-    const list = h('div', { className: 'disclosure-list' }, h('p', { className: 'muted' }, 'Loading channels…'));
+    const channels = [];
+    const rows = new Map();
+    let mode = 'default';
+    const list = ATK.ChannelList({
+      sorts: CHANNEL_SORTS,
+      onSort: (value) => { mode = value; list.setRows(sortChannels(channels, mode).map((ch) => rows.get(ch))); },
+      rows: [h('p', { className: 'muted' }, 'Loading channels…')],
+    });
     const note = h('p', { className: 'muted' },
       "are.na doesn't show connection details (position, who connected it, when, or connection metadata) from a block's side, so this lists the channels themselves.");
     const card = ATK.Card({ title: 'Connected channels', children: h('div', { className: 'stack' }, [note, list]) });
     const title = card.querySelector('.atk-card__title');
     els.resultPane.append(card);
 
-    // Rows are built once and re-ordered in place, so panels you have opened stay open.
-    const channels = [];
-    const rows = new Map();
-    let mode = 'default';
-    const sortSelect = ATK.Select({
-      options: CHANNEL_SORTS,
-      value: mode,
-      onChange: (e) => { mode = e.target.value; renderOrder(); },
-    });
-    sortSelect.id = 'channel-sort';
-    const toolbar = h('div', { className: 'toolbar', hidden: true }, [
-      h('label', { for: 'channel-sort' }, 'Sort'),
-      sortSelect,
-    ]);
-    note.after(toolbar);
-    function renderOrder() {
-      sortChannels(channels, mode).forEach((ch) => list.append(rows.get(ch)));
-    }
-
     let seen = 0;
     try {
       await client.getBlockConnections(id, {
         onPage: (items, meta) => {
           if (run !== inspectRun) return;
-          if (!seen) list.replaceChildren();
           seen += items.length;
           items.forEach((ch) => { channels.push(ch); rows.set(ch, channelRow(ch)); });
-          renderOrder();
-          toolbar.hidden = seen < 2;
+          list.setRows(sortChannels(channels, mode).map((ch) => rows.get(ch)));
           title.textContent = `Connected channels (${meta?.total_count ?? seen})`;
         },
       });
       if (run !== inspectRun) return;
       if (!seen) {
-        list.replaceChildren(h('p', { className: 'muted' }, 'Not connected to any channel you can see.'));
+        list.setRows([h('p', { className: 'muted' }, 'Not connected to any channel you can see.')]);
         title.textContent = 'Connected channels (0)';
       }
       connectedCell.textContent = `${seen} channel${seen === 1 ? '' : 's'}`;
     } catch (err) {
       if (run !== inspectRun) return;
-      list.replaceChildren(h('p', null, `Couldn't load the channels: ${describeConnectError(err)}`));
+      list.setRows([h('p', null, `Couldn't load the channels: ${describeConnectError(err)}`)]);
       connectedCell.textContent = 'unknown';
     }
   }

@@ -101,7 +101,7 @@
 
 /* Card */
 .atk-card {
-  background: var(--surface-card);
+  background: transparent;
   border: 1px solid var(--border-card);
   border-radius: var(--radius-sm);
   padding: var(--space-3);
@@ -110,6 +110,8 @@
   font-size: 14.4px;
   line-height: 21px;
 }
+/* Cards are unfilled by default; opt in with variant: 'filled'. */
+.atk-card--filled { background: var(--surface-card); }
 .atk-card__title {
   font-size: 16px;
   font-weight: 700;
@@ -490,6 +492,87 @@
   background: var(--border-card);
   margin: var(--space-1) 0;
 }
+
+/* ────────────────────────────────────────────────────────────
+   ChannelRow / ChannelList — a channel as a coloured bar that opens
+   ──────────────────────────────────────────────────────────── */
+.atk-channel-row {
+  --bar: var(--surface-sunken);
+  --bar-ink: var(--text-secondary);
+  --bar-border: var(--border-strong);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+}
+.atk-channel-row[data-visibility="public"] {
+  --bar: color-mix(in srgb, var(--accent-success) 6%, var(--surface-page));
+  --bar-ink: var(--accent-success);
+  --bar-border: var(--accent-success);
+}
+.atk-channel-row[data-visibility="private"] {
+  --bar: color-mix(in srgb, var(--accent-private) 6%, var(--surface-page));
+  --bar-ink: var(--accent-private);
+  --bar-border: var(--accent-private);
+}
+.atk-channel-row:hover,
+.atk-channel-row[open],
+.atk-channel-row:focus-within { border-color: var(--bar-border); }
+
+.atk-channel-row > summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-2);
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 23px;
+  font-weight: 400;
+  color: var(--bar-ink);
+  background: var(--bar);
+  border-radius: var(--radius-sm);
+}
+.atk-channel-row > summary::-webkit-details-marker { display: none; }
+.atk-channel-row > summary:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+/* Badges on a bar: a tiny step off the bar colour, in the bar's ink. */
+.atk-channel-row > summary .atk-badge {
+  background: color-mix(in srgb, var(--bar) 97%, var(--text-primary));
+  color: var(--bar-ink);
+}
+.atk-channel-row__count { font-variant-numeric: tabular-nums; }
+.atk-channel-row__owner { margin-left: auto; }
+.atk-channel-row__caret { display: inline-flex; flex: none; margin-left: auto; }
+.atk-channel-row__owner + .atk-channel-row__caret { margin-left: 0; }
+.atk-channel-row[open] .atk-channel-row__caret { transform: rotate(180deg); }
+.atk-channel-row__caret svg { width: 16px; height: 16px; }
+
+/* Open panel: children are laid out as columns (2:3), stacking on narrow screens. */
+.atk-channel-row__body {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: var(--space-5);
+  padding: var(--space-2) var(--space-2) var(--space-3);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  line-height: 21px;
+}
+@media (max-width: 700px) {
+  .atk-channel-row__body { grid-template-columns: 1fr; }
+}
+
+.atk-channel-list { display: flex; flex-direction: column; gap: var(--space-2); }
+.atk-channel-list__rows { display: flex; flex-direction: column; gap: var(--space-1); }
+.atk-channel-list__toolbar { display: flex; align-items: center; gap: var(--space-2); }
+.atk-channel-list__toolbar[hidden] { display: none; }
+.atk-channel-list__toolbar label {
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.atk-channel-list__toolbar .atk-select { width: auto; min-width: 14em; }
 
 /* ────────────────────────────────────────────────────────────
    ThemeChooser — palette button that opens a Menu of themes

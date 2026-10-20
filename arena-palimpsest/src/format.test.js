@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   formatDate, metadataEntries, userHandle, userUrl, blockUrl,
-  ownerLabel, ownerUrl, channelUrl, visibilityVariant, formatCount, sortChannels,
+  ownerLabel, ownerUrl, channelUrl, formatCount, sortChannels,
 } from './format.js';
 
 describe('formatDate', () => {
@@ -55,12 +55,6 @@ describe('channels and owners', () => {
     expect(channelUrl({ slug: 'found', owner: kim })).toBe('https://www.are.na/kim-plowright/found');
     expect(channelUrl({ slug: 'found', owner: group })).toBe('https://www.are.na/channel/found');
     expect(channelUrl({})).toBeNull();
-  });
-
-  it('maps visibility to existing badge variants', () => {
-    expect(visibilityVariant('public')).toBe('success');
-    expect(visibilityVariant('private')).toBe('private');
-    expect(visibilityVariant('closed')).toBe('default');
   });
 });
 

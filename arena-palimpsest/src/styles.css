@@ -92,7 +92,7 @@ body {
 .stack { display: flex; flex-direction: column; gap: var(--space-3); }
 .stack > p { margin: 0; }
 
-/* Main block: a bordered frame (title + image, like an are.na block) beside the text column. */
+/* Main block: the block itself (border = visibility) with its ID as a caption, beside the text column. */
 .block-layout {
   display: grid;
   grid-template-columns: minmax(240px, 5fr) 7fr;
@@ -102,22 +102,27 @@ body {
 .block-frame {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-3);
+  gap: var(--space-2);
+}
+.block-frame__thumb {
+  overflow: hidden;
   border: 2px solid var(--text-secondary);
   border-radius: var(--radius-sm);
 }
-.block-frame[data-visibility="private"] { border-color: var(--accent-private); }
-.block-frame[data-visibility="orphan"] {
+.block-frame[data-visibility="private"] .block-frame__thumb { border-color: var(--accent-private); }
+.block-frame[data-visibility="orphan"] .block-frame__thumb {
   border-style: dotted;
   border-color: color-mix(in srgb, var(--text-secondary) 40%, transparent);
 }
-.block-frame__title { margin: 0; font: var(--text-ui-strong); color: var(--text-heading); }
-.block-frame__thumb { width: 100%; }
 .block-frame .atk-block { width: 100%; min-width: 0; }
-.block-data .kv th { width: 10.5em; }
-.disclosure__body .metadata .kv th { width: 8em; }
-.metadata .kv th { overflow-wrap: anywhere; } /* long metadata keys may break mid-word */
+.block-frame .atk-block--text { border: 0; } /* one border, not two */
+.block-frame__title {
+  margin: 0;
+  font: var(--text-body);
+  color: var(--text-muted);
+  text-align: center;
+}
+.block-frame__link { text-align: center; margin-top: calc(-1 * var(--space-1)); }
 .block-data { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
 
 /* Label/value rows: the shape v2 swaps value cells to inputs in. */
@@ -155,7 +160,6 @@ body {
 
 @media (max-width: 700px) {
   .block-layout { grid-template-columns: 1fr; }
-  .disclosure > .disclosure__body { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 600px) {
@@ -166,71 +170,7 @@ body {
 
 .input-bar__hint { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
 
-.toolbar { display: flex; align-items: center; gap: var(--space-2); }
-.toolbar[hidden] { display: none; }
-.toolbar .atk-select { width: auto; min-width: 14em; }
-.toolbar label { font: var(--text-ui-strong); color: var(--text-muted); }
-.disclosure-list { display: flex; flex-direction: column; gap: var(--space-1); }
-.disclosure-list > p { margin: 0; }
-
-/* Channel rows: a coloured bar per channel, border on hover, caret to open. */
-.disclosure {
-  --bar: var(--surface-sunken);
-  --bar-ink: var(--text-secondary);
-  --bar-border: var(--border-strong);
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-}
-.disclosure[data-visibility="public"] {
-  --bar: color-mix(in srgb, var(--accent-success) 6%, var(--surface-page));
-  --bar-ink: var(--accent-success);
-  --bar-border: var(--accent-success);
-}
-.disclosure[data-visibility="private"] {
-  --bar: color-mix(in srgb, var(--accent-private) 6%, var(--surface-page));
-  --bar-ink: var(--accent-private);
-  --bar-border: var(--accent-private);
-}
-.disclosure:hover,
-.disclosure[open],
-.disclosure:focus-within { border-color: var(--bar-border); }
-
-.disclosure > summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  align-items: center;
-  padding: var(--space-2);
-  cursor: pointer;
-  list-style: none;
-  font: var(--text-body-lg);
-  color: var(--bar-ink);
-  background: var(--bar);
-  border-radius: var(--radius-sm);
-}
-.disclosure > summary::-webkit-details-marker { display: none; }
-.disclosure > summary:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
-
-.disclosure__caret {
-  display: inline-flex;
-  flex: none;
-}
-.disclosure[open] .disclosure__caret { transform: rotate(180deg); }
-.disclosure__title { font: inherit; }
-/* Badges on a bar: a tiny step off the bar colour, dark text. */
-.disclosure > summary .atk-badge {
-  background: color-mix(in srgb, var(--bar) 97%, var(--text-primary));
-  color: var(--bar-ink);
-}
-.disclosure__count { font-variant-numeric: tabular-nums; }
-.disclosure__owner { margin-left: auto; }
-.disclosure > .disclosure__body {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
-  gap: var(--space-5);
-  padding: var(--space-2) var(--space-2) var(--space-3);
-  color: var(--text-primary);
-}
+.atk-channel-list__rows > p { margin: 0; }
 
 .history { display: flex; flex-wrap: wrap; gap: var(--space-1); align-items: center; }
 .history:empty { display: none; }
@@ -253,6 +193,3 @@ body {
   margin-top: var(--space-1);
   z-index: 10;
 }
-
-/* No card backgrounds in this tool. */
-.palimpsest-main .atk-card { background: transparent; }

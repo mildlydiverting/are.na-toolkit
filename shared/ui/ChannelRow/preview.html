@@ -1,0 +1,26 @@
+<!-- @dsCard group="Lists" height=190 -->
+<!doctype html>
+<html>
+<head><style>
+  body { margin: 0; padding: 15px; background: var(--surface-page); font-family: var(--font-sans); display: flex; flex-direction: column; gap: 5px; }
+  p { margin: 0; }
+  .muted { color: var(--text-muted); }
+</style></head>
+<body>
+<div id="root"></div>
+<script>
+  var atk = window.ArenaToolkit;
+  var root = document.getElementById('root');
+  root.style.cssText = 'display:flex;flex-direction:column;gap:5px';
+  function body(text) {
+    return [
+      atk._el('div', null, [atk._el('strong', null, 'Metadata'), atk._el('p', { className: 'muted' }, 'No metadata set')]),
+      atk._el('div', null, atk._el('p', null, text))
+    ];
+  }
+  root.appendChild(atk.ChannelRow({ title: 'Design', visibility: 'public', count: '516', metadataCount: 2, owner: '@brannon-wellington', open: true, children: body('Public channel: green bar, green border while open.') }));
+  root.appendChild(atk.ChannelRow({ title: 'Quirky Finds', visibility: 'closed', count: '84', metadataCount: 0, owner: '@shravan-rajagopal', children: body('Closed channel.') }));
+  root.appendChild(atk.ChannelRow({ title: 'Studio notes', visibility: 'private', count: '12', metadataCount: 0, owner: '@kim-plowright', children: body('Private channel: red.') }));
+</script>
+</body>
+</html>

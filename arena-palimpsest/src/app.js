@@ -239,7 +239,7 @@
     connectedCell = h('span', { className: 'muted' }, 'loading…');
     const fields = [
       ['ID', h('span', { className: 'kv__inline' }, [
-        String(block.id), copyLink(String(block.id)), extLink('open on are.na', blockUrl(block.id)),
+        String(block.id), copyLink(String(block.id)),
       ])],
       ['Class', block.type],
       ['Title', block.title],
@@ -255,16 +255,15 @@
     ];
     const thumb = blockThumb(block);
     const frame = h('div', { className: 'block-frame', 'data-visibility': block.visibility || 'unknown' }, [
-      h('h2', { className: 'block-frame__title' }, `Block ${block.id}`),
       thumb,
+      h('h2', { className: 'block-frame__title' }, `Block ${block.id}`),
+      h('div', { className: 'block-frame__link' }, extLink('open on are.na', blockUrl(block.id))),
     ]);
     return h('div', { className: 'block-layout' }, [
       frame,
-      h('div', { className: 'block-data' }, [kvTable(fields), metadataSection(block.metadata)]),
+      h('div', { className: 'block-data' }, [metadataSection(block.metadata), kvTable(fields)]),
     ]);
   }
-
-  const CARET_SVG = '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l4 4 4-4"/></svg>';
 
   function channelRow(ch) {
     const counts = ch.counts || {};
@@ -283,71 +282,51 @@
       ['Created', formatDate(ch.created_at)],
       ['Updated', formatDate(ch.updated_at)],
     ];
-    const caret = h('span', { className: 'disclosure__caret', 'aria-hidden': 'true' });
-    caret.innerHTML = CARET_SVG; // static markup, no user input
-    const count = formatCount(counts.contents ?? counts.blocks);
-    return h('details', { className: 'disclosure', 'data-visibility': ch.visibility || 'unknown' }, [
-      h('summary', null, [
-        ATK.Badge({ variant: visibilityVariant(ch.visibility), children: ch.visibility || 'unknown' }),
-        h('span', { className: 'disclosure__title' }, ch.title || ch.slug),
-        count ? h('span', { className: 'disclosure__count', title: 'Blocks in this channel' }, count) : null,
-        h('span', { title: 'Metadata entries' }, ATK.Badge({ children: String(metadataEntries(ch.metadata).length) })),
-        h('span', { className: 'disclosure__owner' }, ownerLabel(ch.owner)),
-        caret,
-      ]),
-      h('div', { className: 'disclosure__body stack' }, [metadataSection(ch.metadata), kvTable(fields)]),
-    ]);
+    return ATK.ChannelRow({
+      title: ch.title || ch.slug,
+      visibility: ch.visibility || 'unknown',
+      count: formatCount(counts.contents ?? counts.blocks),
+      metadataCount: metadataEntries(ch.metadata).length,
+      owner: ownerLabel(ch.owner),
+      children: [metadataSection(ch.metadata), kvTable(fields)],
+    });
   }
 
   async function loadConnections(id, run) {
-    const list = h('div', { className: 'disclosure-list' }, h('p', { className: 'muted' }, 'Loading channels…'));
+    const channels = [];
+    const rows = new Map();
+    let mode = 'default';
+    const list = ATK.ChannelList({
+      sorts: CHANNEL_SORTS,
+      onSort: (value) => { mode = value; list.setRows(sortChannels(channels, mode).map((ch) => rows.get(ch))); },
+      rows: [h('p', { className: 'muted' }, 'Loading channels…')],
+    });
     const note = h('p', { className: 'muted' },
       "are.na doesn't show connection details (position, who connected it, when, or connection metadata) from a block's side, so this lists the channels themselves.");
     const card = ATK.Card({ title: 'Connected channels', children: h('div', { className: 'stack' }, [note, list]) });
     const title = card.querySelector('.atk-card__title');
     els.resultPane.append(card);
 
-    // Rows are built once and re-ordered in place, so panels you have opened stay open.
-    const channels = [];
-    const rows = new Map();
-    let mode = 'default';
-    const sortSelect = ATK.Select({
-      options: CHANNEL_SORTS,
-      value: mode,
-      onChange: (e) => { mode = e.target.value; renderOrder(); },
-    });
-    sortSelect.id = 'channel-sort';
-    const toolbar = h('div', { className: 'toolbar', hidden: true }, [
-      h('label', { for: 'channel-sort' }, 'Sort'),
-      sortSelect,
-    ]);
-    note.after(toolbar);
-    function renderOrder() {
-      sortChannels(channels, mode).forEach((ch) => list.append(rows.get(ch)));
-    }
-
     let seen = 0;
     try {
       await client.getBlockConnections(id, {
         onPage: (items, meta) => {
           if (run !== inspectRun) return;
-          if (!seen) list.replaceChildren();
           seen += items.length;
           items.forEach((ch) => { channels.push(ch); rows.set(ch, channelRow(ch)); });
-          renderOrder();
-          toolbar.hidden = seen < 2;
+          list.setRows(sortChannels(channels, mode).map((ch) => rows.get(ch)));
           title.textContent = `Connected channels (${meta?.total_count ?? seen})`;
         },
       });
       if (run !== inspectRun) return;
       if (!seen) {
-        list.replaceChildren(h('p', { className: 'muted' }, 'Not connected to any channel you can see.'));
+        list.setRows([h('p', { className: 'muted' }, 'Not connected to any channel you can see.')]);
         title.textContent = 'Connected channels (0)';
       }
       connectedCell.textContent = `${seen} channel${seen === 1 ? '' : 's'}`;
     } catch (err) {
       if (run !== inspectRun) return;
-      list.replaceChildren(h('p', null, `Couldn't load the channels: ${describeConnectError(err)}`));
+      list.setRows([h('p', null, `Couldn't load the channels: ${describeConnectError(err)}`)]);
       connectedCell.textContent = 'unknown';
     }
   }
