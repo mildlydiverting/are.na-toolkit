@@ -86,6 +86,23 @@ body {
 
 .muted { color: var(--text-muted); }
 
+.stack { display: flex; flex-direction: column; gap: var(--space-2); }
+.field-label { font: var(--text-ui-strong); color: var(--text-muted); }
+.row { display: flex; gap: var(--space-2); }
+.row .atk-input { flex: 1; min-width: 0; }
+
+.chosen { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.chosen__item { display: inline-flex; align-items: center; gap: 2px; }
+.chosen__remove {
+  border: 0;
+  background: none;
+  padding: 0 var(--space-1);
+  color: var(--text-muted);
+  font: var(--text-ui);
+  cursor: pointer;
+}
+.chosen__remove:hover { color: var(--text-primary); }
+
 @media (max-width: 720px) {
   .dupes-layout { grid-template-columns: 1fr; gap: var(--space-4); }
 }

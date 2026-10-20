@@ -16,7 +16,7 @@
     { id: 'done', label: 'Done', description: 'See what changed.' },
   ];
 
-  const state = { step: 0, furthest: 0, user: null, myChannels: [] };
+  const state = { step: 0, furthest: 0, user: null, myChannels: [], channelIds: [], setName: '' };
 
   const els = {
     header: document.getElementById('header'),
@@ -37,7 +37,7 @@
     },
     onChange: (user) => {
       state.user = user;
-      if (!user) { state.furthest = 0; state.step = 0; state.myChannels = []; }
+      if (!user) { state.furthest = 0; state.step = 0; state.myChannels = []; state.channelIds = []; state.setName = ''; }
       render();
     },
   });
@@ -92,6 +92,82 @@
     ];
   }
 
+  /* Scope: which channels to scan, optionally saved under a name. */
+  function stepScope() {
+    const NEW = '';
+    const sets = loadSets(localStorage);
+    const byId = new Map(state.myChannels.map(c => [c.id, c]));
+
+    const select = ATK.Select({
+      options: [{ value: NEW, label: '— New scan —' }, ...Object.keys(sets).map(n => ({ value: n, label: n }))],
+      value: state.setName,
+      onChange: (e) => {
+        state.setName = e.target.value;
+        // Saved ids can outlive their channels, so drop any that have gone.
+        state.channelIds = state.setName ? pruneIds(sets[state.setName].channelIds, state.myChannels) : [];
+        render();
+      },
+    });
+
+    const pickBtn = ATK.Button({
+      variant: 'secondary',
+      children: state.channelIds.length ? 'Change channels' : 'Pick channels',
+      onClick: () => {
+        const offenders = pruneIds(loadOffenders(localStorage), state.myChannels);
+        openChannelPicker({
+          channels: state.myChannels,
+          selected: state.channelIds.length ? state.channelIds : offenders,
+          title: 'Pick channels to scan',
+          confirmLabel: 'Scan',
+          onConfirm: (ids) => { state.channelIds = ids; render(); },
+        });
+      },
+    });
+
+    const chosen = h('div', { className: 'chosen' }, state.channelIds.map(id => {
+      const c = byId.get(id);
+      const chip = h('span', { className: 'chosen__item' }, [
+        ATK.Badge({ children: c ? (c.title || c.slug) : `#${id}` }),
+        h('button', {
+          type: 'button', className: 'chosen__remove', 'aria-label': `Remove ${c ? (c.title || c.slug) : id}`,
+          onclick: () => { state.channelIds = state.channelIds.filter(x => x !== id); render(); },
+        }, '×'),
+      ]);
+      return chip;
+    }));
+    if (!state.channelIds.length) chosen.append(h('p', { className: 'muted' }, 'No channels chosen yet.'));
+
+    const nameInput = ATK.Input({ placeholder: 'Name this selection, to use it again' });
+    nameInput.value = state.setName;
+    const saveBtn = ATK.Button({
+      variant: 'secondary', children: 'Save',
+      disabled: !state.channelIds.length,
+      onClick: () => {
+        const name = saveSet(localStorage, nameInput.value, { channelIds: state.channelIds });
+        if (name) { state.setName = name; render(); }
+      },
+    });
+
+    return [
+      h('h2', null, 'Choose channels to scan'),
+      h('p', null, 'Pick the channels where you suspect duplicates. Blocks are compared across all of them.'),
+      h('div', { className: 'stack' }, [
+        h('label', { className: 'field-label' }, 'Saved selections'),
+        select,
+      ]),
+      h('div', { className: 'stack' }, [
+        h('label', { className: 'field-label' }, `Channels (${state.channelIds.length})`),
+        chosen,
+        h('div', null, pickBtn),
+      ]),
+      h('div', { className: 'stack' }, [
+        h('label', { className: 'field-label' }, 'Save as'),
+        h('div', { className: 'row' }, [nameInput, saveBtn]),
+      ]),
+      nav({ next: { label: 'Continue →', disabled: !state.channelIds.length, onClick: advance } }),
+    ];
+  }
+
   function stepPlaceholder(i) {
     return [
       h('h2', null, `${i + 1}. ${STEPS[i].label}`),
@@ -102,7 +178,7 @@
 
   function render() {
     renderRail();
-    const kids = state.step === 0 ? stepConnect() : stepPlaceholder(state.step);
+    const kids = state.step === 0 ? stepConnect() : state.step === 1 ? stepScope() : stepPlaceholder(state.step);
     els.pane.replaceChildren(...kids);
   }
 
