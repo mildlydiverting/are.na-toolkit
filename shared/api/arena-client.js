@@ -65,6 +65,9 @@ export function createArenaClient({ token = null, fetchImpl = (...a) => globalTh
     getBlock: id => request(`/blocks/${encodeURIComponent(id)}`),
     getBlockConnections: (id, opts = {}) => paginate(`/blocks/${encodeURIComponent(id)}/connections`, {}, opts),
     getChannel: idOrSlug => request(`/channels/${encodeURIComponent(idOrSlug)}`),
+    // Every block/channel in a channel. Each item carries `connection.id`, which deleteConnection needs.
+    // params: { type } filters to Text, Image, Link, Attachment, Embed, Channel or Block.
+    getChannelContents: (idOrSlug, params = {}, opts = {}) => paginate(`/channels/${encodeURIComponent(idOrSlug)}/contents`, params, opts),
 
     // fields: any of title, description, alt_text (Image blocks), metadata (merged; null deletes a key).
     // Owner only.

@@ -61,6 +61,16 @@ describe('createArenaClient', () => {
     expect(fetchImpl.mock.calls[1][0]).toContain('page=2');
   });
 
+  it('getChannelContents paginates and passes the type filter', async () => {
+    const { api, fetchImpl } = client([
+      json(200, { data: [{ id: 1, connection: { id: 11 } }], meta: { has_more_pages: true } }),
+      json(200, { data: [{ id: 2, connection: { id: 12 } }], meta: { has_more_pages: false } }),
+    ]);
+    const all = await api.getChannelContents('my-channel', { type: 'Image' });
+    expect(all.map(b => b.connection.id)).toEqual([11, 12]);
+    expect(fetchImpl.mock.calls[0][0]).toBe('https://api.are.na/v3/channels/my-channel/contents?type=Image&page=1&per=100');
+  });
+
   it('updateBlock PUTs JSON to the block', async () => {
     const { api, fetchImpl } = client([json(200, { id: 7 })]);
     await api.updateBlock(7, { title: 'New', metadata: { dupe_of: 5, old_key: null } });
