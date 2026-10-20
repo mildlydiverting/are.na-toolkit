@@ -1,5 +1,5 @@
-// Read-only are.na v3 client. Endpoints checked against https://api.are.na/v3/openapi.json.
-// Write methods are added by the first tool that needs them.
+// are.na v3 client. Endpoints checked against https://api.are.na/v3/openapi.json.
+// Writes (updateBlock, createConnection, deleteConnection) need a token with write scope.
 export const ARENA_API_BASE = 'https://api.are.na/v3';
 
 export class ArenaError extends Error {
@@ -15,17 +15,20 @@ export class ArenaError extends Error {
 export function createArenaClient({ token = null, fetchImpl = (...a) => globalThis.fetch(...a), throttle = null, base = ARENA_API_BASE } = {}) {
   let currentToken = token;
 
-  async function request(path, params = {}) {
+  // params go in the query string; opts.body (if any) is sent as JSON.
+  async function request(path, params = {}, { method = 'GET', body = null } = {}) {
     const url = new URL(base + path);
     for (const [k, v] of Object.entries(params)) {
       if (v != null) url.searchParams.set(k, String(v));
     }
     const doFetch = () => fetchImpl(url.toString(), {
-      method: 'GET',
+      method,
       headers: {
         Accept: 'application/json',
+        ...(body ? { 'Content-Type': 'application/json' } : {}),
         ...(currentToken ? { Authorization: `Bearer ${currentToken}` } : {}),
       },
+      ...(body ? { body: JSON.stringify(body) } : {}),
       credentials: 'omit',
       referrerPolicy: 'no-referrer',
     });
@@ -62,5 +65,25 @@ export function createArenaClient({ token = null, fetchImpl = (...a) => globalTh
     getBlock: id => request(`/blocks/${encodeURIComponent(id)}`),
     getBlockConnections: (id, opts = {}) => paginate(`/blocks/${encodeURIComponent(id)}/connections`, {}, opts),
     getChannel: idOrSlug => request(`/channels/${encodeURIComponent(idOrSlug)}`),
+
+    // fields: any of title, description, alt_text (Image blocks), metadata (merged; null deletes a key).
+    // Owner only.
+    updateBlock: (id, fields) => request(`/blocks/${encodeURIComponent(id)}`, {}, { method: 'PUT', body: fields }),
+    // Connects a block (or channel) into one or more channels. Resolves to the created Connection[].
+    // channels: ids or slugs, or { id, position?, metadata? } objects.
+    createConnection: async ({ id, type = 'Block', channels }) => {
+      const res = await request('/connections', {}, {
+        method: 'POST',
+        body: {
+          connectable_id: id,
+          connectable_type: type,
+          channels: channels.map(c => (typeof c === 'object' ? c : { id: c })),
+        },
+      });
+      return res?.data || [];
+    },
+    // Takes the *connection* id (from a channel's contents, or createConnection), not a block id.
+    // Removes the block from that channel only; the block itself stays. Resolves to null (204).
+    deleteConnection: connectionId => request(`/connections/${encodeURIComponent(connectionId)}`, {}, { method: 'DELETE' }),
   };
 }
