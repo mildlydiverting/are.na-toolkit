@@ -10,6 +10,9 @@ A palimpsest is a manuscript where newer writing sits over scraped-off older tex
 
 - Paste a block ID (`13857023`) or URL (`https://www.are.na/block/13857023`) and press Enter or **Inspect**.
 - Public blocks work without signing in. For private channels, or your own private blocks, click **Connect →** and paste a [personal access token](https://www.are.na/settings/personal-access-tokens). Read access is enough.
+- The block appears as a framed thumbnail (the border shows its visibility: grey public, red private, dotted orphan) beside its metadata and fields. Metadata values that are web addresses are links.
+- Connected channels are coloured bars. Click one to open it. Use **Sort** above the list to order them by most recent, oldest, most blocks or most metadata (the dates are when each channel was created).
+- The palette button at the top right changes the theme: Light, Dusk, Dark, Dawn, or System (follows your device).
 - The last ten lookups appear as chips under the input.
 - Your token and lookup history stay in this browser (`localStorage`). The token is only ever sent to are.na.
 

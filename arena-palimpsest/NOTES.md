@@ -18,6 +18,7 @@ v1 shipped (read-only). Plan: `_claude/arena-palimpsest-build-plan.md`. User doc
 - **Header** is navigation only: breadcrumb "Are.na Tools / Are.na Palimpsest" on the left, Connect and the theme chooser on the right, no border. The page title and a one-line intro sit in `<main>`. The empty state is plain text, not a Card.
 - **Main block** is a bordered frame (title + image) beside the text column. Border: public grey, private red, orphan dotted at 40%. Metadata sits in the same column and the `.kv` tables share one label width so values line up.
 - **Channel rows** are the shared `ChannelRow` and `ChannelList` components (docs in `shared/ui/ChannelRow/` and `shared/ui/ChannelList/`). Colour follows visibility; the open panel is metadata (2fr) then data (3fr). Fills are are.na's own (`channel-bar-*` tokens = channelPublic1/Private1, closed = `surface-card`; `channel-badge-*` sampled), verified against all four themes. Contrast is are.na's, not ours to fix: see the table in `shared/ui/ChannelRow/README.md`.
+- **URL values are links:** any metadata or field value that is exactly one http(s) address becomes a link (`webUrl()` in `format.js`, applied in `valueNode()`).
 - **Sort** (`CHANNEL_SORTS` / `sortChannels` in `format.js`): default, most recent, oldest, most blocks, most metadata. Dates are the channel's `created_at` (connection dates are not available). Rows are built once and re-ordered with `list.setRows()`, so open panels stay open.
 - **Cards are unfilled** by default in the design system now (`variant: 'filled'` for the old look).
 - **Sections 2 and 3 of the plan are merged** into one "Connected channels (n)" section (see below).
@@ -34,6 +35,11 @@ v1 shipped (read-only). Plan: `_claude/arena-palimpsest-build-plan.md`. User doc
 ## Open items
 - v1.1 ideas: JSON and Markdown export, channel URLs as input, an opt-in per-channel connection lookup.
 - `docs/arena-palimpsest-preview.jpg` shows block 51566599 in the Light theme.
+- Still to check by hand: a private block, a private channel (red styling), a block with a `dupe_of` marker, phone width, every theme across the whole page, the 401/403 card and a live 429 banner.
+- are.na search does not index metadata (tested 2026-10-20), so no metadata-to-search links. Possible instead: a channel-scoped scan of block metadata.
+- Plan history and what changed since: `_claude/arena-palimpsest-build-plan.md` (see its "As built" section).
 
 ## v2 (editing)
+Full plan (read it before starting): `_claude/arena-palimpsest-v2-editing-and-tagging-plan.md`. Already in the shared code: `arena-client.updateBlock`, and `auth-step.js` with `requireWrite` and `checkWriteAccess` (added by the duplicate-finder work). Decisions so far: whole-section Edit toggle with a Review step and one Save; tags stored as a YAML bullet list in a single string value under `tags`; blocks first.
+
 Fields and metadata render through `kvTable()` as label/value rows whose values are nodes, so a value cell can become an `Input`. Needs write scope, an Inspect/Edit toggle, add/remove rows (set a key to `null` to remove it), a dry-run list of the calls, and owner-only editing (`block.can`). Metadata updates use `PUT /v3/blocks/{id}` and `PUT /v3/connections/{id}`, both with merge semantics.

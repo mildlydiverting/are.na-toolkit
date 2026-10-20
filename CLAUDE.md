@@ -9,6 +9,8 @@
 5. Copy to `docs/` after any change — it's the GitHub Pages root.
 6. Ask before changing code. Be concise; explain when asked.
 7. British English in UI copy.
+8. `shared/ui/` is a copy of the Arena Toolkit design-system artifact (the master). Change both together; `bundle.js` and `bundle.css` stay identical to the artifact. Read `shared/ui/README.md` first.
+9. Writing to are.na or to the artifact needs Kim's go-ahead each time; show a dry run or review step before any bulk write.
 
 ## Where to look
 

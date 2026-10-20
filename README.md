@@ -149,10 +149,11 @@ Paste a block URL or ID and see everything are.na knows about it. Handy for find
 **What it does:**
 - Shows the block's own fields: title, description, source, owner, dates, visibility
 - Lists every metadata key and value on the block
-- Lists the channels the block is connected to, each with its own fields and metadata
+- Lists the channels as coloured bars (green public, grey closed, red private) that open for details, with block counts and metadata counts, and a sort menu (most recent, oldest, most blocks, most metadata)
+- Turns metadata values that are web addresses into links
 - Keeps your last ten lookups as chips
 - Works without a token for public blocks. A read-only token unlocks private channels
-- Follows your system theme, or add `?theme=light`, `dark`, `dawn` or `dusk` to the URL
+- Has a theme chooser (Light, Dusk, Dark, Dawn, or System, which follows your device). You can also add `?theme=light`, `dark`, `dawn` or `dusk` to the URL
 
 are.na doesn't expose connection details (position, who connected a block, when) from a block's side, so you see the channels themselves.
 
@@ -266,7 +267,7 @@ are.na-toolkit/
 │   ├── dist/                      # Built output
 │   └── build.js                   # Uses scripts/include-resolver.js
 ├── shared/                        # Code shared by tools on the build pipeline
-│   ├── ui/                        # Arena Toolkit design system bundle
+│   ├── ui/                        # Arena Toolkit design system (copy of the artifact; see shared/ui/README.md)
 │   ├── api/                       # are.na client and request throttle
 │   └── widgets/                   # Connect (token) widget
 ├── scripts/                       # @include resolver, build-all
