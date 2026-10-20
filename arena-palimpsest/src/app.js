@@ -171,7 +171,11 @@
 
   function valueNode(value) {
     if (value == null || value === '') return EMPTY();
-    return typeof value === 'string' || typeof value === 'number' ? document.createTextNode(String(value)) : value;
+    if (typeof value === 'string') {
+      const href = webUrl(value);
+      return href ? extLink(value, href) : document.createTextNode(value);
+    }
+    return typeof value === 'number' ? document.createTextNode(String(value)) : value;
   }
 
   function kvTable(rows) {

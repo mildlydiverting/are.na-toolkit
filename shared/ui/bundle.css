@@ -337,7 +337,7 @@
   pointer-events: auto;
 }
 
-/* Individual action button — bare text until hovered, then picks up border */
+/* Individual action button — same size as a toolkit Button (md), but bare until hovered */
 .atk-block__action {
   all: unset;
   box-sizing: border-box;
@@ -345,11 +345,12 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-1);
-  height: 28px;
-  padding: 0 var(--space-2);
+  height: 36px;                /* matches .atk-btn */
+  padding: 0 var(--space-3);   /* matches .atk-btn */
   font-family: var(--font-sans);
-  font-size: 14.4px;
-  font-weight: 700;
+  font-size: 14.4px;           /* matches .atk-btn */
+  font-weight: 700;            /* matches .atk-btn */
+  line-height: 1;              /* matches .atk-btn */
   color: var(--text-primary);
   background: transparent;
   border: 1px solid transparent;
@@ -365,6 +366,10 @@
 .atk-block__action:focus-visible {
   border-color: var(--border-focus);
   outline: none;
+}
+/* A lone action fills the row — e.g. a block that only offers "Connect →" */
+.atk-block__actions .atk-block__action:only-child {
+  flex: 1;
 }
 
 /* Badge — filled brand & nsfw variants (NEW / BETA / API / NSFW chips) */

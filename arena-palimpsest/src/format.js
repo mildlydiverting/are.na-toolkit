@@ -12,6 +12,18 @@ export function metadataEntries(metadata) {
   return Object.entries(metadata).map(([k, v]) => [k, String(v)]);
 }
 
+// A value that is exactly one web address -> that address; anything else (other schemes, extra text) -> null.
+export function webUrl(text) {
+  const t = String(text ?? '').trim();
+  if (!t || /\s/.test(t)) return null;
+  try {
+    const u = new URL(t);
+    return u.protocol === 'http:' || u.protocol === 'https:' ? u.href : null;
+  } catch {
+    return null;
+  }
+}
+
 // Embedded user -> "@slug", or "(unknown)" when the API gave us nothing.
 export function userHandle(user) {
   return user?.slug ? `@${user.slug}` : '(unknown)';

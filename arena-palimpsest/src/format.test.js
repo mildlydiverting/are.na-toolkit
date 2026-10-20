@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   formatDate, metadataEntries, userHandle, userUrl, blockUrl,
-  ownerLabel, ownerUrl, channelUrl, formatCount, sortChannels,
+  ownerLabel, ownerUrl, channelUrl, formatCount, webUrl, sortChannels,
 } from './format.js';
 
 describe('formatDate', () => {
@@ -103,5 +103,24 @@ describe('sortChannels', () => {
     const input = [a, b, c];
     sortChannels(input, 'blocks');
     expect(ids(input)).toEqual([1, 2, 3]);
+  });
+});
+
+describe('webUrl', () => {
+  it('accepts a single http or https address', () => {
+    expect(webUrl('https://www.pinterest.com/pin/256283035032758099/')).toBe('https://www.pinterest.com/pin/256283035032758099/');
+    expect(webUrl('  http://example.com/a?b=1  ')).toBe('http://example.com/a?b=1');
+  });
+  it('rejects other schemes, plain text, and text around a url', () => {
+    expect(webUrl('javascript:alert(1)')).toBeNull();
+    expect(webUrl('ftp://example.com/file')).toBeNull();
+    expect(webUrl('256283035032758099')).toBeNull();
+    expect(webUrl('see https://example.com')).toBeNull();
+    expect(webUrl('https://example.com and more')).toBeNull();
+  });
+  it('handles empty and missing values', () => {
+    expect(webUrl('')).toBeNull();
+    expect(webUrl(null)).toBeNull();
+    expect(webUrl(undefined)).toBeNull();
   });
 });
