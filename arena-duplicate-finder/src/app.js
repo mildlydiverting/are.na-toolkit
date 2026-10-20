@@ -16,7 +16,7 @@
     { id: 'done', label: 'Done', description: 'See what changed.' },
   ];
 
-  const state = { step: 0, furthest: 0, user: null };
+  const state = { step: 0, furthest: 0, user: null, myChannels: [] };
 
   const els = {
     header: document.getElementById('header'),
@@ -28,9 +28,16 @@
   const auth = createAuthStep({
     client,
     requireWrite: true,
+    panel: true,
+    // Loaded at connect time, as arena-merge does, so the Scope step has its list ready.
+    loadDetail: async (user) => {
+      state.myChannels = (await client.getUserContents(user.id, { type: 'Channel' })).filter(c => c && c.state !== 'deleted');
+      const n = state.myChannels.length;
+      return `${n} of your channel${n === 1 ? '' : 's'} loaded`;
+    },
     onChange: (user) => {
       state.user = user;
-      if (!user) { state.furthest = 0; state.step = 0; }
+      if (!user) { state.furthest = 0; state.step = 0; state.myChannels = []; }
       render();
     },
   });
@@ -79,13 +86,8 @@
 
   function stepConnect() {
     return [
-      h('h2', null, '1. Connect'),
-      ATK.Card({
-        children: h('div', { className: 'stack' }, [
-          h('p', null, 'This tool writes to your account. It adds and removes connections, and marks the blocks it replaces.'),
-          auth.element,
-        ]),
-      }),
+      h('h2', null, 'Connect to are.na'),
+      auth.element,
       nav({ back: false, next: { label: 'Continue →', disabled: !state.user, onClick: advance } }),
     ];
   }

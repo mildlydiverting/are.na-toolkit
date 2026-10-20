@@ -1,6 +1,9 @@
 // PAT connect widget: paste a token, test it against /me, remember it in localStorage.
-// Built only from ArenaToolkit components. Pass requireWrite for tools that change things:
-// the token is then checked for write scope before it is accepted or saved.
+// Built only from ArenaToolkit components. Options for tools that change things:
+//  - requireWrite: the token is checked for write scope before it is accepted or saved.
+//  - panel: arena-merge's Connect layout: a labelled field, a "Remember on this computer"
+//    checkbox (unticked, the token lives in sessionStorage and goes with the tab), and an
+//    account chip once connected. loadDetail(user) can fetch the chip's second line.
 export const AUTH_STORAGE_KEY = 'arena_toolkit_pat';
 export const AUTH_TOKEN_URL = 'https://www.are.na/settings/personal-access-tokens';
 
@@ -14,6 +17,12 @@ export function saveToken(storage, token, key = AUTH_STORAGE_KEY) {
 
 export function clearToken(storage, key = AUTH_STORAGE_KEY) {
   try { storage.removeItem(key); } catch { /* nothing to clear */ }
+}
+
+// Two letters for the account chip's avatar: "Kim Plowright" -> "KP", "kim-plowright" -> "K".
+export function initialsFor(user) {
+  const name = String(user?.full_name || user?.slug || '?').trim();
+  return name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?';
 }
 
 export function describeConnectError(err) {
@@ -54,17 +63,58 @@ function node(tag, text, style) {
 export function createAuthStep({
   client,
   storage = globalThis.localStorage,
+  session = globalThis.sessionStorage,
   storageKey = AUTH_STORAGE_KEY,
   onChange = null,
   requireWrite = false,
+  panel = false,
+  loadDetail = null,
 } = {}) {
   const ATK = window.ArenaToolkit;
   let user = null;
+  let detail = null;
+  let remember = true;
 
   const element = node('div', null, { display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' });
 
+  function rememberCheck() {
+    const box = document.createElement('input');
+    box.type = 'checkbox';
+    box.checked = remember;
+    box.addEventListener('change', () => { remember = box.checked; });
+    const text = node('span');
+    text.append('Remember on this computer', node('br'), node('span', 'Unticked, it is forgotten when you close the tab.', {
+      color: 'var(--text-muted)', font: 'var(--text-body-sm)',
+    }));
+    const label = node('label', null, { display: 'flex', gap: 'var(--space-2)', alignItems: 'flex-start', cursor: 'pointer' });
+    label.append(box, text);
+    return label;
+  }
+
+  function accountChip() {
+    const avatar = node('div', initialsFor(user), {
+      width: '32px', height: '32px', borderRadius: '50%', flexShrink: '0',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'var(--accent-primary)', color: 'var(--surface-page)', font: 'var(--text-ui-strong)',
+    });
+    const who = node('div', null, { flex: '1', minWidth: '0', color: 'var(--text-secondary)' });
+    const name = node('strong', user.full_name || user.slug, { color: 'var(--text-primary)' });
+    who.append('Signed in as ', name);
+    if (detail) who.append(node('br'), node('span', detail, { color: 'var(--text-muted)', font: 'var(--text-body-sm)' }));
+    const chip = node('div', null, {
+      display: 'flex', alignItems: 'center', gap: 'var(--space-3)', padding: 'var(--space-3)',
+      background: 'var(--surface-sunken)', borderRadius: 'var(--radius-sm)',
+    });
+    chip.append(avatar, who, ATK.Button({ variant: 'ghost', size: 'sm', children: 'Disconnect', onClick: disconnect }));
+    return chip;
+  }
+
   function render(statusNode) {
     element.replaceChildren();
+    if (user && panel) {
+      element.append(accountChip());
+      return;
+    }
     if (user) {
       const row = node('div', null, { display: 'flex', alignItems: 'center', gap: 'var(--space-2)' });
       row.append(
@@ -77,16 +127,21 @@ export function createAuthStep({
 
     const intro = node('p', null, { margin: 0 });
     intro.append(
-      'Paste a ',
+      panel ? 'Create a ' : 'Paste a ',
       ATK.Link({ href: AUTH_TOKEN_URL, children: 'personal access token' }),
-      requireWrite
-        ? ' with the write scope ticked. This tool changes your account: it adds and removes connections and edits blocks, so a read-only token will not work.'
-        : ' with read access. That is all this tool needs. Some content, including private channels, only shows up once you are connected.',
     );
+    if (requireWrite) {
+      intro.append(panel
+        ? ' with read and write ticked, then paste it below. The token stays in your browser only.'
+        : ' with the write scope ticked. This tool changes your account: it adds and removes connections and edits blocks, so a read-only token will not work.');
+    } else {
+      intro.append(' with read access. That is all this tool needs. Some content, including private channels, only shows up once you are connected.');
+    }
     intro.querySelector('a').target = '_blank';
     intro.querySelector('a').rel = 'noopener';
 
-    const input = ATK.Input({ type: 'password', placeholder: 'Paste your token here' });
+    const input = ATK.Input({ type: 'password', placeholder: panel ? 'paste it here' : 'Paste your token here' });
+    input.id = 'arena-token';
     input.autocomplete = 'off';
     input.spellcheck = false;
     input.style.flex = '1';
@@ -94,11 +149,19 @@ export function createAuthStep({
     input.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
 
     const row = node('div', null, { display: 'flex', gap: 'var(--space-2)' });
-    row.append(input, ATK.Button({ variant: 'primary', children: 'Connect', onClick: submit }));
+    row.append(input, ATK.Button({ variant: panel ? 'secondary' : 'primary', children: 'Connect', onClick: submit }));
 
     const note = node('p', 'Your token stays in this browser and is only ever sent to are.na.', {
       margin: 0, color: 'var(--text-muted)', font: 'var(--text-body-sm)',
     });
+
+    if (panel) {
+      const label = node('label', 'Personal access token', { font: 'var(--text-ui-strong)', color: 'var(--text-muted)' });
+      label.htmlFor = 'arena-token';
+      element.append(intro, label, row, rememberCheck());
+      if (statusNode) element.append(statusNode);
+      return;
+    }
 
     element.append(intro, row, note);
     if (statusNode) element.append(statusNode);
@@ -136,7 +199,15 @@ export function createAuthStep({
         return null;
       }
     }
-    saveToken(storage, token, storageKey);
+    // Remembered tokens go to localStorage; otherwise sessionStorage, which goes with the tab.
+    clearToken(storage, storageKey);
+    clearToken(session, storageKey);
+    saveToken(remember ? storage : session, token, storageKey);
+    detail = null;
+    if (loadDetail) {
+      render(node('p', 'Loading your channels…', { margin: 0, color: 'var(--text-muted)' }));
+      try { detail = await loadDetail(user); } catch { detail = null; }
+    }
     render();
     if (onChange) onChange(user);
     return user;
@@ -144,17 +215,21 @@ export function createAuthStep({
 
   // Re-connect with a saved token, if there is one. Returns the user or null.
   async function restore() {
-    const saved = readSavedToken(storage, storageKey);
+    const inLocal = readSavedToken(storage, storageKey);
+    const saved = inLocal || readSavedToken(session, storageKey);
     if (!saved) { render(); return null; }
+    remember = !!inLocal;
     const result = await connect(saved);
-    if (!result) clearToken(storage, storageKey);
+    if (!result) { clearToken(storage, storageKey); clearToken(session, storageKey); }
     return result;
   }
 
   function disconnect() {
     user = null;
+    detail = null;
     client.setToken(null);
     clearToken(storage, storageKey);
+    clearToken(session, storageKey);
     render();
     if (onChange) onChange(null);
   }

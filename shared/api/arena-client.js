@@ -69,6 +69,9 @@ export function createArenaClient({ token = null, fetchImpl = (...a) => globalTh
     // params: { type } filters to Text, Image, Link, Attachment, Embed, Channel or Block.
     getChannelContents: (idOrSlug, params = {}, opts = {}) => paginate(`/channels/${encodeURIComponent(idOrSlug)}/contents`, params, opts),
 
+    // A user's own contents (as arena-merge does it). params: { type: 'Channel' } for just their channels.
+    getUserContents: (userId, params = {}, opts = {}) => paginate(`/users/${encodeURIComponent(userId)}/contents`, params, opts),
+
     // fields: any of title, description, alt_text (Image blocks), metadata (merged; null deletes a key).
     // Owner only.
     updateBlock: (id, fields) => request(`/blocks/${encodeURIComponent(id)}`, {}, { method: 'PUT', body: fields }),

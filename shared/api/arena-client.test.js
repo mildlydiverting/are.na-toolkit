@@ -71,6 +71,12 @@ describe('createArenaClient', () => {
     expect(fetchImpl.mock.calls[0][0]).toBe('https://api.are.na/v3/channels/my-channel/contents?type=Image&page=1&per=100');
   });
 
+  it('getUserContents lists a user\'s channels', async () => {
+    const { api, fetchImpl } = client([json(200, { data: [{ id: 1, slug: 'a' }], meta: { has_more_pages: false } })]);
+    expect(await api.getUserContents(77, { type: 'Channel' })).toEqual([{ id: 1, slug: 'a' }]);
+    expect(fetchImpl.mock.calls[0][0]).toBe('https://api.are.na/v3/users/77/contents?type=Channel&page=1&per=100');
+  });
+
   it('updateBlock PUTs JSON to the block', async () => {
     const { api, fetchImpl } = client([json(200, { id: 7 })]);
     await api.updateBlock(7, { title: 'New', metadata: { dupe_of: 5, old_key: null } });

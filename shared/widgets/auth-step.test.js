@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { checkWriteAccess, readSavedToken, saveToken, clearToken, describeConnectError, AUTH_STORAGE_KEY } from './auth-step.js';
+import { checkWriteAccess, initialsFor, readSavedToken, saveToken, clearToken, describeConnectError, AUTH_STORAGE_KEY } from './auth-step.js';
 
 function fakeStorage(initial = {}) {
   const data = { ...initial };
@@ -77,5 +77,19 @@ describe('checkWriteAccess', () => {
   it('rethrows anything else, such as 401 or a network error', async () => {
     await expect(checkWriteAccess(failing(401))).rejects.toMatchObject({ status: 401 });
     await expect(checkWriteAccess({ deleteConnection: async () => { throw new TypeError('offline'); } })).rejects.toThrow('offline');
+  });
+});
+
+describe('initialsFor', () => {
+  it('uses the first letters of a full name', () => {
+    expect(initialsFor({ full_name: 'Kim Plowright', slug: 'kim-plowright' })).toBe('KP');
+  });
+  it('caps at two letters', () => {
+    expect(initialsFor({ full_name: 'Mary Jane Watson' })).toBe('MJ');
+  });
+  it('falls back to the slug, then to ?', () => {
+    expect(initialsFor({ slug: 'kim-plowright' })).toBe('K');
+    expect(initialsFor({})).toBe('?');
+    expect(initialsFor(null)).toBe('?');
   });
 });
