@@ -29,6 +29,11 @@
   --accent-alert: #e15100; /* Warnings, destructive-action confirmations, errors. are.na --colors-alert. */
   --channel-open: #b4d6b3; /* Resting border on an open (public) channel block. are.na --colors-channelPublic2 / green2. Hover deepens to accent-success. */
   --channel-private: #dfbebe; /* Resting border on a private channel block. are.na --colors-channelPrivate2 / red2. Hover deepens to accent-private. */
+  --channel-bar-open: #f4f8f3; /* Fill of an open (public) channel row. are.na --colors-channelPublic1 / green1. Closed rows use surface-card (are.na channelClosed1). */
+  --channel-bar-private: #faf4f3; /* Fill of a private channel row. are.na --colors-channelPrivate1 / red1. */
+  --channel-badge-open: #eaf1e7; /* Badge fill on an open channel row, a step off channel-bar-open. Not an are.na variable: sampled from are.na's rendered row (within one step). */
+  --channel-badge-closed: #efefef; /* Badge fill on a closed channel row, a step off surface-card. */
+  --channel-badge-private: #f5eae8; /* Badge fill on a private channel row, a step off channel-bar-private. */
   --shadow-soft: 0 0 20px rgba(0, 0, 0, 0.08); /* Elevated card. Modal. Dropdown. */
   --shadow-ambient: 0 0 34px rgba(0, 0, 0, 0.05); /* Very subtle ground shadow. Hover lift. */
 }
@@ -54,6 +59,11 @@
   --accent-alert: #ff7a30;
   --channel-open: #2a4c29;
   --channel-private: #412020;
+  --channel-bar-open: #121d12;
+  --channel-bar-private: #1a0404;
+  --channel-badge-open: #213823;
+  --channel-badge-closed: #313131;
+  --channel-badge-private: #310709;
 }
 [data-theme="dawn"] {
   --surface-page: #f5f1f0;
@@ -77,6 +87,11 @@
   --accent-alert: #d6540b;
   --channel-open: #c0d5bc;
   --channel-private: #eaccdb;
+  --channel-bar-open: #eaebe6;
+  --channel-bar-private: #f3eaec;
+  --channel-badge-open: #d7d9ce;
+  --channel-badge-closed: #d6cfce;
+  --channel-badge-private: #e7d6da;
 }
 [data-theme="dusk"] {
   --surface-page: #16171e;
@@ -100,6 +115,11 @@
   --accent-alert: #ff7a30;
   --channel-open: #2a4c29;
   --channel-private: #432f41;
+  --channel-bar-open: #121d12;
+  --channel-bar-private: #1f1c25;
+  --channel-badge-open: #213823;
+  --channel-badge-closed: #443f50;
+  --channel-badge-private: #393544;
 }
 :root {
   --space-nudge: 2px; /* Micro adjustment. Code chip vertical padding, 2px baseline shifts. Not step zero — a named special-purpose value in are.na. */
@@ -719,19 +739,22 @@
    ChannelRow / ChannelList — a channel as a coloured bar that opens
    ──────────────────────────────────────────────────────────── */
 .atk-channel-row {
-  --bar: var(--surface-sunken);
+  --bar: var(--surface-card);
+  --bar-badge: var(--channel-badge-closed);
   --bar-ink: var(--text-secondary);
   --bar-border: var(--border-strong);
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
 }
 .atk-channel-row[data-visibility="public"] {
-  --bar: color-mix(in srgb, var(--accent-success) 6%, var(--surface-page));
+  --bar: var(--channel-bar-open);
+  --bar-badge: var(--channel-badge-open);
   --bar-ink: var(--accent-success);
   --bar-border: var(--accent-success);
 }
 .atk-channel-row[data-visibility="private"] {
-  --bar: color-mix(in srgb, var(--accent-private) 6%, var(--surface-page));
+  --bar: var(--channel-bar-private);
+  --bar-badge: var(--channel-badge-private);
   --bar-ink: var(--accent-private);
   --bar-border: var(--accent-private);
 }
@@ -757,9 +780,9 @@
 }
 .atk-channel-row > summary::-webkit-details-marker { display: none; }
 .atk-channel-row > summary:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
-/* Badges on a bar: a tiny step off the bar colour, in the bar's ink. */
+/* Badges on a bar: a step off the bar colour (own token per state), in the bar's ink. */
 .atk-channel-row > summary .atk-badge {
-  background: color-mix(in srgb, var(--bar) 97%, var(--text-primary));
+  background: var(--bar-badge);
   color: var(--bar-ink);
 }
 .atk-channel-row__count { font-variant-numeric: tabular-nums; }
@@ -1553,32 +1576,57 @@ body {
     return span;
   }
 
+  var SYSTEM_OPTION = { id: 'system', label: 'System' };
+
+  function themeIds(themes) {
+    return (themes || THEME_OPTIONS).map(function (t) { return t.id || t; });
+  }
+
   // Pure: which theme applies. asked = ?theme=, saved = localStorage value.
+  // 'system' (or anything unknown) falls through to the system light/dark setting.
   function resolveTheme(opts) {
     opts = opts || {};
-    var ids = (opts.themes || THEME_OPTIONS).map(function (t) { return t.id || t; });
+    var ids = themeIds(opts.themes);
     if (ids.indexOf(opts.asked) !== -1) return opts.asked;
     if (ids.indexOf(opts.saved) !== -1) return opts.saved;
     var wanted = opts.prefersDark ? 'dark' : 'light';
     return ids.indexOf(wanted) !== -1 ? wanted : ids[0];
   }
 
+  // Pure: which menu entry is selected: ?theme=, else the saved theme, else 'system'.
+  function themeChoice(opts) {
+    opts = opts || {};
+    var ids = themeIds(opts.themes);
+    if (ids.indexOf(opts.asked) !== -1) return opts.asked;
+    if (ids.indexOf(opts.saved) !== -1) return opts.saved;
+    return 'system';
+  }
+
   function ThemeChooser(opts) {
     opts = opts || {};
     var themes = opts.themes || THEME_OPTIONS;
+    var entries = opts.system === false ? themes : themes.concat([SYSTEM_OPTION]);
     var key = opts.storageKey || THEME_KEY;
+    var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
 
     function read() { try { return localStorage.getItem(key); } catch (e) { return null; } }
     function write(value) { try { localStorage.setItem(key, value); } catch (e) { /* private mode */ } }
-    function apply(id) { document.documentElement.setAttribute('data-theme', id); }
 
-    var current = resolveTheme({
+    var choice = themeChoice({
       themes: themes,
       asked: new URLSearchParams(location.search).get('theme'),
-      saved: read(),
-      prefersDark: !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+      saved: read()
     });
-    apply(current);
+    function apply() {
+      document.documentElement.setAttribute('data-theme', resolveTheme({
+        themes: themes,
+        asked: choice === 'system' ? null : choice,
+        prefersDark: !!(mq && mq.matches)
+      }));
+    }
+    apply();
+    // While on System, follow the operating system as it changes.
+    if (mq && mq.addEventListener) mq.addEventListener('change', function () { if (choice === 'system') apply(); });
 
     var root = el('div', { className: 'atk-theme-chooser' });
     var button = el('button', {
@@ -1600,27 +1648,29 @@ body {
     }
 
     function choose(id) {
-      current = id;
-      apply(id);
+      choice = id;
+      apply();
       write(id);
       close(true);
       if (typeof opts.onChange === 'function') opts.onChange(id);
     }
 
     function open() {
-      var menu = Menu({
-        items: themes.map(function (t) {
-          return {
-            label: t.label,
-            icon: t.id === current ? svgSpan(CHECK_SVG) : el('span'),
-            onClick: function () { choose(t.id); }
-          };
-        })
+      var menuItems = [];
+      entries.forEach(function (t) {
+        // System sits apart from the named themes.
+        if (t === SYSTEM_OPTION && themes.length) menuItems.push({ separator: true });
+        menuItems.push({
+          label: t.label,
+          icon: t.id === choice ? svgSpan(CHECK_SVG) : el('span'),
+          onClick: function () { choose(t.id); }
+        });
       });
+      var menu = Menu({ items: menuItems });
       var items = Array.prototype.slice.call(menu.querySelectorAll('.atk-menu__item'));
       items.forEach(function (item, i) {
         item.setAttribute('role', 'menuitemradio');
-        item.setAttribute('aria-checked', String(themes[i].id === current));
+        item.setAttribute('aria-checked', String(entries[i].id === choice));
       });
       menu.addEventListener('keydown', function (e) {
         var i = items.indexOf(document.activeElement);
@@ -1630,7 +1680,7 @@ body {
       popover = el('div', { className: 'atk-theme-chooser__popover' }, menu);
       root.appendChild(popover);
       button.setAttribute('aria-expanded', 'true');
-      var selected = items[themes.map(function (t) { return t.id; }).indexOf(current)];
+      var selected = items[entries.map(function (t) { return t.id; }).indexOf(choice)];
       (selected || items[0]).focus();
     }
 
@@ -1642,6 +1692,7 @@ body {
     return root;
   }
   ThemeChooser.resolve = resolveTheme;
+  ThemeChooser.choice = themeChoice;
 
   /* ── ChannelRow / ChannelList ──────────────────────────────────
      A channel as a coloured bar: badge, name, block count, metadata count,

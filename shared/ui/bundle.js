@@ -306,32 +306,57 @@
     return span;
   }
 
+  var SYSTEM_OPTION = { id: 'system', label: 'System' };
+
+  function themeIds(themes) {
+    return (themes || THEME_OPTIONS).map(function (t) { return t.id || t; });
+  }
+
   // Pure: which theme applies. asked = ?theme=, saved = localStorage value.
+  // 'system' (or anything unknown) falls through to the system light/dark setting.
   function resolveTheme(opts) {
     opts = opts || {};
-    var ids = (opts.themes || THEME_OPTIONS).map(function (t) { return t.id || t; });
+    var ids = themeIds(opts.themes);
     if (ids.indexOf(opts.asked) !== -1) return opts.asked;
     if (ids.indexOf(opts.saved) !== -1) return opts.saved;
     var wanted = opts.prefersDark ? 'dark' : 'light';
     return ids.indexOf(wanted) !== -1 ? wanted : ids[0];
   }
 
+  // Pure: which menu entry is selected: ?theme=, else the saved theme, else 'system'.
+  function themeChoice(opts) {
+    opts = opts || {};
+    var ids = themeIds(opts.themes);
+    if (ids.indexOf(opts.asked) !== -1) return opts.asked;
+    if (ids.indexOf(opts.saved) !== -1) return opts.saved;
+    return 'system';
+  }
+
   function ThemeChooser(opts) {
     opts = opts || {};
     var themes = opts.themes || THEME_OPTIONS;
+    var entries = opts.system === false ? themes : themes.concat([SYSTEM_OPTION]);
     var key = opts.storageKey || THEME_KEY;
+    var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
 
     function read() { try { return localStorage.getItem(key); } catch (e) { return null; } }
     function write(value) { try { localStorage.setItem(key, value); } catch (e) { /* private mode */ } }
-    function apply(id) { document.documentElement.setAttribute('data-theme', id); }
 
-    var current = resolveTheme({
+    var choice = themeChoice({
       themes: themes,
       asked: new URLSearchParams(location.search).get('theme'),
-      saved: read(),
-      prefersDark: !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+      saved: read()
     });
-    apply(current);
+    function apply() {
+      document.documentElement.setAttribute('data-theme', resolveTheme({
+        themes: themes,
+        asked: choice === 'system' ? null : choice,
+        prefersDark: !!(mq && mq.matches)
+      }));
+    }
+    apply();
+    // While on System, follow the operating system as it changes.
+    if (mq && mq.addEventListener) mq.addEventListener('change', function () { if (choice === 'system') apply(); });
 
     var root = el('div', { className: 'atk-theme-chooser' });
     var button = el('button', {
@@ -353,27 +378,29 @@
     }
 
     function choose(id) {
-      current = id;
-      apply(id);
+      choice = id;
+      apply();
       write(id);
       close(true);
       if (typeof opts.onChange === 'function') opts.onChange(id);
     }
 
     function open() {
-      var menu = Menu({
-        items: themes.map(function (t) {
-          return {
-            label: t.label,
-            icon: t.id === current ? svgSpan(CHECK_SVG) : el('span'),
-            onClick: function () { choose(t.id); }
-          };
-        })
+      var menuItems = [];
+      entries.forEach(function (t) {
+        // System sits apart from the named themes.
+        if (t === SYSTEM_OPTION && themes.length) menuItems.push({ separator: true });
+        menuItems.push({
+          label: t.label,
+          icon: t.id === choice ? svgSpan(CHECK_SVG) : el('span'),
+          onClick: function () { choose(t.id); }
+        });
       });
+      var menu = Menu({ items: menuItems });
       var items = Array.prototype.slice.call(menu.querySelectorAll('.atk-menu__item'));
       items.forEach(function (item, i) {
         item.setAttribute('role', 'menuitemradio');
-        item.setAttribute('aria-checked', String(themes[i].id === current));
+        item.setAttribute('aria-checked', String(entries[i].id === choice));
       });
       menu.addEventListener('keydown', function (e) {
         var i = items.indexOf(document.activeElement);
@@ -383,7 +410,7 @@
       popover = el('div', { className: 'atk-theme-chooser__popover' }, menu);
       root.appendChild(popover);
       button.setAttribute('aria-expanded', 'true');
-      var selected = items[themes.map(function (t) { return t.id; }).indexOf(current)];
+      var selected = items[entries.map(function (t) { return t.id; }).indexOf(choice)];
       (selected || items[0]).focus();
     }
 
@@ -395,6 +422,7 @@
     return root;
   }
   ThemeChooser.resolve = resolveTheme;
+  ThemeChooser.choice = themeChoice;
 
   /* ── ChannelRow / ChannelList ──────────────────────────────────
      A channel as a coloured bar: badge, name, block count, metadata count,

@@ -21,6 +21,11 @@
   --accent-alert: #e15100; /* Warnings, destructive-action confirmations, errors. are.na --colors-alert. */
   --channel-open: #b4d6b3; /* Resting border on an open (public) channel block. are.na --colors-channelPublic2 / green2. Hover deepens to accent-success. */
   --channel-private: #dfbebe; /* Resting border on a private channel block. are.na --colors-channelPrivate2 / red2. Hover deepens to accent-private. */
+  --channel-bar-open: #f4f8f3; /* Fill of an open (public) channel row. are.na --colors-channelPublic1 / green1. Closed rows use surface-card (are.na channelClosed1). */
+  --channel-bar-private: #faf4f3; /* Fill of a private channel row. are.na --colors-channelPrivate1 / red1. */
+  --channel-badge-open: #eaf1e7; /* Badge fill on an open channel row, a step off channel-bar-open. Not an are.na variable: sampled from are.na's rendered row (within one step). */
+  --channel-badge-closed: #efefef; /* Badge fill on a closed channel row, a step off surface-card. */
+  --channel-badge-private: #f5eae8; /* Badge fill on a private channel row, a step off channel-bar-private. */
   --shadow-soft: 0 0 20px rgba(0, 0, 0, 0.08); /* Elevated card. Modal. Dropdown. */
   --shadow-ambient: 0 0 34px rgba(0, 0, 0, 0.05); /* Very subtle ground shadow. Hover lift. */
 }
@@ -46,6 +51,11 @@
   --accent-alert: #ff7a30;
   --channel-open: #2a4c29;
   --channel-private: #412020;
+  --channel-bar-open: #121d12;
+  --channel-bar-private: #1a0404;
+  --channel-badge-open: #213823;
+  --channel-badge-closed: #313131;
+  --channel-badge-private: #310709;
 }
 [data-theme="dawn"] {
   --surface-page: #f5f1f0;
@@ -69,6 +79,11 @@
   --accent-alert: #d6540b;
   --channel-open: #c0d5bc;
   --channel-private: #eaccdb;
+  --channel-bar-open: #eaebe6;
+  --channel-bar-private: #f3eaec;
+  --channel-badge-open: #d7d9ce;
+  --channel-badge-closed: #d6cfce;
+  --channel-badge-private: #e7d6da;
 }
 [data-theme="dusk"] {
   --surface-page: #16171e;
@@ -92,6 +107,11 @@
   --accent-alert: #ff7a30;
   --channel-open: #2a4c29;
   --channel-private: #432f41;
+  --channel-bar-open: #121d12;
+  --channel-bar-private: #1f1c25;
+  --channel-badge-open: #213823;
+  --channel-badge-closed: #443f50;
+  --channel-badge-private: #393544;
 }
 :root {
   --space-nudge: 2px; /* Micro adjustment. Code chip vertical padding, 2px baseline shifts. Not step zero — a named special-purpose value in are.na. */

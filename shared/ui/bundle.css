@@ -497,19 +497,22 @@
    ChannelRow / ChannelList — a channel as a coloured bar that opens
    ──────────────────────────────────────────────────────────── */
 .atk-channel-row {
-  --bar: var(--surface-sunken);
+  --bar: var(--surface-card);
+  --bar-badge: var(--channel-badge-closed);
   --bar-ink: var(--text-secondary);
   --bar-border: var(--border-strong);
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
 }
 .atk-channel-row[data-visibility="public"] {
-  --bar: color-mix(in srgb, var(--accent-success) 6%, var(--surface-page));
+  --bar: var(--channel-bar-open);
+  --bar-badge: var(--channel-badge-open);
   --bar-ink: var(--accent-success);
   --bar-border: var(--accent-success);
 }
 .atk-channel-row[data-visibility="private"] {
-  --bar: color-mix(in srgb, var(--accent-private) 6%, var(--surface-page));
+  --bar: var(--channel-bar-private);
+  --bar-badge: var(--channel-badge-private);
   --bar-ink: var(--accent-private);
   --bar-border: var(--accent-private);
 }
@@ -535,9 +538,9 @@
 }
 .atk-channel-row > summary::-webkit-details-marker { display: none; }
 .atk-channel-row > summary:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
-/* Badges on a bar: a tiny step off the bar colour, in the bar's ink. */
+/* Badges on a bar: a step off the bar colour (own token per state), in the bar's ink. */
 .atk-channel-row > summary .atk-badge {
-  background: color-mix(in srgb, var(--bar) 97%, var(--text-primary));
+  background: var(--bar-badge);
   color: var(--bar-ink);
 }
 .atk-channel-row__count { font-variant-numeric: tabular-nums; }

@@ -5,7 +5,7 @@ v1 shipped (read-only). Plan: `_claude/arena-palimpsest-build-plan.md`. User doc
 ## Shape
 - `src/index.html` is the shell with `@include` markers. `app.js` does fetch orchestration and rendering. `parse-input.js`, `format.js` and `history.js` are pure and tested. `styles.css` holds layout only; everything visual comes from `shared/ui/` (Arena Toolkit).
 - Build: `node build.js` (`--watch`, `--docs`). `dist/arena-palimpsest.html` is committed; `--docs` copies it to `docs/`.
-- `shared/ui/bundle.js` and `bundle.css` match the design-system artifact (published 2026-10-20: ThemeChooser, ChannelRow, ChannelList, unfilled Card). Change the artifact and the toolkit together, or a re-sync will overwrite the difference.
+- `shared/ui/bundle.js` and `bundle.css` match the design-system artifact (published 2026-10-20: ThemeChooser with System, ChannelRow and ChannelList with their tokens, unfilled Card). Change the artifact and the toolkit together, or a re-sync will overwrite the difference.
 - Shared code used: `shared/ui/*`, `shared/api/arena-client.js` and `throttle.js`, `shared/widgets/auth-step.js`.
 
 ## Decisions made during the build
@@ -14,10 +14,10 @@ v1 shipped (read-only). Plan: `_claude/arena-palimpsest-build-plan.md`. User doc
 - **No Checkbox** in the design system, so the PAT is always remembered (`arena_toolkit_pat`, shared across tools); Disconnect clears it.
 - **auth-step is read-only.** Add a write-scope check when the first writing tool adopts it.
 - **Errors** use a short alert `Badge` plus a plain sentence. Long text in a Badge is unreadable.
-- **Theme chooser** is the `ArenaToolkit.ThemeChooser` component (palette button in the header). Precedence: `?theme=` (not saved) > saved choice (`arena_toolkit_theme`, shared across tools) > system. Docs and preview are in `shared/ui/ThemeChooser/`.
+- **Theme chooser** is the `ArenaToolkit.ThemeChooser` component (palette button in the header): Light, Dusk, Dark, Dawn, then System (the default; follows the OS live). Precedence: `?theme=` (not saved) > saved choice (`arena_toolkit_theme`, shared across tools; `'system'` when System is chosen) > System. Docs and preview are in `shared/ui/ThemeChooser/`.
 - **Header** is navigation only: breadcrumb "Are.na Tools / Are.na Palimpsest" on the left, Connect and the theme chooser on the right, no border. The page title and a one-line intro sit in `<main>`. The empty state is plain text, not a Card.
 - **Main block** is a bordered frame (title + image) beside the text column. Border: public grey, private red, orphan dotted at 40%. Metadata sits in the same column and the `.kv` tables share one label width so values line up.
-- **Channel rows** are the shared `ChannelRow` and `ChannelList` components (docs in `shared/ui/ChannelRow/` and `shared/ui/ChannelList/`). Colour follows visibility; the open panel is metadata (2fr) then data (3fr). Tint is 6% so green/red text stays near AA (public badge 4.35:1 in Light).
+- **Channel rows** are the shared `ChannelRow` and `ChannelList` components (docs in `shared/ui/ChannelRow/` and `shared/ui/ChannelList/`). Colour follows visibility; the open panel is metadata (2fr) then data (3fr). Fills are are.na's own (`channel-bar-*` tokens = channelPublic1/Private1, closed = `surface-card`; `channel-badge-*` sampled), verified against all four themes. Contrast is are.na's, not ours to fix: see the table in `shared/ui/ChannelRow/README.md`.
 - **Sort** (`CHANNEL_SORTS` / `sortChannels` in `format.js`): default, most recent, oldest, most blocks, most metadata. Dates are the channel's `created_at` (connection dates are not available). Rows are built once and re-ordered with `list.setRows()`, so open panels stay open.
 - **Cards are unfilled** by default in the design system now (`variant: 'filled'` for the old look).
 - **Sections 2 and 3 of the plan are merged** into one "Connected channels (n)" section (see below).
