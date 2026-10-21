@@ -579,7 +579,7 @@
   pointer-events: auto;
 }
 
-/* Individual action button — bare text until hovered, then picks up border */
+/* Individual action button — same size as a toolkit Button (md), but bare until hovered */
 .atk-block__action {
   all: unset;
   box-sizing: border-box;
@@ -587,11 +587,12 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-1);
-  height: 28px;
-  padding: 0 var(--space-2);
+  height: 36px;                /* matches .atk-btn */
+  padding: 0 var(--space-3);   /* matches .atk-btn */
   font-family: var(--font-sans);
-  font-size: 14.4px;
-  font-weight: 700;
+  font-size: 14.4px;           /* matches .atk-btn */
+  font-weight: 700;            /* matches .atk-btn */
+  line-height: 1;              /* matches .atk-btn */
   color: var(--text-primary);
   background: transparent;
   border: 1px solid transparent;
@@ -607,6 +608,10 @@
 .atk-block__action:focus-visible {
   border-color: var(--border-focus);
   outline: none;
+}
+/* A lone action fills the row — e.g. a block that only offers "Connect →" */
+.atk-block__actions .atk-block__action:only-child {
+  flex: 1;
 }
 
 /* Badge — filled brand & nsfw variants (NEW / BETA / API / NSFW chips) */
@@ -1049,6 +1054,55 @@
 
 </style>
 <style>
+/* Checkbox */
+.atk-checkbox {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+.atk-checkbox-input {
+  position: absolute;
+  opacity: 0;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: inherit;
+}
+.atk-checkbox-box {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
+  background: var(--surface-card);
+  color: #fff;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.atk-checkbox:hover .atk-checkbox-box { border-color: var(--border-strong); }
+.atk-checkbox-input:focus-visible + .atk-checkbox-box { outline: 2px solid var(--accent-focus); outline-offset: 2px; }
+.atk-checkbox-input:checked + .atk-checkbox-box,
+.atk-checkbox-input:indeterminate + .atk-checkbox-box {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+.atk-checkbox-tick, .atk-checkbox-bar { display: none; }
+.atk-checkbox-input:checked + .atk-checkbox-box .atk-checkbox-tick { display: block; }
+.atk-checkbox-input:indeterminate + .atk-checkbox-box .atk-checkbox-tick { display: none; }
+.atk-checkbox-input:indeterminate + .atk-checkbox-box .atk-checkbox-bar { display: block; width: 8px; height: 2px; background: currentColor; }
+.atk-checkbox-input:disabled ~ * { opacity: 0.5; }
+.atk-checkbox-input:disabled + .atk-checkbox-box { cursor: not-allowed; }
+.atk-checkbox-text { display: flex; flex-direction: column; gap: 2px; }
+.atk-checkbox-label { color: var(--text-primary); font: var(--text-ui); }
+.atk-checkbox-desc { color: var(--text-muted); font: var(--text-caption); }
+
+</style>
+<style>
 /* Tool-local layout only. Everything else comes from shared/ui. */
 * { box-sizing: border-box; }
 
@@ -1138,6 +1192,9 @@ body {
 .muted { color: var(--text-muted); }
 
 .stack { display: flex; flex-direction: column; gap: var(--space-2); }
+.stack--loose { gap: var(--space-4); }
+.how summary { cursor: pointer; font: var(--text-ui-strong); color: var(--text-muted); }
+.how ul { margin: var(--space-2) 0 0; padding-left: var(--space-4); color: var(--text-secondary); }
 .field-label { font: var(--text-ui-strong); color: var(--text-muted); }
 .row { display: flex; gap: var(--space-2); }
 .row .atk-input { flex: 1; min-width: 0; }
@@ -2215,6 +2272,28 @@ function openChannelPicker({ channels, selected = [], title = 'Pick channels', c
 
 </script>
 <script>
+// Checkbox: a boolean control with an optional description. Tool-local until promoted into shared/ui.
+// A native input sits inside the label, so keyboard, focus and screen readers behave as usual.
+window.ArenaToolkit.Checkbox = function Checkbox({ label, description, checked = false, disabled = false, indeterminate = false, name, onChange } = {}) {
+  const h = window.ArenaToolkit._el;
+  const input = h('input', { type: 'checkbox', className: 'atk-checkbox-input', checked, disabled });
+  if (name) input.name = name;
+  input.indeterminate = indeterminate;
+  if (onChange) input.addEventListener('change', () => onChange(input.checked));
+
+  const box = h('span', { className: 'atk-checkbox-box', 'aria-hidden': 'true' });
+  box.innerHTML = '<svg class="atk-checkbox-tick" viewBox="0 0 12 12" width="12" height="12"><path d="M2.5 6.5l2.5 2.5 4.5-5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="atk-checkbox-bar"></span>';
+
+  const text = h('span', { className: 'atk-checkbox-text' }, [
+    h('span', { className: 'atk-checkbox-label' }, label),
+    description ? h('span', { className: 'atk-checkbox-desc' }, description) : null,
+  ].filter(Boolean));
+
+  return h('label', { className: 'atk-checkbox' }, [input, box, text]);
+};
+
+</script>
+<script>
 // Pure clustering: group blocks that share a normalised URL (or, optionally, title + description).
 
 function keysForBlock(b, opts) {
@@ -2308,7 +2387,7 @@ function pruneIds(ids, channels) {
 
 </script>
 <script>
-// Are.na Duplicate Finder: six-step wizard shell. Steps 2 to 6 are placeholders for now.
+// Are.na Duplicate Finder: six-step wizard shell. Steps 4 to 6 are placeholders for now.
 // Plain DOM, built from ArenaToolkit components. No framework.
 (function () {
   const ATK = window.ArenaToolkit;
@@ -2326,7 +2405,7 @@ function pruneIds(ids, channels) {
     { id: 'done', label: 'Done', description: 'See what changed.' },
   ];
 
-  const state = { step: 0, furthest: 0, user: null, myChannels: [], channelIds: [], setName: '' };
+  const state = { step: 0, furthest: 0, user: null, myChannels: [], channelIds: [], setName: '', detectors: { ...DEFAULT_DETECTORS } };
 
   const els = {
     header: document.getElementById('header'),
@@ -2347,7 +2426,7 @@ function pruneIds(ids, channels) {
     },
     onChange: (user) => {
       state.user = user;
-      if (!user) { state.furthest = 0; state.step = 0; state.myChannels = []; state.channelIds = []; state.setName = ''; }
+      if (!user) { state.furthest = 0; state.step = 0; state.myChannels = []; state.channelIds = []; state.setName = ''; state.detectors = { ...DEFAULT_DETECTORS }; }
       render();
     },
   });
@@ -2415,6 +2494,7 @@ function pruneIds(ids, channels) {
         state.setName = e.target.value;
         // Saved ids can outlive their channels, so drop any that have gone.
         state.channelIds = state.setName ? pruneIds(sets[state.setName].channelIds, state.myChannels) : [];
+        state.detectors = { ...DEFAULT_DETECTORS, ...(state.setName ? sets[state.setName].detectors : null) };
         render();
       },
     });
@@ -2453,7 +2533,7 @@ function pruneIds(ids, channels) {
       variant: 'secondary', children: 'Save',
       disabled: !state.channelIds.length,
       onClick: () => {
-        const name = saveSet(localStorage, nameInput.value, { channelIds: state.channelIds });
+        const name = saveSet(localStorage, nameInput.value, { channelIds: state.channelIds, detectors: state.detectors });
         if (name) { state.setName = name; render(); }
       },
     });
@@ -2478,6 +2558,46 @@ function pruneIds(ids, channels) {
     ];
   }
 
+  /* Detect: which signals count as "the same block". Choices save into the selected scan set. */
+  const DETECTORS = [
+    { key: 'sourceUrl', label: 'Match on source URL', description: 'Blocks saved from the same web page are duplicates.' },
+    { key: 'descriptionUrls', label: 'Match on URLs in the description', description: 'Catches blocks whose description links to the page another block was saved from.' },
+    { key: 'titleDesc', label: 'Match on title and description', description: 'Same title and opening description text. Noisy: expect some false matches.' },
+    { key: 'skipMarked', label: 'Skip blocks already marked as duplicates', description: 'Leaves out blocks a previous run has marked dupe_of.' },
+  ];
+
+  function stepDetect() {
+    const setDetectors = (patch) => {
+      state.detectors = { ...state.detectors, ...patch };
+      if (state.setName) saveSet(localStorage, state.setName, { channelIds: state.channelIds, detectors: state.detectors });
+    };
+    const options = DETECTORS.map(d => ATK.Checkbox({
+      label: d.label, description: d.description, checked: !!state.detectors[d.key],
+      onChange: (checked) => { setDetectors({ [d.key]: checked }); render(); },
+    }));
+    const noSignal = !state.detectors.sourceUrl && !state.detectors.descriptionUrls && !state.detectors.titleDesc;
+
+    const how = h('details', { className: 'how' }, [
+      h('summary', null, 'How URLs are compared'),
+      h('ul', null, [
+        'The host is lower-cased and a leading www. is dropped.',
+        'Tracking parameters are removed: utm_*, fbclid, igshid, ref, si, feature, mc_cid and mc_eid.',
+        'A trailing / is ignored.',
+        'Pinterest: /pin/<id> is the key; anything after it is ignored.',
+        'Instagram: /p/<shortcode> is the key; anything after it is ignored.',
+      ].map(t => h('li', null, t))),
+    ]);
+
+    return [
+      h('h2', null, 'Choose how duplicates are spotted'),
+      h('p', null, state.setName ? `Your choices are saved with “${state.setName}”.` : 'Save a selection on the previous step to keep these choices.'),
+      h('div', { className: 'stack stack--loose' }, options),
+      noSignal ? h('p', { className: 'muted' }, 'Switch on at least one way of matching to continue.') : null,
+      how,
+      nav({ next: { label: 'Continue →', disabled: noSignal, onClick: advance } }),
+    ].filter(Boolean);
+  }
+
   function stepPlaceholder(i) {
     return [
       h('h2', null, `${i + 1}. ${STEPS[i].label}`),
@@ -2488,7 +2608,7 @@ function pruneIds(ids, channels) {
 
   function render() {
     renderRail();
-    const kids = state.step === 0 ? stepConnect() : state.step === 1 ? stepScope() : stepPlaceholder(state.step);
+    const kids = state.step === 0 ? stepConnect() : state.step === 1 ? stepScope() : state.step === 2 ? stepDetect() : stepPlaceholder(state.step);
     els.pane.replaceChildren(...kids);
   }
 

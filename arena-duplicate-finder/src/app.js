@@ -1,4 +1,4 @@
-// Are.na Duplicate Finder: six-step wizard shell. Steps 2 to 6 are placeholders for now.
+// Are.na Duplicate Finder: six-step wizard shell. Steps 4 to 6 are placeholders for now.
 // Plain DOM, built from ArenaToolkit components. No framework.
 (function () {
   const ATK = window.ArenaToolkit;
@@ -16,7 +16,7 @@
     { id: 'done', label: 'Done', description: 'See what changed.' },
   ];
 
-  const state = { step: 0, furthest: 0, user: null, myChannels: [], channelIds: [], setName: '' };
+  const state = { step: 0, furthest: 0, user: null, myChannels: [], channelIds: [], setName: '', detectors: { ...DEFAULT_DETECTORS } };
 
   const els = {
     header: document.getElementById('header'),
@@ -37,7 +37,7 @@
     },
     onChange: (user) => {
       state.user = user;
-      if (!user) { state.furthest = 0; state.step = 0; state.myChannels = []; state.channelIds = []; state.setName = ''; }
+      if (!user) { state.furthest = 0; state.step = 0; state.myChannels = []; state.channelIds = []; state.setName = ''; state.detectors = { ...DEFAULT_DETECTORS }; }
       render();
     },
   });
@@ -105,6 +105,7 @@
         state.setName = e.target.value;
         // Saved ids can outlive their channels, so drop any that have gone.
         state.channelIds = state.setName ? pruneIds(sets[state.setName].channelIds, state.myChannels) : [];
+        state.detectors = { ...DEFAULT_DETECTORS, ...(state.setName ? sets[state.setName].detectors : null) };
         render();
       },
     });
@@ -143,7 +144,7 @@
       variant: 'secondary', children: 'Save',
       disabled: !state.channelIds.length,
       onClick: () => {
-        const name = saveSet(localStorage, nameInput.value, { channelIds: state.channelIds });
+        const name = saveSet(localStorage, nameInput.value, { channelIds: state.channelIds, detectors: state.detectors });
         if (name) { state.setName = name; render(); }
       },
     });
@@ -168,6 +169,46 @@
     ];
   }
 
+  /* Detect: which signals count as "the same block". Choices save into the selected scan set. */
+  const DETECTORS = [
+    { key: 'sourceUrl', label: 'Match on source URL', description: 'Blocks saved from the same web page are duplicates.' },
+    { key: 'descriptionUrls', label: 'Match on URLs in the description', description: 'Catches blocks whose description links to the page another block was saved from.' },
+    { key: 'titleDesc', label: 'Match on title and description', description: 'Same title and opening description text. Noisy: expect some false matches.' },
+    { key: 'skipMarked', label: 'Skip blocks already marked as duplicates', description: 'Leaves out blocks a previous run has marked dupe_of.' },
+  ];
+
+  function stepDetect() {
+    const setDetectors = (patch) => {
+      state.detectors = { ...state.detectors, ...patch };
+      if (state.setName) saveSet(localStorage, state.setName, { channelIds: state.channelIds, detectors: state.detectors });
+    };
+    const options = DETECTORS.map(d => ATK.Checkbox({
+      label: d.label, description: d.description, checked: !!state.detectors[d.key],
+      onChange: (checked) => { setDetectors({ [d.key]: checked }); render(); },
+    }));
+    const noSignal = !state.detectors.sourceUrl && !state.detectors.descriptionUrls && !state.detectors.titleDesc;
+
+    const how = h('details', { className: 'how' }, [
+      h('summary', null, 'How URLs are compared'),
+      h('ul', null, [
+        'The host is lower-cased and a leading www. is dropped.',
+        'Tracking parameters are removed: utm_*, fbclid, igshid, ref, si, feature, mc_cid and mc_eid.',
+        'A trailing / is ignored.',
+        'Pinterest: /pin/<id> is the key; anything after it is ignored.',
+        'Instagram: /p/<shortcode> is the key; anything after it is ignored.',
+      ].map(t => h('li', null, t))),
+    ]);
+
+    return [
+      h('h2', null, 'Choose how duplicates are spotted'),
+      h('p', null, state.setName ? `Your choices are saved with “${state.setName}”.` : 'Save a selection on the previous step to keep these choices.'),
+      h('div', { className: 'stack stack--loose' }, options),
+      noSignal ? h('p', { className: 'muted' }, 'Switch on at least one way of matching to continue.') : null,
+      how,
+      nav({ next: { label: 'Continue →', disabled: noSignal, onClick: advance } }),
+    ].filter(Boolean);
+  }
+
   function stepPlaceholder(i) {
     return [
       h('h2', null, `${i + 1}. ${STEPS[i].label}`),
@@ -178,7 +219,7 @@
 
   function render() {
     renderRail();
-    const kids = state.step === 0 ? stepConnect() : state.step === 1 ? stepScope() : stepPlaceholder(state.step);
+    const kids = state.step === 0 ? stepConnect() : state.step === 1 ? stepScope() : state.step === 2 ? stepDetect() : stepPlaceholder(state.step);
     els.pane.replaceChildren(...kids);
   }
 

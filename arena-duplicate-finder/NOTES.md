@@ -4,7 +4,7 @@ Agent-facing. Last updated 2026-10-21. Read `CLAUDE.md` and `AGENTS.md` first, t
 
 ## State
 
-Built and committed (`8a2262f` to `d0c5a16`), 144 tests green:
+Built and committed (`8a2262f` onwards), 144 tests green:
 
 | Piece | Where |
 |---|---|
@@ -14,15 +14,14 @@ Built and committed (`8a2262f` to `d0c5a16`), 144 tests green:
 | Auth: `requireWrite` (write-scope check), `panel` (arena-merge-style Connect: remember checkbox, account chip, `loadDetail`) | `shared/widgets/auth-step.js` |
 | Multi-select channel picker | `shared/widgets/channel-picker.js` |
 | Saved scan sets, offenders, pruning | `src/scan-sets.js` |
-| Shell, stepper rail, steps 1 (Connect) and 2 (Scope) | `src/app.js`, `src/index.html`, `src/styles.css` |
+| Shell, stepper rail, steps 1 (Connect), 2 (Scope), 3 (Detect) | `src/app.js`, `src/index.html`, `src/styles.css` |
+| Checkbox (tool-local; native input inside a label; uses `--accent-primary`, not the plan's `--fill-accent-primary`) | `src/components/checkbox.{js,css}` |
 
-Kim has tried steps 1 and 2 against her real account and they work. Steps 3 to 6 are "Not built yet" placeholders in `app.js`.
+Kim has tried steps 1 and 2 against her real account and they work. Step 3 (Detect) is built but not yet tried by her; it saves into the selected scan set and loads from it. Steps 4 to 6 are "Not built yet" placeholders in `app.js`.
 
 ## Next
 
-1. Checkbox component, tool-local (`src/components/checkbox.{js,css}`, spec in plan §11). The Connect and picker checkboxes are plain browser ones for now.
-2. Step 3 Detect: four options, explanation under each, "How URLs are compared" disclosure; save choices into the selected scan set (`DEFAULT_DETECTORS` in `scan-sets.js`).
-3. Progress and Toast, then Step 4 Scan, Radio, Step 5 Review, Step 6 Done, Resolve, keyboard shortcuts, then ship (`docs/` copy, `docs/index.html` card, preview jpg, `AGENTS.md` update).
+1. Progress and Toast, then Step 4 Scan, Radio, Step 5 Review, Step 6 Done, Resolve, keyboard shortcuts, then ship (`docs/` copy, `docs/index.html` card, preview jpg, `AGENTS.md` update).
 
 ## Departures from the plan
 
