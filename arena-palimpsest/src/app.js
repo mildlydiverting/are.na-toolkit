@@ -1,4 +1,4 @@
-// Are.na Palimpsest: inspect a block's metadata, connections and channels (read-only).
+// Are.na Palimpsest: inspect a block's metadata, connections and channels; edit a block's own metadata.
 // Plain DOM, built from ArenaToolkit components. No framework.
 (function () {
   const ATK = window.ArenaToolkit;
@@ -33,11 +33,21 @@
   const authSlot = h('div', { className: 'palimpsest-header__auth' });
   let connectModal = null;
 
+  // Set when Edit needs a write token: the Connect modal then asks for one, and once it is
+  // connected the block is reloaded (so `can` is known) and put straight into edit mode.
+  let pendingEditId = null;
+
   const auth = createAuthStep({
     client,
     onChange: (user) => {
       renderAuthSlot(user);
-      if (user) closeConnect();
+      if (!user) return;
+      closeConnect();
+      if (pendingEditId != null) {
+        const id = pendingEditId;
+        pendingEditId = null;
+        inspect(String(id), { autoEdit: true, skipDirtyCheck: true });
+      }
     },
   });
 
@@ -46,7 +56,7 @@
     connectModal = ATK.Modal({
       title: 'Connect to are.na',
       children: auth.element,
-      onClose: () => { connectModal = null; },
+      onClose: () => { connectModal = null; endWriteMode(); },
     });
     document.body.append(connectModal);
   }
@@ -54,6 +64,32 @@
   function closeConnect() {
     connectModal?.remove();
     connectModal = null;
+    endWriteMode();
+  }
+
+  // Back to the read-only Connect wording once the write prompt is over.
+  function endWriteMode() {
+    if (pendingEditId == null && !writePrompt) return;
+    writePrompt = false;
+    if (!auth.getUser()) pendingEditId = null;
+    auth.setRequireWrite(false);
+  }
+  let writePrompt = false;
+
+  // Can this token edit? If not, open Connect asking for a write token.
+  async function requestWrite(blockId) {
+    let writable;
+    try {
+      writable = await auth.ensureWrite();
+    } catch (err) {
+      return { ok: false, message: `Couldn't check the token: ${describeConnectError(err)}` };
+    }
+    if (writable) return { ok: true };
+    writePrompt = true;
+    pendingEditId = blockId;
+    auth.setRequireWrite(true, 'Editing needs a token with write access.');
+    openConnect();
+    return { ok: false };
   }
 
   let menuEl = null;
@@ -211,6 +247,26 @@
     return a;
   }
 
+  function metadataView(metadata) {
+    const entries = metadataEntries(metadata);
+    return entries.length
+      ? kvTable(entries)
+      : h('p', { className: 'muted' }, 'No metadata set');
+  }
+
+  // The block's own metadata, with the Edit toggle.
+  let currentEditor = null;
+  function blockMetadataSection(block) {
+    currentEditor = createMetadataEditor({
+      block,
+      client,
+      renderView: metadataView,
+      requestWrite: () => requestWrite(block.id),
+      onSaved: (saved) => remember(String(saved.id), saved),
+    });
+    return currentEditor.element;
+  }
+
   function metadataSection(metadata) {
     const entries = metadataEntries(metadata);
     return h('div', { className: 'metadata' }, [
@@ -265,7 +321,7 @@
     ]);
     return h('div', { className: 'block-layout' }, [
       frame,
-      h('div', { className: 'block-data' }, [metadataSection(block.metadata), kvTable(fields)]),
+      h('div', { className: 'block-data' }, [blockMetadataSection(block), kvTable(fields)]),
     ]);
   }
 
@@ -359,12 +415,14 @@
 
   let inspectRun = 0;
 
-  async function inspect(raw) {
+  async function inspect(raw, { autoEdit = false, skipDirtyCheck = false } = {}) {
     const id = parseBlockInput(raw);
     if (id == null) {
       setHint("That doesn't look like a block URL or ID. Try 13857023 or https://www.are.na/block/13857023.");
       return;
     }
+    if (!skipDirtyCheck && currentEditor?.isDirty() && !window.confirm('You have unsaved metadata changes. Discard them?')) return;
+    currentEditor = null;
     setHint('');
     const run = ++inspectRun;
     inspectBtn.disabled = true;
@@ -374,6 +432,7 @@
       if (run !== inspectRun) return;
       els.resultPane.replaceChildren(renderBlock(block));
       remember(raw, block);
+      if (autoEdit && !(block.can && block.can.manage === false)) currentEditor?.startEditing();
       await loadConnections(id, run);
     } catch (err) {
       if (run !== inspectRun) return;

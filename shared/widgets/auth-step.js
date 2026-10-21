@@ -263,7 +263,7 @@ export function createAuthStep({
   function setRequireWrite(enabled = true, message = null) {
     requireWrite = !!enabled;
     writeMessage = enabled ? message : null;
-    if (user) disconnect();
+    if (enabled && user) disconnect();
     else render();
   }
 
