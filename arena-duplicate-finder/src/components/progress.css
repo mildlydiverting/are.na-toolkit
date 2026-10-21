@@ -1,0 +1,26 @@
+/* Progress */
+.atk-progress { display: flex; flex-direction: column; gap: var(--space-nudge); }
+.atk-progress-row { display: flex; justify-content: space-between; gap: var(--space-3); }
+.atk-progress-label { color: var(--text-primary); font: var(--text-ui); }
+.atk-progress-detail { color: var(--text-muted); font: var(--text-body-sm); text-align: right; }
+.atk-progress-track {
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunken);
+}
+.atk-progress-fill {
+  height: 100%;
+  width: 0;
+  border-radius: var(--radius-pill);
+  background: var(--accent-primary);
+  transition: width 150ms ease;
+}
+.atk-progress--success .atk-progress-fill { background: var(--accent-success); }
+.atk-progress--alert .atk-progress-fill { background: var(--accent-alert); }
+/* Indeterminate is the one moving thing in the system: it says work is going on. */
+.atk-progress.is-indeterminate .atk-progress-fill { width: 30%; animation: atk-progress-slide 1.2s ease-in-out infinite; }
+@keyframes atk-progress-slide { from { margin-left: -30%; } to { margin-left: 100%; } }
+@media (prefers-reduced-motion: reduce) {
+  .atk-progress.is-indeterminate .atk-progress-fill { animation: none; margin-left: 0; width: 100%; opacity: 0.4; }
+}
