@@ -5,7 +5,7 @@
   const h = (tag, attrs, kids) => ATK._el(tag, attrs, kids);
 
   const throttle = createThrottle({
-    onWait: (seconds) => ATK.Toast.show({ message: `are.na asked us to slow down. Waiting ${seconds}s, then carrying on.`, variant: 'notification', duration: seconds * 1000 }),
+    onWait: (seconds) => ATK.Notice.show({ message: `are.na asked us to slow down. Waiting ${seconds}s, then carrying on.`, variant: 'notification', duration: seconds * 1000 }),
   });
   const client = createArenaClient({ throttle });
 
@@ -231,7 +231,7 @@
       });
       scan.status = 'done';
       for (const sk of scan.result.skipped) {
-        ATK.Toast.show({ message: `Couldn't read ${sk.channel.title || sk.channel.slug}, so it was skipped.`, variant: 'alert', duration: 8000 });
+        ATK.Notice.show({ message: `Couldn't read ${sk.channel.title || sk.channel.slug}, so it was skipped.`, variant: 'alert', duration: 8000 });
       }
     } catch (err) {
       scan.status = 'error';
@@ -336,7 +336,6 @@
 
   function render() {
     renderRail();
-    document.querySelector('.dupes-main').classList.toggle('is-wide', state.step === 4);
     const kids = state.step === 0 ? stepConnect() : state.step === 1 ? stepScope() : state.step === 2 ? stepDetect() : state.step === 3 ? stepScan() : state.step === 4 ? stepReview() : stepPlaceholder(state.step);
     els.pane.replaceChildren(...kids);
   }

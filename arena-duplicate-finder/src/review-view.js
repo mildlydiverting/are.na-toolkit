@@ -5,6 +5,20 @@
 //   onUndo(undo) -> Promise<{ failed }>
 //   getConnectionCount(blockId) -> Promise<number>: every channel the block is in, not just the scanned ones
 
+// Only the card row runs on to the right-hand edge of the window; the rest of the pane keeps the content column.
+// Negative right margin pulls the scroller out to the edge, matching padding keeps the last card clear of it.
+function fitCardsToWindow(cards) {
+  const fit = () => {
+    if (!cards.isConnected) { window.removeEventListener('resize', fit); return; }
+    cards.style.marginRight = cards.style.paddingRight = '';
+    const spare = Math.max(0, document.documentElement.clientWidth - cards.getBoundingClientRect().right);
+    cards.style.marginRight = `-${spare}px`;
+    cards.style.paddingRight = `${spare}px`;
+  };
+  window.addEventListener('resize', fit);
+  requestAnimationFrame(fit);
+}
+
 function createReviewView({ items, decisions, onFinish, onResolve, onUndo, getConnectionCount = null, myUserId = null }) {
   const ATK = window.ArenaToolkit;
   const h = (tag, attrs, kids) => ATK._el(tag, attrs, kids);
@@ -173,7 +187,6 @@ function createReviewView({ items, decisions, onFinish, onResolve, onUndo, getCo
     const header = h('div', { className: 'review-head' }, [
       h('h2', null, `Group ${index + 1} of ${items.length} · ${blocks.length} blocks · ${item.label}`),
       statusBadge(d),
-      dryRun ? null : ATK.Badge({ variant: 'alert', children: 'Live: changes are written to are.na' }),
     ].filter(Boolean));
     const progress = h('p', { className: 'muted' }, `${t.resolved} resolved · ${t.skipped} skipped · ${t.pending} to go`);
     const dryToggle = ATK.Checkbox({
@@ -181,13 +194,16 @@ function createReviewView({ items, decisions, onFinish, onResolve, onUndo, getCo
       checked: dryRun, disabled: busy, onChange: (on) => (on ? setDryRun(true) : confirmLive()),
     });
     const cards = h('div', { className: 'review-cards' }, blocks.map((b, i) => card(item, b, i, d)));
+    fitCardsToWindow(cards);
 
     const finishNow = ATK.Button({ variant: t.pending ? 'secondary' : 'primary', children: t.pending ? 'Finish early →' : 'Finish →', disabled: !t.resolved, onClick: () => onFinish() });
+    const pager = h('div', { className: 'row' }, [
+      ATK.Button({ variant: 'ghost', children: '← Previous', disabled: index === 0, onClick: () => move(-1) }),
+      ATK.Button({ variant: 'ghost', children: 'Next →', disabled: index === items.length - 1, onClick: () => move(1) }),
+    ]);
+    const liveNote = dryRun ? null : h('p', { className: 'atk-note', role: 'status' }, 'Dry run is off: Resolve group writes to are.na straight away.');
     const actions = h('div', { className: 'step-nav' }, [
-      h('div', { className: 'row' }, [
-        ATK.Button({ variant: 'ghost', children: '← Previous', disabled: index === 0, onClick: () => move(-1) }),
-        ATK.Button({ variant: 'ghost', children: 'Next →', disabled: index === items.length - 1, onClick: () => move(1) }),
-      ]),
+      dryToggle,
       h('div', { className: 'row' }, [
         ATK.Button({ variant: 'ghost', children: 'Undo', disabled: busy || !undoStack.length, onClick: undo }),
         ATK.Button({ variant: 'secondary', children: 'Skip group', disabled: busy, onClick: () => decide('skipped') }),
@@ -196,8 +212,8 @@ function createReviewView({ items, decisions, onFinish, onResolve, onUndo, getCo
     ]);
 
     root.replaceChildren(
-      header, progress, dryToggle, cards, details(item, d),
-      actions, reportEl(),
+      header, progress, pager, cards, details(item, d),
+      liveNote, actions, reportEl(),
       h('div', { className: 'row' }, [finishNow, ATK.Button({ variant: 'ghost', size: 'sm', children: 'Keyboard shortcuts (?)', onClick: openHelp })]),
       live,
     );
@@ -311,7 +327,7 @@ function createReviewView({ items, decisions, onFinish, onResolve, onUndo, getCo
     if (report.dry) parts.push(h('h3', { className: 'review-subhead' }, 'Dry run: nothing was changed'));
     else parts.push(h('h3', { className: 'review-subhead' }, report.failed.length ? 'Done, with problems' : 'Done'));
     if (report.lines.length) parts.push(h('ul', null, report.lines.map(l => h('li', null, l))));
-    if (report.failed.length) parts.push(h('ul', { role: 'alert', className: 'review-problems' }, report.failed.map(f => h('li', null, f.message))));
+    if (report.failed.length) parts.push(h('ul', { role: 'alert', className: 'atk-note review-problems' }, report.failed.map(f => h('li', null, f.message))));
     if (report.notes?.length) parts.push(h('ul', { className: 'muted' }, report.notes.map(n => h('li', null, n))));
     if (report.dry) parts.push(h('p', { className: 'muted' }, 'Happy with that? Switch off Dry run above, then Resolve group.'));
     return h('div', { className: 'review-report' }, parts);

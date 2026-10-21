@@ -21,7 +21,7 @@ Kim has tried steps 1 and 2 against her real account and they work. Step 3 (Dete
 
 ## Next
 
-1. Progress and Toast, then Step 4 Scan, Radio, Step 5 Review, Step 6 Done, Resolve, keyboard shortcuts, then ship (`docs/` copy, `docs/index.html` card, preview jpg, `AGENTS.md` update).
+1. Progress and Notice, then Step 4 Scan, Radio, Step 5 Review, Step 6 Done, Resolve, keyboard shortcuts, then ship (`docs/` copy, `docs/index.html` card, preview jpg, `AGENTS.md` update).
 
 ## Ideas for later
 

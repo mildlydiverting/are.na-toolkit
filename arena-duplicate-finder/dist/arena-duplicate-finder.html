@@ -1247,10 +1247,10 @@
 
 </style>
 <style>
-/* Toast */
-.atk-toast-stack {
+/* Notice */
+.atk-notice-stack {
   position: fixed;
-  right: var(--space-3);
+  left: var(--space-3);
   bottom: var(--space-3);
   z-index: 1000;
   display: flex;
@@ -1258,36 +1258,33 @@
   gap: var(--space-2);
   max-width: min(360px, calc(100vw - 2 * var(--space-3)));
 }
-.atk-toast {
+.atk-notice {
   display: flex;
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border-card);
-  border-left: 3px solid var(--border-strong);
+  border: 0;
   border-radius: var(--radius-sm);
-  background: var(--surface-page);
-  color: var(--text-primary);
+  background: var(--accent-primary); /* same pairing as the primary button, as on are.na's corner notice */
+  color: var(--surface-page);
   box-shadow: var(--shadow-soft);
   font: var(--text-body);
-  animation: atk-toast-in 150ms ease;
+  animation: atk-notice-in 150ms ease;
 }
-.atk-toast--success { border-left-color: var(--accent-success); }
-.atk-toast--alert { border-left-color: var(--accent-alert); }
-.atk-toast--notification { border-left-color: var(--accent-notification); }
-.atk-toast.is-leaving { opacity: 0; transition: opacity 150ms ease; }
-.atk-toast-message { flex: 1; min-width: 0; }
-.atk-toast-close {
+.atk-notice.is-leaving { opacity: 0; transition: opacity 150ms ease; }
+.atk-notice-message { flex: 1; min-width: 0; }
+.atk-notice-close {
   border: 0;
   background: none;
   padding: 0 var(--space-1);
-  color: var(--text-muted);
+  color: inherit;
   font: var(--text-ui);
   cursor: pointer;
+  opacity: 0.8;
 }
-.atk-toast-close:hover { color: var(--text-primary); }
-@keyframes atk-toast-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { .atk-toast { animation: none; } }
+.atk-notice-close:hover { opacity: 1; }
+@keyframes atk-notice-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .atk-notice { animation: none; } }
 
 </style>
 <style>
@@ -1347,8 +1344,6 @@ body {
   flex-direction: column;
   gap: var(--space-8);
 }
-
-.dupes-main.is-wide { max-width: none; } /* Review: let the cards use the whole window before they scroll */
 
 .dupes-layout {
   display: grid;
@@ -1456,12 +1451,13 @@ body {
   flex-direction: column;
   gap: var(--space-2);
   padding: var(--space-3);
-  border: 1px solid var(--border-card);
   border-radius: var(--radius-sm);
   background: var(--surface-card);
 }
 .review-report ul { margin: 0; padding-left: var(--space-4); }
-.review-problems { color: var(--text-primary); border-left: 3px solid var(--accent-alert); padding-left: var(--space-3); list-style-position: inside; }
+/* Pale inline note, as on are.na's review screens: sits in the flow, no border */
+.atk-note { margin: 0; padding: var(--space-3); border-radius: var(--radius-sm); background: var(--surface-card); color: var(--text-primary); font: var(--text-body); max-width: 40em; }
+.review-problems { list-style-position: inside; }
 
 .review-card__facts { display: flex; flex-direction: column; gap: var(--space-nudge); margin: 0; font: var(--text-body); }
 .review-card__fact { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: var(--space-1); }
@@ -2726,16 +2722,16 @@ window.ArenaToolkit.Progress = function Progress({ value = null, max = 100, labe
 
 </script>
 <script>
-// Toast: a short message in a stack at the bottom right. Tool-local until promoted into shared/ui.
-//   Toast.show({ message, variant: 'default' | 'success' | 'alert' | 'notification', duration: 4000 (0 = stay), action: { label, onClick } })
-//   Toast.dismissAll()
+// Notice: a short message in a stack at the bottom left. Tool-local until promoted into shared/ui.
+//   Notice.show({ message, variant: 'default' | 'success' | 'alert' | 'notification', duration: 4000 (0 = stay), action: { label, onClick } })
+//   Notice.dismissAll()
 (function () {
   const h = window.ArenaToolkit._el;
   let stack = null;
 
   function getStack() {
     if (!stack || !stack.isConnected) {
-      stack = h('div', { className: 'atk-toast-stack' });
+      stack = h('div', { className: 'atk-notice-stack' });
       document.body.append(stack);
     }
     return stack;
@@ -2743,21 +2739,21 @@ window.ArenaToolkit.Progress = function Progress({ value = null, max = 100, labe
 
   function show({ message, variant = 'default', duration = 4000, action = null } = {}) {
     const alert = variant === 'alert';
-    const toast = h('div', { className: `atk-toast atk-toast--${variant}`, role: alert ? 'alert' : 'status' });
+    const notice = h('div', { className: `atk-notice atk-notice--${variant}`, role: alert ? 'alert' : 'status' });
     let timer = null;
     const dismiss = () => {
       clearTimeout(timer);
-      if (!toast.isConnected) return;
-      toast.classList.add('is-leaving');
-      setTimeout(() => toast.remove(), 150);
+      if (!notice.isConnected) return;
+      notice.classList.add('is-leaving');
+      setTimeout(() => notice.remove(), 150);
     };
-    toast.append(h('span', { className: 'atk-toast-message' }, message));
+    notice.append(h('span', { className: 'atk-notice-message' }, message));
     if (action) {
-      toast.append(window.ArenaToolkit.Button({ variant: 'ghost', size: 'sm', children: action.label, onClick: () => { action.onClick(); dismiss(); } }));
+      notice.append(window.ArenaToolkit.Button({ variant: 'ghost', size: 'sm', children: action.label, onClick: () => { action.onClick(); dismiss(); } }));
     }
-    toast.append(h('button', { type: 'button', className: 'atk-toast-close', 'aria-label': 'Dismiss', onclick: dismiss }, '×'));
-    toast.addEventListener('keydown', (e) => { if (e.key === 'Escape') dismiss(); });
-    getStack().append(toast);
+    notice.append(h('button', { type: 'button', className: 'atk-notice-close', 'aria-label': 'Dismiss', onclick: dismiss }, '×'));
+    notice.addEventListener('keydown', (e) => { if (e.key === 'Escape') dismiss(); });
+    getStack().append(notice);
     if (duration > 0) timer = setTimeout(dismiss, duration);
     return { dismiss };
   }
@@ -2766,7 +2762,7 @@ window.ArenaToolkit.Progress = function Progress({ value = null, max = 100, labe
     if (stack) stack.replaceChildren();
   }
 
-  window.ArenaToolkit.Toast = { show, dismissAll };
+  window.ArenaToolkit.Notice = { show, dismissAll };
 })();
 
 </script>
@@ -3187,6 +3183,20 @@ function dropUndo(storage, clusterId) {
 //   onUndo(undo) -> Promise<{ failed }>
 //   getConnectionCount(blockId) -> Promise<number>: every channel the block is in, not just the scanned ones
 
+// Only the card row runs on to the right-hand edge of the window; the rest of the pane keeps the content column.
+// Negative right margin pulls the scroller out to the edge, matching padding keeps the last card clear of it.
+function fitCardsToWindow(cards) {
+  const fit = () => {
+    if (!cards.isConnected) { window.removeEventListener('resize', fit); return; }
+    cards.style.marginRight = cards.style.paddingRight = '';
+    const spare = Math.max(0, document.documentElement.clientWidth - cards.getBoundingClientRect().right);
+    cards.style.marginRight = `-${spare}px`;
+    cards.style.paddingRight = `${spare}px`;
+  };
+  window.addEventListener('resize', fit);
+  requestAnimationFrame(fit);
+}
+
 function createReviewView({ items, decisions, onFinish, onResolve, onUndo, getConnectionCount = null, myUserId = null }) {
   const ATK = window.ArenaToolkit;
   const h = (tag, attrs, kids) => ATK._el(tag, attrs, kids);
@@ -3355,7 +3365,6 @@ function createReviewView({ items, decisions, onFinish, onResolve, onUndo, getCo
     const header = h('div', { className: 'review-head' }, [
       h('h2', null, `Group ${index + 1} of ${items.length} · ${blocks.length} blocks · ${item.label}`),
       statusBadge(d),
-      dryRun ? null : ATK.Badge({ variant: 'alert', children: 'Live: changes are written to are.na' }),
     ].filter(Boolean));
     const progress = h('p', { className: 'muted' }, `${t.resolved} resolved · ${t.skipped} skipped · ${t.pending} to go`);
     const dryToggle = ATK.Checkbox({
@@ -3363,13 +3372,16 @@ function createReviewView({ items, decisions, onFinish, onResolve, onUndo, getCo
       checked: dryRun, disabled: busy, onChange: (on) => (on ? setDryRun(true) : confirmLive()),
     });
     const cards = h('div', { className: 'review-cards' }, blocks.map((b, i) => card(item, b, i, d)));
+    fitCardsToWindow(cards);
 
     const finishNow = ATK.Button({ variant: t.pending ? 'secondary' : 'primary', children: t.pending ? 'Finish early →' : 'Finish →', disabled: !t.resolved, onClick: () => onFinish() });
+    const pager = h('div', { className: 'row' }, [
+      ATK.Button({ variant: 'ghost', children: '← Previous', disabled: index === 0, onClick: () => move(-1) }),
+      ATK.Button({ variant: 'ghost', children: 'Next →', disabled: index === items.length - 1, onClick: () => move(1) }),
+    ]);
+    const liveNote = dryRun ? null : h('p', { className: 'atk-note', role: 'status' }, 'Dry run is off: Resolve group writes to are.na straight away.');
     const actions = h('div', { className: 'step-nav' }, [
-      h('div', { className: 'row' }, [
-        ATK.Button({ variant: 'ghost', children: '← Previous', disabled: index === 0, onClick: () => move(-1) }),
-        ATK.Button({ variant: 'ghost', children: 'Next →', disabled: index === items.length - 1, onClick: () => move(1) }),
-      ]),
+      dryToggle,
       h('div', { className: 'row' }, [
         ATK.Button({ variant: 'ghost', children: 'Undo', disabled: busy || !undoStack.length, onClick: undo }),
         ATK.Button({ variant: 'secondary', children: 'Skip group', disabled: busy, onClick: () => decide('skipped') }),
@@ -3378,8 +3390,8 @@ function createReviewView({ items, decisions, onFinish, onResolve, onUndo, getCo
     ]);
 
     root.replaceChildren(
-      header, progress, dryToggle, cards, details(item, d),
-      actions, reportEl(),
+      header, progress, pager, cards, details(item, d),
+      liveNote, actions, reportEl(),
       h('div', { className: 'row' }, [finishNow, ATK.Button({ variant: 'ghost', size: 'sm', children: 'Keyboard shortcuts (?)', onClick: openHelp })]),
       live,
     );
@@ -3493,7 +3505,7 @@ function createReviewView({ items, decisions, onFinish, onResolve, onUndo, getCo
     if (report.dry) parts.push(h('h3', { className: 'review-subhead' }, 'Dry run: nothing was changed'));
     else parts.push(h('h3', { className: 'review-subhead' }, report.failed.length ? 'Done, with problems' : 'Done'));
     if (report.lines.length) parts.push(h('ul', null, report.lines.map(l => h('li', null, l))));
-    if (report.failed.length) parts.push(h('ul', { role: 'alert', className: 'review-problems' }, report.failed.map(f => h('li', null, f.message))));
+    if (report.failed.length) parts.push(h('ul', { role: 'alert', className: 'atk-note review-problems' }, report.failed.map(f => h('li', null, f.message))));
     if (report.notes?.length) parts.push(h('ul', { className: 'muted' }, report.notes.map(n => h('li', null, n))));
     if (report.dry) parts.push(h('p', { className: 'muted' }, 'Happy with that? Switch off Dry run above, then Resolve group.'));
     return h('div', { className: 'review-report' }, parts);
@@ -3610,7 +3622,7 @@ function pruneIds(ids, channels) {
   const h = (tag, attrs, kids) => ATK._el(tag, attrs, kids);
 
   const throttle = createThrottle({
-    onWait: (seconds) => ATK.Toast.show({ message: `are.na asked us to slow down. Waiting ${seconds}s, then carrying on.`, variant: 'notification', duration: seconds * 1000 }),
+    onWait: (seconds) => ATK.Notice.show({ message: `are.na asked us to slow down. Waiting ${seconds}s, then carrying on.`, variant: 'notification', duration: seconds * 1000 }),
   });
   const client = createArenaClient({ throttle });
 
@@ -3836,7 +3848,7 @@ function pruneIds(ids, channels) {
       });
       scan.status = 'done';
       for (const sk of scan.result.skipped) {
-        ATK.Toast.show({ message: `Couldn't read ${sk.channel.title || sk.channel.slug}, so it was skipped.`, variant: 'alert', duration: 8000 });
+        ATK.Notice.show({ message: `Couldn't read ${sk.channel.title || sk.channel.slug}, so it was skipped.`, variant: 'alert', duration: 8000 });
       }
     } catch (err) {
       scan.status = 'error';
@@ -3941,7 +3953,6 @@ function pruneIds(ids, channels) {
 
   function render() {
     renderRail();
-    document.querySelector('.dupes-main').classList.toggle('is-wide', state.step === 4);
     const kids = state.step === 0 ? stepConnect() : state.step === 1 ? stepScope() : state.step === 2 ? stepDetect() : state.step === 3 ? stepScan() : state.step === 4 ? stepReview() : stepPlaceholder(state.step);
     els.pane.replaceChildren(...kids);
   }
