@@ -1189,6 +1189,79 @@
 
 </style>
 <style>
+/* Progress */
+.atk-progress { display: flex; flex-direction: column; gap: var(--space-nudge); }
+.atk-progress-row { display: flex; justify-content: space-between; gap: var(--space-3); }
+.atk-progress-label { color: var(--text-primary); font: var(--text-ui); }
+.atk-progress-detail { color: var(--text-muted); font: var(--text-body-sm); text-align: right; }
+.atk-progress-track {
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunken);
+}
+.atk-progress-fill {
+  height: 100%;
+  width: 0;
+  border-radius: var(--radius-pill);
+  background: var(--accent-primary);
+  transition: width 150ms ease;
+}
+.atk-progress--success .atk-progress-fill { background: var(--accent-success); }
+.atk-progress--alert .atk-progress-fill { background: var(--accent-alert); }
+/* Indeterminate is the one moving thing in the system: it says work is going on. */
+.atk-progress.is-indeterminate .atk-progress-fill { width: 30%; animation: atk-progress-slide 1.2s ease-in-out infinite; }
+@keyframes atk-progress-slide { from { margin-left: -30%; } to { margin-left: 100%; } }
+@media (prefers-reduced-motion: reduce) {
+  .atk-progress.is-indeterminate .atk-progress-fill { animation: none; margin-left: 0; width: 100%; opacity: 0.4; }
+}
+
+</style>
+<style>
+/* Toast */
+.atk-toast-stack {
+  position: fixed;
+  right: var(--space-3);
+  bottom: var(--space-3);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: min(360px, calc(100vw - 2 * var(--space-3)));
+}
+.atk-toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-card);
+  border-left: 3px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-page);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-soft);
+  font: var(--text-body);
+  animation: atk-toast-in 150ms ease;
+}
+.atk-toast--success { border-left-color: var(--accent-success); }
+.atk-toast--alert { border-left-color: var(--accent-alert); }
+.atk-toast--notification { border-left-color: var(--accent-notification); }
+.atk-toast.is-leaving { opacity: 0; transition: opacity 150ms ease; }
+.atk-toast-message { flex: 1; min-width: 0; }
+.atk-toast-close {
+  border: 0;
+  background: none;
+  padding: 0 var(--space-1);
+  color: var(--text-muted);
+  font: var(--text-ui);
+  cursor: pointer;
+}
+.atk-toast-close:hover { color: var(--text-primary); }
+@keyframes atk-toast-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .atk-toast { animation: none; } }
+
+</style>
+<style>
 /* Tool-local layout only. Everything else comes from shared/ui. */
 * { box-sizing: border-box; }
 
@@ -2493,6 +2566,90 @@ window.ArenaToolkit.Checkbox = function Checkbox({ label, description, checked =
 
 </script>
 <script>
+// Progress: a thin bar with a label row. Indeterminate when value is omitted. Tool-local until promoted into shared/ui.
+// The returned element has update({ value, max, label, detail }) so a running scan can change it in place.
+window.ArenaToolkit.Progress = function Progress({ value = null, max = 100, label = '', detail = '', variant = 'default' } = {}) {
+  const h = window.ArenaToolkit._el;
+  const labelEl = h('span', { className: 'atk-progress-label' }, label);
+  const detailEl = h('span', { className: 'atk-progress-detail' }, detail);
+  const fill = h('div', { className: 'atk-progress-fill' });
+  const track = h('div', { className: 'atk-progress-track', role: 'progressbar', 'aria-valuemin': '0' }, fill);
+  const root = h('div', { className: `atk-progress atk-progress--${variant}` }, [
+    h('div', { className: 'atk-progress-row' }, [labelEl, detailEl]),
+    track,
+  ]);
+
+  root.update = function update(next = {}) {
+    if ('label' in next) labelEl.textContent = next.label;
+    if ('detail' in next) detailEl.textContent = next.detail;
+    const v = 'value' in next ? next.value : value;
+    const m = 'max' in next ? next.max : max;
+    value = v;
+    max = m;
+    const indeterminate = v == null;
+    root.classList.toggle('is-indeterminate', indeterminate);
+    if (indeterminate) {
+      track.removeAttribute('aria-valuenow');
+      fill.style.width = '';
+    } else {
+      const pct = m > 0 ? Math.min(100, Math.max(0, (v / m) * 100)) : 0;
+      track.setAttribute('aria-valuemax', String(m));
+      track.setAttribute('aria-valuenow', String(v));
+      fill.style.width = `${pct}%`;
+    }
+    track.setAttribute('aria-label', labelEl.textContent || 'Progress');
+  };
+  root.update({});
+  return root;
+};
+
+</script>
+<script>
+// Toast: a short message in a stack at the bottom right. Tool-local until promoted into shared/ui.
+//   Toast.show({ message, variant: 'default' | 'success' | 'alert' | 'notification', duration: 4000 (0 = stay), action: { label, onClick } })
+//   Toast.dismissAll()
+(function () {
+  const h = window.ArenaToolkit._el;
+  let stack = null;
+
+  function getStack() {
+    if (!stack || !stack.isConnected) {
+      stack = h('div', { className: 'atk-toast-stack' });
+      document.body.append(stack);
+    }
+    return stack;
+  }
+
+  function show({ message, variant = 'default', duration = 4000, action = null } = {}) {
+    const alert = variant === 'alert';
+    const toast = h('div', { className: `atk-toast atk-toast--${variant}`, role: alert ? 'alert' : 'status' });
+    let timer = null;
+    const dismiss = () => {
+      clearTimeout(timer);
+      if (!toast.isConnected) return;
+      toast.classList.add('is-leaving');
+      setTimeout(() => toast.remove(), 150);
+    };
+    toast.append(h('span', { className: 'atk-toast-message' }, message));
+    if (action) {
+      toast.append(window.ArenaToolkit.Button({ variant: 'ghost', size: 'sm', children: action.label, onClick: () => { action.onClick(); dismiss(); } }));
+    }
+    toast.append(h('button', { type: 'button', className: 'atk-toast-close', 'aria-label': 'Dismiss', onclick: dismiss }, '×'));
+    toast.addEventListener('keydown', (e) => { if (e.key === 'Escape') dismiss(); });
+    getStack().append(toast);
+    if (duration > 0) timer = setTimeout(dismiss, duration);
+    return { dismiss };
+  }
+
+  function dismissAll() {
+    if (stack) stack.replaceChildren();
+  }
+
+  window.ArenaToolkit.Toast = { show, dismissAll };
+})();
+
+</script>
+<script>
 // Pure clustering: group blocks that share a normalised URL (or, optionally, title + description).
 
 function keysForBlock(b, opts) {
@@ -2507,7 +2664,8 @@ function keysForBlock(b, opts) {
   return [...keys];
 }
 
-// Blocks sharing any key land in the same bucket; buckets of 2+ are clusters.
+// Blocks sharing any key are in the same cluster; groups that overlap (a block with two different
+// keys can link two buckets) are merged, so a block never appears in two clusters. Clusters have 2+ blocks.
 // A block connected into several channels appears once per channel in a scan, so de-dupe by id first.
 // With opts.skipMarked, blocks already carrying metadata.dupe_of are left out.
 function clusterBlocks(blocks, opts) {
@@ -2522,7 +2680,118 @@ function clusterBlocks(blocks, opts) {
       buckets.get(k).push(b);
     }
   }
-  return [...buckets.values()].filter(cluster => cluster.length >= 2);
+
+  const parent = new Map();
+  const find = (id) => {
+    while (parent.get(id) !== id) { parent.set(id, parent.get(parent.get(id))); id = parent.get(id); }
+    return id;
+  };
+  const byId = new Map();
+  for (const bucket of buckets.values()) {
+    if (bucket.length < 2) continue;
+    for (const b of bucket) { byId.set(b.id, b); if (!parent.has(b.id)) parent.set(b.id, b.id); }
+    const root = find(bucket[0].id);
+    for (const b of bucket.slice(1)) parent.set(find(b.id), root);
+  }
+
+  const groups = new Map();
+  for (const [id, b] of byId) {
+    const root = find(id);
+    if (!groups.has(root)) groups.set(root, []);
+    groups.get(root).push(b);
+  }
+  return [...groups.values()];
+}
+
+</script>
+<script>
+// Scan: read the chosen channels page by page, remember where every block sits (including the
+// connection id that deleteConnection needs), and group the duplicates. No DOM.
+
+// Pause and resume for a running scan. The scan calls checkpoint() between requests.
+function createScanControl() {
+  let paused = false;
+  let release = null;
+  return {
+    pause() { paused = true; },
+    resume() { paused = false; if (release) { release(); release = null; } },
+    isPaused: () => paused,
+    checkpoint() {
+      return paused ? new Promise(resolve => { release = resolve; }) : Promise.resolve();
+    },
+  };
+}
+
+const byAge = (a, b) => (a.created_at || '').localeCompare(b.created_at || '') || a.id - b.id;
+
+// blocks: unique blocks; places: Map blockId -> [{ channelId, channelSlug, channelTitle, connectionId }]
+// Returns clusters, each with its blocks oldest first (the usual best keeper), where they sit,
+// and whether it lives in one channel ('single') or spans several ('cross').
+function buildClusters(blocks, places, detectors) {
+  return clusterBlocks(blocks, detectors).map(group => {
+    const sorted = [...group].sort(byAge);
+    const channelIds = [...new Set(sorted.flatMap(b => (places.get(b.id) || []).map(p => p.channelId)))];
+    return {
+      id: `c-${sorted.map(b => b.id).join('-')}`,
+      blocks: sorted,
+      places: Object.fromEntries(sorted.map(b => [b.id, places.get(b.id) || []])),
+      channelIds,
+      scope: channelIds.length > 1 ? 'cross' : 'single',
+    };
+  });
+}
+
+// Single-channel clusters grouped by channel, then the ones that span channels.
+function splitClusters(clusters) {
+  const byChannel = new Map();
+  const cross = [];
+  for (const c of clusters) {
+    if (c.scope === 'cross') { cross.push(c); continue; }
+    const id = c.channelIds[0];
+    if (!byChannel.has(id)) byChannel.set(id, []);
+    byChannel.get(id).push(c);
+  }
+  return { byChannel: [...byChannel].map(([channelId, list]) => ({ channelId, clusters: list })), cross };
+}
+
+// client: from createArenaClient(); channels: [{ id, slug, title }]; detectors: the Detect choices.
+// onProgress({ channelIndex, channelCount, channelTitle, blocksFetched, clusterCount, channelDone }) is called after
+// each page and again when a channel finishes (channelDone). clusterCount is only refreshed at the end of each channel.
+// A channel that can't be read (403, 404) is skipped and reported; anything else (401, network) throws.
+async function scanChannels({ client, channels, detectors, control = createScanControl(), onProgress = () => {}, per = 100 }) {
+  const blocks = new Map();
+  const places = new Map();
+  const skipped = [];
+  let blocksFetched = 0;
+  let clusterCount = 0;
+
+  for (const [i, ch] of channels.entries()) {
+    const title = ch.title || ch.slug;
+    for (let page = 1; ; page++) {
+      await control.checkpoint();
+      let body;
+      try {
+        body = await client.request(`/channels/${encodeURIComponent(ch.id)}/contents`, { page, per });
+      } catch (err) {
+        if (err?.status === 403 || err?.status === 404) { skipped.push({ channel: ch, message: err.message }); break; }
+        throw err;
+      }
+      for (const item of body?.data || []) {
+        if (!item || item.id == null || item.type === 'Channel' || item.base_type === 'Channel') continue;
+        blocksFetched++;
+        if (!blocks.has(item.id)) blocks.set(item.id, item);
+        if (!places.has(item.id)) places.set(item.id, []);
+        places.get(item.id).push({ channelId: ch.id, channelSlug: ch.slug, channelTitle: title, connectionId: item.connection?.id ?? null });
+      }
+      onProgress({ channelIndex: i + 1, channelCount: channels.length, channelTitle: title, blocksFetched, clusterCount, channelDone: false });
+      if (!body?.meta?.has_more_pages) break;
+    }
+    clusterCount = buildClusters([...blocks.values()], places, detectors).length;
+    onProgress({ channelIndex: i + 1, channelCount: channels.length, channelTitle: title, blocksFetched, clusterCount, channelDone: true });
+  }
+
+  const clusters = buildClusters([...blocks.values()], places, detectors);
+  return { clusters, blocksFetched, uniqueBlocks: blocks.size, skipped };
 }
 
 </script>
@@ -2586,13 +2855,15 @@ function pruneIds(ids, channels) {
 
 </script>
 <script>
-// Are.na Duplicate Finder: six-step wizard shell. Steps 4 to 6 are placeholders for now.
+// Are.na Duplicate Finder: six-step wizard shell. Steps 5 and 6 are placeholders for now.
 // Plain DOM, built from ArenaToolkit components. No framework.
 (function () {
   const ATK = window.ArenaToolkit;
   const h = (tag, attrs, kids) => ATK._el(tag, attrs, kids);
 
-  const throttle = createThrottle();
+  const throttle = createThrottle({
+    onWait: (seconds) => ATK.Toast.show({ message: `are.na asked us to slow down. Waiting ${seconds}s, then carrying on.`, variant: 'notification', duration: seconds * 1000 }),
+  });
   const client = createArenaClient({ throttle });
 
   const STEPS = [
@@ -2604,7 +2875,7 @@ function pruneIds(ids, channels) {
     { id: 'done', label: 'Done', description: 'See what changed.' },
   ];
 
-  const state = { step: 0, furthest: 0, user: null, myChannels: [], channelIds: [], setName: '', detectors: { ...DEFAULT_DETECTORS } };
+  const state = { step: 0, furthest: 0, user: null, myChannels: [], channelIds: [], setName: '', detectors: { ...DEFAULT_DETECTORS }, scan: null };
 
   const els = {
     header: document.getElementById('header'),
@@ -2625,7 +2896,7 @@ function pruneIds(ids, channels) {
     },
     onChange: (user) => {
       state.user = user;
-      if (!user) { state.furthest = 0; state.step = 0; state.myChannels = []; state.channelIds = []; state.setName = ''; state.detectors = { ...DEFAULT_DETECTORS }; }
+      if (!user) { state.furthest = 0; state.step = 0; state.myChannels = []; state.channelIds = []; state.setName = ''; state.detectors = { ...DEFAULT_DETECTORS }; state.scan = null; }
       render();
     },
   });
@@ -2797,6 +3068,78 @@ function pruneIds(ids, channels) {
     ].filter(Boolean);
   }
 
+  /* Scan: read the channels, then group the duplicates. Read-only: nothing is written to are.na. */
+  const scanSignature = () => JSON.stringify([state.channelIds, state.detectors]);
+
+  async function startScan() {
+    const control = createScanControl();
+    const channels = state.channelIds.map(id => state.myChannels.find(c => c.id === id)).filter(Boolean);
+    const progress = ATK.Progress({ label: 'Starting…' });
+    const scan = state.scan = { status: 'running', signature: scanSignature(), control, progress, result: null, error: '' };
+    render();
+    try {
+      scan.result = await scanChannels({
+        client, channels, detectors: state.detectors, control,
+        onProgress: (p) => progress.update({
+          value: p.channelIndex - (p.channelDone ? 0 : 1), max: p.channelCount,
+          label: `Channel ${p.channelIndex} of ${p.channelCount} · ${p.channelTitle}`,
+          detail: `${p.blocksFetched} blocks fetched · ${p.clusterCount} group${p.clusterCount === 1 ? '' : 's'} so far`,
+        }),
+      });
+      scan.status = 'done';
+      for (const sk of scan.result.skipped) {
+        ATK.Toast.show({ message: `Couldn't read ${sk.channel.title || sk.channel.slug}, so it was skipped.`, variant: 'alert', duration: 8000 });
+      }
+    } catch (err) {
+      scan.status = 'error';
+      scan.error = describeConnectError(err);
+    }
+    if (state.scan === scan) render();
+  }
+
+  function stepScan() {
+    const scan = state.scan && state.scan.signature === scanSignature() ? state.scan : null;
+    const n = state.channelIds.length;
+    const head = h('h2', null, 'Scan your channels');
+
+    if (!scan || scan.status === 'error') {
+      return [
+        head,
+        h('p', null, `Ready to read ${n} channel${n === 1 ? '' : 's'}. This only reads: nothing in are.na is changed.`),
+        scan ? h('p', { role: 'alert' }, `The scan stopped. ${scan.error}`) : null,
+        nav({ next: { label: scan ? 'Try again' : 'Start scan', onClick: startScan } }),
+      ].filter(Boolean);
+    }
+
+    if (scan.status === 'running') {
+      const pauseBtn = ATK.Button({
+        variant: 'secondary', children: scan.control.isPaused() ? 'Resume' : 'Pause',
+        onClick: () => { scan.control.isPaused() ? scan.control.resume() : scan.control.pause(); render(); },
+      });
+      return [head, scan.progress, h('div', null, pauseBtn), nav({ back: false })];
+    }
+
+    const { clusters, uniqueBlocks, skipped } = scan.result;
+    const { byChannel, cross } = splitClusters(clusters);
+    const within = byChannel.reduce((sum, g) => sum + g.clusters.length, 0);
+    const lines = clusters.length
+      ? [
+          h('p', null, `Found ${clusters.length} group${clusters.length === 1 ? '' : 's'} of duplicates among ${uniqueBlocks} blocks.`),
+          h('ul', null, [
+            h('li', null, `${within} within a single channel`),
+            h('li', null, `${cross.length} across more than one channel`),
+          ]),
+        ]
+      : [h('p', null, `No duplicates found among ${uniqueBlocks} blocks. Try switching on another way of matching.`)];
+    return [
+      head,
+      ATK.Progress({ value: 1, max: 1, label: 'Scan complete', variant: 'success' }),
+      ...lines,
+      skipped.length ? h('p', { className: 'muted' }, `Skipped (couldn't be read): ${skipped.map(s => s.channel.title || s.channel.slug).join(', ')}.`) : null,
+      nav({ next: clusters.length ? { label: 'Review →', onClick: advance } : { label: 'Scan again', onClick: startScan } }),
+    ].filter(Boolean);
+  }
+
   function stepPlaceholder(i) {
     return [
       h('h2', null, `${i + 1}. ${STEPS[i].label}`),
@@ -2807,7 +3150,7 @@ function pruneIds(ids, channels) {
 
   function render() {
     renderRail();
-    const kids = state.step === 0 ? stepConnect() : state.step === 1 ? stepScope() : state.step === 2 ? stepDetect() : stepPlaceholder(state.step);
+    const kids = state.step === 0 ? stepConnect() : state.step === 1 ? stepScope() : state.step === 2 ? stepDetect() : state.step === 3 ? stepScan() : stepPlaceholder(state.step);
     els.pane.replaceChildren(...kids);
   }
 

@@ -55,6 +55,18 @@ describe('clusterBlocks', () => {
     expect(clusterBlocks(marked, { sourceUrl: true })).toHaveLength(1);
   });
 
+  it('merges groups that overlap, so no block is in two clusters', () => {
+    const blocks = [
+      { id: 1, source: { url: 'https://example.com/a' }, description: { plain: 'https://example.com/b' } },
+      { id: 2, source: { url: 'https://example.com/a' } },
+      { id: 3, source: { url: 'https://example.com/b' } },
+      { id: 4, source: { url: 'https://example.com/other' } },
+    ];
+    const clusters = clusterBlocks(blocks, { sourceUrl: true, descriptionUrls: true });
+    expect(clusters).toHaveLength(1);
+    expect(clusters[0].map(b => b.id).sort()).toEqual([1, 2, 3]);
+  });
+
   it('matches on title + description only when asked, and ignores short ones', () => {
     const long = { title: 'Red print', description: { plain: 'Linocut, two colours, 2019' } };
     const blocks = [{ id: 1, ...long }, { id: 2, ...long }, { id: 3, title: 'ab', description: { plain: 'short' } }];

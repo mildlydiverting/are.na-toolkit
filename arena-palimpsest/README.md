@@ -1,6 +1,6 @@
 # Are.na Palimpsest
 
-Paste an are.na block URL or ID and see everything the API knows about it: the block's own fields, its metadata, and the channels it is connected to (with each channel's metadata).
+Paste an are.na block URL or ID and see everything the API knows about it: the block's own fields, its custom metadata, and the channels it is connected to (with each channel's metadata). For blocks you own, you can edit the custom metadata.
 
 **[Try it](https://mildlydiverting.github.io/are.na-toolkit/arena-palimpsest.html)**
 
@@ -20,9 +20,19 @@ A palimpsest is a manuscript where newer writing sits over scraped-off older tex
 
 are.na doesn't expose connection details (position, who connected a block, when, or connection metadata) from a block's side, so you see the channels themselves.
 
-## Read-only
+## Editing custom metadata
 
-This version never writes to are.na.
+Looking is read-only. Editing writes to are.na, and only on blocks you own.
+
+1. Click **Edit** beside **Custom Metadata**. If you are not connected, or your token is read-only, you are asked to connect with a token that has **write** access. Blocks you don't own show "Read-only" instead.
+2. Each property is a row with a type (**Text**, **Number**, **Checkbox** or **List**), a value and a **⋯** menu (change type, copy value, remove). **+ Add property** adds one. Names use letters, numbers and underscores, up to 40 characters; a value is up to 2000 characters; a block can hold 50 properties.
+3. **Review changes** shows what was added, changed and removed, and the exact request that will be sent. Nothing is written until you press **Save**. **Cancel** discards your edits.
+4. Only the properties you changed are sent, and each keeps its type: a number stays a number.
+5. Keys starting `dupe_` are written by arena-duplicate-finder and are locked until you press **Edit anyway**.
+
+**Tags** use the key `tags` (or any List property). are.na values are single strings, so a list is stored as a JSON array written as text, for example `["journal", "silly thing"]`. In are.na's own JSON view the quotes look escaped (`"[\"journal\", ...]"`): that is just how JSON shows a string containing quotes; the stored text has no backslashes. Older `- tag` bullet lists are still read, and become JSON the next time you edit them.
+
+Keyboard: Tab moves through the rows, Enter opens a row's menu, the arrow keys move within it and Escape closes it.
 
 ## Building
 

@@ -13,7 +13,8 @@ export function keysForBlock(b, opts) {
   return [...keys];
 }
 
-// Blocks sharing any key land in the same bucket; buckets of 2+ are clusters.
+// Blocks sharing any key are in the same cluster; groups that overlap (a block with two different
+// keys can link two buckets) are merged, so a block never appears in two clusters. Clusters have 2+ blocks.
 // A block connected into several channels appears once per channel in a scan, so de-dupe by id first.
 // With opts.skipMarked, blocks already carrying metadata.dupe_of are left out.
 export function clusterBlocks(blocks, opts) {
@@ -28,5 +29,25 @@ export function clusterBlocks(blocks, opts) {
       buckets.get(k).push(b);
     }
   }
-  return [...buckets.values()].filter(cluster => cluster.length >= 2);
+
+  const parent = new Map();
+  const find = (id) => {
+    while (parent.get(id) !== id) { parent.set(id, parent.get(parent.get(id))); id = parent.get(id); }
+    return id;
+  };
+  const byId = new Map();
+  for (const bucket of buckets.values()) {
+    if (bucket.length < 2) continue;
+    for (const b of bucket) { byId.set(b.id, b); if (!parent.has(b.id)) parent.set(b.id, b.id); }
+    const root = find(bucket[0].id);
+    for (const b of bucket.slice(1)) parent.set(find(b.id), root);
+  }
+
+  const groups = new Map();
+  for (const [id, b] of byId) {
+    const root = find(id);
+    if (!groups.has(root)) groups.set(root, []);
+    groups.get(root).push(b);
+  }
+  return [...groups.values()];
 }

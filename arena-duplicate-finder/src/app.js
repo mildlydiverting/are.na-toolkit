@@ -1,10 +1,12 @@
-// Are.na Duplicate Finder: six-step wizard shell. Steps 4 to 6 are placeholders for now.
+// Are.na Duplicate Finder: six-step wizard shell. Steps 5 and 6 are placeholders for now.
 // Plain DOM, built from ArenaToolkit components. No framework.
 (function () {
   const ATK = window.ArenaToolkit;
   const h = (tag, attrs, kids) => ATK._el(tag, attrs, kids);
 
-  const throttle = createThrottle();
+  const throttle = createThrottle({
+    onWait: (seconds) => ATK.Toast.show({ message: `are.na asked us to slow down. Waiting ${seconds}s, then carrying on.`, variant: 'notification', duration: seconds * 1000 }),
+  });
   const client = createArenaClient({ throttle });
 
   const STEPS = [
@@ -16,7 +18,7 @@
     { id: 'done', label: 'Done', description: 'See what changed.' },
   ];
 
-  const state = { step: 0, furthest: 0, user: null, myChannels: [], channelIds: [], setName: '', detectors: { ...DEFAULT_DETECTORS } };
+  const state = { step: 0, furthest: 0, user: null, myChannels: [], channelIds: [], setName: '', detectors: { ...DEFAULT_DETECTORS }, scan: null };
 
   const els = {
     header: document.getElementById('header'),
@@ -37,7 +39,7 @@
     },
     onChange: (user) => {
       state.user = user;
-      if (!user) { state.furthest = 0; state.step = 0; state.myChannels = []; state.channelIds = []; state.setName = ''; state.detectors = { ...DEFAULT_DETECTORS }; }
+      if (!user) { state.furthest = 0; state.step = 0; state.myChannels = []; state.channelIds = []; state.setName = ''; state.detectors = { ...DEFAULT_DETECTORS }; state.scan = null; }
       render();
     },
   });
@@ -209,6 +211,78 @@
     ].filter(Boolean);
   }
 
+  /* Scan: read the channels, then group the duplicates. Read-only: nothing is written to are.na. */
+  const scanSignature = () => JSON.stringify([state.channelIds, state.detectors]);
+
+  async function startScan() {
+    const control = createScanControl();
+    const channels = state.channelIds.map(id => state.myChannels.find(c => c.id === id)).filter(Boolean);
+    const progress = ATK.Progress({ label: 'Starting…' });
+    const scan = state.scan = { status: 'running', signature: scanSignature(), control, progress, result: null, error: '' };
+    render();
+    try {
+      scan.result = await scanChannels({
+        client, channels, detectors: state.detectors, control,
+        onProgress: (p) => progress.update({
+          value: p.channelIndex - (p.channelDone ? 0 : 1), max: p.channelCount,
+          label: `Channel ${p.channelIndex} of ${p.channelCount} · ${p.channelTitle}`,
+          detail: `${p.blocksFetched} blocks fetched · ${p.clusterCount} group${p.clusterCount === 1 ? '' : 's'} so far`,
+        }),
+      });
+      scan.status = 'done';
+      for (const sk of scan.result.skipped) {
+        ATK.Toast.show({ message: `Couldn't read ${sk.channel.title || sk.channel.slug}, so it was skipped.`, variant: 'alert', duration: 8000 });
+      }
+    } catch (err) {
+      scan.status = 'error';
+      scan.error = describeConnectError(err);
+    }
+    if (state.scan === scan) render();
+  }
+
+  function stepScan() {
+    const scan = state.scan && state.scan.signature === scanSignature() ? state.scan : null;
+    const n = state.channelIds.length;
+    const head = h('h2', null, 'Scan your channels');
+
+    if (!scan || scan.status === 'error') {
+      return [
+        head,
+        h('p', null, `Ready to read ${n} channel${n === 1 ? '' : 's'}. This only reads: nothing in are.na is changed.`),
+        scan ? h('p', { role: 'alert' }, `The scan stopped. ${scan.error}`) : null,
+        nav({ next: { label: scan ? 'Try again' : 'Start scan', onClick: startScan } }),
+      ].filter(Boolean);
+    }
+
+    if (scan.status === 'running') {
+      const pauseBtn = ATK.Button({
+        variant: 'secondary', children: scan.control.isPaused() ? 'Resume' : 'Pause',
+        onClick: () => { scan.control.isPaused() ? scan.control.resume() : scan.control.pause(); render(); },
+      });
+      return [head, scan.progress, h('div', null, pauseBtn), nav({ back: false })];
+    }
+
+    const { clusters, uniqueBlocks, skipped } = scan.result;
+    const { byChannel, cross } = splitClusters(clusters);
+    const within = byChannel.reduce((sum, g) => sum + g.clusters.length, 0);
+    const lines = clusters.length
+      ? [
+          h('p', null, `Found ${clusters.length} group${clusters.length === 1 ? '' : 's'} of duplicates among ${uniqueBlocks} blocks.`),
+          h('ul', null, [
+            h('li', null, `${within} within a single channel`),
+            h('li', null, `${cross.length} across more than one channel`),
+          ]),
+        ]
+      : [h('p', null, `No duplicates found among ${uniqueBlocks} blocks. Try switching on another way of matching.`)];
+    return [
+      head,
+      ATK.Progress({ value: 1, max: 1, label: 'Scan complete', variant: 'success' }),
+      ...lines,
+      skipped.length ? h('p', { className: 'muted' }, `Skipped (couldn't be read): ${skipped.map(s => s.channel.title || s.channel.slug).join(', ')}.`) : null,
+      nav({ next: clusters.length ? { label: 'Review →', onClick: advance } : { label: 'Scan again', onClick: startScan } }),
+    ].filter(Boolean);
+  }
+
   function stepPlaceholder(i) {
     return [
       h('h2', null, `${i + 1}. ${STEPS[i].label}`),
@@ -219,7 +293,7 @@
 
   function render() {
     renderRail();
-    const kids = state.step === 0 ? stepConnect() : state.step === 1 ? stepScope() : state.step === 2 ? stepDetect() : stepPlaceholder(state.step);
+    const kids = state.step === 0 ? stepConnect() : state.step === 1 ? stepScope() : state.step === 2 ? stepDetect() : state.step === 3 ? stepScan() : stepPlaceholder(state.step);
     els.pane.replaceChildren(...kids);
   }
 

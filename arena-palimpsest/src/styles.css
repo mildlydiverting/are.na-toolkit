@@ -223,9 +223,12 @@ body {
 .meta-row__name { font: var(--text-ui-strong); color: var(--text-muted); overflow-wrap: anywhere; }
 .meta-type { font: var(--text-body-sm); color: var(--text-muted); }
 .meta-note { font: var(--text-body-sm); color: var(--text-muted); }
-.meta-error { margin: 0; font: var(--text-body-sm); color: var(--accent-alert); }
+/* Alert orange is below 4.5:1 as text on Light and Dawn, so it only colours the icon. */
+.meta-error { margin: 0; font: var(--text-body-sm); color: var(--text-primary); }
 .meta-error:empty { display: none; }
-.meta-warning { margin: 0; color: var(--accent-alert); }
+.meta-warning { margin: 0; color: var(--text-primary); }
+.meta-error:not(:empty)::before,
+.meta-warning::before { content: "\26A0\00A0"; color: var(--accent-alert); }
 .meta-check-label { display: inline-flex; gap: var(--space-2); align-items: center; cursor: pointer; }
 .meta-check { accent-color: var(--accent-primary); width: 18px; height: 18px; }
 .meta-check:focus-visible,

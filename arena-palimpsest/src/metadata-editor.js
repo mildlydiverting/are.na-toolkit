@@ -215,7 +215,16 @@ function createMetadataEditor({ block, client, renderView, requestWrite, onSaved
     const node = h('div', { className: 'meta-menu' }, ATK.Menu({ items }));
     wrap.append(node);
     menu = { row, node, button };
-    node.querySelector('button')?.focus();
+    const entries = [...node.querySelectorAll('button')];
+    node.addEventListener('keydown', (e) => {
+      const i = entries.indexOf(document.activeElement);
+      if (e.key === 'ArrowDown') { e.preventDefault(); entries[(i + 1) % entries.length].focus(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); entries[(i - 1 + entries.length) % entries.length].focus(); }
+    });
+    wrap.addEventListener('focusout', (e) => {
+      if (menu && menu.node === node && !wrap.contains(e.relatedTarget)) closeMenu();
+    });
+    entries[0]?.focus();
   }
 
   async function copyValue(row) {
@@ -336,6 +345,7 @@ function createMetadataEditor({ block, client, renderView, requestWrite, onSaved
     limitsEl = h('p', { className: 'meta-error', role: 'alert' });
     countEl = h('span', { className: 'muted' });
     reviewBtn = ATK.Button({ variant: 'primary', children: 'Review changes', disabled: true, onClick: openReview });
+    reviewBtn.id = 'meta-review-btn';
     const addBtn = ATK.Button({ variant: 'ghost', size: 'sm', children: '+ Add property', onClick: addRow });
     addBtn.id = 'meta-add';
     const body = h('div', { className: 'meta-edit' }, [
@@ -378,9 +388,11 @@ function createMetadataEditor({ block, client, renderView, requestWrite, onSaved
       ]),
     );
     if (saveError) body.push(h('p', { className: 'meta-warning', role: 'alert' }, saveError));
+    const saveBtn = ATK.Button({ variant: 'primary', children: busy === 'saving' ? 'Saving…' : 'Save', disabled: busy === 'saving', onClick: save });
+    saveBtn.id = 'meta-save';
     body.push(h('div', { className: 'meta-actions' }, [
-      ATK.Button({ variant: 'primary', children: busy === 'saving' ? 'Saving…' : 'Save', disabled: busy === 'saving', onClick: save }),
-      ATK.Button({ variant: 'secondary', children: 'Back to editing', disabled: busy === 'saving', onClick: () => { saveError = ''; mode = 'edit'; render(); } }),
+      saveBtn,
+      ATK.Button({ variant: 'secondary', children: 'Back to editing', disabled: busy === 'saving', onClick: () => { saveError = ''; mode = 'edit'; focusAfter = 'meta-review-btn'; render(); } }),
       ATK.Button({ variant: 'ghost', children: 'Cancel', disabled: busy === 'saving', onClick: cancel }),
     ]));
     return h('div', { className: 'meta-review' }, body);
@@ -405,7 +417,9 @@ function createMetadataEditor({ block, client, renderView, requestWrite, onSaved
       if (current.can && current.can.manage === false) {
         head.push(h('span', { className: 'muted', title: 'You can only edit blocks you own' }, 'Read-only'));
       } else {
-        head.push(ATK.Button({ variant: 'secondary', size: 'sm', children: 'Edit', onClick: startEditing }));
+        const editBtn = ATK.Button({ variant: 'secondary', size: 'sm', children: 'Edit', onClick: startEditing });
+        editBtn.id = 'meta-edit';
+        head.push(editBtn);
       }
     }
     return h('div', { className: 'metadata__head' }, head);
@@ -455,6 +469,8 @@ function createMetadataEditor({ block, client, renderView, requestWrite, onSaved
     rows = Object.entries(original).map(([k, v]) => makeRow(k, v, false));
     mode = 'edit';
     saveError = '';
+    const first = rows.find((r) => r.unlocked);
+    focusAfter = first ? `meta-val-${first.id}` : 'meta-add';
     listen(true);
     render();
     live.textContent = 'Editing metadata.';
@@ -472,7 +488,7 @@ function createMetadataEditor({ block, client, renderView, requestWrite, onSaved
 
   function cancel() {
     leaveEditing();
-    focusAfter = null;
+    focusAfter = 'meta-edit';
     render();
     live.textContent = 'Edits discarded.';
   }
@@ -493,6 +509,7 @@ function createMetadataEditor({ block, client, renderView, requestWrite, onSaved
     }
     saveError = '';
     mode = 'review';
+    focusAfter = 'meta-save';
     render();
   }
 
@@ -507,6 +524,7 @@ function createMetadataEditor({ block, client, renderView, requestWrite, onSaved
       current = { ...current, ...saved };
       leaveEditing();
       notice = '';
+      focusAfter = 'meta-edit';
       render();
       live.textContent = 'Saved.';
       if (onSaved) onSaved(current);
