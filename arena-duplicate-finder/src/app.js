@@ -1,4 +1,4 @@
-// Are.na Duplicate Finder: six-step wizard shell. Steps 5 and 6 are placeholders for now.
+// Are.na Duplicate Finder: six-step wizard shell. Step 6 is a placeholder for now.
 // Plain DOM, built from ArenaToolkit components. No framework.
 (function () {
   const ATK = window.ArenaToolkit;
@@ -283,6 +283,49 @@
     ].filter(Boolean);
   }
 
+  /* Resolve one group: a dry run only describes it; live runs write to are.na, then keep the record for Done and Undo. */
+  async function resolveCluster({ item, decision, dryRun }) {
+    const plan = planResolution(item.cluster, decision, new Date(), state.user?.id ?? null);
+    if (dryRun) return { ...describePlan(plan, { dryRun: true }), done: [], failed: [], undo: null };
+    const out = await executeResolution(client, plan);
+    const { notes } = describePlan(plan, { dryRun: false });
+    const moved = out.undo.dupes.filter(d => d.marked || d.removedFrom.length || d.foreign);
+    const orphaned = moved.filter(d => !d.foreign); // someone else's block isn't yours to delete
+    if (moved.length) {
+      if (orphaned.length) addOrphans(localStorage, plan.canonicalId, orphaned);
+      pushUndo(localStorage, { clusterId: item.cluster.id, ...out.undo, resolved_at: new Date().toISOString() });
+      addOffenders(localStorage, item.cluster.channelIds);
+    }
+    return { lines: out.done, notes, done: out.done, failed: out.failed, undo: { ...out.undo, clusterId: item.cluster.id } };
+  }
+
+  async function undoCluster(undo) {
+    const out = await undoResolution(client, undo);
+    removeOrphans(localStorage, undo.dupes.map(d => d.id));
+    dropUndo(localStorage, undo.clusterId);
+    return out;
+  }
+
+  /* Review: decide, group by group. */
+  function stepReview() {
+    const scan = state.scan;
+    if (!scan || scan.status !== 'done') return [h('p', { className: 'muted' }, 'Run a scan first.'), nav({})];
+    if (!scan.review) {
+      scan.decisions = {};
+      scan.review = createReviewView({
+        items: orderClusters(scan.result.clusters), decisions: scan.decisions, onFinish: advance,
+        onResolve: resolveCluster, onUndo: undoCluster,
+        getConnectionCount: async (id) => (await client.request(`/blocks/${id}/connections`, { per: 1 }))?.meta?.total_count ?? 0,
+        myUserId: state.user?.id ?? null,
+      });
+    }
+    return [scan.review.element, nav({ next: null })];
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (state.step === 4 && state.scan?.review) state.scan.review.handleKey(e);
+  });
+
   function stepPlaceholder(i) {
     return [
       h('h2', null, `${i + 1}. ${STEPS[i].label}`),
@@ -293,7 +336,8 @@
 
   function render() {
     renderRail();
-    const kids = state.step === 0 ? stepConnect() : state.step === 1 ? stepScope() : state.step === 2 ? stepDetect() : state.step === 3 ? stepScan() : stepPlaceholder(state.step);
+    document.querySelector('.dupes-main').classList.toggle('is-wide', state.step === 4);
+    const kids = state.step === 0 ? stepConnect() : state.step === 1 ? stepScope() : state.step === 2 ? stepDetect() : state.step === 3 ? stepScan() : state.step === 4 ? stepReview() : stepPlaceholder(state.step);
     els.pane.replaceChildren(...kids);
   }
 

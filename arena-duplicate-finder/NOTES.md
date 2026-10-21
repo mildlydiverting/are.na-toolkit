@@ -23,6 +23,10 @@ Kim has tried steps 1 and 2 against her real account and they work. Step 3 (Dete
 
 1. Progress and Toast, then Step 4 Scan, Radio, Step 5 Review, Step 6 Done, Resolve, keyboard shortcuts, then ship (`docs/` copy, `docs/index.html` card, preview jpg, `AGENTS.md` update).
 
+## Ideas for later
+
+- **Orphanage channel.** When a keeper is chosen and the other blocks lose their connections, offer an option to move those connections to a channel called "orphanage" instead of just deleting them. That preserves the old blocks (and anything others have linked to them) in one findable place. Needs: find-or-create the channel (`createChannel` is in the MCP list; add to `arena-client.js` after checking v3), then `createConnection` into it before `deleteConnection` from the originals. Off by default; surfaces in Review (5b) beside the merge action, and in the dry run. (Kim, 2026-10-21.)
+
 ## Departures from the plan
 
 - **Delete takes a connection id.** `DELETE /v3/connections/{id}`, not channel + block. `GET /blocks/{id}/connections` returns plain channels with no connection id. The id appears only as `connection.id` on items from `GET /channels/{id}/contents` (and in `createConnection` results). So **the Scan step must record `{block, channel, connection.id}`** while paginating. A duplicate sitting in an unscanned channel has no id: leave that connection alone and list it in the summary.
