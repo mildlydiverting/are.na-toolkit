@@ -1,6 +1,9 @@
 // PAT connect widget: paste a token, test it against /me, remember it in localStorage.
 // Built only from ArenaToolkit components. Options for tools that change things:
 //  - requireWrite: the token is checked for write scope before it is accepted or saved.
+//  - writeMessage: a line shown above the form, e.g. "Editing needs a token with write access."
+//  - For a page that is read-only until asked: leave requireWrite off, call ensureWrite() (true / false /
+//    null for not connected), and if it is not true call setRequireWrite(true, message) and open the form.
 //  - panel: arena-merge's Connect layout: a labelled field, a "Remember on this computer"
 //    checkbox (unticked, the token lives in sessionStorage and goes with the tab), and an
 //    account chip once connected. loadDetail(user) can fetch the chip's second line.
@@ -45,6 +48,21 @@ export async function checkWriteAccess(client) {
   }
 }
 
+// Remembers whether the connected token can write, so a page can ask "can I edit?" without a request each time.
+// Call reset() when the token changes; mark(true) when a connect has already proved write access.
+export function createWriteGate(client) {
+  let answer = null;
+  return {
+    mark(value) { answer = value; },
+    reset() { answer = null; },
+    // true / false from the cache or one probe. A failed probe (401, offline) throws and caches nothing.
+    async check() {
+      if (answer === null) answer = await checkWriteAccess(client);
+      return answer;
+    },
+  };
+}
+
 function statusRow(label, message) {
   const row = document.createElement('div');
   Object.assign(row.style, { display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', alignItems: 'center' });
@@ -66,11 +84,15 @@ export function createAuthStep({
   session = globalThis.sessionStorage,
   storageKey = AUTH_STORAGE_KEY,
   onChange = null,
-  requireWrite = false,
+  requireWrite: initialRequireWrite = false,
+  writeMessage: initialWriteMessage = null,
   panel = false,
   loadDetail = null,
 } = {}) {
   const ATK = window.ArenaToolkit;
+  let requireWrite = initialRequireWrite;
+  let writeMessage = initialWriteMessage;
+  const writeGate = createWriteGate(client);
   let user = null;
   let detail = null;
   let remember = true;
@@ -125,6 +147,8 @@ export function createAuthStep({
       return;
     }
 
+    if (writeMessage) element.append(node('p', writeMessage, { margin: 0, font: 'var(--text-ui-strong)' }));
+
     const intro = node('p', null, { margin: 0 });
     intro.append(
       panel ? 'Create a ' : 'Paste a ',
@@ -175,6 +199,7 @@ export function createAuthStep({
     }
     render(ATK.Badge({ children: 'Checking…' }));
     client.setToken(token);
+    writeGate.reset();
     try {
       user = await client.getCurrentUser();
     } catch (err) {
@@ -198,6 +223,7 @@ export function createAuthStep({
         render(statusRow('Read-only token', 'This token can\'t write. Create a new one with the write scope ticked.'));
         return null;
       }
+      writeGate.mark(true);
     }
     // Remembered tokens go to localStorage; otherwise sessionStorage, which goes with the tab.
     clearToken(storage, storageKey);
@@ -224,9 +250,27 @@ export function createAuthStep({
     return result;
   }
 
+  // Can the connected token write? true / false, or null when nobody is connected.
+  // Checked once per token (the DELETE /connections/0 probe); throws on 401 or a network error.
+  async function ensureWrite() {
+    if (!user) return null;
+    return writeGate.check();
+  }
+
+  // Switch to write mode, for a page that is read-only until the person asks to edit.
+  // message appears above the form. A connected token is dropped so the form can take a write token.
+  // setRequireWrite(false) puts the widget back to its read-only wording.
+  function setRequireWrite(enabled = true, message = null) {
+    requireWrite = !!enabled;
+    writeMessage = enabled ? message : null;
+    if (user) disconnect();
+    else render();
+  }
+
   function disconnect() {
     user = null;
     detail = null;
+    writeGate.reset();
     client.setToken(null);
     clearToken(storage, storageKey);
     clearToken(session, storageKey);
@@ -235,5 +279,5 @@ export function createAuthStep({
   }
 
   render();
-  return { element, connect, restore, disconnect, getUser: () => user };
+  return { element, connect, restore, disconnect, ensureWrite, setRequireWrite, getUser: () => user };
 }

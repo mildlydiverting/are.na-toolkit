@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { checkWriteAccess, initialsFor, readSavedToken, saveToken, clearToken, describeConnectError, AUTH_STORAGE_KEY } from './auth-step.js';
+import { checkWriteAccess, createWriteGate, initialsFor, readSavedToken, saveToken, clearToken, describeConnectError, AUTH_STORAGE_KEY } from './auth-step.js';
 
 function fakeStorage(initial = {}) {
   const data = { ...initial };
@@ -77,6 +77,55 @@ describe('checkWriteAccess', () => {
   it('rethrows anything else, such as 401 or a network error', async () => {
     await expect(checkWriteAccess(failing(401))).rejects.toMatchObject({ status: 401 });
     await expect(checkWriteAccess({ deleteConnection: async () => { throw new TypeError('offline'); } })).rejects.toThrow('offline');
+  });
+});
+
+describe('createWriteGate', () => {
+  const counting = status => {
+    const client = { calls: 0, deleteConnection: async () => { client.calls++; throw Object.assign(new Error('x'), { status }); } };
+    return client;
+  };
+
+  it('probes once and then answers from memory', async () => {
+    const client = counting(404);
+    const gate = createWriteGate(client);
+    expect(await gate.check()).toBe(true);
+    expect(await gate.check()).toBe(true);
+    expect(client.calls).toBe(1);
+  });
+
+  it('reports a read-only token as false', async () => {
+    expect(await createWriteGate(counting(403)).check()).toBe(false);
+  });
+
+  it('skips the probe when a connect already proved write access', async () => {
+    const client = counting(403);
+    const gate = createWriteGate(client);
+    gate.mark(true);
+    expect(await gate.check()).toBe(true);
+    expect(client.calls).toBe(0);
+  });
+
+  it('probes again after reset (a new token)', async () => {
+    const client = counting(404);
+    const gate = createWriteGate(client);
+    await gate.check();
+    gate.reset();
+    await gate.check();
+    expect(client.calls).toBe(2);
+  });
+
+  it('caches nothing when the probe fails', async () => {
+    let fail = true;
+    const gate = createWriteGate({
+      deleteConnection: async () => {
+        if (fail) throw Object.assign(new Error('x'), { status: 401 });
+        throw Object.assign(new Error('x'), { status: 404 });
+      },
+    });
+    await expect(gate.check()).rejects.toMatchObject({ status: 401 });
+    fail = false;
+    expect(await gate.check()).toBe(true);
   });
 });
 
