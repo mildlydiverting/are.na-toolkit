@@ -1,5 +1,5 @@
 // PAT connect widget: paste a token, test it against /me, remember it in localStorage.
-// Built only from ArenaToolkit components. Options for tools that change things:
+// The look is ArenaToolkit.AuthPanel (docs in shared/ui/AuthPanel/). Options for tools that change things:
 //  - requireWrite: the token is checked for write scope before it is accepted or saved.
 //  - writeMessage: a line shown above the form, e.g. "Editing needs a token with write access."
 //  - For a page that is read-only until asked: leave requireWrite off, call ensureWrite() (true / false /
@@ -20,12 +20,6 @@ export function saveToken(storage, token, key = AUTH_STORAGE_KEY) {
 
 export function clearToken(storage, key = AUTH_STORAGE_KEY) {
   try { storage.removeItem(key); } catch { /* nothing to clear */ }
-}
-
-// Two letters for the account chip's avatar: "Kim Plowright" -> "KP", "kim-plowright" -> "K".
-export function initialsFor(user) {
-  const name = String(user?.full_name || user?.slug || '?').trim();
-  return name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?';
 }
 
 export function describeConnectError(err) {
@@ -63,21 +57,8 @@ export function createWriteGate(client) {
   };
 }
 
-function statusRow(label, message) {
-  const row = document.createElement('div');
-  Object.assign(row.style, { display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', alignItems: 'center' });
-  row.append(window.ArenaToolkit.Badge({ variant: 'alert', children: label }), message);
-  return row;
-}
-
-function node(tag, text, style) {
-  const n = document.createElement(tag);
-  if (text != null) n.textContent = text;
-  if (style) Object.assign(n.style, style);
-  return n;
-}
-
 // client: from createArenaClient(). onChange(user | null) fires on connect and disconnect.
+// The look is ArenaToolkit.AuthPanel; this keeps the token, the checks and the storage.
 export function createAuthStep({
   client,
   storage = globalThis.localStorage,
@@ -89,7 +70,6 @@ export function createAuthStep({
   panel = false,
   loadDetail = null,
 } = {}) {
-  const ATK = window.ArenaToolkit;
   let requireWrite = initialRequireWrite;
   let writeMessage = initialWriteMessage;
   const writeGate = createWriteGate(client);
@@ -97,114 +77,36 @@ export function createAuthStep({
   let detail = null;
   let remember = true;
 
-  const element = node('div', null, { display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' });
+  const element = window.ArenaToolkit.AuthPanel({
+    panel,
+    tokenUrl: AUTH_TOKEN_URL,
+    onConnect: (token) => connect(token),
+    onDisconnect: () => disconnect(),
+    onRememberChange: (value) => { remember = value; },
+  });
 
-  function rememberCheck() {
-    const box = document.createElement('input');
-    box.type = 'checkbox';
-    box.checked = remember;
-    box.addEventListener('change', () => { remember = box.checked; });
-    const text = node('span');
-    text.append('Remember on this computer', node('br'), node('span', 'Unticked, it is forgotten when you close the tab.', {
-      color: 'var(--text-muted)', font: 'var(--text-body-sm)',
-    }));
-    const label = node('label', null, { display: 'flex', gap: 'var(--space-2)', alignItems: 'flex-start', cursor: 'pointer' });
-    label.append(box, text);
-    return label;
+  // status: null, or { tone: 'error' | 'info', label?, message }
+  function render(status = null) {
+    element.update({ user, detail, status, requireWrite, writeMessage, remember });
   }
 
-  function accountChip() {
-    const avatar = node('div', initialsFor(user), {
-      width: '32px', height: '32px', borderRadius: '50%', flexShrink: '0',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'var(--accent-primary)', color: 'var(--surface-page)', font: 'var(--text-ui-strong)',
-    });
-    const who = node('div', null, { flex: '1', minWidth: '0', color: 'var(--text-secondary)' });
-    const name = node('strong', user.full_name || user.slug, { color: 'var(--text-primary)' });
-    who.append('Signed in as ', name);
-    if (detail) who.append(node('br'), node('span', detail, { color: 'var(--text-muted)', font: 'var(--text-body-sm)' }));
-    const chip = node('div', null, {
-      display: 'flex', alignItems: 'center', gap: 'var(--space-3)', padding: 'var(--space-3)',
-      background: 'var(--surface-sunken)', borderRadius: 'var(--radius-sm)',
-    });
-    chip.append(avatar, who, ATK.Button({ variant: 'ghost', size: 'sm', children: 'Disconnect', onClick: disconnect }));
-    return chip;
-  }
-
-  function render(statusNode) {
-    element.replaceChildren();
-    if (user && panel) {
-      element.append(accountChip());
-      return;
-    }
-    if (user) {
-      const row = node('div', null, { display: 'flex', alignItems: 'center', gap: 'var(--space-2)' });
-      row.append(
-        ATK.Badge({ variant: 'success', children: `Connected as @${user.slug}` }),
-        ATK.Button({ variant: 'ghost', size: 'sm', children: 'Disconnect', onClick: disconnect }),
-      );
-      element.append(row);
-      return;
-    }
-
-    if (writeMessage) element.append(node('p', writeMessage, { margin: 0, font: 'var(--text-ui-strong)' }));
-
-    const intro = node('p', null, { margin: 0 });
-    intro.append(
-      panel ? 'Create a ' : 'Paste a ',
-      ATK.Link({ href: AUTH_TOKEN_URL, children: 'personal access token' }),
-    );
-    if (requireWrite) {
-      intro.append(panel
-        ? ' with read and write ticked, then paste it below. The token stays in your browser only.'
-        : ' with the write scope ticked. This tool changes your account: it adds and removes connections and edits blocks, so a read-only token will not work.');
-    } else {
-      intro.append(' with read access. That is all this tool needs. Some content, including private channels, only shows up once you are connected.');
-    }
-    intro.querySelector('a').target = '_blank';
-    intro.querySelector('a').rel = 'noopener';
-
-    const input = ATK.Input({ type: 'password', placeholder: panel ? 'paste it here' : 'Paste your token here' });
-    input.id = 'arena-token';
-    input.autocomplete = 'off';
-    input.spellcheck = false;
-    input.style.flex = '1';
-    const submit = () => connect(input.value);
-    input.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
-
-    const row = node('div', null, { display: 'flex', gap: 'var(--space-2)' });
-    row.append(input, ATK.Button({ variant: panel ? 'secondary' : 'primary', children: 'Connect', onClick: submit }));
-
-    const note = node('p', 'Your token stays in this browser and is only ever sent to are.na.', {
-      margin: 0, color: 'var(--text-muted)', font: 'var(--text-body-sm)',
-    });
-
-    if (panel) {
-      const label = node('label', 'Personal access token', { font: 'var(--text-ui-strong)', color: 'var(--text-muted)' });
-      label.htmlFor = 'arena-token';
-      element.append(intro, label, row, rememberCheck());
-      if (statusNode) element.append(statusNode);
-      return;
-    }
-
-    element.append(intro, row, note);
-    if (statusNode) element.append(statusNode);
-  }
+  const failure = (label, message) => ({ tone: 'error', label, message });
+  const progress = (message) => ({ tone: 'info', message });
 
   async function connect(rawToken) {
     const token = String(rawToken || '').trim();
     if (!token) {
-      render(statusRow('No token', 'Paste a token first.'));
+      render(failure('No token', 'Paste a token first.'));
       return null;
     }
-    render(ATK.Badge({ children: 'Checking…' }));
+    render(progress('Checking token…'));
     client.setToken(token);
     writeGate.reset();
     try {
       user = await client.getCurrentUser();
     } catch (err) {
       client.setToken(null);
-      render(statusRow('Couldn\'t connect', describeConnectError(err)));
+      render(failure("Couldn't connect", describeConnectError(err)));
       return null;
     }
     if (requireWrite) {
@@ -214,13 +116,13 @@ export function createAuthStep({
       } catch (err) {
         client.setToken(null);
         user = null;
-        render(statusRow('Couldn\'t connect', describeConnectError(err)));
+        render(failure("Couldn't connect", describeConnectError(err)));
         return null;
       }
       if (!writable) {
         client.setToken(null);
         user = null;
-        render(statusRow('Read-only token', 'This token can\'t write. Create a new one with the write scope ticked.'));
+        render(failure('Read-only token', "This token can't write. Create a new one with the write scope ticked."));
         return null;
       }
       writeGate.mark(true);
@@ -231,7 +133,7 @@ export function createAuthStep({
     saveToken(remember ? storage : session, token, storageKey);
     detail = null;
     if (loadDetail) {
-      render(node('p', 'Loading your channels…', { margin: 0, color: 'var(--text-muted)' }));
+      render(progress('Loading your channels…'));
       try { detail = await loadDetail(user); } catch { detail = null; }
     }
     render();

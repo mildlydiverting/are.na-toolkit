@@ -1,0 +1,19 @@
+<!-- @dsCard group="Feedback" height=200 -->
+<!doctype html>
+<html>
+<head><style>
+  body { margin: 0; padding: 20px; background: var(--surface-page); color: var(--text-primary); font-family: var(--font-sans); }
+  #root { display: flex; flex-direction: column; gap: 12px; }
+</style></head>
+<body>
+<div id="root"></div>
+<script>
+  var ATK = window.ArenaToolkit, root = document.getElementById('root');
+  root.append(
+    ATK.StatusMessage({ tone: 'info', children: 'Checking token…' }),
+    ATK.StatusMessage({ tone: 'success', label: 'Connected', children: 'You can now edit blocks you own.' }),
+    ATK.StatusMessage({ tone: 'error', label: "Couldn't connect", children: "are.na didn't recognise that token. Check it was copied whole." })
+  );
+</script>
+</body>
+</html>

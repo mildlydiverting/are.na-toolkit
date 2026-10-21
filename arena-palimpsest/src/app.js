@@ -30,8 +30,8 @@
   }
 
   /* ── Header and Connect ──────────────────────────────────────── */
-  const authSlot = h('div', { className: 'palimpsest-header__auth' });
   let connectModal = null;
+  const account = ATK.AccountMenu({ onConnect: () => openConnect(), onDisconnect: () => auth.disconnect() });
 
   // Set when Edit needs a write token: the Connect modal then asks for one, and once it is
   // connected the block is reloaded (so `can` is known) and put straight into edit mode.
@@ -40,7 +40,7 @@
   const auth = createAuthStep({
     client,
     onChange: (user) => {
-      renderAuthSlot(user);
+      account.setUser(user);
       if (!user) return;
       closeConnect();
       if (pendingEditId != null) {
@@ -92,39 +92,9 @@
     return { ok: false };
   }
 
-  let menuEl = null;
-  function closeMenu() {
-    menuEl?.remove();
-    menuEl = null;
-  }
-
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { closeConnect(); closeMenu(); }
+    if (e.key === 'Escape') closeConnect();
   });
-  document.addEventListener('click', (e) => {
-    if (menuEl && !authSlot.contains(e.target)) closeMenu();
-  });
-
-  function toggleMenu() {
-    if (menuEl) { closeMenu(); return; }
-    menuEl = h('div', { className: 'auth-menu' }, ATK.Menu({
-      items: [{ label: 'Disconnect', onClick: () => { closeMenu(); auth.disconnect(); } }],
-    }));
-    authSlot.append(menuEl);
-  }
-
-  function renderAuthSlot(user) {
-    closeMenu();
-    if (!user) {
-      const link = ATK.Link({ children: 'Connect →' });
-      link.addEventListener('click', (e) => { e.preventDefault(); openConnect(); });
-      authSlot.replaceChildren(link);
-      return;
-    }
-    const chip = h('button', { className: 'chip-button', type: 'button', 'aria-haspopup': 'menu', onClick: toggleMenu },
-      ATK.Badge({ variant: 'success', children: `Connected as @${user.slug} ⌄` }));
-    authSlot.replaceChildren(chip);
-  }
 
   function mountHeader() {
     const crumbs = h('nav', { className: 'crumbs', 'aria-label': 'Breadcrumb' },
@@ -132,9 +102,8 @@
         h('li', null, ATK.Link({ variant: 'muted', href: 'index.html', children: 'Are.na Tools' })),
         h('li', { 'aria-current': 'page' }, 'Are.na Palimpsest'),
       ]));
-    const end = h('div', { className: 'palimpsest-header__end' }, [authSlot, ATK.ThemeChooser()]);
+    const end = h('div', { className: 'palimpsest-header__end' }, [account, ATK.ThemeChooser()]);
     els.header.append(crumbs, end);
-    renderAuthSlot(null);
   }
 
   /* ── Input bar ───────────────────────────────────────────────── */
@@ -271,7 +240,7 @@
     const entries = metadataEntries(metadata);
     return h('div', { className: 'metadata' }, [
       h('h3', { className: 'metadata__title' }, [
-        'Metadata ',
+        'Custom Metadata ',
         ATK.Badge({ children: String(entries.length) }),
       ]),
       entries.length
@@ -321,7 +290,10 @@
     ]);
     return h('div', { className: 'block-layout' }, [
       frame,
-      h('div', { className: 'block-data' }, [blockMetadataSection(block), kvTable(fields)]),
+      h('div', { className: 'block-data' }, [
+        blockMetadataSection(block),
+        h('div', { className: 'metadata' }, [h('h3', { className: 'metadata__title' }, 'Block Metadata'), kvTable(fields)]),
+      ]),
     ]);
   }
 

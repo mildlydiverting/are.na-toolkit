@@ -23,7 +23,7 @@ function jsonArrayItems(text) {
   }
 }
 
-// A string made only of "- item" lines (blank lines ignored), or a JSON array string.
+// A JSON array string, or (older tags) a string made only of "- item" lines, blank lines ignored.
 function looksLikeList(text) {
   if (typeof text !== 'string') return false;
   if (jsonArrayItems(text)) return true;
@@ -52,7 +52,9 @@ export function validateKey(key, existingKeys = []) {
   return null;
 }
 
-// ---- Tags: a YAML bullet list inside one string (plan §6) ----
+// ---- Tags: a JSON array written as text, e.g. ["journal", "silly thing"] ----
+// are.na values are scalar, so the array lives inside one string. Older bullet lists
+// ("- a\n- b") are still read, and are rewritten as JSON the next time the value is edited.
 
 function unquoteTag(s) {
   const m = /^"(.*)"$/.exec(s);
@@ -63,7 +65,7 @@ function unquoteTag(s) {
 
 const cleanTag = (t) => String(t).trim().replace(/ {2,}/g, ' ');
 
-// Text (bullet list, or JSON array string) -> array of tags.
+// Text (JSON array string, or an older bullet list) -> array of tags.
 export function parseList(text) {
   if (text == null) return [];
   const fromJson = jsonArrayItems(text);
@@ -86,13 +88,10 @@ function dedupe(items) {
   });
 }
 
-const NEEDS_QUOTES = /(:|\s#|")|^[-[{&*!|>'%@`#]/;
-
-// Array of tags -> "- a\n- b". Trims, collapses spaces, drops empties and case-insensitive duplicates.
+// Array of tags -> '["a", "b"]'. Trims, collapses spaces, drops empties and case-insensitive duplicates.
 export function serialiseList(items) {
-  return dedupe((items || []).map(cleanTag).filter(Boolean))
-    .map((t) => `- ${NEEDS_QUOTES.test(t) ? `"${t.replace(/(["\\])/g, '\\$1')}"` : t}`)
-    .join('\n');
+  const tags = dedupe((items || []).map(cleanTag).filter(Boolean));
+  return `[${tags.map((t) => JSON.stringify(t)).join(', ')}]`;
 }
 
 // ---- Values and type changes ----

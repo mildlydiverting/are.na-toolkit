@@ -490,10 +490,177 @@
     return root;
   }
 
+  /* ── StatusMessage: one inline line for progress, success and errors ── */
+  function StatusMessage(opts) {
+    opts = opts || {};
+    var tone = opts.tone || 'info';
+    var kids = [];
+    if (tone === 'error' || tone === 'success') {
+      kids.push(el('span', { className: 'atk-status__icon', 'aria-hidden': 'true' }, tone === 'error' ? '\u26A0' : '\u2713'));
+    }
+    if (opts.label) kids.push(el('strong', null, opts.label + '.'));
+    kids = kids.concat(opts.children == null ? [] : opts.children);
+    return el('p', {
+      className: 'atk-status atk-status--' + tone,
+      role: tone === 'error' ? 'alert' : 'status'
+    }, kids);
+  }
+
+  /* ── Accounts: names and initials come from are.na's user object ── */
+  function accountName(user) {
+    return (user && (user.name || user.full_name || user.slug)) || '';
+  }
+
+  // The API's own `initials` when present, else the first letters of the name ("Kim Plowright" -> "KP").
+  function accountInitials(user) {
+    if (user && user.initials) return String(user.initials).slice(0, 2).toUpperCase();
+    var name = (accountName(user) || '?').trim();
+    return name.split(/\s+/).map(function (w) { return w[0]; }).join('').slice(0, 2).toUpperCase() || '?';
+  }
+
+  function Avatar(user) {
+    return el('span', { className: 'atk-avatar', 'aria-hidden': 'true' }, accountInitials(user));
+  }
+
+  /* ── AccountMenu: the header block. [Connect →] or [avatar] name [Disconnect] ── */
+  function AccountMenu(opts) {
+    opts = opts || {};
+    var root = el('div', { className: 'atk-account' });
+    root.setUser = function (user) {
+      if (!user) {
+        root.replaceChildren(Button({
+          variant: 'ghost', size: 'sm',
+          children: opts.connectLabel || 'Connect \u2192',
+          onClick: opts.onConnect
+        }));
+        return;
+      }
+      root.replaceChildren(
+        Avatar(user),
+        el('span', { className: 'atk-account__name' }, accountName(user)),
+        Button({ variant: 'ghost', size: 'sm', children: opts.disconnectLabel || 'Disconnect', onClick: opts.onDisconnect })
+      );
+    };
+    root.setUser(opts.user || null);
+    return root;
+  }
+  AccountMenu.displayName = accountName;
+  AccountMenu.initials = accountInitials;
+
+  /* ── AuthPanel: the token form and the signed-in chip. No requests, no storage:
+        the caller (shared/widgets/auth-step.js) owns those and calls update(). ── */
+  function AuthPanel(opts) {
+    opts = opts || {};
+    var state = {
+      user: null, detail: null, status: null,
+      requireWrite: !!opts.requireWrite, writeMessage: opts.writeMessage || null,
+      remember: opts.remember !== false
+    };
+    var panel = !!opts.panel;
+    var root = el('div', { className: 'atk-auth' });
+
+    function status(s) {
+      return s ? StatusMessage({ tone: s.tone, label: s.label, children: s.message }) : null;
+    }
+
+    function rememberCheck() {
+      var box = el('input', { type: 'checkbox' });
+      box.checked = state.remember;
+      box.addEventListener('change', function () {
+        state.remember = box.checked;
+        if (opts.onRememberChange) opts.onRememberChange(box.checked);
+      });
+      return el('label', { className: 'atk-auth__remember' }, [
+        box,
+        el('span', null, [
+          'Remember on this computer',
+          el('br'),
+          el('span', { className: 'atk-auth__hint' }, 'Unticked, it is forgotten when you close the tab.')
+        ])
+      ]);
+    }
+
+    function chip() {
+      var u = state.user;
+      var who = el('div', { className: 'atk-auth__who' }, ['Signed in as ', el('strong', null, accountName(u))]);
+      if (state.detail) {
+        who.appendChild(el('br'));
+        who.appendChild(el('span', { className: 'atk-auth__hint' }, state.detail));
+      }
+      return el('div', { className: 'atk-auth__chip' }, [
+        Avatar(u), who,
+        Button({ variant: 'ghost', size: 'sm', children: 'Disconnect', onClick: opts.onDisconnect })
+      ]);
+    }
+
+    function form() {
+      var link = Link({ href: opts.tokenUrl, children: 'personal access token' });
+      link.target = '_blank';
+      link.rel = 'noopener';
+      var intro = el('p', { className: 'atk-auth__intro' }, [panel ? 'Create a ' : 'Paste a ', link]);
+      if (state.requireWrite) {
+        intro.appendChild(document.createTextNode(panel
+          ? ' with read and write ticked, then paste it below. The token stays in your browser only.'
+          : ' with the write scope ticked. This tool changes your account: it adds and removes connections and edits blocks, so a read-only token will not work.'));
+      } else {
+        intro.appendChild(document.createTextNode(' with read access. That is all this tool needs. Some content, including private channels, only shows up once you are connected.'));
+      }
+
+      var input = Input({ type: 'password', placeholder: panel ? 'paste it here' : 'Paste your token here' });
+      input.id = 'arena-token';
+      input.autocomplete = 'off';
+      input.spellcheck = false;
+      var submit = function () { if (opts.onConnect) opts.onConnect(input.value); };
+      input.addEventListener('keydown', function (e) { if (e.key === 'Enter') submit(); });
+      var row = el('div', { className: 'atk-auth__row' }, [
+        input,
+        Button({ variant: panel ? 'secondary' : 'primary', children: 'Connect', onClick: submit })
+      ]);
+
+      var kids = [];
+      if (state.writeMessage) kids.push(el('p', { className: 'atk-auth__message' }, state.writeMessage));
+      kids.push(intro);
+      if (panel) {
+        var label = el('label', { className: 'atk-auth__label', 'for': 'arena-token' }, 'Personal access token');
+        kids.push(label, row, rememberCheck());
+      } else {
+        kids.push(row, el('p', { className: 'atk-auth__note' }, 'Your token stays in this browser and is only ever sent to are.na.'));
+      }
+      kids.push(status(state.status));
+      return kids;
+    }
+
+    function render() {
+      var kids;
+      if (state.user && panel) {
+        kids = [status(state.status), chip()];
+      } else if (state.user) {
+        kids = [el('div', { className: 'atk-auth__row atk-auth__row--center' }, [
+          Badge({ variant: 'success', children: 'Connected as @' + state.user.slug }),
+          Button({ variant: 'ghost', size: 'sm', children: 'Disconnect', onClick: opts.onDisconnect })
+        ])];
+      } else {
+        kids = form();
+      }
+      root.replaceChildren.apply(root, kids.filter(Boolean));
+    }
+
+    // Merges these keys into the state and redraws: user, detail, status {tone,label,message}, requireWrite, writeMessage, remember.
+    root.update = function (next) {
+      for (var k in next) { if (Object.prototype.hasOwnProperty.call(next, k)) state[k] = next[k]; }
+      render();
+    };
+    render();
+    return root;
+  }
+
   window.ArenaToolkit = {
     ChannelRow: ChannelRow,
     ChannelList: ChannelList,
     ThemeChooser: ThemeChooser,
+    StatusMessage: StatusMessage,
+    AccountMenu: AccountMenu,
+    AuthPanel: AuthPanel,
     Button: Button,
     Input: Input,
     Link: Link,

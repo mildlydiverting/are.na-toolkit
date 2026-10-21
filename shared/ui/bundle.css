@@ -809,3 +809,89 @@
   line-height: 1.45;
   font-weight: 400;
 }
+
+/* ────────────────────────────────────────────────────────────
+   StatusMessage — one inline line for progress, success, errors
+   ──────────────────────────────────────────────────────────── */
+.atk-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  align-items: baseline;
+  margin: 0;
+  color: var(--text-primary);
+}
+.atk-status--info { color: var(--text-muted); }
+.atk-status--error .atk-status__icon { color: var(--accent-alert); }
+.atk-status--success .atk-status__icon { color: var(--accent-success); }
+
+/* ────────────────────────────────────────────────────────────
+   Avatar and AccountMenu — [avatar] name [Disconnect], or [Connect →]
+   ──────────────────────────────────────────────────────────── */
+.atk-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface-sunken);
+  color: var(--text-primary);
+  font: var(--text-ui-strong);
+}
+.atk-account {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.atk-account__name {
+  color: var(--text-secondary);
+  font: var(--text-ui);
+}
+@media (max-width: 480px) {
+  .atk-account__name { display: none; }
+}
+
+/* ────────────────────────────────────────────────────────────
+   AuthPanel — the token form and the signed-in chip
+   ──────────────────────────────────────────────────────────── */
+.atk-auth {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.atk-auth__intro,
+.atk-auth__message,
+.atk-auth__note { margin: 0; }
+.atk-auth__message { font: var(--text-ui-strong); }
+.atk-auth__note,
+.atk-auth__hint { color: var(--text-muted); font: var(--text-body-sm); }
+.atk-auth__label { font: var(--text-ui-strong); color: var(--text-muted); }
+.atk-auth__row { display: flex; gap: var(--space-2); }
+.atk-auth__row--center { align-items: center; }
+.atk-auth__row .atk-input { flex: 1; min-width: 0; }
+.atk-auth__remember {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  cursor: pointer;
+}
+.atk-auth__chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--surface-sunken);
+  border-radius: var(--radius-sm);
+}
+.atk-auth__chip .atk-avatar {
+  background: var(--accent-primary);
+  color: var(--surface-page);
+}
+.atk-auth__who {
+  flex: 1;
+  min-width: 0;
+  color: var(--text-secondary);
+}
+.atk-auth__who strong { color: var(--text-primary); }

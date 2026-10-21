@@ -1,0 +1,20 @@
+<!-- @dsCard group="Forms" height=520 -->
+<!doctype html>
+<html>
+<head><style>
+  body { margin: 0; padding: 20px; background: var(--surface-page); color: var(--text-primary); font-family: var(--font-sans); }
+  #root { display: flex; flex-direction: column; gap: 28px; max-width: 520px; }
+</style></head>
+<body>
+<div id="root"></div>
+<script>
+  var ATK = window.ArenaToolkit, root = document.getElementById('root');
+  var url = 'https://www.are.na/settings/personal-access-tokens';
+  var a = ATK.AuthPanel({ tokenUrl: url });
+  a.update({ requireWrite: true, writeMessage: 'Editing needs a token with write access.', status: { tone: 'error', label: "Couldn't connect", message: "are.na didn't recognise that token. Check it was copied whole." } });
+  var b = ATK.AuthPanel({ tokenUrl: url, panel: true, requireWrite: true });
+  b.update({ user: { name: 'Kim Plowright', initials: 'KP', slug: 'kim-plowright' }, detail: '158 of your channels loaded' });
+  root.append(a, b);
+</script>
+</body>
+</html>

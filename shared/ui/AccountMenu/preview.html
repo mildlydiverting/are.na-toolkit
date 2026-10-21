@@ -1,0 +1,18 @@
+<!-- @dsCard group="Navigation" height=160 -->
+<!doctype html>
+<html>
+<head><style>
+  body { margin: 0; padding: 20px; background: var(--surface-page); color: var(--text-primary); font-family: var(--font-sans); }
+  #root { display: flex; flex-direction: column; gap: 16px; align-items: flex-end; }
+</style></head>
+<body>
+<div id="root"></div>
+<script>
+  var ATK = window.ArenaToolkit;
+  document.getElementById('root').append(
+    ATK.AccountMenu({}),
+    ATK.AccountMenu({ user: { name: 'Kim Plowright', initials: 'KP', slug: 'kim-plowright' } })
+  );
+</script>
+</body>
+</html>

@@ -185,15 +185,6 @@ body {
 }
 .chip-button:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; border-radius: var(--radius-sm); }
 
-.palimpsest-header__auth { position: relative; }
-.auth-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: var(--space-1);
-  z-index: 10;
-}
-
 /* Metadata editor (v2) */
 .visually-hidden {
   position: absolute;

@@ -18,7 +18,7 @@ describe('detectType', () => {
   it('treats a long numeric string as text', () => {
     expect(detectType('1234567890123456789012')).toBe('text');
   });
-  it('reads a JSON array string as a list', () => {
+  it('reads a JSON array string as a list, and older bullet lists too', () => {
     expect(detectType('["drawing","reference"]')).toBe('list');
   });
   it('does not call ordinary text or hyphenated text a list', () => {
@@ -68,7 +68,7 @@ describe('validateValue', () => {
     expect(validateValue('text', 'x'.repeat(2001)).ok).toBe(false);
   });
   it('serialises a list and reports when it is too long', () => {
-    expect(validateValue('list', ['a', 'b'])).toEqual({ ok: true, value: '- a\n- b' });
+    expect(validateValue('list', ['a', 'b'])).toEqual({ ok: true, value: '["a", "b"]' });
     const big = validateValue('list', Array.from({ length: 400 }, (_, i) => `tag-number-${i}`));
     expect(big.ok).toBe(false);
     expect(big.message).toMatch(/limit 2000 characters/);
@@ -76,40 +76,39 @@ describe('validateValue', () => {
 });
 
 describe('parseList and serialiseList', () => {
-  it('round-trips simple tags', () => {
-    const tags = ['drawing', 'life drawing', 'reference/anatomy'];
-    expect(serialiseList(tags)).toBe('- drawing\n- life drawing\n- reference/anatomy');
+  it('writes a JSON array with a space after each comma', () => {
+    expect(serialiseList(['journal', 'silly thing'])).toBe('["journal", "silly thing"]');
+    expect(serialiseList([])).toBe('[]');
+  });
+  it('round-trips tags, including awkward ones', () => {
+    const tags = ['drawing', 'life drawing', 'reference/anatomy', 'note: this', 'say "hi"', '-dash', '[x]', '#lead', 'back\\slash', 'café'];
     expect(parseList(serialiseList(tags))).toEqual(tags);
   });
-  it('tolerates indents and blank lines, writes none', () => {
-    expect(parseList('tags:\n'.slice(0, 0) + '  - a\n\n  - b\n')).toEqual(['a', 'b']);
-    expect(serialiseList(['a', 'b'])).not.toMatch(/\n$|\n\n/);
+  it('writes valid JSON that are.na and other tools can read', () => {
+    expect(JSON.parse(serialiseList(['a', 'b "c"']))).toEqual(['a', 'b "c"']);
   });
   it('trims, collapses spaces, drops empties, removes duplicates ignoring case', () => {
-    expect(serialiseList(['  a   b ', '', 'A B', 'c'])).toBe('- a b\n- c');
+    expect(serialiseList(['  a   b ', '', 'A B', 'c'])).toBe('["a b", "c"]');
   });
   it('keeps case as typed', () => {
-    expect(parseList('- Drawing')).toEqual(['Drawing']);
+    expect(parseList('["Drawing"]')).toEqual(['Drawing']);
   });
-  it('quotes awkward tags and reads them back', () => {
-    const tags = ['note: this', 'say "hi"', '-dash', '[x]', 'a #b', '#lead', '@me', 'say "a\\b"'];
-    const text = serialiseList(tags);
-    for (const line of text.split('\n')) expect(line).toMatch(/^- "/);
-    expect(parseList(text)).toEqual(tags);
-  });
-  it('does not quote ordinary tags', () => {
-    expect(serialiseList(['a-b', 'c/d', "it's"])).toBe("- a-b\n- c/d\n- it's");
-  });
-  it('strips matching single quotes on read', () => {
-    expect(parseList("- 'quoted'")).toEqual(['quoted']);
-  });
-  it('reads a JSON array string', () => {
+  it('reads a JSON array with or without spaces', () => {
     expect(parseList('["drawing","reference"]')).toEqual(['drawing', 'reference']);
+    expect(parseList('["drawing", "reference"]')).toEqual(['drawing', 'reference']);
+  });
+  it('still reads older bullet lists, tolerating indents and blank lines', () => {
+    expect(parseList('- tag-1\n- tag-2\n- tag-3')).toEqual(['tag-1', 'tag-2', 'tag-3']);
+    expect(parseList('  - a\n\n  - b\n')).toEqual(['a', 'b']);
+    expect(parseList('- "note: this"\n- \'quoted\'')).toEqual(['note: this', 'quoted']);
+  });
+  it('rewrites an older bullet list as JSON', () => {
+    expect(serialiseList(parseList('- tag-1\n- tag-2'))).toBe('["tag-1", "tag-2"]');
   });
   it('handles null and empty', () => {
     expect(parseList(null)).toEqual([]);
     expect(parseList('')).toEqual([]);
-    expect(serialiseList([])).toBe('');
+    expect(parseList('[]')).toEqual([]);
   });
 });
 
@@ -140,13 +139,13 @@ describe('coerce', () => {
     expect(coerce('checkbox', 'number', true)).toEqual({ ok: true, value: 1, lossy: true });
   });
   it('Text to List splits on commas and new lines and flags the change', () => {
-    expect(coerce('text', 'list', 'a, b\nc')).toEqual({ ok: true, value: '- a\n- b\n- c', lossy: true });
+    expect(coerce('text', 'list', 'a, b\nc')).toEqual({ ok: true, value: '["a", "b", "c"]', lossy: true });
   });
-  it('List to Text keeps the bullet text as it is', () => {
+  it('List to Text keeps the stored text as it is', () => {
     expect(coerce('list', 'text', '- a\n- b')).toEqual({ ok: true, value: '- a\n- b', lossy: false });
   });
   it('Number to List goes through its text', () => {
-    expect(coerce('number', 'list', 5)).toEqual({ ok: true, value: '- 5', lossy: true });
+    expect(coerce('number', 'list', 5)).toEqual({ ok: true, value: '["5"]', lossy: true });
   });
   it('List to Number works only for a single numeric item', () => {
     expect(coerce('list', 'number', '- 5')).toEqual({ ok: true, value: 5, lossy: true });

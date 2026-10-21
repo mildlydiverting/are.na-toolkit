@@ -13,7 +13,7 @@
 
 **Decisions already made (Kim, 20 October 2026)**
 - Edit mode is a **whole-section toggle** with a review step, not edit-in-place row by row.
-- **Tags are stored as a YAML bullet list** inside a single string value (spec in §6).
+- **Tags are stored as a JSON array written as text** inside a single string value, e.g. `["journal", "silly thing"]` (spec in §6). *Changed 21 October 2026 from a YAML bullet list: the API returns the string with its `\n` characters visible, which read badly.*
 - Blocks first. Channels and connections come later, using the same pattern.
 
 ---
@@ -74,7 +74,7 @@
 | Text | string | text input | any string that is not another type |
 | Number | number | number input (accepts decimals, negatives) | the API returned a number |
 | Checkbox | boolean | checkbox | the API returned a boolean |
-| List | string (YAML bullet list, §6) | chip editor | a string made only of `- item` lines |
+| List | string (JSON array as text, §6) | chip editor | a JSON array string, or older `- item` bullet lines |
 
 - **Never retype silently.** Only changed keys are sent, and a value keeps the type it arrived with unless the person changes the type through the menu.
 - **Type change warnings** (like Obsidian's dialog): Text → Number is blocked if the text is not a number ("Not a number. Change the value first."); Number or Checkbox → Text converts to its text form; Text → List splits on commas and new lines and shows the result before it is applied; List → Text keeps the bullet text as it is.
@@ -116,7 +116,9 @@ Tests cover at least: number stays a number; boolean stays a boolean; unchanged 
 
 ---
 
-## 6. Tags as a YAML bullet list
+## 6. Tags as a JSON array in a string
+
+> **Changed 21 October 2026 (Kim, after testing on block 51621626).** Tags are now written as `["journal", "silly thing"]` (valid JSON, comma then space). Older bullet lists (`- a\n- b`) are still **read**, and rewritten as JSON the next time that value is edited. The rules below describe the original bullet format; quoting rules no longer apply, because JSON does its own escaping. Length limit (2000 characters) is unchanged.
 
 Stored under the key **`tags`** (matching Obsidian) as **one string** whose lines are bullets:
 

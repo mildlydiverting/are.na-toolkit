@@ -398,7 +398,7 @@ function createMetadataEditor({ block, client, renderView, requestWrite, onSaved
   function headerEl() {
     const count = Object.keys(current.metadata || {}).length;
     const head = [h('h3', { className: 'metadata__title' }, [
-      'Metadata ', ATK.Badge({ children: String(count) }),
+      'Custom Metadata ', ATK.Badge({ children: String(count) }),
       mode !== 'view' ? ATK.Badge({ variant: 'focus', children: mode === 'review' ? 'Reviewing' : 'Editing' }) : null,
     ])];
     if (mode === 'view') {

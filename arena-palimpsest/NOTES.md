@@ -6,6 +6,7 @@ v1 shipped (read-only). Plan: `_claude/arena-palimpsest-build-plan.md`. User doc
 - `src/index.html` is the shell with `@include` markers. `app.js` does fetch orchestration and rendering. `parse-input.js`, `format.js` and `history.js` are pure and tested. `styles.css` holds layout only; everything visual comes from `shared/ui/` (Arena Toolkit).
 - Build: `node build.js` (`--watch`, `--docs`). `dist/arena-palimpsest.html` is committed; `--docs` copies it to `docs/`.
 - `shared/ui/bundle.js` and `bundle.css` match the design-system artifact (published 2026-10-20: ThemeChooser with System, ChannelRow and ChannelList with their tokens, unfilled Card). Change the artifact and the toolkit together, or a re-sync will overwrite the difference.
+- **Not yet in the artifact (21 Oct 2026):** `StatusMessage`, `AccountMenu` and `AuthPanel` (new in `bundle.js`/`bundle.css`, with READMEs and previews here). Until they are published, `bundle.js` and `bundle.css` are ahead of the artifact: a re-sync from it would remove them. Publish with the steps in `shared/ui/README.md`; still needed: `index.d.ts` for each.
 - Shared code used: `shared/ui/*`, `shared/api/arena-client.js` and `throttle.js`, `shared/widgets/auth-step.js`.
 
 ## Decisions made during the build
@@ -40,6 +41,6 @@ v1 shipped (read-only). Plan: `_claude/arena-palimpsest-build-plan.md`. User doc
 - Plan history and what changed since: `_claude/arena-palimpsest-build-plan.md` (see its "As built" section).
 
 ## v2 (editing)
-Full plan (read it before starting): `_claude/arena-palimpsest-v2-editing-and-tagging-plan.md`. Already in the shared code: `arena-client.updateBlock`, and `auth-step.js` with `requireWrite` and `checkWriteAccess` (added by the duplicate-finder work). Decisions so far: whole-section Edit toggle with a Review step and one Save; tags stored as a YAML bullet list in a single string value under `tags`; blocks first.
+Full plan (read it before starting): `_claude/arena-palimpsest-v2-editing-and-tagging-plan.md`. Already in the shared code: `arena-client.updateBlock`, and `auth-step.js` with `requireWrite` and `checkWriteAccess` (added by the duplicate-finder work). Decisions so far: whole-section Edit toggle with a Review step and one Save; tags stored as a JSON array written as text (`["a", "b"]`) in a single string value under `tags`; blocks first.
 
 Fields and metadata render through `kvTable()` as label/value rows whose values are nodes, so a value cell can become an `Input`. Needs write scope, an Inspect/Edit toggle, add/remove rows (set a key to `null` to remove it), a dry-run list of the calls, and owner-only editing (`block.can`). Metadata updates use `PUT /v3/blocks/{id}` and `PUT /v3/connections/{id}`, both with merge semantics.

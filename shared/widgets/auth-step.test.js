@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { checkWriteAccess, createWriteGate, initialsFor, readSavedToken, saveToken, clearToken, describeConnectError, AUTH_STORAGE_KEY } from './auth-step.js';
+import { checkWriteAccess, createWriteGate, readSavedToken, saveToken, clearToken, describeConnectError, AUTH_STORAGE_KEY } from './auth-step.js';
 
 function fakeStorage(initial = {}) {
   const data = { ...initial };
@@ -126,19 +126,5 @@ describe('createWriteGate', () => {
     await expect(gate.check()).rejects.toMatchObject({ status: 401 });
     fail = false;
     expect(await gate.check()).toBe(true);
-  });
-});
-
-describe('initialsFor', () => {
-  it('uses the first letters of a full name', () => {
-    expect(initialsFor({ full_name: 'Kim Plowright', slug: 'kim-plowright' })).toBe('KP');
-  });
-  it('caps at two letters', () => {
-    expect(initialsFor({ full_name: 'Mary Jane Watson' })).toBe('MJ');
-  });
-  it('falls back to the slug, then to ?', () => {
-    expect(initialsFor({ slug: 'kim-plowright' })).toBe('K');
-    expect(initialsFor({})).toBe('?');
-    expect(initialsFor(null)).toBe('?');
   });
 });
