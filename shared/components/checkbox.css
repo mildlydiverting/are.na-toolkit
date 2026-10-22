@@ -1,4 +1,5 @@
-/* Checkbox */
+/* Checkbox. The resting border is --text-muted, not --border-input: the latter is 1.35:1 on the page in Light,
+   and a control's edge needs 3:1 (WCAG 1.4.11). --text-muted clears 3:1 in all four themes (3.82 in Dawn, 4.69+ elsewhere). */
 .atk-checkbox {
   display: inline-flex;
   align-items: flex-start;
@@ -22,13 +23,13 @@
   width: 16px;
   height: 16px;
   margin-top: 2px;
-  border: 1px solid var(--border-input);
+  border: 1px solid var(--text-muted);
   border-radius: var(--radius-sm);
-  background: var(--surface-card);
+  background: var(--surface-page);
   color: var(--surface-page); /* same pairing as the primary button: dark on pale accents, light on navy */
   transition: border-color 120ms ease, background 120ms ease;
 }
-.atk-checkbox:hover .atk-checkbox-box { border-color: var(--border-strong); }
+.atk-checkbox:hover .atk-checkbox-box { border-color: var(--text-primary); }
 .atk-checkbox-input:focus-visible + .atk-checkbox-box { outline: 2px solid var(--accent-focus); outline-offset: 2px; }
 .atk-checkbox-input:checked + .atk-checkbox-box,
 .atk-checkbox-input:indeterminate + .atk-checkbox-box {
@@ -43,4 +44,4 @@
 .atk-checkbox-input:disabled + .atk-checkbox-box { cursor: not-allowed; }
 .atk-checkbox-text { display: flex; flex-direction: column; gap: 2px; }
 .atk-checkbox-label { color: var(--text-primary); font: var(--text-ui); }
-.atk-checkbox-desc { color: var(--text-muted); font: var(--text-caption); }
+.atk-checkbox-desc { color: var(--text-muted); font: var(--text-body-sm); }

@@ -2,7 +2,7 @@
 .atk-progress { display: flex; flex-direction: column; gap: var(--space-nudge); }
 .atk-progress-row { display: flex; justify-content: space-between; gap: var(--space-3); }
 .atk-progress-label { color: var(--text-primary); font: var(--text-ui); }
-.atk-progress-detail { color: var(--text-muted); font: var(--text-body-sm); text-align: right; }
+.atk-progress-detail { color: var(--text-muted); font: var(--text-body-sm); text-align: right; font-variant-numeric: tabular-nums; }
 .atk-progress-track {
   height: 4px;
   overflow: hidden;

@@ -1,0 +1,26 @@
+/* StatusLog. Green = success, grey = message, orange = warning, red = error.
+   Contrast on --surface-sunken (Light / Dark / Dawn / Dusk): success 4.29 / 7.78 / 3.66 / 8.11,
+   message 10.79 / 10.03 / 7.14 / 8.36, error 4.72 / 4.03 / 2.76 / 4.21, warning 3.34 / 4.86 / 2.98 / 5.07.
+   Dawn's error and warning fall short of 4.5:1; they are the system's own colours, recorded not changed. */
+.atk-log { margin-top: var(--space-3); }
+.atk-log__summary {
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: var(--space-2) 0;
+}
+.atk-log__body {
+  margin-top: var(--space-2);
+  font: var(--text-body-sm);
+  font-family: var(--font-mono);
+  background: var(--surface-sunken);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  max-height: 240px;
+  overflow-y: auto;
+}
+.atk-log__line { padding: 2px 0; color: var(--text-secondary); line-height: 1.3; }
+.atk-log__line.is-success { color: var(--accent-success); }
+.atk-log__line.is-warning { color: var(--accent-alert); }
+.atk-log__line.is-error   { color: var(--accent-private); }
+.atk-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

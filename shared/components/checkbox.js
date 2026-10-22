@@ -1,9 +1,11 @@
-// Checkbox: a boolean control with an optional description. Tool-local until promoted into shared/ui.
+// Checkbox: a boolean control with an optional description. Lives in shared/components until promoted into shared/ui
+// (which means publishing it to the design-system artifact, so it needs Kim's go-ahead).
 // A native input sits inside the label, so keyboard, focus and screen readers behave as usual.
-window.ArenaToolkit.Checkbox = function Checkbox({ label, description, checked = false, disabled = false, indeterminate = false, name, onChange } = {}) {
+window.ArenaToolkit.Checkbox = function Checkbox({ label, description, checked = false, disabled = false, indeterminate = false, name, id, onChange } = {}) {
   const h = window.ArenaToolkit._el;
   const input = h('input', { type: 'checkbox', className: 'atk-checkbox-input', checked, disabled });
   if (name) input.name = name;
+  if (id) input.id = id;
   input.indeterminate = indeterminate;
   if (onChange) input.addEventListener('change', () => onChange(input.checked));
 

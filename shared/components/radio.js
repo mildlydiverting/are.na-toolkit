@@ -1,4 +1,4 @@
-// Radio: one choice from a group, grouped by `name`. Tool-local until promoted into shared/ui.
+// Radio: one choice from a group, grouped by `name`. Lives in shared/components until promoted into shared/ui.
 // A native radio input sits inside the label, so arrow keys, focus and screen readers behave as usual.
 window.ArenaToolkit.Radio = function Radio({ label, description, value, name, checked = false, disabled = false, onChange } = {}) {
   const h = window.ArenaToolkit._el;
