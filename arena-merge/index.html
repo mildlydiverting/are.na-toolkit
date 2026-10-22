@@ -2018,7 +2018,7 @@ dialog.picker::backdrop {
             <span class="atk-checkbox-box" aria-hidden="true"><svg class="atk-checkbox-tick" viewBox="0 0 12 12" width="12" height="12"><path d="M2.5 6.5l2.5 2.5 4.5-5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="atk-checkbox-bar"></span></span>
             <span class="atk-checkbox-text">
               <span class="atk-checkbox-label">Quiet mode: hide destination during transfer</span>
-              <span class="atk-checkbox-desc">Temporarily sets the destination to private so followers aren't notified for each block, then restores its original status at the end. Skipped on simulations and when the channel is already private.</span>
+              <span class="atk-checkbox-desc">Temporarily sets the destination to private so followers aren't notified for each block, then restores its original status at the end. Skipped on dry runs and when the channel is already private.</span>
             </span>
           </label>
         </div>
@@ -2037,10 +2037,10 @@ dialog.picker::backdrop {
 
         <div class="actions" id="transfer-actions">
           <button type="button" class="btn" data-nav="options">← Back</button>
-          <button type="button" class="btn btn-primary" id="start-btn">Simulate</button>
-          <button type="button" class="btn" id="start-real-btn">Run full transfer</button>
+          <button type="button" class="btn btn-primary" id="start-btn">Dry Run</button>
+          <button type="button" class="btn" id="start-real-btn">Run Full Merge</button>
         </div>
-        <p class="action-hint">Simulate shows what would happen and changes nothing on are.na. Run full transfer writes to your account.</p>
+        <p class="action-hint">Dry Run shows what would happen and changes nothing on are.na. Run Full Merge writes to your account.</p>
 
         <div class="progress" id="progress" hidden aria-live="polite">
           <div class="progress-head">
@@ -2622,7 +2622,7 @@ function renderTransferSummary() {
   if (skipped > 0) bits.push(`<br>${skipped} already there — those will be skipped.`);
   if (S.opts.deleteFromSource) bits.push(`<br>Then remove them from <strong>${esc(S.source.title)}</strong>.`);
   if (S.opts.quietMode && S.dest.status !== 'private') {
-    bits.push(`<br>A full transfer will set the destination to <strong>private</strong> while it runs and restore it to <strong>${esc(S.dest.status)}</strong> at the end.`);
+    bits.push(`<br>A full merge will set the destination to <strong>private</strong> while it runs and restore it to <strong>${esc(S.dest.status)}</strong> at the end.`);
   }
   document.getElementById('transfer-summary').innerHTML = bits.join(' ');
 }
@@ -2631,7 +2631,7 @@ startBtn.addEventListener('click', () => runTransfer(true));
 
 const startRealBtn = document.getElementById('start-real-btn');
 
-// A full transfer changes the account, so it takes a deliberate yes (same pattern as arena-duplicate-finder).
+// A full merge changes the account, so it takes a deliberate yes (same pattern as arena-duplicate-finder).
 function confirmFullTransfer() {
   const ATK = window.ArenaToolkit;
   const { toAdd } = transferCounts();
@@ -2640,11 +2640,11 @@ function confirmFullTransfer() {
     + '. The blocks themselves are not deleted.';
   const close = () => { document.removeEventListener('keydown', onKey); modal.remove(); startRealBtn.focus(); };
   const onKey = (e) => { if (e.key === 'Escape') close(); };
-  const ok = ATK.Button({ variant: 'primary', children: 'Run full transfer', onClick: () => {
+  const ok = ATK.Button({ variant: 'primary', children: 'Run Full Merge', onClick: () => {
     document.removeEventListener('keydown', onKey); modal.remove(); runTransfer(false);
   } });
   const modal = ATK.Modal({
-    title: 'Run full transfer?',
+    title: 'Run Full Merge?',
     children: ATK._el('p', null, text),
     footer: [ATK.Button({ variant: 'ghost', children: 'Cancel', onClick: close }), ok],
     onClose: () => document.removeEventListener('keydown', onKey),
@@ -2659,6 +2659,9 @@ async function runTransfer(dryRun) {
   S.opts.dryRun = dryRun;
   startBtn.disabled = true;
   startRealBtn.disabled = true;
+  // Fresh run: Dry Run is the primary, Run Full Merge the secondary
+  startBtn.classList.add('btn-primary');
+  startRealBtn.classList.remove('btn-primary');
   document.getElementById('finish-summary').hidden = true;
   document.getElementById('progress').hidden = false;
 
@@ -2667,8 +2670,8 @@ async function runTransfer(dryRun) {
   const total = toProcess.length + (S.opts.deleteFromSource ? toProcess.length : 0);
   let done = 0;
 
-  updatePhase(S.opts.dryRun ? 'Simulating merge…' : 'Merging…');
-  log('info', `Starting ${S.opts.dryRun ? 'simulation' : 'transfer'}: ${toProcess.length} block${toProcess.length === 1 ? '' : 's'}.`);
+  updatePhase(S.opts.dryRun ? 'Dry run: merging…' : 'Merging…');
+  log('info', `Starting ${S.opts.dryRun ? 'dry run' : 'merge'}: ${toProcess.length} block${toProcess.length === 1 ? '' : 's'}.`);
 
   // Quiet mode: hide destination during transfer, restore afterwards.
   // Only applies to a real transfer, and only when the channel isn't already private.
@@ -2683,7 +2686,7 @@ async function runTransfer(dryRun) {
         await arenaFetch('PUT', `/channels/${encodeURIComponent(S.dest.slug)}`, { status: 'private' });
         privacyFlipped = true;
         log('ok', `Set destination to private (was ${originalStatus}). Will restore at the end.`);
-        updatePhase(S.opts.dryRun ? 'Simulating merge…' : 'Merging…');
+        updatePhase(S.opts.dryRun ? 'Dry run: merging…' : 'Merging…');
       } catch (err) {
         log('err', `Couldn't set destination to private: ${err.message}. Continuing without quiet mode — followers may be notified.`);
       }
@@ -2725,7 +2728,7 @@ async function runTransfer(dryRun) {
   }
 
   if (S.opts.deleteFromSource) {
-    updatePhase(S.opts.dryRun ? 'Simulating removal from source…' : 'Removing from source…');
+    updatePhase(S.opts.dryRun ? 'Dry run: removing from source…' : 'Removing from source…');
     for (const item of addedBlocks) {
       const connId = item.connection?.id;
       if (!connId) {
@@ -2764,7 +2767,7 @@ async function runTransfer(dryRun) {
     }
   }
 
-  updatePhase(S.opts.dryRun ? 'Simulation complete.' : 'Transfer complete.');
+  updatePhase(S.opts.dryRun ? 'Dry run complete.' : 'Merge complete.');
   log('ok', `Done. Added ${counts.added}, skipped ${counts.skipped}, removed ${counts.removed}, failed ${counts.failed}.`);
   startBtn.disabled = false;
   startRealBtn.disabled = false;
@@ -2777,12 +2780,15 @@ function renderFinishSummary(counts) {
   const srcUrl = `https://www.are.na/${S.source.contents[0]?.user?.slug || S.user.slug}/${S.source.slug}`;
 
   if (S.opts.dryRun) {
-    // After simulation: offer to run the real thing
+    // After a dry run: offer to run the real thing
     box.innerHTML = `
-      <div class="card-title">Simulation complete</div>
+      <div class="card-title">Dry run complete</div>
       <div class="card-meta">${counts.added} would be added, ${counts.skipped} already there, ${counts.failed} failed. Nothing on are.na has changed.</div>
-      <div style="margin-top:var(--space-3);color:var(--text-primary);font-size:var(--fs-sm)">If that looks right, choose <strong>Run full transfer</strong> above.</div>`;
+      <div style="margin-top:var(--space-3);color:var(--text-primary);font-size:var(--fs-sm)">If that looks right, choose <strong>Run Full Merge</strong> above.</div>`;
     box.hidden = false;
+    // Shift emphasis: Run Full Merge becomes the primary, Dry Run the secondary
+    startBtn.classList.remove('btn-primary');
+    startRealBtn.classList.add('btn-primary');
   } else {
     // After real transfer: show channel link
     box.innerHTML = `
@@ -2793,6 +2799,9 @@ function renderFinishSummary(counts) {
         <a href="${srcUrl}" target="_blank" rel="noopener" class="btn">View source channel →</a>
       </div>`;
     box.hidden = false;
+    // After a real merge, a repeat is the only thing on offer — neither needs emphasis
+    startBtn.classList.remove('btn-primary');
+    startRealBtn.classList.remove('btn-primary');
   }
 }
 

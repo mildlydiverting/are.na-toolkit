@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,6 +19,125 @@
 /* ──────────────────────────────────────────────────────────────
    Design tokens — change here, never hard-code in rules below
    ────────────────────────────────────────────────────────────── */
+/* ──────────────────────────────────────────────────────────────
+   Arena Toolkit colour tokens — copied from shared/ui/tokens.css
+   Themes: light, dark, dawn, dusk (set via data-theme on <html>)
+   ────────────────────────────────────────────────────────────── */
+:root, [data-theme="light"] {
+  --surface-page: #ffffff; /* Page background. are.na --colors-background / gray0. */
+  --surface-card: #f7f7f7; /* Content cards. Lifts above surface-page. are.na gray1. */
+  --surface-media: #ededed; /* Behind thumbnails and image placeholders. are.na gray2. */
+  --surface-sunken: #ededed; /* Inset or quiet panels. Shares gray2 with surface-media on purpose. */
+  --border-card: #ededed; /* Hairline between cards and page. 1px solid. are.na gray2. */
+  --border-input: #dedede; /* Default input border. Visible but quiet. are.na gray3. */
+  --border-strong: #999999; /* Divider or border that carries weight. are.na gray4. */
+  --border-focus: #000000; /* Focus ring. are.na --colors-foreground / gray7. */
+  --text-primary: #000000; /* Body text and primary labels. are.na --colors-foreground / gray7. */
+  --text-secondary: #333333; /* Supporting text. Links. are.na --colors-link / gray6. */
+  --text-muted: #696969; /* Low-emphasis text. Labels above fields, status lines. are.na --colors-slate / gray5. */
+  --text-faint: #999999; /* Placeholders and disabled text. Never for text that must be read. are.na gray4. */
+  --text-heading: #333333; /* Section headings. Deliberately a touch quieter than text-primary. are.na gray6. */
+  --accent-primary: #00075f; /* Primary call-to-action background. are.na --colors-brandDark / blue3 — always the high-contrast opposite of the page: deep navy on light themes, near-white or pale indigo on dark themes. */
+  --accent-focus: #3d46c2; /* Focus ring and current selection. are.na --colors-focus / blue2. Dawn uses a dustier, more muted indigo. */
+  --accent-success: #238020; /* Positive status, confirmation. are.na --colors-channelPublic3 / green3. */
+  --accent-notification: #a87253; /* Soft notification brown. are.na --colors-notification. Dawn is the warmest. */
+  --accent-private: #b93d3d; /* Private channel marker. are.na --colors-channelPrivate3 / red3. Light / Dark are red; Dawn / Dusk shift to rose pink. */
+  --accent-alert: #e15100; /* Warnings, destructive-action confirmations, errors. are.na --colors-alert. */
+  --channel-open: #b4d6b3; /* Resting border on an open (public) channel block. are.na --colors-channelPublic2 / green2. Hover deepens to accent-success. */
+  --channel-private: #dfbebe; /* Resting border on a private channel block. are.na --colors-channelPrivate2 / red2. Hover deepens to accent-private. */
+  --channel-bar-open: #f4f8f3; /* Fill of an open (public) channel row. are.na --colors-channelPublic1 / green1. Closed rows use surface-card (are.na channelClosed1). */
+  --channel-bar-private: #faf4f3; /* Fill of a private channel row. are.na --colors-channelPrivate1 / red1. */
+  --channel-badge-open: #eaf1e7; /* Badge fill on an open channel row, a step off channel-bar-open. Not an are.na variable: sampled from are.na's rendered row (within one step). */
+  --channel-badge-closed: #efefef; /* Badge fill on a closed channel row, a step off surface-card. */
+  --channel-badge-private: #f5eae8; /* Badge fill on a private channel row, a step off channel-bar-private. */
+  --shadow-soft: 0 0 20px rgba(0, 0, 0, 0.08); /* Elevated card. Modal. Dropdown. */
+  --shadow-ambient: 0 0 34px rgba(0, 0, 0, 0.05); /* Very subtle ground shadow. Hover lift. */
+}
+[data-theme="dark"] {
+  --surface-page: #000000;
+  --surface-card: #1a1a1a;
+  --surface-media: #333333;
+  --surface-sunken: #333333;
+  --border-card: #333333;
+  --border-input: #4f4f4f;
+  --border-strong: #696969;
+  --border-focus: #ffffff;
+  --text-primary: #ffffff;
+  --text-secondary: #e5e5e5;
+  --text-muted: #b2b2b2;
+  --text-faint: #696969;
+  --text-heading: #e5e5e5;
+  --accent-primary: #e2dfe9;
+  --accent-focus: #5e6dee;
+  --accent-success: #98dc89;
+  --accent-notification: #ac7556;
+  --accent-private: #eb6864;
+  --accent-alert: #ff7a30;
+  --channel-open: #2a4c29;
+  --channel-private: #412020;
+  --channel-bar-open: #121d12;
+  --channel-bar-private: #1a0404;
+  --channel-badge-open: #213823;
+  --channel-badge-closed: #313131;
+  --channel-badge-private: #310709;
+}
+[data-theme="dawn"] {
+  --surface-page: #f5f1f0;
+  --surface-card: #eae6e5;
+  --surface-media: #e0dbda;
+  --surface-sunken: #e0dbda;
+  --border-card: #e0dbda;
+  --border-input: #cac5c4;
+  --border-strong: #aaa4a3;
+  --border-focus: #342c2a;
+  --text-primary: #342c2a;
+  --text-secondary: #4a4240;
+  --text-muted: #7f7977;
+  --text-faint: #aaa4a3;
+  --text-heading: #4a4240;
+  --accent-primary: #00075f;
+  --accent-focus: #8082c5;
+  --accent-success: #238020;
+  --accent-notification: #b47e5f;
+  --accent-private: #c95d9e;
+  --accent-alert: #d6540b;
+  --channel-open: #c0d5bc;
+  --channel-private: #eaccdb;
+  --channel-bar-open: #eaebe6;
+  --channel-bar-private: #f3eaec;
+  --channel-badge-open: #d7d9ce;
+  --channel-badge-closed: #d6cfce;
+  --channel-badge-private: #e7d6da;
+}
+[data-theme="dusk"] {
+  --surface-page: #16171e;
+  --surface-card: #24222c;
+  --surface-media: #342e38;
+  --surface-sunken: #342e38;
+  --border-card: #342e38;
+  --border-input: #4f4756;
+  --border-strong: #81738c;
+  --border-focus: #e7dbf0;
+  --text-primary: #e7dbf0;
+  --text-secondary: #d5cade;
+  --text-muted: #a798b3;
+  --text-faint: #81738c;
+  --text-heading: #d5cade;
+  --accent-primary: #c1c4ea;
+  --accent-focus: #5e6dee;
+  --accent-success: #98dc89;
+  --accent-notification: #ac7556;
+  --accent-private: #cb76a9;
+  --accent-alert: #ff7a30;
+  --channel-open: #2a4c29;
+  --channel-private: #432f41;
+  --channel-bar-open: #121d12;
+  --channel-bar-private: #1f1c25;
+  --channel-badge-open: #213823;
+  --channel-badge-closed: #443f50;
+  --channel-badge-private: #393544;
+}
+
 :root {
   /* Typography */
   --font-sans:        Arial, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, sans-serif;
@@ -70,81 +189,23 @@
   --page-pad-y:       2rem;
   --control-h:        36px;
 
-  /* Colours — light default (matches toolkit index) */
-  --bg-page:          #f5f4f0;
-  --bg-card:          #ffffff;
-  --bg-input:         #ffffff;
-  --bg-sunken:        #ede9e4;
-  --bg-media:         #ede9e4;
+  /* From the Arena Toolkit type scale (used by Checkbox/Radio) */
+  --text-body-sm: 400 12.5px/17px var(--font-sans);
+  --radius-round: 50%;
 
-  --text-primary:     #1a1a18;
-  --text-secondary:   #6a6660;
-  --text-muted:       #888580;
-  --text-heading:     #888580;
-  --text-faint:       #aaa49e;
-
-  --border-card:      #e5e3de;
-  --border-input:     #ccc8c2;
-  --border-strong:    #aaa49e;
-  --border-focus:     #1a1a18;
-
-  --link-color:       #1a1a18;
-
-  --toggle-bg:        #ccc8c2;
-  --toggle-thumb:     #f5f4f0;
-
-  /* Semantic */
-  --color-success:    #4a7c4f;
-  --color-error:      #a04040;
-  --color-warning:    #a07020;
-
-  /* Primary action — inverted */
-  --btn-primary-bg:    #1a1a18;
-  --btn-primary-text:  #f5f4f0;
-  --btn-primary-hover: #333331;
-
-  /* Step rail */
-  --rail-dot:          #ccc8c2;
-  --rail-dot-active:   #1a1a18;
-  --rail-dot-done:     #6a6660;
-  --rail-line:         #e5e3de;
-}
-
-body.theme-dark {
-  --bg-page:          #1e1d1b;
-  --bg-card:          #2a2825;
-  --bg-input:         #1e1d1b;
-  --bg-sunken:        #322f2c;
-  --bg-media:         #322f2c;
-
-  --text-primary:     #e8e4de;
-  --text-secondary:   #9e9890;
-  --text-muted:       #7e7870;
-  --text-heading:     #7e7870;
-  --text-faint:       #5e5a54;
-
-  --border-card:      #3a3733;
-  --border-input:     #4a4640;
-  --border-strong:    #6e6860;
-  --border-focus:     #e8e4de;
-
-  --link-color:       #e8e4de;
-
-  --toggle-bg:        #4a4640;
-  --toggle-thumb:     #e8e4de;
-
-  --color-success:    #88b088;
-  --color-error:      #d08080;
-  --color-warning:    #c89860;
-
-  --btn-primary-bg:    #e8e4de;
-  --btn-primary-text:  #1e1d1b;
-  --btn-primary-hover: #ccc8c2;
-
-  --rail-dot:          #4a4640;
-  --rail-dot-active:   #e8e4de;
-  --rail-dot-done:     #9e9890;
-  --rail-line:         #3a3733;
+  /* Aliases: this tool's names → Arena Toolkit tokens (colours flip with data-theme) */
+  --bg-page:          var(--surface-page);
+  --bg-card:          var(--surface-card);
+  --bg-input:         var(--surface-page);
+  --bg-sunken:        var(--surface-sunken);
+  --bg-media:         var(--surface-media);
+  --link-color:       var(--text-primary);
+  --color-success:    var(--accent-success);
+  --color-error:      var(--accent-private);
+  --color-warning:    var(--accent-alert);
+  --btn-primary-bg:    var(--accent-primary);
+  --btn-primary-text:  var(--surface-page);
+  --btn-primary-hover: color-mix(in srgb, var(--accent-primary) 85%, var(--surface-page));
 }
 
 /* ──────────────────────────────────────────────────────────────
@@ -184,15 +245,38 @@ a:visited, a:active { color: var(--link-color); }
    ────────────────────────────────────────────────────────────── */
 .wrap { max-width: 980px; margin: 0 auto; }
 
-header {
+.topbar {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-6);
-  gap: var(--space-4);
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
 }
 
-.header-text h1 {
+.crumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-heading);
+}
+.crumbs li + li::before {
+  content: "/";
+  margin-right: var(--space-1);
+  color: var(--text-muted);
+  font-weight: var(--fw-regular);
+}
+.crumbs a { color: var(--text-muted); text-decoration: none; }
+.crumbs a:hover { color: var(--text-primary); }
+.crumbs a:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+
+.page-title { margin-bottom: var(--space-6); }
+
+.page-title h1 {
   font-size: var(--fs-2xl);
   font-weight: var(--fw-semibold);
   letter-spacing: var(--tracking-tight);
@@ -200,50 +284,10 @@ header {
   margin-bottom: var(--space-2);
 }
 
-.header-text p {
+.page-title p {
   color: var(--text-secondary);
   font-size: var(--fs-base);
 }
-
-.theme-toggle {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  cursor: pointer;
-  user-select: none;
-  flex-shrink: 0;
-  margin-top: var(--space-1);
-}
-
-.toggle-label {
-  font-size: var(--fs-xs);
-  color: var(--text-muted);
-  min-width: 28px;
-  text-align: right;
-  transition: color var(--t-base);
-}
-
-.toggle-track {
-  position: relative;
-  width: 34px;
-  height: 19px;
-  background: var(--toggle-bg);
-  border-radius: var(--radius-pill);
-  transition: background var(--t-base);
-}
-
-.toggle-thumb {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 13px;
-  height: 13px;
-  background: var(--toggle-thumb);
-  border-radius: 50%;
-  transition: transform var(--t-fast), background var(--t-base);
-}
-
-body.theme-dark .toggle-thumb { transform: translateX(15px); }
 
 /* ──────────────────────────────────────────────────────────────
    Layout — rail + content
@@ -261,77 +305,77 @@ body.theme-dark .toggle-thumb { transform: translateX(15px); }
 }
 
 /* ──────────────────────────────────────────────────────────────
-   Step rail
+   Step rail — matches the design system Stepper:
+   one continuous line down the gutter, dot size carries state
    ────────────────────────────────────────────────────────────── */
 .rail { position: sticky; top: var(--space-5); }
 
 .steps {
-  list-style: none;
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+/* One line from the first dot centre to the last */
+.steps::before {
+  content: "";
+  position: absolute;
+  left: 10px;      /* centre of the 20px track column */
+  top: 17px;
+  bottom: 17px;
+  width: 1px;
+  background: var(--border-input);
+}
+.steps li { position: relative; z-index: 1; }
+
+.step {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-1) 0 var(--space-2);
+  background: none;
+  border: none;
+  font-family: var(--font-sans);
+  font-size: var(--fs-lg);
+  line-height: 1.25;
+  color: var(--text-muted);
+  text-align: left;
+  cursor: default;
+  transition: color var(--t-fast);
+}
+.step.is-visited { cursor: pointer; }
+.step.is-visited:hover { color: var(--text-primary); }
+.step:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+
+.step-dot {
+  justify-self: center;
+  margin-top: 8px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--border-input);
+  transition: background var(--t-fast);
+}
+
+.step.is-done { color: var(--text-primary); }
+.step.is-done .step-dot { background: var(--border-strong); }
+
+.step.is-active { color: var(--text-primary); font-weight: 700; }
+.step.is-active .step-dot {
+  width: 9px;
+  height: 9px;
+  margin-top: 7px;
+  background: var(--text-primary);
 }
 
 @media (max-width: 720px) {
   .steps { flex-direction: row; flex-wrap: wrap; gap: var(--space-2); }
+  .steps::before { display: none; }
+  .step { width: auto; padding-right: var(--space-3); }
 }
-
-.step {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var(--fs-sm);
-  color: var(--text-faint);
-  padding: var(--space-1) 0;
-  transition: color var(--t-fast);
-  background: none;
-  border: none;
-  font-family: var(--font-sans);
-  cursor: default;
-  text-align: left;
-  width: 100%;
-}
-
-.step.is-visited {
-  cursor: pointer;
-}
-
-.step.is-visited:hover {
-  color: var(--text-primary);
-}
-
-/* Vertical connector line between step dots */
-.steps { position: relative; list-style: none; margin: 0; padding: 0; }
-.steps li { position: relative; }
-.steps li:not(:last-child)::after {
-  content: '';
-  position: absolute;
-  left: 4px; /* under centre of 10px dot */
-  top: 50%;
-  height: 100%;
-  width: 1px;
-  background: var(--border-input);
-  z-index: 0;
-}
-.step-dot { position: relative; z-index: 1; }
-
-.step-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--rail-dot);
-  flex-shrink: 0;
-  transition: background var(--t-fast);
-}
-
-.step.is-active {
-  color: var(--text-primary);
-  font-weight: var(--fw-medium);
-}
-.step.is-active .step-dot { background: var(--rail-dot-active); }
-
-.step.is-done { color: var(--text-secondary); }
-.step.is-done .step-dot { background: var(--rail-dot-done); }
 
 /* ──────────────────────────────────────────────────────────────
    Panels
@@ -523,36 +567,88 @@ body.theme-dark .toggle-thumb { transform: translateX(15px); }
 /* ──────────────────────────────────────────────────────────────
    Options checkboxes
    ────────────────────────────────────────────────────────────── */
-.check {
-  display: flex;
+/* Checkbox + Radio — from arena-duplicate-finder/src/components (tool-local there until promoted to shared/ui) */
+/* Checkbox */
+.atk-checkbox {
+  display: inline-flex;
   align-items: flex-start;
   gap: var(--space-2);
-  padding: var(--space-2) 0;
   cursor: pointer;
 }
-
-.check input {
-  margin-top: 3px;
-  cursor: pointer;
-  accent-color: var(--text-primary);
+.atk-checkbox-input {
+  position: absolute;
+  opacity: 0;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: inherit;
 }
-
-.check-label {
-  font-size: var(--fs-md);
-  color: var(--text-primary);
-  line-height: var(--lh-base);
-}
-
-.check-sub {
-  display: block;
-  font-size: var(--fs-sm);
-  color: var(--text-muted);
+.atk-checkbox-box {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
   margin-top: 2px;
+  border: 1px solid var(--text-muted);   /* ≥3:1 on the page in all four themes (border-input was 1.35:1 in Light) */
+  border-radius: var(--radius-sm);
+  background: var(--surface-page);
+  color: var(--surface-page); /* same pairing as the primary button: dark on pale accents, light on navy */
+  transition: border-color 120ms ease, background 120ms ease;
 }
+.atk-checkbox:hover .atk-checkbox-box { border-color: var(--text-primary); }
+.atk-checkbox-input:focus-visible + .atk-checkbox-box { outline: 2px solid var(--accent-focus); outline-offset: 2px; }
+.atk-checkbox-input:checked + .atk-checkbox-box,
+.atk-checkbox-input:indeterminate + .atk-checkbox-box {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+.atk-checkbox-tick, .atk-checkbox-bar { display: none; }
+.atk-checkbox-input:checked + .atk-checkbox-box .atk-checkbox-tick { display: block; }
+.atk-checkbox-input:indeterminate + .atk-checkbox-box .atk-checkbox-tick { display: none; }
+.atk-checkbox-input:indeterminate + .atk-checkbox-box .atk-checkbox-bar { display: block; width: 8px; height: 2px; background: currentColor; }
+.atk-checkbox-input:disabled ~ * { opacity: 0.5; }
+.atk-checkbox-input:disabled + .atk-checkbox-box { cursor: not-allowed; }
+.atk-checkbox-text { display: flex; flex-direction: column; gap: 2px; }
+.atk-checkbox-label { color: var(--text-primary); font-size: var(--fs-md); line-height: var(--lh-base); }
+.atk-checkbox-desc { color: var(--text-muted); font: var(--text-body-sm); }
+
+/* Radio */
+.atk-radio { display: inline-flex; align-items: flex-start; gap: var(--space-2); cursor: pointer; }
+.atk-radio-input { position: absolute; opacity: 0; width: 16px; height: 16px; margin: 0; cursor: inherit; }
+.atk-radio-ring {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  border: 1px solid var(--text-muted);
+  border-radius: var(--radius-round);
+  background: var(--surface-page);
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.atk-radio:hover .atk-radio-ring { border-color: var(--text-primary); }
+.atk-radio-input:focus-visible + .atk-radio-ring { outline: 2px solid var(--accent-focus); outline-offset: 2px; }
+.atk-radio-dot { display: none; width: 8px; height: 8px; border-radius: var(--radius-round); background: var(--surface-page); }
+.atk-radio-input:checked + .atk-radio-ring { background: var(--accent-primary); border-color: var(--accent-primary); }
+.atk-radio-input:checked + .atk-radio-ring .atk-radio-dot { display: block; }
+.atk-radio-input:disabled ~ * { opacity: 0.5; }
+.atk-radio-text { display: flex; flex-direction: column; gap: 2px; }
+.atk-radio-label { color: var(--text-primary); font-size: var(--fs-md); line-height: var(--lh-base); }
+.atk-radio-desc { color: var(--text-muted); font: var(--text-body-sm); }
+
+.atk-checkbox { padding: var(--space-2) 0; display: flex; }
 
 /* ──────────────────────────────────────────────────────────────
    Transfer / progress
    ────────────────────────────────────────────────────────────── */
+.action-hint { font-size: var(--fs-sm); color: var(--text-muted); margin-top: var(--space-2); }
+
 .summary-box {
   background: var(--bg-sunken);
   padding: var(--space-4);
@@ -875,33 +971,945 @@ dialog.picker::backdrop {
 /* Hide inactive panels (JS toggles .is-visible) */
 .panel { display: none; }
 .panel.is-visible { display: block; }
+
+/* Copied from shared/ui/bundle.css (Button, Modal, Menu, ThemeChooser) */
+/* Button */
+.atk-btn {
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  line-height: 1;
+  font-weight: 700;
+  padding: 0 var(--space-3);
+  height: 36px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+  box-sizing: border-box;
+}
+.atk-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.atk-btn--primary {
+  background: var(--accent-primary);
+  color: var(--surface-page);
+  border-color: var(--accent-primary);
+}
+.atk-btn--primary:hover:not(:disabled) {
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+}
+
+.atk-btn--secondary {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: var(--border-strong);
+}
+.atk-btn--secondary:hover:not(:disabled) {
+  color: var(--text-primary);
+  border-color: var(--text-primary);
+}
+
+.atk-btn--ghost {
+  background: var(--surface-card);
+  color: var(--text-secondary);
+}
+.atk-btn--ghost:hover:not(:disabled) {
+  background: var(--surface-media);
+  color: var(--text-primary);
+}
+
+.atk-btn--sm {
+  font-size: 12.5px;
+  height: 28px;
+  padding: 0 var(--space-2);
+}
+
+/* ────────────────────────────────────────────────────────────
+   Modal — centred panel on a dimmed, blurred backdrop
+   ──────────────────────────────────────────────────────────── */
+.atk-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+  -webkit-backdrop-filter: blur(8px);
+          backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  z-index: 100;
+  font-family: var(--font-sans);
+}
+.atk-modal {
+  background: var(--surface-card);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.12);
+  width: 100%;
+  max-width: 460px;
+  max-height: calc(100vh - var(--space-6));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.atk-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border-card);
+  font-size: 14.4px;
+  font-weight: 400;
+  color: var(--text-primary);
+}
+.atk-modal__close {
+  all: unset;
+  cursor: pointer;
+  color: var(--text-muted);
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+}
+.atk-modal__close:hover { color: var(--text-primary); }
+.atk-modal__body {
+  padding: var(--space-3);
+  overflow: auto;
+  font-size: 14.4px;
+  color: var(--text-primary);
+  line-height: 1.45;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.atk-modal__footer {
+  padding: var(--space-3);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+/* ────────────────────────────────────────────────────────────
+   Menu — floating action list (icon + label + optional shortcut)
+   ──────────────────────────────────────────────────────────── */
+.atk-menu {
+  background: var(--surface-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.08);
+  padding: var(--space-1) 0;
+  min-width: 200px;
+  font-family: var(--font-sans);
+  display: inline-block;
+}
+.atk-menu__item {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  font-size: 14.4px;
+  font-weight: 700;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background-color 100ms ease;
+}
+.atk-menu__item:hover,
+.atk-menu__item:focus-visible {
+  background: var(--surface-sunken);
+}
+.atk-menu__icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--text-muted);
+}
+.atk-menu__icon svg { width: 100%; height: 100%; }
+.atk-menu__label { flex: 1; min-width: 0; }
+.atk-menu__shortcut { margin-left: auto; }
+.atk-menu__separator {
+  height: 1px;
+  background: var(--border-card);
+  margin: var(--space-1) 0;
+}
+
+/* ────────────────────────────────────────────────────────────
+   ThemeChooser — palette button that opens a Menu of themes
+   ──────────────────────────────────────────────────────────── */
+.atk-theme-chooser {
+  position: relative;
+  display: inline-flex;
+}
+.atk-theme-chooser__button {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color 100ms ease, color 100ms ease;
+}
+.atk-theme-chooser__button:hover,
+.atk-theme-chooser__button[aria-expanded="true"] {
+  background: var(--surface-sunken);
+  color: var(--text-primary);
+}
+.atk-theme-chooser__button:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+.atk-theme-chooser__button svg { width: 20px; height: 20px; }
+.atk-theme-chooser__popover {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: var(--space-1);
+  z-index: 10;
+}
+.atk-theme-chooser .atk-menu { min-width: 160px; }
+
+/* Step descriptions: shown under the current step only */
+.step-text { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.step-desc {
+  display: none;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-regular);
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+.step.is-active .step-desc { display: block; }
+@media (max-width: 720px) { .step.is-active .step-desc { display: none; } }
 </style>
 </head>
 
-<body class="theme-light">
+<body>
 
 <div class="wrap">
 
-  <header>
-    <div class="header-text">
-      <h1>Are.na Merge</h1>
-      <p>Add every block from one channel into another, in one go.</p>
-    </div>
-    <div class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark" role="button" tabindex="0">
-      <span class="toggle-label" id="toggle-label">dark</span>
-      <div class="toggle-track"><div class="toggle-thumb"></div></div>
-    </div>
+  <header class="topbar">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="index.html">Are.na Tools</a></li>
+        <li aria-current="page">Are.na Merge</li>
+      </ol>
+    </nav>
+    <div id="theme-slot"></div>
   </header>
+  <script>
+/* ArenaToolkit — component bundle. Classic script, assigns window.ArenaToolkit. */
+(function () {
+  'use strict';
+
+  function el(tag, attrs, kids) {
+    var node = document.createElement(tag);
+    if (attrs) {
+      for (var k in attrs) {
+        if (!Object.prototype.hasOwnProperty.call(attrs, k)) continue;
+        var v = attrs[k];
+        if (v == null || v === false) continue;
+        if (k === 'className') node.className = v;
+        else if (k === 'style' && typeof v === 'object') Object.assign(node.style, v);
+        else if (k.indexOf('on') === 0 && typeof v === 'function') {
+          node.addEventListener(k.slice(2).toLowerCase(), v);
+        } else if (v === true) {
+          node.setAttribute(k, '');
+        } else {
+          node.setAttribute(k, String(v));
+        }
+      }
+    }
+    if (kids == null) return node;
+    if (!Array.isArray(kids)) kids = [kids];
+    for (var i = 0; i < kids.length; i++) {
+      var c = kids[i];
+      if (c == null) continue;
+      if (typeof c === 'string' || typeof c === 'number') {
+        node.appendChild(document.createTextNode(String(c)));
+      } else {
+        node.appendChild(c);
+      }
+    }
+    return node;
+  }
+
+  function Button(opts) {
+    opts = opts || {};
+    var cls = ['atk-btn', 'atk-btn--' + (opts.variant || 'primary')];
+    if (opts.size === 'sm') cls.push('atk-btn--sm');
+    return el('button', {
+      className: cls.join(' '),
+      type: opts.type || 'button',
+      disabled: opts.disabled || null,
+      onclick: opts.onClick
+    }, opts.children);
+  }
+
+  function Input(opts) {
+    opts = opts || {};
+    var node = el('input', {
+      className: 'atk-input',
+      type: opts.type || 'text',
+      placeholder: opts.placeholder || null,
+      name: opts.name || null,
+      disabled: opts.disabled || null,
+      oninput: opts.onInput
+    });
+    if (opts.value != null) node.value = opts.value;
+    return node;
+  }
+
+  function Link(opts) {
+    opts = opts || {};
+    var cls = ['atk-link'];
+    if (opts.variant === 'muted') cls.push('atk-link--muted');
+    return el('a', {
+      className: cls.join(' '),
+      href: opts.href || '#'
+    }, opts.children);
+  }
+
+  function Card(opts) {
+    opts = opts || {};
+    var kids = [];
+    if (opts.title) kids.push(el('div', { className: 'atk-card__title' }, opts.title));
+    kids.push(el('div', { className: 'atk-card__body' }, opts.children));
+    return el('div', { className: opts.variant === 'filled' ? 'atk-card atk-card--filled' : 'atk-card' }, kids);
+  }
+
+  function Badge(opts) {
+    opts = opts || {};
+    var cls = ['atk-badge'];
+    if (opts.variant && opts.variant !== 'default') cls.push('atk-badge--' + opts.variant);
+    return el('span', { className: cls.join(' ') }, opts.children);
+  }
+
+  function Block(opts) {
+    opts = opts || {};
+    var variant = opts.variant || 'text';
+    var cls = ['atk-block', 'atk-block--' + variant];
+    var kids = [];
+
+    // Image (image / attachment variants)
+    if (opts.src) {
+      kids.push(el('img', { src: opts.src, alt: opts.alt || '' }));
+    }
+
+    // Text variant: content IS the block body — children or html, with inline markup allowed.
+    // Channel variant: structured title / byline / meta, centred.
+    if (variant === 'text') {
+      var textWrap;
+      if (opts.html != null) {
+        textWrap = el('div', { className: 'atk-block__text-fade' });
+        textWrap.innerHTML = opts.html;
+      } else {
+        textWrap = el('div', { className: 'atk-block__text-fade' }, opts.children);
+      }
+      kids.push(textWrap);
+    } else if (variant === 'channel' || variant.indexOf('channel-') === 0) {
+      var body = [];
+      if (opts.title) body.push(el('div', { className: 'atk-block__title' }, opts.title));
+      if (opts.byline) body.push(el('div', { className: 'atk-block__byline' }, opts.byline));
+      if (opts.meta) body.push(el('div', { className: 'atk-block__meta' }, opts.meta));
+      if (body.length) kids.push(el('div', { className: 'atk-block__content' }, body));
+    }
+
+    // Label (bottom-right chip, e.g. "PDF")
+    if (opts.label) {
+      kids.push(el('span', { className: 'atk-block__label' }, opts.label));
+    }
+
+    // Hover-revealed actions row
+    if (opts.actions && opts.actions.length) {
+      var actionNodes = opts.actions.map(function (a) {
+        var tag = a.href ? 'a' : 'button';
+        var attrs = {
+          className: 'atk-block__action',
+          href: a.href || null,
+          type: a.href ? null : 'button',
+          onclick: a.onClick
+        };
+        return el(tag, attrs, a.label);
+      });
+      kids.push(el('div', { className: 'atk-block__actions' }, actionNodes));
+    }
+
+    return el('div', { className: cls.join(' ') }, kids);
+  }
+
+  function KeyChip(opts) {
+    opts = opts || {};
+    return el('kbd', { className: 'atk-key' }, opts.children);
+  }
+
+  function Menu(opts) {
+    opts = opts || {};
+    var menu = el('div', { className: 'atk-menu', role: 'menu' });
+    (opts.items || []).forEach(function (item) {
+      if (item.separator) {
+        menu.appendChild(el('div', { className: 'atk-menu__separator' }));
+        return;
+      }
+      var tag = item.href ? 'a' : 'button';
+      var kids = [];
+      if (item.icon) kids.push(el('span', { className: 'atk-menu__icon' }, item.icon));
+      kids.push(el('span', { className: 'atk-menu__label' }, item.label));
+      if (item.shortcut) {
+        kids.push(el('span', { className: 'atk-menu__shortcut' },
+          KeyChip({ children: item.shortcut })));
+      }
+      menu.appendChild(el(tag, {
+        className: 'atk-menu__item',
+        href: item.href || null,
+        type: item.href ? null : 'button',
+        role: 'menuitem',
+        onclick: item.onClick
+      }, kids));
+    });
+    return menu;
+  }
+
+  function Modal(opts) {
+    opts = opts || {};
+    var backdrop = el('div', { className: 'atk-modal__backdrop', role: 'dialog', 'aria-modal': 'true' });
+    var panel = el('div', { className: 'atk-modal' });
+
+    function close(e) {
+      if (opts.onClose) opts.onClose(e);
+      if (backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
+    }
+
+    if (opts.title) {
+      var closeBtn = el('button', {
+        className: 'atk-modal__close',
+        type: 'button',
+        onclick: close,
+        'aria-label': 'Close'
+      }, '×');
+      panel.appendChild(el('div', { className: 'atk-modal__header' }, [
+        el('span', null, opts.title),
+        closeBtn
+      ]));
+    }
+    if (opts.children != null) {
+      panel.appendChild(el('div', { className: 'atk-modal__body' }, opts.children));
+    }
+    if (opts.footer != null) {
+      panel.appendChild(el('div', { className: 'atk-modal__footer' }, opts.footer));
+    }
+
+    backdrop.appendChild(panel);
+    backdrop.addEventListener('click', function (e) {
+      if (e.target === backdrop) close(e);
+    });
+    return backdrop;
+  }
+
+  function Select(opts) {
+    opts = opts || {};
+    var attrs = {
+      className: 'atk-select',
+      name: opts.name || null,
+      disabled: opts.disabled || null,
+      onchange: opts.onChange
+    };
+    var options = (opts.options || []).map(function (o) {
+      if (typeof o === 'string') o = { value: o, label: o };
+      var optAttrs = { value: o.value };
+      if (o.value === opts.value) optAttrs.selected = '';
+      return el('option', optAttrs, o.label);
+    });
+    return el('select', attrs, options);
+  }
+
+  function Textarea(opts) {
+    opts = opts || {};
+    var node = el('textarea', {
+      className: 'atk-textarea',
+      placeholder: opts.placeholder || null,
+      name: opts.name || null,
+      rows: opts.rows || null,
+      disabled: opts.disabled || null,
+      oninput: opts.onInput
+    });
+    if (opts.value != null) node.value = opts.value;
+    return node;
+  }
+
+  function Tabs(opts) {
+    opts = opts || {};
+    var tabs = el('div', { className: 'atk-tabs', role: 'tablist' });
+    var items = opts.items || [];
+    items.forEach(function (t, idx) {
+      var isActive = (opts.value != null)
+        ? (t.value === opts.value)
+        : (idx === 0);
+      var kids = [t.label];
+      if (t.count != null) {
+        kids.push(el('span', { className: 'atk-tabs__count' }, String(t.count)));
+      }
+      tabs.appendChild(el('button', {
+        className: 'atk-tabs__tab',
+        type: 'button',
+        role: 'tab',
+        'aria-selected': isActive ? 'true' : 'false',
+        onclick: function (e) {
+          if (opts.onChange) opts.onChange(t.value, e);
+        }
+      }, kids));
+    });
+    return tabs;
+  }
+
+  function Stepper(opts) {
+    opts = opts || {};
+    var root = el('div', { className: 'atk-stepper' });
+    (opts.items || []).forEach(function (step) {
+      var state = step.state || 'upcoming';
+      var item = el('div', { className: 'atk-stepper__item is-' + state });
+      item.appendChild(el('div', { className: 'atk-stepper__track' },
+        el('span', { className: 'atk-stepper__dot' })));
+      var body = el('div', { className: 'atk-stepper__body' },
+        el('div', { className: 'atk-stepper__label' }, step.label));
+      if (step.description && state === 'current') {
+        body.appendChild(el('div', { className: 'atk-stepper__description' }, step.description));
+      }
+      item.appendChild(body);
+      root.appendChild(item);
+    });
+    return root;
+  }
+
+  /* ── ThemeChooser ──────────────────────────────────────────────
+     Palette button + Menu of themes. Sets data-theme on <html> and
+     remembers the choice in localStorage, shared by every tool on the
+     same origin. Order of precedence: ?theme= (not saved) > saved > system. */
+
+  var THEME_KEY = 'arena_toolkit_theme';
+  var THEME_OPTIONS = [
+    { id: 'light', label: 'Light' },
+    { id: 'dusk', label: 'Dusk' },
+    { id: 'dark', label: 'Dark' },
+    { id: 'dawn', label: 'Dawn' }
+  ];
+
+  // Palette: the system's own Icons/Theme.svg (Phosphor), inlined so it takes the text colour.
+  var PALETTE_SVG =
+    '<svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M200.77,53.89A103.27,103.27,0,0,0,128,24h-1.07A104,104,0,0,0,24,128c0,43,26.58,79.06,69.36,94.17A32,32,0,0,0,136,192a16,16,0,0,1,16-16h46.21a31.81,31.81,0,0,0,31.2-24.88,104.43,104.43,0,0,0,2.59-24A103.28,103.28,0,0,0,200.77,53.89Zm13,93.71A15.89,15.89,0,0,1,198.21,160H152a32,32,0,0,0-32,32,16,16,0,0,1-21.31,15.07C62.49,194.3,40,164,40,128a88,88,0,0,1,87.09-88h.9a88.35,88.35,0,0,1,88,87.25A88.86,88.86,0,0,1,213.81,147.6ZM140,76a12,12,0,1,1-12-12A12,12,0,0,1,140,76ZM96,100A12,12,0,1,1,84,88,12,12,0,0,1,96,100Zm0,56a12,12,0,1,1-12-12A12,12,0,0,1,96,156Zm88-56a12,12,0,1,1-12-12A12,12,0,0,1,184,100Z"/></svg>';
+  var CHECK_SVG =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+  function svgSpan(markup) {
+    var span = el('span');
+    span.innerHTML = markup; // static strings above, never user input
+    return span;
+  }
+
+  var SYSTEM_OPTION = { id: 'system', label: 'System' };
+
+  function themeIds(themes) {
+    return (themes || THEME_OPTIONS).map(function (t) { return t.id || t; });
+  }
+
+  // Pure: which theme applies. asked = ?theme=, saved = localStorage value.
+  // 'system' (or anything unknown) falls through to the system light/dark setting.
+  function resolveTheme(opts) {
+    opts = opts || {};
+    var ids = themeIds(opts.themes);
+    if (ids.indexOf(opts.asked) !== -1) return opts.asked;
+    if (ids.indexOf(opts.saved) !== -1) return opts.saved;
+    var wanted = opts.prefersDark ? 'dark' : 'light';
+    return ids.indexOf(wanted) !== -1 ? wanted : ids[0];
+  }
+
+  // Pure: which menu entry is selected: ?theme=, else the saved theme, else 'system'.
+  function themeChoice(opts) {
+    opts = opts || {};
+    var ids = themeIds(opts.themes);
+    if (ids.indexOf(opts.asked) !== -1) return opts.asked;
+    if (ids.indexOf(opts.saved) !== -1) return opts.saved;
+    return 'system';
+  }
+
+  function ThemeChooser(opts) {
+    opts = opts || {};
+    var themes = opts.themes || THEME_OPTIONS;
+    var entries = opts.system === false ? themes : themes.concat([SYSTEM_OPTION]);
+    var key = opts.storageKey || THEME_KEY;
+    var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+
+    function read() { try { return localStorage.getItem(key); } catch (e) { return null; } }
+    function write(value) { try { localStorage.setItem(key, value); } catch (e) { /* private mode */ } }
+
+    var choice = themeChoice({
+      themes: themes,
+      asked: new URLSearchParams(location.search).get('theme'),
+      saved: read()
+    });
+    function apply() {
+      document.documentElement.setAttribute('data-theme', resolveTheme({
+        themes: themes,
+        asked: choice === 'system' ? null : choice,
+        prefersDark: !!(mq && mq.matches)
+      }));
+    }
+    apply();
+    // While on System, follow the operating system as it changes.
+    if (mq && mq.addEventListener) mq.addEventListener('change', function () { if (choice === 'system') apply(); });
+
+    var root = el('div', { className: 'atk-theme-chooser' });
+    var button = el('button', {
+      className: 'atk-theme-chooser__button',
+      type: 'button',
+      title: 'Theme',
+      'aria-label': 'Choose theme',
+      'aria-haspopup': 'menu',
+      'aria-expanded': 'false'
+    }, svgSpan(PALETTE_SVG));
+    var popover = null;
+
+    function close(returnFocus) {
+      if (!popover) return;
+      popover.remove();
+      popover = null;
+      button.setAttribute('aria-expanded', 'false');
+      if (returnFocus) button.focus();
+    }
+
+    function choose(id) {
+      choice = id;
+      apply();
+      write(id);
+      close(true);
+      if (typeof opts.onChange === 'function') opts.onChange(id);
+    }
+
+    function open() {
+      var menuItems = [];
+      entries.forEach(function (t) {
+        // System sits apart from the named themes.
+        if (t === SYSTEM_OPTION && themes.length) menuItems.push({ separator: true });
+        menuItems.push({
+          label: t.label,
+          icon: t.id === choice ? svgSpan(CHECK_SVG) : el('span'),
+          onClick: function () { choose(t.id); }
+        });
+      });
+      var menu = Menu({ items: menuItems });
+      var items = Array.prototype.slice.call(menu.querySelectorAll('.atk-menu__item'));
+      items.forEach(function (item, i) {
+        item.setAttribute('role', 'menuitemradio');
+        item.setAttribute('aria-checked', String(entries[i].id === choice));
+      });
+      menu.addEventListener('keydown', function (e) {
+        var i = items.indexOf(document.activeElement);
+        if (e.key === 'ArrowDown') { e.preventDefault(); items[(i + 1) % items.length].focus(); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
+      });
+      popover = el('div', { className: 'atk-theme-chooser__popover' }, menu);
+      root.appendChild(popover);
+      button.setAttribute('aria-expanded', 'true');
+      var selected = items[entries.map(function (t) { return t.id; }).indexOf(choice)];
+      (selected || items[0]).focus();
+    }
+
+    button.addEventListener('click', function () { if (popover) close(); else open(); });
+    document.addEventListener('click', function (e) { if (popover && !root.contains(e.target)) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && popover) close(true); });
+
+    root.appendChild(button);
+    return root;
+  }
+  ThemeChooser.resolve = resolveTheme;
+  ThemeChooser.choice = themeChoice;
+
+  /* ── ChannelRow / ChannelList ──────────────────────────────────
+     A channel as a coloured bar: badge, name, block count, metadata count,
+     owner, caret. Opens (a <details>) to show whatever you pass as children.
+     ChannelList stacks rows and adds an optional sort menu; sorting itself
+     is yours: re-order with list.setRows(). */
+
+  var CHEVRON_SVG =
+    '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>';
+
+  function ChannelRow(opts) {
+    opts = opts || {};
+    var visibility = opts.visibility || 'closed';
+    var badgeVariant = { public: 'success', private: 'private' }[visibility] || 'default';
+    var caret = svgSpan(CHEVRON_SVG);
+    caret.className = 'atk-channel-row__caret';
+    var summary = el('summary', null, [
+      Badge({ variant: badgeVariant, children: visibility }),
+      el('span', { className: 'atk-channel-row__title' }, opts.title),
+      opts.count != null
+        ? el('span', { className: 'atk-channel-row__count', title: 'Blocks in this channel' }, String(opts.count))
+        : null,
+      opts.metadataCount != null
+        ? el('span', { title: 'Metadata entries' }, Badge({ children: String(opts.metadataCount) }))
+        : null,
+      opts.owner ? el('span', { className: 'atk-channel-row__owner' }, opts.owner) : null,
+      caret
+    ]);
+    return el('details', {
+      className: 'atk-channel-row',
+      'data-visibility': visibility,
+      open: opts.open ? true : null
+    }, [summary, el('div', { className: 'atk-channel-row__body' }, opts.children)]);
+  }
+
+  var channelListCount = 0;
+
+  function ChannelList(opts) {
+    opts = opts || {};
+    var root = el('div', { className: 'atk-channel-list' });
+    var rowsEl = el('div', { className: 'atk-channel-list__rows' });
+    var toolbar = null;
+    if (opts.sorts && opts.sorts.length) {
+      var select = Select({
+        options: opts.sorts,
+        value: opts.sortValue || opts.sorts[0].value,
+        onChange: function (e) { if (opts.onSort) opts.onSort(e.target.value); }
+      });
+      select.id = 'atk-channel-sort-' + (++channelListCount);
+      toolbar = el('div', { className: 'atk-channel-list__toolbar', hidden: true }, [
+        el('label', { for: select.id }, opts.sortLabel || 'Sort'),
+        select
+      ]);
+      root.appendChild(toolbar);
+    }
+    root.appendChild(rowsEl);
+
+    // Replace the list's contents. Rows you pass again are moved, not rebuilt, so open rows stay open.
+    // The sort menu shows once there are two or more. A single node (a message) works too.
+    root.setRows = function (nodes) {
+      rowsEl.replaceChildren.apply(rowsEl, nodes);
+      if (toolbar) toolbar.hidden = nodes.length < 2;
+    };
+    root.setRows(opts.rows || []);
+    return root;
+  }
+
+  /* ── StatusMessage: one inline line for progress, success and errors ── */
+  function StatusMessage(opts) {
+    opts = opts || {};
+    var tone = opts.tone || 'info';
+    var kids = [];
+    if (tone === 'error' || tone === 'success') {
+      kids.push(el('span', { className: 'atk-status__icon', 'aria-hidden': 'true' }, tone === 'error' ? '\u26A0' : '\u2713'));
+    }
+    if (opts.label) kids.push(el('strong', null, opts.label + '.'));
+    kids = kids.concat(opts.children == null ? [] : opts.children);
+    return el('p', {
+      className: 'atk-status atk-status--' + tone,
+      role: tone === 'error' ? 'alert' : 'status'
+    }, kids);
+  }
+
+  /* ── Accounts: names and initials come from are.na's user object ── */
+  function accountName(user) {
+    return (user && (user.name || user.full_name || user.slug)) || '';
+  }
+
+  // The API's own `initials` when present, else the first letters of the name ("Kim Plowright" -> "KP").
+  function accountInitials(user) {
+    if (user && user.initials) return String(user.initials).slice(0, 2).toUpperCase();
+    var name = (accountName(user) || '?').trim();
+    return name.split(/\s+/).map(function (w) { return w[0]; }).join('').slice(0, 2).toUpperCase() || '?';
+  }
+
+  function Avatar(user) {
+    return el('span', { className: 'atk-avatar', 'aria-hidden': 'true' }, accountInitials(user));
+  }
+
+  /* ── AccountMenu: the header block. [Connect →] or [avatar] name [Disconnect] ── */
+  function AccountMenu(opts) {
+    opts = opts || {};
+    var root = el('div', { className: 'atk-account' });
+    root.setUser = function (user) {
+      if (!user) {
+        root.replaceChildren(Button({
+          variant: 'ghost', size: 'sm',
+          children: opts.connectLabel || 'Connect \u2192',
+          onClick: opts.onConnect
+        }));
+        return;
+      }
+      root.replaceChildren(
+        Avatar(user),
+        el('span', { className: 'atk-account__name' }, accountName(user)),
+        Button({ variant: 'ghost', size: 'sm', children: opts.disconnectLabel || 'Disconnect', onClick: opts.onDisconnect })
+      );
+    };
+    root.setUser(opts.user || null);
+    return root;
+  }
+  AccountMenu.displayName = accountName;
+  AccountMenu.initials = accountInitials;
+
+  /* ── AuthPanel: the token form and the signed-in chip. No requests, no storage:
+        the caller (shared/widgets/auth-step.js) owns those and calls update(). ── */
+  function AuthPanel(opts) {
+    opts = opts || {};
+    var state = {
+      user: null, detail: null, status: null,
+      requireWrite: !!opts.requireWrite, writeMessage: opts.writeMessage || null,
+      remember: opts.remember !== false
+    };
+    var panel = !!opts.panel;
+    var root = el('div', { className: 'atk-auth' });
+
+    function status(s) {
+      return s ? StatusMessage({ tone: s.tone, label: s.label, children: s.message }) : null;
+    }
+
+    function rememberCheck() {
+      var box = el('input', { type: 'checkbox' });
+      box.checked = state.remember;
+      box.addEventListener('change', function () {
+        state.remember = box.checked;
+        if (opts.onRememberChange) opts.onRememberChange(box.checked);
+      });
+      return el('label', { className: 'atk-auth__remember' }, [
+        box,
+        el('span', null, [
+          'Remember on this computer',
+          el('br'),
+          el('span', { className: 'atk-auth__hint' }, 'Unticked, it is forgotten when you close the tab.')
+        ])
+      ]);
+    }
+
+    function chip() {
+      var u = state.user;
+      var who = el('div', { className: 'atk-auth__who' }, ['Signed in as ', el('strong', null, accountName(u))]);
+      if (state.detail) {
+        who.appendChild(el('br'));
+        who.appendChild(el('span', { className: 'atk-auth__hint' }, state.detail));
+      }
+      return el('div', { className: 'atk-auth__chip' }, [
+        Avatar(u), who,
+        Button({ variant: 'ghost', size: 'sm', children: 'Disconnect', onClick: opts.onDisconnect })
+      ]);
+    }
+
+    function form() {
+      var link = Link({ href: opts.tokenUrl, children: 'personal access token' });
+      link.target = '_blank';
+      link.rel = 'noopener';
+      var intro = el('p', { className: 'atk-auth__intro' }, [panel ? 'Create a ' : 'Paste a ', link]);
+      if (state.requireWrite) {
+        intro.appendChild(document.createTextNode(panel
+          ? ' with read and write ticked, then paste it below. The token stays in your browser only.'
+          : ' with the write scope ticked. This tool changes your account: it adds and removes connections and edits blocks, so a read-only token will not work.'));
+      } else {
+        intro.appendChild(document.createTextNode(' with read access. That is all this tool needs. Some content, including private channels, only shows up once you are connected.'));
+      }
+
+      var input = Input({ type: 'password', placeholder: panel ? 'paste it here' : 'Paste your token here' });
+      input.id = 'arena-token';
+      input.autocomplete = 'off';
+      input.spellcheck = false;
+      var submit = function () { if (opts.onConnect) opts.onConnect(input.value); };
+      input.addEventListener('keydown', function (e) { if (e.key === 'Enter') submit(); });
+      var row = el('div', { className: 'atk-auth__row' }, [
+        input,
+        Button({ variant: panel ? 'secondary' : 'primary', children: 'Connect', onClick: submit })
+      ]);
+
+      var kids = [];
+      if (state.writeMessage) kids.push(el('p', { className: 'atk-auth__message' }, state.writeMessage));
+      kids.push(intro);
+      if (panel) {
+        var label = el('label', { className: 'atk-auth__label', 'for': 'arena-token' }, 'Personal access token');
+        kids.push(label, row, rememberCheck());
+      } else {
+        kids.push(row, el('p', { className: 'atk-auth__note' }, 'Your token stays in this browser and is only ever sent to are.na.'));
+      }
+      kids.push(status(state.status));
+      return kids;
+    }
+
+    function render() {
+      var kids;
+      if (state.user && panel) {
+        kids = [status(state.status), chip()];
+      } else if (state.user) {
+        kids = [el('div', { className: 'atk-auth__row atk-auth__row--center' }, [
+          Badge({ variant: 'success', children: 'Connected as @' + state.user.slug }),
+          Button({ variant: 'ghost', size: 'sm', children: 'Disconnect', onClick: opts.onDisconnect })
+        ])];
+      } else {
+        kids = form();
+      }
+      root.replaceChildren.apply(root, kids.filter(Boolean));
+    }
+
+    // Merges these keys into the state and redraws: user, detail, status {tone,label,message}, requireWrite, writeMessage, remember.
+    root.update = function (next) {
+      for (var k in next) { if (Object.prototype.hasOwnProperty.call(next, k)) state[k] = next[k]; }
+      render();
+    };
+    render();
+    return root;
+  }
+
+  window.ArenaToolkit = {
+    ChannelRow: ChannelRow,
+    ChannelList: ChannelList,
+    ThemeChooser: ThemeChooser,
+    StatusMessage: StatusMessage,
+    AccountMenu: AccountMenu,
+    AuthPanel: AuthPanel,
+    Button: Button,
+    Input: Input,
+    Link: Link,
+    Card: Card,
+    Badge: Badge,
+    Block: Block,
+    Modal: Modal,
+    Menu: Menu,
+    KeyChip: KeyChip,
+    Select: Select,
+    Textarea: Textarea,
+    Tabs: Tabs,
+    Stepper: Stepper,
+    _el: el
+  };
+}());
+  </script>
+  <script>
+  // Theme chooser: applies the saved/system theme straight away
+  document.getElementById('theme-slot').replaceWith(ArenaToolkit.ThemeChooser());
+  </script>
+
+  <div class="page-title">
+    <h1>Are.na Merge</h1>
+    <p>Add every block from one channel into another, in one go.</p>
+  </div>
 
   <div class="layout">
 
     <nav class="rail" aria-label="Steps">
       <ol class="steps" id="steps">
-        <li><button type="button" class="step is-active is-visited" data-step="connect"><span class="step-dot"></span>Connect</button></li>
-        <li><button type="button" class="step" data-step="source"><span class="step-dot"></span>Source</button></li>
-        <li><button type="button" class="step" data-step="destination"><span class="step-dot"></span>Destination</button></li>
-        <li><button type="button" class="step" data-step="options"><span class="step-dot"></span>Options</button></li>
-        <li><button type="button" class="step" data-step="transfer"><span class="step-dot"></span>Transfer</button></li>
+        <li><button type="button" class="step is-active is-visited" data-step="connect"><span class="step-dot"></span><span class="step-text"><span class="step-label">Connect</span><span class="step-desc">Paste a token with write access.</span></span></button></li>
+        <li><button type="button" class="step" data-step="source"><span class="step-dot"></span><span class="step-text"><span class="step-label">Source</span><span class="step-desc">Pick the channel to copy from.</span></span></button></li>
+        <li><button type="button" class="step" data-step="destination"><span class="step-dot"></span><span class="step-text"><span class="step-label">Destination</span><span class="step-desc">Pick the channel to copy into.</span></span></button></li>
+        <li><button type="button" class="step" data-step="options"><span class="step-dot"></span><span class="step-text"><span class="step-label">Options</span><span class="step-desc">Choose how the merge runs.</span></span></button></li>
+        <li><button type="button" class="step" data-step="transfer"><span class="step-dot"></span><span class="step-text"><span class="step-label">Transfer</span><span class="step-desc">Check the summary, then run it.</span></span></button></li>
       </ol>
     </nav>
 
@@ -921,10 +1929,12 @@ dialog.picker::backdrop {
             <input type="password" id="token" class="text-input" placeholder="paste it here" spellcheck="false" autocomplete="off">
             <button type="button" class="btn" id="connect-btn">Connect</button>
           </div>
-          <label class="check">
-            <input type="checkbox" id="remember">
-            <span class="check-label">Remember on this computer
-              <span class="check-sub">Unticked, it is forgotten when you close the tab.</span>
+          <label class="atk-checkbox">
+            <input class="atk-checkbox-input" type="checkbox" id="remember">
+            <span class="atk-checkbox-box" aria-hidden="true"><svg class="atk-checkbox-tick" viewBox="0 0 12 12" width="12" height="12"><path d="M2.5 6.5l2.5 2.5 4.5-5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="atk-checkbox-bar"></span></span>
+            <span class="atk-checkbox-text">
+              <span class="atk-checkbox-label">Remember on this computer</span>
+              <span class="atk-checkbox-desc">Unticked, it is forgotten when you close the tab.</span>
             </span>
           </label>
           <div class="status" id="connect-status" hidden></div>
@@ -993,24 +2003,22 @@ dialog.picker::backdrop {
         <p class="panel-intro">Choose how the merge runs.</p>
 
         <div class="field">
-          <label class="check">
-            <input type="checkbox" id="opt-dryrun" checked>
-            <span class="check-label">Simulate first (recommended)
-              <span class="check-sub">Shows what would happen without changing anything on are.na.</span>
+
+          <label class="atk-checkbox">
+            <input class="atk-checkbox-input" type="checkbox" id="opt-delete-source">
+            <span class="atk-checkbox-box" aria-hidden="true"><svg class="atk-checkbox-tick" viewBox="0 0 12 12" width="12" height="12"><path d="M2.5 6.5l2.5 2.5 4.5-5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="atk-checkbox-bar"></span></span>
+            <span class="atk-checkbox-text">
+              <span class="atk-checkbox-label">Remove blocks from source after merging</span>
+              <span class="atk-checkbox-desc">The blocks themselves survive — only their connection to the source channel goes.</span>
             </span>
           </label>
 
-          <label class="check">
-            <input type="checkbox" id="opt-delete-source">
-            <span class="check-label">Remove blocks from source after merging
-              <span class="check-sub">The blocks themselves survive — only their connection to the source channel goes.</span>
-            </span>
-          </label>
-
-          <label class="check">
-            <input type="checkbox" id="opt-quiet">
-            <span class="check-label">Quiet mode: hide destination during transfer
-              <span class="check-sub">Temporarily sets the destination to private so followers aren't notified for each block, then restores its original status at the end. Skipped on simulations and when the channel is already private.</span>
+          <label class="atk-checkbox">
+            <input class="atk-checkbox-input" type="checkbox" id="opt-quiet">
+            <span class="atk-checkbox-box" aria-hidden="true"><svg class="atk-checkbox-tick" viewBox="0 0 12 12" width="12" height="12"><path d="M2.5 6.5l2.5 2.5 4.5-5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="atk-checkbox-bar"></span></span>
+            <span class="atk-checkbox-text">
+              <span class="atk-checkbox-label">Quiet mode: hide destination during transfer</span>
+              <span class="atk-checkbox-desc">Temporarily sets the destination to private so followers aren't notified for each block, then restores its original status at the end. Skipped on dry runs and when the channel is already private.</span>
             </span>
           </label>
         </div>
@@ -1029,9 +2037,10 @@ dialog.picker::backdrop {
 
         <div class="actions" id="transfer-actions">
           <button type="button" class="btn" data-nav="options">← Back</button>
-          <button type="button" class="btn btn-primary" id="start-btn">Transfer</button>
-          <button type="button" class="btn btn-primary" id="start-real-btn" hidden>Run full transfer now</button>
+          <button type="button" class="btn btn-primary" id="start-btn">Dry Run</button>
+          <button type="button" class="btn" id="start-real-btn">Run Full Merge</button>
         </div>
+        <p class="action-hint">Dry Run shows what would happen and changes nothing on are.na. Run Full Merge writes to your account.</p>
 
         <div class="progress" id="progress" hidden aria-live="polite">
           <div class="progress-head">
@@ -1102,27 +2111,6 @@ const READ_GAP = 150;   // ms between read requests
 const WRITE_GAP = 600;  // ms between write requests (safer)
 const BACKOFF = [2000, 4000, 8000];
 const STORAGE_KEY = 'arena-merge-token';
-
-/* ────────────────────────────────────────────────────────────────
-   Theme
-   ──────────────────────────────────────────────────────────────── */
-function toggleTheme() {
-  const isDark = document.body.classList.contains('theme-dark');
-  applyTheme(!isDark);
-  localStorage.setItem('arena-merge-theme', !isDark ? 'dark' : 'light');
-}
-
-function applyTheme(dark) {
-  document.body.classList.toggle('theme-dark', dark);
-  document.body.classList.toggle('theme-light', !dark);
-  document.getElementById('toggle-label').textContent = dark ? 'dark' : 'light';
-}
-
-(function initTheme() {
-  const stored = localStorage.getItem('arena-merge-theme');
-  if (stored) applyTheme(stored === 'dark');
-  else applyTheme(window.matchMedia?.('(prefers-color-scheme: dark)').matches);
-})();
 
 /* ────────────────────────────────────────────────────────────────
    Navigation between steps
@@ -1608,14 +2596,6 @@ destContinue.addEventListener('click', () => goTo('options'));
 /* ────────────────────────────────────────────────────────────────
    Options
    ──────────────────────────────────────────────────────────────── */
-document.getElementById('opt-dryrun').addEventListener('change', e => {
-  S.opts.dryRun = e.target.checked;
-  // Hide the "run full transfer" button if user toggles dry-run back on
-  if (e.target.checked) {
-    startRealBtn.hidden = true;
-    startBtn.classList.add('btn-primary');
-  }
-});
 document.getElementById('opt-delete-source').addEventListener('change', e => { S.opts.deleteFromSource = e.target.checked; });
 
 document.getElementById('opt-quiet').addEventListener('change', e => { S.opts.quietMode = e.target.checked; });
@@ -1630,38 +2610,58 @@ document.getElementById('options-continue').addEventListener('click', () => {
    ──────────────────────────────────────────────────────────────── */
 const startBtn = document.getElementById('start-btn');
 
-function renderTransferSummary() {
+function transferCounts() {
   const toAdd = S.source.contents.filter(it => !S.dest.existing_block_ids.has(it.id)).length;
-  const skipped = S.source.length - toAdd;
+  return { toAdd, skipped: S.source.length - toAdd };
+}
+
+function renderTransferSummary() {
+  const { toAdd, skipped } = transferCounts();
   const bits = [];
   bits.push(`Add <strong>${toAdd}</strong> block${toAdd === 1 ? '' : 's'} from <strong>${esc(S.source.title)}</strong> into <strong>${esc(S.dest.title)}</strong>.`);
   if (skipped > 0) bits.push(`<br>${skipped} already there — those will be skipped.`);
   if (S.opts.deleteFromSource) bits.push(`<br>Then remove them from <strong>${esc(S.source.title)}</strong>.`);
-  if (S.opts.quietMode && !S.opts.dryRun && S.dest.status !== 'private') {
-    bits.push(`<br>Destination will be set to <strong>private</strong> during the transfer and restored to <strong>${esc(S.dest.status)}</strong> at the end.`);
+  if (S.opts.quietMode && S.dest.status !== 'private') {
+    bits.push(`<br>A full merge will set the destination to <strong>private</strong> while it runs and restore it to <strong>${esc(S.dest.status)}</strong> at the end.`);
   }
-  if (S.opts.dryRun) bits.push(`<br><em>Simulation only — nothing on are.na will change.</em>`);
   document.getElementById('transfer-summary').innerHTML = bits.join(' ');
-  startBtn.textContent = S.opts.dryRun ? 'Run simulation' : 'Transfer';
 }
 
-startBtn.addEventListener('click', runTransfer);
+startBtn.addEventListener('click', () => runTransfer(true));
 
 const startRealBtn = document.getElementById('start-real-btn');
-startRealBtn.addEventListener('click', () => {
-  S.opts.dryRun = false;
-  document.getElementById('opt-dryrun').checked = false;
-  startRealBtn.hidden = true;
-  renderTransferSummary();
-  runTransfer();
-});
 
-async function runTransfer() {
+// A full merge changes the account, so it takes a deliberate yes (same pattern as arena-duplicate-finder).
+function confirmFullTransfer() {
+  const ATK = window.ArenaToolkit;
+  const { toAdd } = transferCounts();
+  const text = `This will add ${toAdd} block${toAdd === 1 ? '' : 's'} from “${S.source.title}” into “${S.dest.title}” on are.na`
+    + (S.opts.deleteFromSource ? `, then remove them from “${S.source.title}”` : '')
+    + '. The blocks themselves are not deleted.';
+  const close = () => { document.removeEventListener('keydown', onKey); modal.remove(); startRealBtn.focus(); };
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+  const ok = ATK.Button({ variant: 'primary', children: 'Run Full Merge', onClick: () => {
+    document.removeEventListener('keydown', onKey); modal.remove(); runTransfer(false);
+  } });
+  const modal = ATK.Modal({
+    title: 'Run Full Merge?',
+    children: ATK._el('p', null, text),
+    footer: [ATK.Button({ variant: 'ghost', children: 'Cancel', onClick: close }), ok],
+    onClose: () => document.removeEventListener('keydown', onKey),
+  });
+  document.addEventListener('keydown', onKey);
+  document.body.append(modal);
+  ok.focus();
+}
+startRealBtn.addEventListener('click', confirmFullTransfer);
+
+async function runTransfer(dryRun) {
+  S.opts.dryRun = dryRun;
   startBtn.disabled = true;
-  startRealBtn.hidden = true;
-  // Restore button hierarchy to initial state for a fresh run
+  startRealBtn.disabled = true;
+  // Fresh run: Dry Run is the primary, Run Full Merge the secondary
   startBtn.classList.add('btn-primary');
-  startRealBtn.classList.add('btn-primary');
+  startRealBtn.classList.remove('btn-primary');
   document.getElementById('finish-summary').hidden = true;
   document.getElementById('progress').hidden = false;
 
@@ -1670,8 +2670,8 @@ async function runTransfer() {
   const total = toProcess.length + (S.opts.deleteFromSource ? toProcess.length : 0);
   let done = 0;
 
-  updatePhase(S.opts.dryRun ? 'Simulating merge…' : 'Merging…');
-  log('info', `Starting ${S.opts.dryRun ? 'simulation' : 'transfer'}: ${toProcess.length} block${toProcess.length === 1 ? '' : 's'}.`);
+  updatePhase(S.opts.dryRun ? 'Dry run: merging…' : 'Merging…');
+  log('info', `Starting ${S.opts.dryRun ? 'dry run' : 'merge'}: ${toProcess.length} block${toProcess.length === 1 ? '' : 's'}.`);
 
   // Quiet mode: hide destination during transfer, restore afterwards.
   // Only applies to a real transfer, and only when the channel isn't already private.
@@ -1686,7 +2686,7 @@ async function runTransfer() {
         await arenaFetch('PUT', `/channels/${encodeURIComponent(S.dest.slug)}`, { status: 'private' });
         privacyFlipped = true;
         log('ok', `Set destination to private (was ${originalStatus}). Will restore at the end.`);
-        updatePhase(S.opts.dryRun ? 'Simulating merge…' : 'Merging…');
+        updatePhase(S.opts.dryRun ? 'Dry run: merging…' : 'Merging…');
       } catch (err) {
         log('err', `Couldn't set destination to private: ${err.message}. Continuing without quiet mode — followers may be notified.`);
       }
@@ -1728,7 +2728,7 @@ async function runTransfer() {
   }
 
   if (S.opts.deleteFromSource) {
-    updatePhase(S.opts.dryRun ? 'Simulating removal from source…' : 'Removing from source…');
+    updatePhase(S.opts.dryRun ? 'Dry run: removing from source…' : 'Removing from source…');
     for (const item of addedBlocks) {
       const connId = item.connection?.id;
       if (!connId) {
@@ -1767,10 +2767,10 @@ async function runTransfer() {
     }
   }
 
-  updatePhase(S.opts.dryRun ? 'Simulation complete.' : 'Transfer complete.');
+  updatePhase(S.opts.dryRun ? 'Dry run complete.' : 'Merge complete.');
   log('ok', `Done. Added ${counts.added}, skipped ${counts.skipped}, removed ${counts.removed}, failed ${counts.failed}.`);
   startBtn.disabled = false;
-  startBtn.textContent = S.opts.dryRun ? 'Run simulation again' : 'Transfer again';
+  startRealBtn.disabled = false;
   renderFinishSummary(counts);
 }
 
@@ -1780,14 +2780,13 @@ function renderFinishSummary(counts) {
   const srcUrl = `https://www.are.na/${S.source.contents[0]?.user?.slug || S.user.slug}/${S.source.slug}`;
 
   if (S.opts.dryRun) {
-    // After simulation: offer to run the real thing
+    // After a dry run: offer to run the real thing
     box.innerHTML = `
-      <div class="card-title">Simulation complete</div>
+      <div class="card-title">Dry run complete</div>
       <div class="card-meta">${counts.added} would be added, ${counts.skipped} already there, ${counts.failed} failed. Nothing on are.na has changed.</div>
-      <div style="margin-top:var(--space-3);color:var(--text-primary);font-size:var(--fs-sm)">If that looks right, run the full transfer:</div>`;
+      <div style="margin-top:var(--space-3);color:var(--text-primary);font-size:var(--fs-sm)">If that looks right, choose <strong>Run Full Merge</strong> above.</div>`;
     box.hidden = false;
-    startRealBtn.hidden = false;
-    // Shift hierarchy: real-transfer becomes primary, re-run simulation becomes secondary
+    // Shift emphasis: Run Full Merge becomes the primary, Dry Run the secondary
     startBtn.classList.remove('btn-primary');
     startRealBtn.classList.add('btn-primary');
   } else {
@@ -1800,9 +2799,9 @@ function renderFinishSummary(counts) {
         <a href="${srcUrl}" target="_blank" rel="noopener" class="btn">View source channel →</a>
       </div>`;
     box.hidden = false;
-    startRealBtn.hidden = true;
-    // After a real transfer, startBtn offers only a repeat — secondary is enough
+    // After a real merge, a repeat is the only thing on offer — neither needs emphasis
     startBtn.classList.remove('btn-primary');
+    startRealBtn.classList.remove('btn-primary');
   }
 }
 
