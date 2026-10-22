@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en-GB" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Are.na Merge — combine two channels</title>
+  <meta name="description" content="Merge all blocks from one are.na channel into another. Runs in your browser, your token stays local.">
+  <link rel="canonical" href="https://mildlydiverting.github.io/are.na-toolkit/arena-merge.html">
+  <meta property="og:type"        content="website">
+  <meta property="og:url"         content="https://mildlydiverting.github.io/are.na-toolkit/arena-merge.html">
+  <meta property="og:title"       content="Are.na Merge">
+  <meta property="og:description" content="Merge all blocks from one are.na channel into another. Runs in your browser, your token stays local.">
+  <meta property="og:image"       content="https://mildlydiverting.github.io/are.na-toolkit/arena-merge.jpg">
+  <meta name="twitter:card"        content="summary_large_image">
+  <meta name="twitter:title"       content="Are.na Merge">
+  <meta name="twitter:description" content="Merge all blocks from one are.na channel into another.">
+  <meta name="twitter:image"       content="https://mildlydiverting.github.io/are.na-toolkit/arena-merge.jpg">
+
+  <!-- @include shared/ui/tokens.css -->
+  <!-- @include shared/ui/bundle.css -->
+  <!-- @include shared/components/checkbox.css -->
+  <!-- @include shared/components/radio.css -->
+  <!-- @include shared/components/progress.css -->
+  <!-- @include shared/components/stat-grid.css -->
+  <!-- @include shared/components/status-log.css -->
+  <!-- @include ./styles.css -->
+</head>
+<body>
+  <header class="merge-header" id="header">
+    <!-- breadcrumb and theme chooser mount here -->
+  </header>
+
+  <main class="merge-main">
+    <div class="page-title">
+      <h1>Are.na Merge</h1>
+      <p class="lede">Copy every block from one channel into another, with a dry run first.</p>
+    </div>
+
+    <p class="atk-status atk-status--info" id="notice" role="status" hidden></p>
+
+    <div class="merge-layout">
+      <aside class="step-rail" id="step-rail" aria-label="Steps"></aside>
+      <section class="step-pane" id="step-pane" aria-live="polite"></section>
+    </div>
+  </main>
+
+  <footer class="merge-footer">
+    <p>Runs in your browser. Your are.na access is only sent to <code>api.are.na</code>. Part of <a href="../index.html">Are.na Tools and Toys</a> by <a href="https://www.mildlydiverting.com/about">Kim Plowright</a>.</p>
+    <p><a href="https://github.com/mildlydiverting/are.na-toolkit">Source on GitHub</a></p>
+  </footer>
+
+  <!-- @include shared/ui/bundle.js -->
+  <!-- @include shared/api/arena-client.js -->
+  <!-- @include shared/api/throttle.js -->
+  <!-- @include shared/widgets/auth-step.js -->
+  <!-- @include shared/widgets/channel-picker.js -->
+  <!-- @include shared/components/checkbox.js -->
+  <!-- @include shared/components/radio.js -->
+  <!-- @include shared/components/progress.js -->
+  <!-- @include shared/components/stat-grid.js -->
+  <!-- @include shared/components/status-log.js -->
+  <!-- @include ./helpers.js -->
+  <!-- @include ./transfer.js -->
+  <!-- @include ./app.js -->
+</body>
+</html>

@@ -1,0 +1,3362 @@
+<!doctype html>
+<html lang="en-GB" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Are.na Merge — combine two channels</title>
+  <meta name="description" content="Merge all blocks from one are.na channel into another. Runs in your browser, your token stays local.">
+  <link rel="canonical" href="https://mildlydiverting.github.io/are.na-toolkit/arena-merge.html">
+  <meta property="og:type"        content="website">
+  <meta property="og:url"         content="https://mildlydiverting.github.io/are.na-toolkit/arena-merge.html">
+  <meta property="og:title"       content="Are.na Merge">
+  <meta property="og:description" content="Merge all blocks from one are.na channel into another. Runs in your browser, your token stays local.">
+  <meta property="og:image"       content="https://mildlydiverting.github.io/are.na-toolkit/arena-merge.jpg">
+  <meta name="twitter:card"        content="summary_large_image">
+  <meta name="twitter:title"       content="Are.na Merge">
+  <meta name="twitter:description" content="Merge all blocks from one are.na channel into another.">
+  <meta name="twitter:image"       content="https://mildlydiverting.github.io/are.na-toolkit/arena-merge.jpg">
+
+<style>
+/* Arena Toolkit — generated from tokens.json */
+:root, [data-theme="light"] {
+  --surface-page: #ffffff; /* Page background. are.na --colors-background / gray0. */
+  --surface-card: #f7f7f7; /* Content cards. Lifts above surface-page. are.na gray1. */
+  --surface-media: #ededed; /* Behind thumbnails and image placeholders. are.na gray2. */
+  --surface-sunken: #ededed; /* Inset or quiet panels. Shares gray2 with surface-media on purpose. */
+  --border-card: #ededed; /* Hairline between cards and page. 1px solid. are.na gray2. */
+  --border-input: #dedede; /* Default input border. Visible but quiet. are.na gray3. */
+  --border-strong: #999999; /* Divider or border that carries weight. are.na gray4. */
+  --border-focus: #000000; /* Focus ring. are.na --colors-foreground / gray7. */
+  --text-primary: #000000; /* Body text and primary labels. are.na --colors-foreground / gray7. */
+  --text-secondary: #333333; /* Supporting text. Links. are.na --colors-link / gray6. */
+  --text-muted: #696969; /* Low-emphasis text. Labels above fields, status lines. are.na --colors-slate / gray5. */
+  --text-faint: #999999; /* Placeholders and disabled text. Never for text that must be read. are.na gray4. */
+  --text-heading: #333333; /* Section headings. Deliberately a touch quieter than text-primary. are.na gray6. */
+  --accent-primary: #00075f; /* Primary call-to-action background. are.na --colors-brandDark / blue3 — always the high-contrast opposite of the page: deep navy on light themes, near-white or pale indigo on dark themes. */
+  --accent-focus: #3d46c2; /* Focus ring and current selection. are.na --colors-focus / blue2. Dawn uses a dustier, more muted indigo. */
+  --accent-success: #238020; /* Positive status, confirmation. are.na --colors-channelPublic3 / green3. */
+  --accent-notification: #a87253; /* Soft notification brown. are.na --colors-notification. Dawn is the warmest. */
+  --accent-private: #b93d3d; /* Private channel marker. are.na --colors-channelPrivate3 / red3. Light / Dark are red; Dawn / Dusk shift to rose pink. */
+  --accent-alert: #e15100; /* Warnings, destructive-action confirmations, errors. are.na --colors-alert. */
+  --channel-open: #b4d6b3; /* Resting border on an open (public) channel block. are.na --colors-channelPublic2 / green2. Hover deepens to accent-success. */
+  --channel-private: #dfbebe; /* Resting border on a private channel block. are.na --colors-channelPrivate2 / red2. Hover deepens to accent-private. */
+  --channel-bar-open: #f4f8f3; /* Fill of an open (public) channel row. are.na --colors-channelPublic1 / green1. Closed rows use surface-card (are.na channelClosed1). */
+  --channel-bar-private: #faf4f3; /* Fill of a private channel row. are.na --colors-channelPrivate1 / red1. */
+  --channel-badge-open: #eaf1e7; /* Badge fill on an open channel row, a step off channel-bar-open. Not an are.na variable: sampled from are.na's rendered row (within one step). */
+  --channel-badge-closed: #efefef; /* Badge fill on a closed channel row, a step off surface-card. */
+  --channel-badge-private: #f5eae8; /* Badge fill on a private channel row, a step off channel-bar-private. */
+  --shadow-soft: 0 0 20px rgba(0, 0, 0, 0.08); /* Elevated card. Modal. Dropdown. */
+  --shadow-ambient: 0 0 34px rgba(0, 0, 0, 0.05); /* Very subtle ground shadow. Hover lift. */
+}
+[data-theme="dark"] {
+  --surface-page: #000000;
+  --surface-card: #1a1a1a;
+  --surface-media: #333333;
+  --surface-sunken: #333333;
+  --border-card: #333333;
+  --border-input: #4f4f4f;
+  --border-strong: #696969;
+  --border-focus: #ffffff;
+  --text-primary: #ffffff;
+  --text-secondary: #e5e5e5;
+  --text-muted: #b2b2b2;
+  --text-faint: #696969;
+  --text-heading: #e5e5e5;
+  --accent-primary: #e2dfe9;
+  --accent-focus: #5e6dee;
+  --accent-success: #98dc89;
+  --accent-notification: #ac7556;
+  --accent-private: #eb6864;
+  --accent-alert: #ff7a30;
+  --channel-open: #2a4c29;
+  --channel-private: #412020;
+  --channel-bar-open: #121d12;
+  --channel-bar-private: #1a0404;
+  --channel-badge-open: #213823;
+  --channel-badge-closed: #313131;
+  --channel-badge-private: #310709;
+}
+[data-theme="dawn"] {
+  --surface-page: #f5f1f0;
+  --surface-card: #eae6e5;
+  --surface-media: #e0dbda;
+  --surface-sunken: #e0dbda;
+  --border-card: #e0dbda;
+  --border-input: #cac5c4;
+  --border-strong: #aaa4a3;
+  --border-focus: #342c2a;
+  --text-primary: #342c2a;
+  --text-secondary: #4a4240;
+  --text-muted: #7f7977;
+  --text-faint: #aaa4a3;
+  --text-heading: #4a4240;
+  --accent-primary: #00075f;
+  --accent-focus: #8082c5;
+  --accent-success: #238020;
+  --accent-notification: #b47e5f;
+  --accent-private: #c95d9e;
+  --accent-alert: #d6540b;
+  --channel-open: #c0d5bc;
+  --channel-private: #eaccdb;
+  --channel-bar-open: #eaebe6;
+  --channel-bar-private: #f3eaec;
+  --channel-badge-open: #d7d9ce;
+  --channel-badge-closed: #d6cfce;
+  --channel-badge-private: #e7d6da;
+}
+[data-theme="dusk"] {
+  --surface-page: #16171e;
+  --surface-card: #24222c;
+  --surface-media: #342e38;
+  --surface-sunken: #342e38;
+  --border-card: #342e38;
+  --border-input: #4f4756;
+  --border-strong: #81738c;
+  --border-focus: #e7dbf0;
+  --text-primary: #e7dbf0;
+  --text-secondary: #d5cade;
+  --text-muted: #a798b3;
+  --text-faint: #81738c;
+  --text-heading: #d5cade;
+  --accent-primary: #c1c4ea;
+  --accent-focus: #5e6dee;
+  --accent-success: #98dc89;
+  --accent-notification: #ac7556;
+  --accent-private: #cb76a9;
+  --accent-alert: #ff7a30;
+  --channel-open: #2a4c29;
+  --channel-private: #432f41;
+  --channel-bar-open: #121d12;
+  --channel-bar-private: #1f1c25;
+  --channel-badge-open: #213823;
+  --channel-badge-closed: #443f50;
+  --channel-badge-private: #393544;
+}
+:root {
+  --space-nudge: 2px; /* Micro adjustment. Code chip vertical padding, 2px baseline shifts. Not step zero — a named special-purpose value in are.na. */
+  --space-1: 5px; /* Tight spacing within a related group. Gap between inline elements. */
+  --space-2: 10px; /* Small gaps between controls. Button icon-to-text gap. Horizontal padding on compact inputs. */
+  --space-3: 15px; /* The workhorse. Default padding. Card interior. Grid gutters. */
+  --space-4: 20px; /* Section spacing. Headroom around a block. Toast padding. */
+  --space-5: 25px; /* Modest section break. */
+  --space-6: 35px; /* Large section break. Between major regions. */
+  --space-7: 45px; /* Big section break. */
+  --space-8: 65px; /* Page-level gaps. Padding of modal containers. */
+  --space-9: 80px; /* Hero and marketing structure. */
+  --space-10: 100px; /* Very large spacing. Marketing-only. */
+  --space-11: 130px; /* Page-level marketing hero padding. */
+  --radius-sm: 3px; /* The default. Buttons, inputs, cards, media, thumbnails, badges — essentially everything. are.na --radii-1. */
+  --radius-round: 50%; /* Perfect circles. Avatars, dot indicators. are.na --radii-round. */
+  --radius-pill: 9999px; /* Full pills. Audio scrubbers, progress tracks, segmented controls — NOT badges in are.na. are.na --radii-pill. */
+  --font-sans: "Areal", Arial, Helvetica, sans-serif;
+  --font-serif: "Times New Roman", Times, serif;
+  --font-mono: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --text-h1: 700 28px/35px var(--font-sans);
+  --text-h2: 400 24px/30px var(--font-sans);
+  --text-h3: 700 19.2px/28px var(--font-sans);
+  --text-h4: 400 19.2px/23px var(--font-sans);
+  --text-body-lg: 400 16px/23px var(--font-sans);
+  --text-body: 400 14.4px/21px var(--font-sans);
+  --text-body-sm: 400 12.5px/17px var(--font-sans);
+  --text-ui: 400 16px/20px var(--font-sans);
+  --text-ui-strong: 700 14.4px/20px var(--font-sans);
+  --text-link-sm: 700 12.5px/16px var(--font-sans);
+  --text-caption: 600 10px/12px var(--font-sans);
+  --text-prose: 400 16px/24px var(--font-serif);
+}
+.h1 {
+  font-family: var(--font-sans);
+  font-size: 28px;
+  line-height: 35px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.h2 {
+  font-family: var(--font-sans);
+  font-size: 24px;
+  line-height: 30px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.h3 {
+  font-family: var(--font-sans);
+  font-size: 19.2px;
+  line-height: 28px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.h4 {
+  font-family: var(--font-sans);
+  font-size: 19.2px;
+  line-height: 23px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.body-lg {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 23px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.body {
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  line-height: 21px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.body-sm {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 17px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.ui {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 20px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.ui-strong {
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  line-height: 20px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.link-sm {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 16px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.caption {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  line-height: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.prose {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+</style>
+<style>
+/* ArenaToolkit — component styles. All colours route through tokens.css so themes flip automatically. */
+
+.atk-btn {
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  line-height: 1;
+  font-weight: 700;
+  padding: 0 var(--space-3);
+  height: 36px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+  box-sizing: border-box;
+}
+.atk-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.atk-btn--primary {
+  background: var(--accent-primary);
+  color: var(--surface-page);
+  border-color: var(--accent-primary);
+}
+.atk-btn--primary:hover:not(:disabled) {
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+}
+
+.atk-btn--secondary {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: var(--border-strong);
+}
+.atk-btn--secondary:hover:not(:disabled) {
+  color: var(--text-primary);
+  border-color: var(--text-primary);
+}
+
+.atk-btn--ghost {
+  background: var(--surface-card);
+  color: var(--text-secondary);
+}
+.atk-btn--ghost:hover:not(:disabled) {
+  background: var(--surface-media);
+  color: var(--text-primary);
+}
+
+.atk-btn--sm {
+  font-size: 12.5px;
+  height: 28px;
+  padding: 0 var(--space-2);
+}
+
+/* Input */
+.atk-input {
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  line-height: 1.2;
+  font-weight: 400;
+  padding: 0 var(--space-2);
+  height: 36px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-input);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.atk-input:hover { border-color: var(--border-strong); }
+.atk-input:focus { border-color: var(--border-focus); }
+.atk-input::placeholder { color: var(--text-faint); }
+.atk-input:disabled {
+  color: var(--text-faint);
+  background: var(--surface-sunken);
+  cursor: not-allowed;
+}
+
+/* Link */
+.atk-link {
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+.atk-link:hover { color: var(--text-primary); }
+
+.atk-link--muted {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-weight: 400;
+}
+.atk-link--muted:hover { color: var(--text-primary); }
+
+/* Card */
+.atk-card {
+  background: transparent;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  line-height: 21px;
+}
+/* Cards are unfilled by default; opt in with variant: 'filled'. */
+.atk-card--filled { background: var(--surface-card); }
+.atk-card__title {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 20px;
+  margin: 0 0 var(--space-1) 0;
+}
+.atk-card__body { color: var(--text-secondary); }
+
+/* Badge — matches are.na's .c-eZIjnL: 3px radius chip, mono, 10px uppercase. */
+.atk-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
+  white-space: nowrap;
+  vertical-align: middle;
+  background: var(--surface-card);
+  color: var(--text-muted);
+}
+.atk-badge--private {
+  background: var(--accent-private);
+  color: var(--surface-page);
+}
+.atk-badge--success {
+  background: var(--accent-success);
+  color: var(--surface-page);
+}
+.atk-badge--alert {
+  background: var(--accent-alert);
+  color: var(--surface-page);
+}
+.atk-badge--focus {
+  background: var(--accent-focus);
+  color: var(--surface-page);
+}
+
+/* Block — matches are.na's channel-grid block pattern. Four variants: image, attachment, text, channel.
+   Blocks are always square and SPACIOUS — ~260–320px in the real UI, laid out on a repeat(auto-fill, minmax(260px, 1fr)) grid. */
+.atk-block {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-page);
+  overflow: hidden;
+  box-sizing: border-box;
+  aspect-ratio: 1 / 1;
+  min-width: 180px;
+}
+
+/* image + attachment: no border, image fills */
+.atk-block--image,
+.atk-block--attachment {
+  padding: 0;
+  background: var(--surface-media);
+}
+.atk-block--image > img,
+.atk-block--attachment > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* text: hairline border, generous padding, content top-left aligned, supports inline markup */
+.atk-block--text {
+  border: 1px solid var(--border-card);
+  padding: var(--space-3);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+.atk-block--text strong,
+.atk-block--text b { font-weight: 700; }
+.atk-block--text em,
+.atk-block--text i { font-style: italic; }
+.atk-block--text a {
+  color: var(--text-primary);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Fading text wrapper — mirrors are.na's .c-ftzJsE-gidtAM-direction-vertical.
+   Overflow fades to transparent over the bottom third of the block so long
+   text goes soft rather than hard-clipping, and action buttons overlay cleanly. */
+.atk-block__text-fade {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to top, transparent 0%, #000 33%);
+          mask-image: linear-gradient(to top, transparent 0%, #000 33%);
+}
+.atk-block__text-fade > p { margin: 0 0 var(--space-2) 0; }
+.atk-block__text-fade > p:last-child { margin-bottom: 0; }
+
+/* channel: 2px border, content centred. Three colour variants matching are.na's channel states.
+   Default (variant 'channel') is the closed/neutral look. */
+.atk-block--channel,
+.atk-block--channel-closed,
+.atk-block--channel-open,
+.atk-block--channel-private {
+  border-width: 2px;
+  border-style: solid;
+  padding: var(--space-3);
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  transition: border-color 120ms ease;
+}
+
+/* Closed / default — grey. */
+.atk-block--channel,
+.atk-block--channel-closed {
+  border-color: var(--border-input);
+}
+.atk-block--channel:hover,
+.atk-block--channel:focus-within,
+.atk-block--channel-closed:hover,
+.atk-block--channel-closed:focus-within {
+  border-color: var(--text-secondary);
+}
+
+/* Open — green. Soft resting border, deep hover. Text takes the strong green. */
+.atk-block--channel-open {
+  border-color: var(--channel-open);
+  color: var(--accent-success);
+}
+.atk-block--channel-open:hover,
+.atk-block--channel-open:focus-within {
+  border-color: var(--accent-success);
+}
+
+/* Private — red/pink border and text. */
+.atk-block--channel-private {
+  border-color: var(--channel-private);
+  color: var(--accent-private);
+}
+.atk-block--channel-private:hover,
+.atk-block--channel-private:focus-within {
+  border-color: var(--accent-private);
+}
+
+/* Channel body stack — title / byline / meta, centred */
+.atk-block__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  max-width: 100%;
+}
+.atk-block__title {
+  font-size: 24px;
+  line-height: 1.25;
+  font-weight: 400;
+  color: inherit;
+}
+.atk-block__byline {
+  font-size: 14.4px;
+  line-height: 1.35;
+  font-weight: 700;
+  color: inherit;
+  margin-top: var(--space-1);
+}
+.atk-block__meta {
+  font-size: 14.4px;
+  line-height: 1.35;
+  font-weight: 400;
+  color: inherit;
+}
+
+/* Label — small chip, bottom-right. e.g. "PDF" on attachment blocks. */
+.atk-block__label {
+  position: absolute;
+  right: var(--space-2);
+  bottom: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: var(--surface-card);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+/* Actions row — hover-revealed. Mirrors are.na's .c-hRIxJA pattern. */
+.atk-block__actions {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(2px);
+  transition: opacity 150ms ease, transform 150ms ease, visibility 150ms;
+  pointer-events: none;
+}
+.atk-block:hover .atk-block__actions,
+.atk-block:focus-within .atk-block__actions {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Individual action button — same size as a toolkit Button (md), but bare until hovered */
+.atk-block__action {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  height: 36px;                /* matches .atk-btn */
+  padding: 0 var(--space-3);   /* matches .atk-btn */
+  font-family: var(--font-sans);
+  font-size: 14.4px;           /* matches .atk-btn */
+  font-weight: 700;            /* matches .atk-btn */
+  line-height: 1;              /* matches .atk-btn */
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+.atk-block__action:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-card);
+}
+.atk-block__action:focus-visible {
+  border-color: var(--border-focus);
+  outline: none;
+}
+/* A lone action fills the row — e.g. a block that only offers "Connect →" */
+.atk-block__actions .atk-block__action:only-child {
+  flex: 1;
+}
+
+/* Badge — filled brand & nsfw variants (NEW / BETA / API / NSFW chips) */
+.atk-badge--brand {
+  background: var(--accent-primary);
+  color: var(--surface-page);
+}
+.atk-badge--nsfw {
+  background: var(--accent-notification);
+  color: var(--surface-page);
+}
+
+/* ────────────────────────────────────────────────────────────
+   Modal — centred panel on a dimmed, blurred backdrop
+   ──────────────────────────────────────────────────────────── */
+.atk-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+  -webkit-backdrop-filter: blur(8px);
+          backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  z-index: 100;
+  font-family: var(--font-sans);
+}
+.atk-modal {
+  background: var(--surface-card);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.12);
+  width: 100%;
+  max-width: 460px;
+  max-height: calc(100vh - var(--space-6));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.atk-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border-card);
+  font-size: 14.4px;
+  font-weight: 400;
+  color: var(--text-primary);
+}
+.atk-modal__close {
+  all: unset;
+  cursor: pointer;
+  color: var(--text-muted);
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+}
+.atk-modal__close:hover { color: var(--text-primary); }
+.atk-modal__body {
+  padding: var(--space-3);
+  overflow: auto;
+  font-size: 14.4px;
+  color: var(--text-primary);
+  line-height: 1.45;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.atk-modal__footer {
+  padding: var(--space-3);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+/* ────────────────────────────────────────────────────────────
+   Menu — floating action list (icon + label + optional shortcut)
+   ──────────────────────────────────────────────────────────── */
+.atk-menu {
+  background: var(--surface-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.08);
+  padding: var(--space-1) 0;
+  min-width: 200px;
+  font-family: var(--font-sans);
+  display: inline-block;
+}
+.atk-menu__item {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  font-size: 14.4px;
+  font-weight: 700;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background-color 100ms ease;
+}
+.atk-menu__item:hover,
+.atk-menu__item:focus-visible {
+  background: var(--surface-sunken);
+}
+.atk-menu__icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--text-muted);
+}
+.atk-menu__icon svg { width: 100%; height: 100%; }
+.atk-menu__label { flex: 1; min-width: 0; }
+.atk-menu__shortcut { margin-left: auto; }
+.atk-menu__separator {
+  height: 1px;
+  background: var(--border-card);
+  margin: var(--space-1) 0;
+}
+
+/* ────────────────────────────────────────────────────────────
+   ChannelRow / ChannelList — a channel as a coloured bar that opens
+   ──────────────────────────────────────────────────────────── */
+.atk-channel-row {
+  --bar: var(--surface-card);
+  --bar-badge: var(--channel-badge-closed);
+  --bar-ink: var(--text-secondary);
+  --bar-border: var(--border-strong);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+}
+.atk-channel-row[data-visibility="public"] {
+  --bar: var(--channel-bar-open);
+  --bar-badge: var(--channel-badge-open);
+  --bar-ink: var(--accent-success);
+  --bar-border: var(--accent-success);
+}
+.atk-channel-row[data-visibility="private"] {
+  --bar: var(--channel-bar-private);
+  --bar-badge: var(--channel-badge-private);
+  --bar-ink: var(--accent-private);
+  --bar-border: var(--accent-private);
+}
+.atk-channel-row:hover,
+.atk-channel-row[open],
+.atk-channel-row:focus-within { border-color: var(--bar-border); }
+
+.atk-channel-row > summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-2);
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 23px;
+  font-weight: 400;
+  color: var(--bar-ink);
+  background: var(--bar);
+  border-radius: var(--radius-sm);
+}
+.atk-channel-row > summary::-webkit-details-marker { display: none; }
+.atk-channel-row > summary:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+/* Badges on a bar: a step off the bar colour (own token per state), in the bar's ink. */
+.atk-channel-row > summary .atk-badge {
+  background: var(--bar-badge);
+  color: var(--bar-ink);
+}
+.atk-channel-row__count { font-variant-numeric: tabular-nums; }
+.atk-channel-row__owner { margin-left: auto; }
+.atk-channel-row__caret { display: inline-flex; flex: none; margin-left: auto; }
+.atk-channel-row__owner + .atk-channel-row__caret { margin-left: 0; }
+.atk-channel-row[open] .atk-channel-row__caret { transform: rotate(180deg); }
+.atk-channel-row__caret svg { width: 16px; height: 16px; }
+
+/* Open panel: children are laid out as columns (2:3), stacking on narrow screens. */
+.atk-channel-row__body {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: var(--space-5);
+  padding: var(--space-2) var(--space-2) var(--space-3);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  line-height: 21px;
+}
+@media (max-width: 700px) {
+  .atk-channel-row__body { grid-template-columns: 1fr; }
+}
+
+.atk-channel-list { display: flex; flex-direction: column; gap: var(--space-2); }
+.atk-channel-list__rows { display: flex; flex-direction: column; gap: var(--space-1); }
+.atk-channel-list__toolbar { display: flex; align-items: center; gap: var(--space-2); }
+.atk-channel-list__toolbar[hidden] { display: none; }
+.atk-channel-list__toolbar label {
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.atk-channel-list__toolbar .atk-select { width: auto; min-width: 14em; }
+
+/* ────────────────────────────────────────────────────────────
+   ThemeChooser — palette button that opens a Menu of themes
+   ──────────────────────────────────────────────────────────── */
+.atk-theme-chooser {
+  position: relative;
+  display: inline-flex;
+}
+.atk-theme-chooser__button {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color 100ms ease, color 100ms ease;
+}
+.atk-theme-chooser__button:hover,
+.atk-theme-chooser__button[aria-expanded="true"] {
+  background: var(--surface-sunken);
+  color: var(--text-primary);
+}
+.atk-theme-chooser__button:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+.atk-theme-chooser__button svg { width: 20px; height: 20px; }
+.atk-theme-chooser__popover {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: var(--space-1);
+  z-index: 10;
+}
+.atk-theme-chooser .atk-menu { min-width: 160px; }
+
+/* ────────────────────────────────────────────────────────────
+   KeyChip — a single keyboard shortcut key
+   ──────────────────────────────────────────────────────────── */
+.atk-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+/* ────────────────────────────────────────────────────────────
+   Select — same shape as Input, with a chevron
+   ──────────────────────────────────────────────────────────── */
+.atk-select {
+  display: block;
+  width: 100%;
+  min-height: 36px;
+  padding: 0 30px 0 var(--space-2);
+  background-color: var(--surface-card);
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  color: var(--text-primary);
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+  outline: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M3 4.5 L6 7.5 L9 4.5' stroke='%23696969' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
+  box-sizing: border-box;
+  transition: border-color 120ms ease;
+}
+.atk-select:hover { border-color: var(--border-strong); }
+.atk-select:focus { border-color: var(--border-focus); }
+.atk-select:disabled {
+  color: var(--text-faint);
+  background-color: var(--surface-sunken);
+  cursor: not-allowed;
+}
+
+/* ────────────────────────────────────────────────────────────
+   Textarea — multi-line input, same visual as Input
+   ──────────────────────────────────────────────────────────── */
+.atk-textarea {
+  font-family: var(--font-sans);
+  font-size: 14.4px;
+  line-height: 1.45;
+  font-weight: 400;
+  padding: var(--space-2);
+  min-height: 100px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-input);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  transition: border-color 120ms ease;
+}
+.atk-textarea:hover { border-color: var(--border-strong); }
+.atk-textarea:focus { border-color: var(--border-focus); }
+.atk-textarea::placeholder { color: var(--text-faint); }
+.atk-textarea:disabled {
+  color: var(--text-faint);
+  background: var(--surface-sunken);
+  cursor: not-allowed;
+}
+
+/* ────────────────────────────────────────────────────────────
+   Tabs — underline-active horizontal nav
+   ──────────────────────────────────────────────────────────── */
+.atk-tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-4);
+  border-bottom: 1px solid var(--border-card);
+  font-family: var(--font-sans);
+}
+.atk-tabs__tab {
+  all: unset;
+  padding: var(--space-2) 0;
+  font-size: 14.4px;
+  font-weight: 400;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 1px solid transparent;
+  margin-bottom: -1px;
+  transition: color 120ms ease, border-color 120ms ease;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.atk-tabs__tab:hover { color: var(--text-primary); }
+.atk-tabs__tab[aria-selected="true"] {
+  color: var(--text-primary);
+  font-weight: 700;
+  border-bottom-color: var(--text-primary);
+}
+.atk-tabs__count {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+/* ────────────────────────────────────────────────────────────
+   Stepper — vertical process indicator, dot on a track
+   ──────────────────────────────────────────────────────────── */
+.atk-stepper {
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-sans);
+  position: relative;
+}
+/* One continuous line down the gutter — runs from the first dot to the last. */
+.atk-stepper::before {
+  content: "";
+  position: absolute;
+  left: 10px;        /* centred in the 20px track column */
+  top: 17px;         /* aligns with first dot centre */
+  bottom: 17px;      /* aligns with last dot centre */
+  width: 1px;
+  background: var(--border-input);
+  z-index: 0;
+}
+.atk-stepper__item {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: var(--space-2);
+  padding: var(--space-1) 0 var(--space-2) 0;
+  position: relative;
+  z-index: 1;
+}
+.atk-stepper__track {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  padding-top: 8px;
+}
+.atk-stepper__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--border-strong);
+  position: relative;
+  z-index: 1;
+}
+.atk-stepper__item.is-upcoming .atk-stepper__dot {
+  background: var(--border-input);
+}
+.atk-stepper__item.is-current .atk-stepper__dot {
+  background: var(--text-primary);
+  width: 9px;
+  height: 9px;
+}
+.atk-stepper__label {
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--text-muted);
+  line-height: 1.25;
+}
+.atk-stepper__item.is-current .atk-stepper__label {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+.atk-stepper__item.is-done .atk-stepper__label {
+  color: var(--text-primary);
+}
+.atk-stepper__description {
+  font-size: 14.4px;
+  color: var(--text-primary);
+  margin-top: var(--space-1);
+  line-height: 1.45;
+  font-weight: 400;
+}
+
+/* ────────────────────────────────────────────────────────────
+   StatusMessage — one inline line for progress, success, errors
+   ──────────────────────────────────────────────────────────── */
+.atk-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  align-items: baseline;
+  margin: 0;
+  color: var(--text-primary);
+}
+.atk-status--info { color: var(--text-muted); }
+.atk-status--error .atk-status__icon { color: var(--accent-alert); }
+.atk-status--success .atk-status__icon { color: var(--accent-success); }
+
+/* ────────────────────────────────────────────────────────────
+   Avatar and AccountMenu — [avatar] name [Disconnect], or [Connect →]
+   ──────────────────────────────────────────────────────────── */
+.atk-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface-sunken);
+  color: var(--text-primary);
+  font: var(--text-ui-strong);
+}
+.atk-account {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.atk-account__name {
+  color: var(--text-secondary);
+  font: var(--text-ui);
+}
+@media (max-width: 480px) {
+  .atk-account__name { display: none; }
+}
+
+/* ────────────────────────────────────────────────────────────
+   AuthPanel — the token form and the signed-in chip
+   ──────────────────────────────────────────────────────────── */
+.atk-auth {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.atk-auth__intro,
+.atk-auth__message,
+.atk-auth__note { margin: 0; }
+.atk-auth__message { font: var(--text-ui-strong); }
+.atk-auth__note,
+.atk-auth__hint { color: var(--text-muted); font: var(--text-body-sm); }
+.atk-auth__label { font: var(--text-ui-strong); color: var(--text-muted); }
+.atk-auth__row { display: flex; gap: var(--space-2); }
+.atk-auth__row--center { align-items: center; }
+.atk-auth__row .atk-input { flex: 1; min-width: 0; }
+.atk-auth__remember {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  cursor: pointer;
+}
+.atk-auth__chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--surface-sunken);
+  border-radius: var(--radius-sm);
+}
+.atk-auth__chip .atk-avatar {
+  background: var(--accent-primary);
+  color: var(--surface-page);
+}
+.atk-auth__who {
+  flex: 1;
+  min-width: 0;
+  color: var(--text-secondary);
+}
+.atk-auth__who strong { color: var(--text-primary); }
+
+</style>
+<style>
+/* Checkbox. The resting border is --text-muted, not --border-input: the latter is 1.35:1 on the page in Light,
+   and a control's edge needs 3:1 (WCAG 1.4.11). --text-muted clears 3:1 in all four themes (3.82 in Dawn, 4.69+ elsewhere). */
+.atk-checkbox {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+.atk-checkbox-input {
+  position: absolute;
+  opacity: 0;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: inherit;
+}
+.atk-checkbox-box {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  border: 1px solid var(--text-muted);
+  border-radius: var(--radius-sm);
+  background: var(--surface-page);
+  color: var(--surface-page); /* same pairing as the primary button: dark on pale accents, light on navy */
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.atk-checkbox:hover .atk-checkbox-box { border-color: var(--text-primary); }
+.atk-checkbox-input:focus-visible + .atk-checkbox-box { outline: 2px solid var(--accent-focus); outline-offset: 2px; }
+.atk-checkbox-input:checked + .atk-checkbox-box,
+.atk-checkbox-input:indeterminate + .atk-checkbox-box {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+.atk-checkbox-tick, .atk-checkbox-bar { display: none; }
+.atk-checkbox-input:checked + .atk-checkbox-box .atk-checkbox-tick { display: block; }
+.atk-checkbox-input:indeterminate + .atk-checkbox-box .atk-checkbox-tick { display: none; }
+.atk-checkbox-input:indeterminate + .atk-checkbox-box .atk-checkbox-bar { display: block; width: 8px; height: 2px; background: currentColor; }
+.atk-checkbox-input:disabled ~ * { opacity: 0.5; }
+.atk-checkbox-input:disabled + .atk-checkbox-box { cursor: not-allowed; }
+.atk-checkbox-text { display: flex; flex-direction: column; gap: 2px; }
+.atk-checkbox-label { color: var(--text-primary); font: var(--text-ui); }
+.atk-checkbox-desc { color: var(--text-muted); font: var(--text-body-sm); }
+
+</style>
+<style>
+/* Radio. Resting border is --text-muted for 3:1 contrast, as in Checkbox. */
+.atk-radio { display: inline-flex; align-items: flex-start; gap: var(--space-2); cursor: pointer; }
+.atk-radio-input { position: absolute; opacity: 0; width: 16px; height: 16px; margin: 0; cursor: inherit; }
+.atk-radio-ring {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  border: 1px solid var(--text-muted);
+  border-radius: var(--radius-round);
+  background: var(--surface-page);
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.atk-radio:hover .atk-radio-ring { border-color: var(--text-primary); }
+.atk-radio-input:focus-visible + .atk-radio-ring { outline: 2px solid var(--accent-focus); outline-offset: 2px; }
+.atk-radio-dot { display: none; width: 8px; height: 8px; border-radius: var(--radius-round); background: var(--surface-page); }
+.atk-radio-input:checked + .atk-radio-ring { background: var(--accent-primary); border-color: var(--accent-primary); }
+.atk-radio-input:checked + .atk-radio-ring .atk-radio-dot { display: block; }
+.atk-radio-input:disabled ~ * { opacity: 0.5; }
+.atk-radio-text { display: flex; flex-direction: column; gap: 2px; }
+.atk-radio-label { color: var(--text-primary); font: var(--text-ui); }
+.atk-radio-desc { color: var(--text-muted); font: var(--text-body-sm); }
+
+</style>
+<style>
+/* Progress */
+.atk-progress { display: flex; flex-direction: column; gap: var(--space-nudge); }
+.atk-progress-row { display: flex; justify-content: space-between; gap: var(--space-3); }
+.atk-progress-label { color: var(--text-primary); font: var(--text-ui); }
+.atk-progress-detail { color: var(--text-muted); font: var(--text-body-sm); text-align: right; font-variant-numeric: tabular-nums; }
+.atk-progress-track {
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunken);
+}
+.atk-progress-fill {
+  height: 100%;
+  width: 0;
+  border-radius: var(--radius-pill);
+  background: var(--accent-primary);
+  transition: width 150ms ease;
+}
+.atk-progress--success .atk-progress-fill { background: var(--accent-success); }
+.atk-progress--alert .atk-progress-fill { background: var(--accent-alert); }
+/* Indeterminate is the one moving thing in the system: it says work is going on. */
+.atk-progress.is-indeterminate .atk-progress-fill { width: 30%; animation: atk-progress-slide 1.2s ease-in-out infinite; }
+@keyframes atk-progress-slide { from { margin-left: -30%; } to { margin-left: 100%; } }
+@media (prefers-reduced-motion: reduce) {
+  .atk-progress.is-indeterminate .atk-progress-fill { animation: none; margin-left: 0; width: 100%; opacity: 0.4; }
+}
+
+</style>
+<style>
+/* StatGrid */
+.atk-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--space-3);
+}
+.atk-stat {
+  padding: var(--space-3);
+  background: var(--surface-sunken);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+.atk-stat__value {
+  display: block;
+  font: var(--text-h3);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.atk-stat__label {
+  display: block;
+  margin-top: var(--space-1);
+  font: var(--text-caption);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+</style>
+<style>
+/* StatusLog. Green = success, grey = message, orange = warning, red = error.
+   Contrast on --surface-sunken (Light / Dark / Dawn / Dusk): success 4.29 / 7.78 / 3.66 / 8.11,
+   message 10.79 / 10.03 / 7.14 / 8.36, error 4.72 / 4.03 / 2.76 / 4.21, warning 3.34 / 4.86 / 2.98 / 5.07.
+   Dawn's error and warning fall short of 4.5:1; they are the system's own colours, recorded not changed. */
+.atk-log { margin-top: var(--space-3); }
+.atk-log__summary {
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: var(--space-2) 0;
+}
+.atk-log__body {
+  margin-top: var(--space-2);
+  font: var(--text-body-sm);
+  font-family: var(--font-mono);
+  background: var(--surface-sunken);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  max-height: 240px;
+  overflow-y: auto;
+}
+.atk-log__line { padding: 2px 0; color: var(--text-secondary); line-height: 1.3; }
+.atk-log__line.is-success { color: var(--accent-success); }
+.atk-log__line.is-warning { color: var(--accent-alert); }
+.atk-log__line.is-error   { color: var(--accent-private); }
+.atk-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+</style>
+<style>
+/* Tool-local layout only. Everything else comes from shared/ui. */
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--surface-page);
+  color: var(--text-primary);
+  font: var(--text-body);
+}
+
+.merge-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+}
+
+.crumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font: var(--text-ui-strong);
+  color: var(--text-heading);
+}
+.crumbs li + li::before {
+  content: "/";
+  margin-right: var(--space-1);
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.page-title h1 {
+  margin: 0;
+  font: 700 44px/52px var(--font-sans);
+  letter-spacing: -0.01em;
+  color: var(--text-heading);
+  text-wrap: balance;
+}
+.lede {
+  max-width: 34em;
+  margin: var(--space-3) 0 0;
+  font: 400 20px/30px var(--font-sans);
+}
+
+.merge-main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.merge-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: var(--space-8);
+  align-items: start;
+}
+
+.step-rail .atk-stepper__item { cursor: pointer; }
+.step-rail .atk-stepper__item.is-locked { cursor: default; opacity: 0.6; }
+
+.step-pane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+.step-pane h2 {
+  margin: 0;
+  font: var(--text-ui-strong);
+  color: var(--text-heading);
+}
+.step-pane p { margin: 0; }
+
+.step-nav {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: space-between;
+}
+
+.muted { color: var(--text-muted); }
+
+.stack { display: flex; flex-direction: column; gap: var(--space-2); }
+.stack--loose { gap: var(--space-4); }
+.how summary { cursor: pointer; font: var(--text-ui-strong); color: var(--text-muted); }
+.how ul { margin: var(--space-2) 0 0; padding-left: var(--space-4); color: var(--text-secondary); }
+.field-label { font: var(--text-ui-strong); color: var(--text-muted); }
+.row { display: flex; gap: var(--space-2); }
+.row .atk-input { flex: 1; min-width: 0; }
+
+.chosen { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.chosen__item { display: inline-flex; align-items: center; gap: 2px; }
+.chosen__remove {
+  border: 0;
+  background: none;
+  padding: 0 var(--space-1);
+  color: var(--text-muted);
+  font: var(--text-ui);
+  cursor: pointer;
+}
+.chosen__remove:hover { color: var(--text-primary); }
+
+@media (max-width: 720px) {
+  .merge-layout { grid-template-columns: 1fr; gap: var(--space-4); }
+}
+
+
+.step-nav__right { display: flex; gap: var(--space-2); }
+.row--wrap { flex-wrap: wrap; align-items: center; }
+.run { display: flex; flex-direction: column; gap: var(--space-4); }
+
+.link-button {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--text-muted);
+  font: var(--text-ui);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.link-button:hover { color: var(--text-primary); }
+.link-button:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+
+.card-title { font: var(--text-ui-strong); color: var(--text-heading); margin-bottom: var(--space-1); }
+.card-meta { font: var(--text-body-sm); color: var(--text-muted); }
+.action-hint { font: var(--text-body-sm); color: var(--text-muted); }
+
+.thumbs { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-2); margin-top: var(--space-3); }
+.thumb {
+  aspect-ratio: 1 / 1;
+  background: var(--surface-media);
+  border-radius: var(--radius-sm, 3px);
+  overflow: hidden;
+  font: var(--text-caption);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-1);
+  word-break: break-word;
+}
+.thumb:has(> img) { padding: 0; }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+@media (max-width: 480px) { .thumbs { grid-template-columns: repeat(3, 1fr); } }
+
+.summary-box {
+  background: var(--surface-sunken);
+  padding: var(--space-4);
+  border-radius: var(--radius-sm, 3px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+#notice { max-width: 1100px; margin: 0 auto; padding: 0 var(--space-3); }
+
+.merge-footer {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-3) var(--space-8);
+  border-top: 1px solid var(--border-card);
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+}
+.merge-footer p { margin: 0 0 var(--space-2); }
+.merge-footer a { color: inherit; }
+.atk-card__body > .card-meta + .row { margin-top: var(--space-3); }
+.atk-card__body > .card-meta + .action-hint { margin-top: var(--space-2); }
+
+</style>
+</head>
+<body>
+  <header class="merge-header" id="header">
+    <!-- breadcrumb and theme chooser mount here -->
+  </header>
+
+  <main class="merge-main">
+    <div class="page-title">
+      <h1>Are.na Merge</h1>
+      <p class="lede">Copy every block from one channel into another, with a dry run first.</p>
+    </div>
+
+    <p class="atk-status atk-status--info" id="notice" role="status" hidden></p>
+
+    <div class="merge-layout">
+      <aside class="step-rail" id="step-rail" aria-label="Steps"></aside>
+      <section class="step-pane" id="step-pane" aria-live="polite"></section>
+    </div>
+  </main>
+
+  <footer class="merge-footer">
+    <p>Runs in your browser. Your are.na access is only sent to <code>api.are.na</code>. Part of <a href="../index.html">Are.na Tools and Toys</a> by <a href="https://www.mildlydiverting.com/about">Kim Plowright</a>.</p>
+    <p><a href="https://github.com/mildlydiverting/are.na-toolkit">Source on GitHub</a></p>
+  </footer>
+
+<script>
+/* ArenaToolkit — component bundle. Classic script, assigns window.ArenaToolkit. */
+(function () {
+  'use strict';
+
+  function el(tag, attrs, kids) {
+    var node = document.createElement(tag);
+    if (attrs) {
+      for (var k in attrs) {
+        if (!Object.prototype.hasOwnProperty.call(attrs, k)) continue;
+        var v = attrs[k];
+        if (v == null || v === false) continue;
+        if (k === 'className') node.className = v;
+        else if (k === 'style' && typeof v === 'object') Object.assign(node.style, v);
+        else if (k.indexOf('on') === 0 && typeof v === 'function') {
+          node.addEventListener(k.slice(2).toLowerCase(), v);
+        } else if (v === true) {
+          node.setAttribute(k, '');
+        } else {
+          node.setAttribute(k, String(v));
+        }
+      }
+    }
+    if (kids == null) return node;
+    if (!Array.isArray(kids)) kids = [kids];
+    for (var i = 0; i < kids.length; i++) {
+      var c = kids[i];
+      if (c == null) continue;
+      if (typeof c === 'string' || typeof c === 'number') {
+        node.appendChild(document.createTextNode(String(c)));
+      } else {
+        node.appendChild(c);
+      }
+    }
+    return node;
+  }
+
+  function Button(opts) {
+    opts = opts || {};
+    var cls = ['atk-btn', 'atk-btn--' + (opts.variant || 'primary')];
+    if (opts.size === 'sm') cls.push('atk-btn--sm');
+    return el('button', {
+      className: cls.join(' '),
+      type: opts.type || 'button',
+      disabled: opts.disabled || null,
+      onclick: opts.onClick
+    }, opts.children);
+  }
+
+  function Input(opts) {
+    opts = opts || {};
+    var node = el('input', {
+      className: 'atk-input',
+      type: opts.type || 'text',
+      placeholder: opts.placeholder || null,
+      name: opts.name || null,
+      disabled: opts.disabled || null,
+      oninput: opts.onInput
+    });
+    if (opts.value != null) node.value = opts.value;
+    return node;
+  }
+
+  function Link(opts) {
+    opts = opts || {};
+    var cls = ['atk-link'];
+    if (opts.variant === 'muted') cls.push('atk-link--muted');
+    return el('a', {
+      className: cls.join(' '),
+      href: opts.href || '#'
+    }, opts.children);
+  }
+
+  function Card(opts) {
+    opts = opts || {};
+    var kids = [];
+    if (opts.title) kids.push(el('div', { className: 'atk-card__title' }, opts.title));
+    kids.push(el('div', { className: 'atk-card__body' }, opts.children));
+    return el('div', { className: opts.variant === 'filled' ? 'atk-card atk-card--filled' : 'atk-card' }, kids);
+  }
+
+  function Badge(opts) {
+    opts = opts || {};
+    var cls = ['atk-badge'];
+    if (opts.variant && opts.variant !== 'default') cls.push('atk-badge--' + opts.variant);
+    return el('span', { className: cls.join(' ') }, opts.children);
+  }
+
+  function Block(opts) {
+    opts = opts || {};
+    var variant = opts.variant || 'text';
+    var cls = ['atk-block', 'atk-block--' + variant];
+    var kids = [];
+
+    // Image (image / attachment variants)
+    if (opts.src) {
+      kids.push(el('img', { src: opts.src, alt: opts.alt || '' }));
+    }
+
+    // Text variant: content IS the block body — children or html, with inline markup allowed.
+    // Channel variant: structured title / byline / meta, centred.
+    if (variant === 'text') {
+      var textWrap;
+      if (opts.html != null) {
+        textWrap = el('div', { className: 'atk-block__text-fade' });
+        textWrap.innerHTML = opts.html;
+      } else {
+        textWrap = el('div', { className: 'atk-block__text-fade' }, opts.children);
+      }
+      kids.push(textWrap);
+    } else if (variant === 'channel' || variant.indexOf('channel-') === 0) {
+      var body = [];
+      if (opts.title) body.push(el('div', { className: 'atk-block__title' }, opts.title));
+      if (opts.byline) body.push(el('div', { className: 'atk-block__byline' }, opts.byline));
+      if (opts.meta) body.push(el('div', { className: 'atk-block__meta' }, opts.meta));
+      if (body.length) kids.push(el('div', { className: 'atk-block__content' }, body));
+    }
+
+    // Label (bottom-right chip, e.g. "PDF")
+    if (opts.label) {
+      kids.push(el('span', { className: 'atk-block__label' }, opts.label));
+    }
+
+    // Hover-revealed actions row
+    if (opts.actions && opts.actions.length) {
+      var actionNodes = opts.actions.map(function (a) {
+        var tag = a.href ? 'a' : 'button';
+        var attrs = {
+          className: 'atk-block__action',
+          href: a.href || null,
+          type: a.href ? null : 'button',
+          onclick: a.onClick
+        };
+        return el(tag, attrs, a.label);
+      });
+      kids.push(el('div', { className: 'atk-block__actions' }, actionNodes));
+    }
+
+    return el('div', { className: cls.join(' ') }, kids);
+  }
+
+  function KeyChip(opts) {
+    opts = opts || {};
+    return el('kbd', { className: 'atk-key' }, opts.children);
+  }
+
+  function Menu(opts) {
+    opts = opts || {};
+    var menu = el('div', { className: 'atk-menu', role: 'menu' });
+    (opts.items || []).forEach(function (item) {
+      if (item.separator) {
+        menu.appendChild(el('div', { className: 'atk-menu__separator' }));
+        return;
+      }
+      var tag = item.href ? 'a' : 'button';
+      var kids = [];
+      if (item.icon) kids.push(el('span', { className: 'atk-menu__icon' }, item.icon));
+      kids.push(el('span', { className: 'atk-menu__label' }, item.label));
+      if (item.shortcut) {
+        kids.push(el('span', { className: 'atk-menu__shortcut' },
+          KeyChip({ children: item.shortcut })));
+      }
+      menu.appendChild(el(tag, {
+        className: 'atk-menu__item',
+        href: item.href || null,
+        type: item.href ? null : 'button',
+        role: 'menuitem',
+        onclick: item.onClick
+      }, kids));
+    });
+    return menu;
+  }
+
+  function Modal(opts) {
+    opts = opts || {};
+    var backdrop = el('div', { className: 'atk-modal__backdrop', role: 'dialog', 'aria-modal': 'true' });
+    var panel = el('div', { className: 'atk-modal' });
+
+    function close(e) {
+      if (opts.onClose) opts.onClose(e);
+      if (backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
+    }
+
+    if (opts.title) {
+      var closeBtn = el('button', {
+        className: 'atk-modal__close',
+        type: 'button',
+        onclick: close,
+        'aria-label': 'Close'
+      }, '×');
+      panel.appendChild(el('div', { className: 'atk-modal__header' }, [
+        el('span', null, opts.title),
+        closeBtn
+      ]));
+    }
+    if (opts.children != null) {
+      panel.appendChild(el('div', { className: 'atk-modal__body' }, opts.children));
+    }
+    if (opts.footer != null) {
+      panel.appendChild(el('div', { className: 'atk-modal__footer' }, opts.footer));
+    }
+
+    backdrop.appendChild(panel);
+    backdrop.addEventListener('click', function (e) {
+      if (e.target === backdrop) close(e);
+    });
+    return backdrop;
+  }
+
+  function Select(opts) {
+    opts = opts || {};
+    var attrs = {
+      className: 'atk-select',
+      name: opts.name || null,
+      disabled: opts.disabled || null,
+      onchange: opts.onChange
+    };
+    var options = (opts.options || []).map(function (o) {
+      if (typeof o === 'string') o = { value: o, label: o };
+      var optAttrs = { value: o.value };
+      if (o.value === opts.value) optAttrs.selected = '';
+      return el('option', optAttrs, o.label);
+    });
+    return el('select', attrs, options);
+  }
+
+  function Textarea(opts) {
+    opts = opts || {};
+    var node = el('textarea', {
+      className: 'atk-textarea',
+      placeholder: opts.placeholder || null,
+      name: opts.name || null,
+      rows: opts.rows || null,
+      disabled: opts.disabled || null,
+      oninput: opts.onInput
+    });
+    if (opts.value != null) node.value = opts.value;
+    return node;
+  }
+
+  function Tabs(opts) {
+    opts = opts || {};
+    var tabs = el('div', { className: 'atk-tabs', role: 'tablist' });
+    var items = opts.items || [];
+    items.forEach(function (t, idx) {
+      var isActive = (opts.value != null)
+        ? (t.value === opts.value)
+        : (idx === 0);
+      var kids = [t.label];
+      if (t.count != null) {
+        kids.push(el('span', { className: 'atk-tabs__count' }, String(t.count)));
+      }
+      tabs.appendChild(el('button', {
+        className: 'atk-tabs__tab',
+        type: 'button',
+        role: 'tab',
+        'aria-selected': isActive ? 'true' : 'false',
+        onclick: function (e) {
+          if (opts.onChange) opts.onChange(t.value, e);
+        }
+      }, kids));
+    });
+    return tabs;
+  }
+
+  function Stepper(opts) {
+    opts = opts || {};
+    var root = el('div', { className: 'atk-stepper' });
+    (opts.items || []).forEach(function (step) {
+      var state = step.state || 'upcoming';
+      var item = el('div', { className: 'atk-stepper__item is-' + state });
+      item.appendChild(el('div', { className: 'atk-stepper__track' },
+        el('span', { className: 'atk-stepper__dot' })));
+      var body = el('div', { className: 'atk-stepper__body' },
+        el('div', { className: 'atk-stepper__label' }, step.label));
+      if (step.description && state === 'current') {
+        body.appendChild(el('div', { className: 'atk-stepper__description' }, step.description));
+      }
+      item.appendChild(body);
+      root.appendChild(item);
+    });
+    return root;
+  }
+
+  /* ── ThemeChooser ──────────────────────────────────────────────
+     Palette button + Menu of themes. Sets data-theme on <html> and
+     remembers the choice in localStorage, shared by every tool on the
+     same origin. Order of precedence: ?theme= (not saved) > saved > system. */
+
+  var THEME_KEY = 'arena_toolkit_theme';
+  var THEME_OPTIONS = [
+    { id: 'light', label: 'Light' },
+    { id: 'dusk', label: 'Dusk' },
+    { id: 'dark', label: 'Dark' },
+    { id: 'dawn', label: 'Dawn' }
+  ];
+
+  // Palette: the system's own Icons/Theme.svg (Phosphor), inlined so it takes the text colour.
+  var PALETTE_SVG =
+    '<svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M200.77,53.89A103.27,103.27,0,0,0,128,24h-1.07A104,104,0,0,0,24,128c0,43,26.58,79.06,69.36,94.17A32,32,0,0,0,136,192a16,16,0,0,1,16-16h46.21a31.81,31.81,0,0,0,31.2-24.88,104.43,104.43,0,0,0,2.59-24A103.28,103.28,0,0,0,200.77,53.89Zm13,93.71A15.89,15.89,0,0,1,198.21,160H152a32,32,0,0,0-32,32,16,16,0,0,1-21.31,15.07C62.49,194.3,40,164,40,128a88,88,0,0,1,87.09-88h.9a88.35,88.35,0,0,1,88,87.25A88.86,88.86,0,0,1,213.81,147.6ZM140,76a12,12,0,1,1-12-12A12,12,0,0,1,140,76ZM96,100A12,12,0,1,1,84,88,12,12,0,0,1,96,100Zm0,56a12,12,0,1,1-12-12A12,12,0,0,1,96,156Zm88-56a12,12,0,1,1-12-12A12,12,0,0,1,184,100Z"/></svg>';
+  var CHECK_SVG =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+  function svgSpan(markup) {
+    var span = el('span');
+    span.innerHTML = markup; // static strings above, never user input
+    return span;
+  }
+
+  var SYSTEM_OPTION = { id: 'system', label: 'System' };
+
+  function themeIds(themes) {
+    return (themes || THEME_OPTIONS).map(function (t) { return t.id || t; });
+  }
+
+  // Pure: which theme applies. asked = ?theme=, saved = localStorage value.
+  // 'system' (or anything unknown) falls through to the system light/dark setting.
+  function resolveTheme(opts) {
+    opts = opts || {};
+    var ids = themeIds(opts.themes);
+    if (ids.indexOf(opts.asked) !== -1) return opts.asked;
+    if (ids.indexOf(opts.saved) !== -1) return opts.saved;
+    var wanted = opts.prefersDark ? 'dark' : 'light';
+    return ids.indexOf(wanted) !== -1 ? wanted : ids[0];
+  }
+
+  // Pure: which menu entry is selected: ?theme=, else the saved theme, else 'system'.
+  function themeChoice(opts) {
+    opts = opts || {};
+    var ids = themeIds(opts.themes);
+    if (ids.indexOf(opts.asked) !== -1) return opts.asked;
+    if (ids.indexOf(opts.saved) !== -1) return opts.saved;
+    return 'system';
+  }
+
+  function ThemeChooser(opts) {
+    opts = opts || {};
+    var themes = opts.themes || THEME_OPTIONS;
+    var entries = opts.system === false ? themes : themes.concat([SYSTEM_OPTION]);
+    var key = opts.storageKey || THEME_KEY;
+    var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+
+    function read() { try { return localStorage.getItem(key); } catch (e) { return null; } }
+    function write(value) { try { localStorage.setItem(key, value); } catch (e) { /* private mode */ } }
+
+    var choice = themeChoice({
+      themes: themes,
+      asked: new URLSearchParams(location.search).get('theme'),
+      saved: read()
+    });
+    function apply() {
+      document.documentElement.setAttribute('data-theme', resolveTheme({
+        themes: themes,
+        asked: choice === 'system' ? null : choice,
+        prefersDark: !!(mq && mq.matches)
+      }));
+    }
+    apply();
+    // While on System, follow the operating system as it changes.
+    if (mq && mq.addEventListener) mq.addEventListener('change', function () { if (choice === 'system') apply(); });
+
+    var root = el('div', { className: 'atk-theme-chooser' });
+    var button = el('button', {
+      className: 'atk-theme-chooser__button',
+      type: 'button',
+      title: 'Theme',
+      'aria-label': 'Choose theme',
+      'aria-haspopup': 'menu',
+      'aria-expanded': 'false'
+    }, svgSpan(PALETTE_SVG));
+    var popover = null;
+
+    function close(returnFocus) {
+      if (!popover) return;
+      popover.remove();
+      popover = null;
+      button.setAttribute('aria-expanded', 'false');
+      if (returnFocus) button.focus();
+    }
+
+    function choose(id) {
+      choice = id;
+      apply();
+      write(id);
+      close(true);
+      if (typeof opts.onChange === 'function') opts.onChange(id);
+    }
+
+    function open() {
+      var menuItems = [];
+      entries.forEach(function (t) {
+        // System sits apart from the named themes.
+        if (t === SYSTEM_OPTION && themes.length) menuItems.push({ separator: true });
+        menuItems.push({
+          label: t.label,
+          icon: t.id === choice ? svgSpan(CHECK_SVG) : el('span'),
+          onClick: function () { choose(t.id); }
+        });
+      });
+      var menu = Menu({ items: menuItems });
+      var items = Array.prototype.slice.call(menu.querySelectorAll('.atk-menu__item'));
+      items.forEach(function (item, i) {
+        item.setAttribute('role', 'menuitemradio');
+        item.setAttribute('aria-checked', String(entries[i].id === choice));
+      });
+      menu.addEventListener('keydown', function (e) {
+        var i = items.indexOf(document.activeElement);
+        if (e.key === 'ArrowDown') { e.preventDefault(); items[(i + 1) % items.length].focus(); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
+      });
+      popover = el('div', { className: 'atk-theme-chooser__popover' }, menu);
+      root.appendChild(popover);
+      button.setAttribute('aria-expanded', 'true');
+      var selected = items[entries.map(function (t) { return t.id; }).indexOf(choice)];
+      (selected || items[0]).focus();
+    }
+
+    button.addEventListener('click', function () { if (popover) close(); else open(); });
+    document.addEventListener('click', function (e) { if (popover && !root.contains(e.target)) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && popover) close(true); });
+
+    root.appendChild(button);
+    return root;
+  }
+  ThemeChooser.resolve = resolveTheme;
+  ThemeChooser.choice = themeChoice;
+
+  /* ── ChannelRow / ChannelList ──────────────────────────────────
+     A channel as a coloured bar: badge, name, block count, metadata count,
+     owner, caret. Opens (a <details>) to show whatever you pass as children.
+     ChannelList stacks rows and adds an optional sort menu; sorting itself
+     is yours: re-order with list.setRows(). */
+
+  var CHEVRON_SVG =
+    '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>';
+
+  function ChannelRow(opts) {
+    opts = opts || {};
+    var visibility = opts.visibility || 'closed';
+    var badgeVariant = { public: 'success', private: 'private' }[visibility] || 'default';
+    var caret = svgSpan(CHEVRON_SVG);
+    caret.className = 'atk-channel-row__caret';
+    var summary = el('summary', null, [
+      Badge({ variant: badgeVariant, children: visibility }),
+      el('span', { className: 'atk-channel-row__title' }, opts.title),
+      opts.count != null
+        ? el('span', { className: 'atk-channel-row__count', title: 'Blocks in this channel' }, String(opts.count))
+        : null,
+      opts.metadataCount != null
+        ? el('span', { title: 'Metadata entries' }, Badge({ children: String(opts.metadataCount) }))
+        : null,
+      opts.owner ? el('span', { className: 'atk-channel-row__owner' }, opts.owner) : null,
+      caret
+    ]);
+    return el('details', {
+      className: 'atk-channel-row',
+      'data-visibility': visibility,
+      open: opts.open ? true : null
+    }, [summary, el('div', { className: 'atk-channel-row__body' }, opts.children)]);
+  }
+
+  var channelListCount = 0;
+
+  function ChannelList(opts) {
+    opts = opts || {};
+    var root = el('div', { className: 'atk-channel-list' });
+    var rowsEl = el('div', { className: 'atk-channel-list__rows' });
+    var toolbar = null;
+    if (opts.sorts && opts.sorts.length) {
+      var select = Select({
+        options: opts.sorts,
+        value: opts.sortValue || opts.sorts[0].value,
+        onChange: function (e) { if (opts.onSort) opts.onSort(e.target.value); }
+      });
+      select.id = 'atk-channel-sort-' + (++channelListCount);
+      toolbar = el('div', { className: 'atk-channel-list__toolbar', hidden: true }, [
+        el('label', { for: select.id }, opts.sortLabel || 'Sort'),
+        select
+      ]);
+      root.appendChild(toolbar);
+    }
+    root.appendChild(rowsEl);
+
+    // Replace the list's contents. Rows you pass again are moved, not rebuilt, so open rows stay open.
+    // The sort menu shows once there are two or more. A single node (a message) works too.
+    root.setRows = function (nodes) {
+      rowsEl.replaceChildren.apply(rowsEl, nodes);
+      if (toolbar) toolbar.hidden = nodes.length < 2;
+    };
+    root.setRows(opts.rows || []);
+    return root;
+  }
+
+  /* ── StatusMessage: one inline line for progress, success and errors ── */
+  function StatusMessage(opts) {
+    opts = opts || {};
+    var tone = opts.tone || 'info';
+    var kids = [];
+    if (tone === 'error' || tone === 'success') {
+      kids.push(el('span', { className: 'atk-status__icon', 'aria-hidden': 'true' }, tone === 'error' ? '\u26A0' : '\u2713'));
+    }
+    if (opts.label) kids.push(el('strong', null, opts.label + '.'));
+    kids = kids.concat(opts.children == null ? [] : opts.children);
+    return el('p', {
+      className: 'atk-status atk-status--' + tone,
+      role: tone === 'error' ? 'alert' : 'status'
+    }, kids);
+  }
+
+  /* ── Accounts: names and initials come from are.na's user object ── */
+  function accountName(user) {
+    return (user && (user.name || user.full_name || user.slug)) || '';
+  }
+
+  // The API's own `initials` when present, else the first letters of the name ("Kim Plowright" -> "KP").
+  function accountInitials(user) {
+    if (user && user.initials) return String(user.initials).slice(0, 2).toUpperCase();
+    var name = (accountName(user) || '?').trim();
+    return name.split(/\s+/).map(function (w) { return w[0]; }).join('').slice(0, 2).toUpperCase() || '?';
+  }
+
+  function Avatar(user) {
+    return el('span', { className: 'atk-avatar', 'aria-hidden': 'true' }, accountInitials(user));
+  }
+
+  /* ── AccountMenu: the header block. [Connect →] or [avatar] name [Disconnect] ── */
+  function AccountMenu(opts) {
+    opts = opts || {};
+    var root = el('div', { className: 'atk-account' });
+    root.setUser = function (user) {
+      if (!user) {
+        root.replaceChildren(Button({
+          variant: 'ghost', size: 'sm',
+          children: opts.connectLabel || 'Connect \u2192',
+          onClick: opts.onConnect
+        }));
+        return;
+      }
+      root.replaceChildren(
+        Avatar(user),
+        el('span', { className: 'atk-account__name' }, accountName(user)),
+        Button({ variant: 'ghost', size: 'sm', children: opts.disconnectLabel || 'Disconnect', onClick: opts.onDisconnect })
+      );
+    };
+    root.setUser(opts.user || null);
+    return root;
+  }
+  AccountMenu.displayName = accountName;
+  AccountMenu.initials = accountInitials;
+
+  /* ── AuthPanel: the token form and the signed-in chip. No requests, no storage:
+        the caller (shared/widgets/auth-step.js) owns those and calls update(). ── */
+  function AuthPanel(opts) {
+    opts = opts || {};
+    var state = {
+      user: null, detail: null, status: null,
+      requireWrite: !!opts.requireWrite, writeMessage: opts.writeMessage || null,
+      remember: opts.remember !== false
+    };
+    var panel = !!opts.panel;
+    var root = el('div', { className: 'atk-auth' });
+
+    function status(s) {
+      return s ? StatusMessage({ tone: s.tone, label: s.label, children: s.message }) : null;
+    }
+
+    function rememberCheck() {
+      var box = el('input', { type: 'checkbox' });
+      box.checked = state.remember;
+      box.addEventListener('change', function () {
+        state.remember = box.checked;
+        if (opts.onRememberChange) opts.onRememberChange(box.checked);
+      });
+      return el('label', { className: 'atk-auth__remember' }, [
+        box,
+        el('span', null, [
+          'Remember on this computer',
+          el('br'),
+          el('span', { className: 'atk-auth__hint' }, 'Unticked, it is forgotten when you close the tab.')
+        ])
+      ]);
+    }
+
+    function chip() {
+      var u = state.user;
+      var who = el('div', { className: 'atk-auth__who' }, ['Signed in as ', el('strong', null, accountName(u))]);
+      if (state.detail) {
+        who.appendChild(el('br'));
+        who.appendChild(el('span', { className: 'atk-auth__hint' }, state.detail));
+      }
+      return el('div', { className: 'atk-auth__chip' }, [
+        Avatar(u), who,
+        Button({ variant: 'ghost', size: 'sm', children: 'Disconnect', onClick: opts.onDisconnect })
+      ]);
+    }
+
+    function form() {
+      var link = Link({ href: opts.tokenUrl, children: 'personal access token' });
+      link.target = '_blank';
+      link.rel = 'noopener';
+      var intro = el('p', { className: 'atk-auth__intro' }, [panel ? 'Create a ' : 'Paste a ', link]);
+      if (state.requireWrite) {
+        intro.appendChild(document.createTextNode(panel
+          ? ' with read and write ticked, then paste it below. The token stays in your browser only.'
+          : ' with the write scope ticked. This tool changes your account: it adds and removes connections and edits blocks, so a read-only token will not work.'));
+      } else {
+        intro.appendChild(document.createTextNode(' with read access. That is all this tool needs. Some content, including private channels, only shows up once you are connected.'));
+      }
+
+      var input = Input({ type: 'password', placeholder: panel ? 'paste it here' : 'Paste your token here' });
+      input.id = 'arena-token';
+      input.autocomplete = 'off';
+      input.spellcheck = false;
+      var submit = function () { if (opts.onConnect) opts.onConnect(input.value); };
+      input.addEventListener('keydown', function (e) { if (e.key === 'Enter') submit(); });
+      var row = el('div', { className: 'atk-auth__row' }, [
+        input,
+        Button({ variant: panel ? 'secondary' : 'primary', children: 'Connect', onClick: submit })
+      ]);
+
+      var kids = [];
+      if (state.writeMessage) kids.push(el('p', { className: 'atk-auth__message' }, state.writeMessage));
+      kids.push(intro);
+      if (panel) {
+        var label = el('label', { className: 'atk-auth__label', 'for': 'arena-token' }, 'Personal access token');
+        kids.push(label, row, rememberCheck());
+      } else {
+        kids.push(row, el('p', { className: 'atk-auth__note' }, 'Your token stays in this browser and is only ever sent to are.na.'));
+      }
+      kids.push(status(state.status));
+      return kids;
+    }
+
+    function render() {
+      var kids;
+      if (state.user && panel) {
+        kids = [status(state.status), chip()];
+      } else if (state.user) {
+        kids = [el('div', { className: 'atk-auth__row atk-auth__row--center' }, [
+          Badge({ variant: 'success', children: 'Connected as @' + state.user.slug }),
+          Button({ variant: 'ghost', size: 'sm', children: 'Disconnect', onClick: opts.onDisconnect })
+        ])];
+      } else {
+        kids = form();
+      }
+      root.replaceChildren.apply(root, kids.filter(Boolean));
+    }
+
+    // Merges these keys into the state and redraws: user, detail, status {tone,label,message}, requireWrite, writeMessage, remember.
+    root.update = function (next) {
+      for (var k in next) { if (Object.prototype.hasOwnProperty.call(next, k)) state[k] = next[k]; }
+      render();
+    };
+    render();
+    return root;
+  }
+
+  window.ArenaToolkit = {
+    ChannelRow: ChannelRow,
+    ChannelList: ChannelList,
+    ThemeChooser: ThemeChooser,
+    StatusMessage: StatusMessage,
+    AccountMenu: AccountMenu,
+    AuthPanel: AuthPanel,
+    Button: Button,
+    Input: Input,
+    Link: Link,
+    Card: Card,
+    Badge: Badge,
+    Block: Block,
+    Modal: Modal,
+    Menu: Menu,
+    KeyChip: KeyChip,
+    Select: Select,
+    Textarea: Textarea,
+    Tabs: Tabs,
+    Stepper: Stepper,
+    _el: el
+  };
+}());
+
+</script>
+<script>
+// are.na v3 client. Endpoints checked against https://api.are.na/v3/openapi.json.
+// Writes (updateBlock, createConnection, deleteConnection) need a token with write scope.
+const ARENA_API_BASE = 'https://api.are.na/v3';
+
+class ArenaError extends Error {
+  constructor(status, message, body) {
+    super(message);
+    this.name = 'ArenaError';
+    this.status = status;
+    this.body = body;
+  }
+}
+
+// throttle: the function from createThrottle(); omit in tests to call fetch directly.
+function createArenaClient({ token = null, fetchImpl = (...a) => globalThis.fetch(...a), throttle = null, base = ARENA_API_BASE } = {}) {
+  let currentToken = token;
+
+  // params go in the query string; opts.body (if any) is sent as JSON.
+  async function request(path, params = {}, { method = 'GET', body = null } = {}) {
+    const url = new URL(base + path);
+    for (const [k, v] of Object.entries(params)) {
+      if (v != null) url.searchParams.set(k, String(v));
+    }
+    const doFetch = () => fetchImpl(url.toString(), {
+      method,
+      headers: {
+        Accept: 'application/json',
+        ...(body ? { 'Content-Type': 'application/json' } : {}),
+        ...(currentToken ? { Authorization: `Bearer ${currentToken}` } : {}),
+      },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+      credentials: 'omit',
+      referrerPolicy: 'no-referrer',
+    });
+    const res = throttle ? await throttle(doFetch, { write: method !== 'GET' }) : await doFetch();
+
+    const text = await res.text();
+    let data = null;
+    try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+
+    if (!res.ok) {
+      const msg = data?.details?.message || data?.error || `are.na error ${res.status}`;
+      throw new ArenaError(res.status, msg, data);
+    }
+    return data;
+  }
+
+  // Follows meta.has_more_pages and returns every item in `data`. onPage(items, meta) fires per page.
+  async function paginate(path, params = {}, { per = 100, onPage = null } = {}) {
+    const all = [];
+    for (let page = 1; ; page++) {
+      const body = await request(path, { ...params, page, per });
+      const items = body?.data || [];
+      all.push(...items);
+      if (onPage) onPage(items, body?.meta);
+      if (!body?.meta?.has_more_pages) return all;
+    }
+  }
+
+  return {
+    setToken(t) { currentToken = t || null; },
+    request,
+    paginate,
+    getCurrentUser: () => request('/me'),
+    getBlock: id => request(`/blocks/${encodeURIComponent(id)}`),
+    getBlockConnections: (id, opts = {}) => paginate(`/blocks/${encodeURIComponent(id)}/connections`, {}, opts),
+    getChannel: idOrSlug => request(`/channels/${encodeURIComponent(idOrSlug)}`),
+    // Every block/channel in a channel. Each item carries `connection.id`, which deleteConnection needs.
+    // params: { type } filters to Text, Image, Link, Attachment, Embed, Channel or Block.
+    getChannelContents: (idOrSlug, params = {}, opts = {}) => paginate(`/channels/${encodeURIComponent(idOrSlug)}/contents`, params, opts),
+
+    // A user's own contents (as arena-merge does it). params: { type: 'Channel' } for just their channels.
+    getUserContents: (userId, params = {}, opts = {}) => paginate(`/users/${encodeURIComponent(userId)}/contents`, params, opts),
+
+    // fields: any of title, description, alt_text (Image blocks), metadata (merged; null deletes a key).
+    // Owner only.
+    updateBlock: (id, fields) => request(`/blocks/${encodeURIComponent(id)}`, {}, { method: 'PUT', body: fields }),
+    // Connects a block (or channel) into one or more channels. Resolves to the created Connection[].
+    // channels: ids or slugs, or { id, position?, metadata? } objects.
+    createConnection: async ({ id, type = 'Block', channels }) => {
+      const res = await request('/connections', {}, {
+        method: 'POST',
+        body: {
+          connectable_id: id,
+          connectable_type: type,
+          channels: channels.map(c => (typeof c === 'object' ? c : { id: c })),
+        },
+      });
+      return res?.data || [];
+    },
+    // fields: any of title, description, status ('public' | 'closed' | 'private'). Owner or collaborator.
+    updateChannel: (idOrSlug, fields) => request(`/channels/${encodeURIComponent(idOrSlug)}`, {}, { method: 'PUT', body: fields }),
+    // Takes the *connection* id (from a channel's contents, or createConnection), not a block id.
+    // Removes the block from that channel only; the block itself stays. Resolves to null (204).
+    deleteConnection: connectionId => request(`/connections/${encodeURIComponent(connectionId)}`, {}, { method: 'DELETE' }),
+  };
+}
+
+</script>
+<script>
+// Polite pacing for are.na: 150 ms between requests, and on 429 back off [2, 4, 8] s,
+// honouring Retry-After. Wraps a function that returns a fetch Response.
+const THROTTLE_GAP_MS = 150;
+const THROTTLE_BACKOFF_S = [2, 4, 8];
+
+// onWait(seconds, attempt) is called before each backoff sleep, so the UI can say so.
+// writeGap (default: same as gap) is the pause after a write, for tools that want to be gentler when
+// changing an account. Call throttled(doFetch, { write: true }) for writes; everything else is a read.
+function createThrottle({
+  gap = THROTTLE_GAP_MS,
+  writeGap = gap,
+  backoff = THROTTLE_BACKOFF_S,
+  sleep = ms => new Promise(r => setTimeout(r, ms)),
+  now = () => Date.now(),
+  onWait = null,
+} = {}) {
+  let nextSlot = 0;
+
+  // Reserve the next start time synchronously, so concurrent callers queue up in order.
+  async function takeSlot(spacing) {
+    const start = Math.max(now(), nextSlot);
+    nextSlot = start + spacing;
+    const wait = start - now();
+    if (wait > 0) await sleep(wait);
+  }
+
+  return async function throttled(doFetch, { write = false } = {}) {
+    for (let attempt = 0; ; attempt++) {
+      await takeSlot(write ? writeGap : gap);
+      const res = await doFetch();
+      if (res.status !== 429 || attempt >= backoff.length) return res;
+      const retryAfter = Number(res.headers?.get?.('retry-after'));
+      const seconds = retryAfter > 0 ? retryAfter : backoff[attempt];
+      if (onWait) onWait(seconds, attempt + 1);
+      await sleep(seconds * 1000);
+    }
+  };
+}
+
+</script>
+<script>
+// PAT connect widget: paste a token, test it against /me, remember it in localStorage.
+// The look is ArenaToolkit.AuthPanel (docs in shared/ui/AuthPanel/). Options for tools that change things:
+//  - requireWrite: the token is checked for write scope before it is accepted or saved.
+//  - writeMessage: a line shown above the form, e.g. "Editing needs a token with write access."
+//  - For a page that is read-only until asked: leave requireWrite off, call ensureWrite() (true / false /
+//    null for not connected), and if it is not true call setRequireWrite(true, message) and open the form.
+//  - panel: arena-merge's Connect layout: a labelled field, a "Remember on this computer"
+//    checkbox (unticked, the token lives in sessionStorage and goes with the tab), and an
+//    account chip once connected. loadDetail(user) can fetch the chip's second line.
+const AUTH_STORAGE_KEY = 'arena_toolkit_pat';
+const AUTH_TOKEN_URL = 'https://www.are.na/settings/personal-access-tokens';
+
+function readSavedToken(storage, key = AUTH_STORAGE_KEY) {
+  try { return storage.getItem(key) || null; } catch { return null; }
+}
+
+function saveToken(storage, token, key = AUTH_STORAGE_KEY) {
+  try { storage.setItem(key, token); } catch { /* private window or blocked storage: carry on unsaved */ }
+}
+
+function clearToken(storage, key = AUTH_STORAGE_KEY) {
+  try { storage.removeItem(key); } catch { /* nothing to clear */ }
+}
+
+function describeConnectError(err) {
+  if (err?.status === 401) return "are.na didn't recognise that token. Check it was copied whole.";
+  if (err?.status === 429) return 'are.na is asking us to slow down. Try again in a minute.';
+  if (err?.status) return `are.na said: ${err.message}`;
+  return "Couldn't reach are.na. Check your connection and try again.";
+}
+
+// DELETE /connections/0 never matches anything: 403 means a read-only token, 404 means write is allowed.
+// (The trick arena-merge and to-arena use; nothing is changed either way.)
+async function checkWriteAccess(client) {
+  try {
+    await client.deleteConnection(0);
+    return true;
+  } catch (err) {
+    if (err?.status === 403) return false;
+    if (err?.status === 404) return true;
+    throw err;
+  }
+}
+
+// Remembers whether the connected token can write, so a page can ask "can I edit?" without a request each time.
+// Call reset() when the token changes; mark(true) when a connect has already proved write access.
+function createWriteGate(client) {
+  let answer = null;
+  return {
+    mark(value) { answer = value; },
+    reset() { answer = null; },
+    // true / false from the cache or one probe. A failed probe (401, offline) throws and caches nothing.
+    async check() {
+      if (answer === null) answer = await checkWriteAccess(client);
+      return answer;
+    },
+  };
+}
+
+// client: from createArenaClient(). onChange(user | null) fires on connect and disconnect.
+// The look is ArenaToolkit.AuthPanel; this keeps the token, the checks and the storage.
+function createAuthStep({
+  client,
+  storage = globalThis.localStorage,
+  session = globalThis.sessionStorage,
+  storageKey = AUTH_STORAGE_KEY,
+  onChange = null,
+  requireWrite: initialRequireWrite = false,
+  writeMessage: initialWriteMessage = null,
+  panel = false,
+  loadDetail = null,
+} = {}) {
+  let requireWrite = initialRequireWrite;
+  let writeMessage = initialWriteMessage;
+  const writeGate = createWriteGate(client);
+  let user = null;
+  let detail = null;
+  let remember = true;
+
+  const element = window.ArenaToolkit.AuthPanel({
+    panel,
+    tokenUrl: AUTH_TOKEN_URL,
+    onConnect: (token) => connect(token),
+    onDisconnect: () => disconnect(),
+    onRememberChange: (value) => { remember = value; },
+  });
+
+  // status: null, or { tone: 'error' | 'info', label?, message }
+  function render(status = null) {
+    element.update({ user, detail, status, requireWrite, writeMessage, remember });
+  }
+
+  const failure = (label, message) => ({ tone: 'error', label, message });
+  const progress = (message) => ({ tone: 'info', message });
+
+  async function connect(rawToken) {
+    const token = String(rawToken || '').trim();
+    if (!token) {
+      render(failure('No token', 'Paste a token first.'));
+      return null;
+    }
+    render(progress('Checking token…'));
+    client.setToken(token);
+    writeGate.reset();
+    try {
+      user = await client.getCurrentUser();
+    } catch (err) {
+      client.setToken(null);
+      render(failure("Couldn't connect", describeConnectError(err)));
+      return null;
+    }
+    if (requireWrite) {
+      let writable = false;
+      try {
+        writable = await checkWriteAccess(client);
+      } catch (err) {
+        client.setToken(null);
+        user = null;
+        render(failure("Couldn't connect", describeConnectError(err)));
+        return null;
+      }
+      if (!writable) {
+        client.setToken(null);
+        user = null;
+        render(failure('Read-only token', "This token can't write. Create a new one with the write scope ticked."));
+        return null;
+      }
+      writeGate.mark(true);
+    }
+    // Remembered tokens go to localStorage; otherwise sessionStorage, which goes with the tab.
+    clearToken(storage, storageKey);
+    clearToken(session, storageKey);
+    saveToken(remember ? storage : session, token, storageKey);
+    detail = null;
+    if (loadDetail) {
+      render(progress('Loading your channels…'));
+      try { detail = await loadDetail(user); } catch { detail = null; }
+    }
+    render();
+    if (onChange) onChange(user);
+    return user;
+  }
+
+  // Re-connect with a saved token, if there is one. Returns the user or null.
+  async function restore() {
+    const inLocal = readSavedToken(storage, storageKey);
+    const saved = inLocal || readSavedToken(session, storageKey);
+    if (!saved) { render(); return null; }
+    remember = !!inLocal;
+    const result = await connect(saved);
+    if (!result) { clearToken(storage, storageKey); clearToken(session, storageKey); }
+    return result;
+  }
+
+  // Can the connected token write? true / false, or null when nobody is connected.
+  // Checked once per token (the DELETE /connections/0 probe); throws on 401 or a network error.
+  async function ensureWrite() {
+    if (!user) return null;
+    return writeGate.check();
+  }
+
+  // Switch to write mode, for a page that is read-only until the person asks to edit.
+  // message appears above the form. A connected token is dropped so the form can take a write token.
+  // setRequireWrite(false) puts the widget back to its read-only wording.
+  function setRequireWrite(enabled = true, message = null) {
+    requireWrite = !!enabled;
+    writeMessage = enabled ? message : null;
+    if (enabled && user) disconnect();
+    else render();
+  }
+
+  function disconnect() {
+    user = null;
+    detail = null;
+    writeGate.reset();
+    client.setToken(null);
+    clearToken(storage, storageKey);
+    clearToken(session, storageKey);
+    render();
+    if (onChange) onChange(null);
+  }
+
+  render();
+  return { element, connect, restore, disconnect, ensureWrite, setRequireWrite, getUser: () => user };
+}
+
+</script>
+<script>
+// Multi-select channel picker, lifted from arena-merge's single-select dialog.
+// Knows nothing about what the channels are for: give it channels and the ids already
+// chosen, get the new ids back through onConfirm. Built from ArenaToolkit components.
+
+// Case-insensitive match on title or slug. An empty query matches everything.
+function filterChannels(channels, query) {
+  const q = String(query || '').toLowerCase().trim();
+  if (!q) return channels;
+  return channels.filter(c => (c.title || '').toLowerCase().includes(q) || (c.slug || '').toLowerCase().includes(q));
+}
+
+// Returns a new array with id added or removed, keeping the order picked.
+function toggleId(ids, id) {
+  return ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id];
+}
+
+// What a click on a row does: in multiple mode it toggles; in single mode it chooses just that one.
+function selectId(ids, id, multiple = true) {
+  return multiple ? toggleId(ids, id) : [id];
+}
+
+function blockCount(c) {
+  return c.counts?.contents ?? c.counts?.blocks ?? c.length ?? null;
+}
+
+// channels: [{ id, slug, title, visibility, counts }]; selected: [id]
+// onRefresh (optional): async () => fresh channels array. Adds a Refresh button that reloads the list and keeps the ticks.
+// multiple (default true): false makes it a pick-one list (radio buttons, no Clear); onConfirm still gets an array, of one id.
+// Returns { element, open(), close() }; the element is a Modal you append to document.body.
+function openChannelPicker({ channels, selected = [], title = 'Pick channels', confirmLabel = 'Use', multiple = true, onConfirm, onCancel = null, onRefresh = null }) {
+  const ATK = window.ArenaToolkit;
+  let chosen = multiple ? [...selected] : selected.slice(0, 1);
+  let query = '';
+
+  const filter = ATK.Input({ type: 'search', placeholder: 'Filter by name or slug' });
+  filter.setAttribute('aria-label', 'Filter channels');
+  filter.addEventListener('input', () => { query = filter.value; renderList(); });
+
+  const list = document.createElement('div');
+  Object.assign(list.style, { display: 'flex', flexDirection: 'column', maxHeight: '50vh', overflowY: 'auto' });
+
+  const confirm = ATK.Button({ variant: 'primary', children: confirmLabel, onClick: () => { done(); onConfirm(chosen); } });
+
+  function updateConfirm() {
+    confirm.textContent = multiple ? `${confirmLabel} ${chosen.length} channel${chosen.length === 1 ? '' : 's'}` : confirmLabel;
+    confirm.disabled = chosen.length === 0;
+  }
+
+  function renderList() {
+    const matches = filterChannels(channels, query);
+    if (!matches.length) {
+      const empty = document.createElement('p');
+      empty.className = 'muted';
+      empty.textContent = query ? `No channels match "${query}".` : 'No channels to show.';
+      list.replaceChildren(empty);
+    } else {
+      list.replaceChildren(...matches.map(row));
+    }
+    updateConfirm();
+  }
+
+  function row(c) {
+    const box = document.createElement('input');
+    box.type = multiple ? 'checkbox' : 'radio';
+    if (!multiple) box.name = 'atk-channel-pick';
+    box.checked = chosen.includes(c.id);
+    box.addEventListener('change', () => { chosen = selectId(chosen, c.id, multiple); updateConfirm(); });
+
+    const n = blockCount(c);
+    const text = document.createElement('span');
+    Object.assign(text.style, { flex: '1', minWidth: '0' });
+    const name = document.createElement('span');
+    name.textContent = c.title || c.slug;
+    const meta = document.createElement('span');
+    meta.textContent = `${n ?? '?'} block${n === 1 ? '' : 's'} · ${c.slug}`;
+    Object.assign(meta.style, { display: 'block', color: 'var(--text-muted)', font: 'var(--text-body-sm)' });
+    text.append(name, meta);
+
+    const label = document.createElement('label');
+    Object.assign(label.style, {
+      display: 'flex', alignItems: 'center', gap: 'var(--space-2)', cursor: 'pointer',
+      padding: 'var(--space-2) var(--space-1)', borderBottom: '1px solid var(--border-card)',
+    });
+    label.append(box, text);
+    if (c.visibility && c.visibility !== 'public') {
+      label.append(ATK.Badge({ variant: c.visibility === 'private' ? 'private' : 'default', children: c.visibility }));
+    }
+    return label;
+  }
+
+  const clear = ATK.Button({ variant: 'ghost', children: 'Clear', onClick: () => { chosen = []; renderList(); } });
+  const cancel = ATK.Button({ variant: 'secondary', children: 'Cancel', onClick: () => { done(); if (onCancel) onCancel(); } });
+
+  const status = document.createElement('p');
+  status.className = 'muted';
+  status.setAttribute('role', 'status');
+  status.hidden = true;
+
+  const refresh = onRefresh && ATK.Button({
+    variant: 'secondary', children: 'Refresh list',
+    onClick: async () => {
+      refresh.disabled = true;
+      refresh.textContent = 'Refreshing…';
+      status.hidden = true;
+      try {
+        channels = await onRefresh();
+        status.textContent = `${channels.length} channel${channels.length === 1 ? '' : 's'} loaded.`;
+        renderList();
+      } catch (err) {
+        status.textContent = `Couldn't refresh the list: ${err?.message || err}`;
+      }
+      status.hidden = false;
+      refresh.disabled = false;
+      refresh.textContent = 'Refresh list';
+    },
+  });
+
+  const top = document.createElement('div');
+  Object.assign(top.style, { display: 'flex', gap: 'var(--space-2)', alignItems: 'center' });
+  Object.assign(filter.style, { flex: '1', minWidth: '0' });
+  top.append(...[filter, refresh].filter(Boolean));
+
+  const body = document.createElement('div');
+  Object.assign(body.style, { display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' });
+  body.append(top, status, list);
+
+  const footer = document.createElement('div');
+  Object.assign(footer.style, { display: 'flex', justifyContent: 'space-between', gap: 'var(--space-2)', width: '100%' });
+  const right = document.createElement('div');
+  Object.assign(right.style, { display: 'flex', gap: 'var(--space-2)' });
+  right.append(cancel, confirm);
+  footer.append(multiple ? clear : document.createElement('span'), right);
+
+  const modal = ATK.Modal({ title, children: body, footer, onClose: () => { if (onCancel) onCancel(); } });
+  function done() { modal.remove(); }
+
+  renderList();
+  document.body.append(modal);
+  setTimeout(() => filter.focus(), 50);
+  return { element: modal, close: done };
+}
+
+</script>
+<script>
+// Checkbox: a boolean control with an optional description. Lives in shared/components until promoted into shared/ui
+// (which means publishing it to the design-system artifact, so it needs Kim's go-ahead).
+// A native input sits inside the label, so keyboard, focus and screen readers behave as usual.
+window.ArenaToolkit.Checkbox = function Checkbox({ label, description, checked = false, disabled = false, indeterminate = false, name, id, onChange } = {}) {
+  const h = window.ArenaToolkit._el;
+  const input = h('input', { type: 'checkbox', className: 'atk-checkbox-input', checked, disabled });
+  if (name) input.name = name;
+  if (id) input.id = id;
+  input.indeterminate = indeterminate;
+  if (onChange) input.addEventListener('change', () => onChange(input.checked));
+
+  const box = h('span', { className: 'atk-checkbox-box', 'aria-hidden': 'true' });
+  box.innerHTML = '<svg class="atk-checkbox-tick" viewBox="0 0 12 12" width="12" height="12"><path d="M2.5 6.5l2.5 2.5 4.5-5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="atk-checkbox-bar"></span>';
+
+  const text = h('span', { className: 'atk-checkbox-text' }, [
+    h('span', { className: 'atk-checkbox-label' }, label),
+    description ? h('span', { className: 'atk-checkbox-desc' }, description) : null,
+  ].filter(Boolean));
+
+  return h('label', { className: 'atk-checkbox' }, [input, box, text]);
+};
+
+</script>
+<script>
+// Radio: one choice from a group, grouped by `name`. Lives in shared/components until promoted into shared/ui.
+// A native radio input sits inside the label, so arrow keys, focus and screen readers behave as usual.
+window.ArenaToolkit.Radio = function Radio({ label, description, value, name, checked = false, disabled = false, onChange } = {}) {
+  const h = window.ArenaToolkit._el;
+  const input = h('input', { type: 'radio', className: 'atk-radio-input', checked, disabled, name, value });
+  if (onChange) input.addEventListener('change', () => { if (input.checked) onChange(value); });
+
+  const ring = h('span', { className: 'atk-radio-ring', 'aria-hidden': 'true' }, h('span', { className: 'atk-radio-dot' }));
+  const text = h('span', { className: 'atk-radio-text' }, [
+    h('span', { className: 'atk-radio-label' }, label),
+    description ? h('span', { className: 'atk-radio-desc' }, description) : null,
+  ].filter(Boolean));
+  return h('label', { className: 'atk-radio' }, [input, ring, text]);
+};
+
+</script>
+<script>
+// Progress: a thin bar with a label row. Lives in shared/components until promoted into shared/ui.
+// Finite (value and max > 0) or indeterminate (no value, or no usable max): update() can switch between them at any time.
+//   Progress({ value, max, label, detail, variant })   variant: 'default' | 'success' | 'alert'
+//   bar.update({ value, max, label, detail, variant })  changes only the keys you pass
+// detail is text or a node. aria-valuetext is built from label + detail, so a screen reader says
+// "Dry run: merging, 16 of 20" rather than just "80%".
+
+// Pure: what the bar should show for a value and a max.
+function progressModel({ value = null, max = 100 } = {}) {
+  const finite = value != null && Number.isFinite(value) && Number.isFinite(max) && max > 0;
+  if (!finite) return { indeterminate: true, pct: null, now: null, max: null };
+  const now = Math.min(max, Math.max(0, value));
+  return { indeterminate: false, pct: (now / max) * 100, now, max };
+}
+
+// Pure: the text a node or string contributes to a spoken description.
+function plainText(x) {
+  if (x == null) return '';
+  return typeof x === 'string' ? x : String(x.textContent ?? '');
+}
+
+// Pure: "label, detail" for aria-valuetext.
+function spokenProgress({ label = '', detail = '' } = {}) {
+  return [plainText(label), plainText(detail)].filter(Boolean).join(', ');
+}
+
+if (typeof window !== 'undefined' && window.ArenaToolkit) {
+  window.ArenaToolkit.Progress = function Progress(initial = {}) {
+    const h = window.ArenaToolkit._el;
+    const state = { value: null, max: 100, label: '', detail: '', variant: 'default', ...initial };
+    const labelEl = h('span', { className: 'atk-progress-label' });
+    const detailEl = h('span', { className: 'atk-progress-detail' });
+    const fill = h('div', { className: 'atk-progress-fill' });
+    const track = h('div', { className: 'atk-progress-track', role: 'progressbar', 'aria-valuemin': '0' }, fill);
+    const root = h('div', { className: 'atk-progress' }, [
+      h('div', { className: 'atk-progress-row' }, [labelEl, detailEl]),
+      track,
+    ]);
+
+    function render() {
+      const m = progressModel(state);
+      root.className = `atk-progress atk-progress--${state.variant}${m.indeterminate ? ' is-indeterminate' : ''}`;
+      labelEl.textContent = state.label;
+      if (typeof state.detail === 'string' || state.detail == null) detailEl.textContent = state.detail ?? '';
+      else detailEl.replaceChildren(state.detail);
+      if (m.indeterminate) {
+        track.removeAttribute('aria-valuenow');
+        track.removeAttribute('aria-valuemax');
+        fill.style.width = '';
+      } else {
+        track.setAttribute('aria-valuemax', String(m.max));
+        track.setAttribute('aria-valuenow', String(m.now));
+        fill.style.width = `${m.pct}%`;
+      }
+      track.setAttribute('aria-label', plainText(state.label) || 'Progress');
+      const spoken = spokenProgress(state);
+      if (spoken) track.setAttribute('aria-valuetext', spoken); else track.removeAttribute('aria-valuetext');
+    }
+
+    root.update = function update(next = {}) {
+      for (const k of ['value', 'max', 'label', 'detail', 'variant']) if (k in next) state[k] = next[k];
+      render();
+    };
+    render();
+    return root;
+  };
+}
+
+</script>
+<script>
+// StatGrid: a row of labelled counts that wraps on narrow screens. Lives in shared/components until promoted into shared/ui.
+//   StatGrid({ items: [{ key, label, value = 0 }] })
+//   grid.update({ added: 3, failed: 0 })   changes the named counts in place
+window.ArenaToolkit.StatGrid = function StatGrid({ items = [] } = {}) {
+  const h = window.ArenaToolkit._el;
+  const values = {};
+  const root = h('div', { className: 'atk-stats' });
+  items.forEach(({ key, label, value = 0 }) => {
+    values[key] = h('span', { className: 'atk-stat__value' }, String(value));
+    root.appendChild(h('div', { className: 'atk-stat' }, [values[key], h('span', { className: 'atk-stat__label' }, label)]));
+  });
+  root.update = (next = {}) => {
+    Object.keys(next).forEach(k => { if (values[k]) values[k].textContent = String(next[k]); });
+  };
+  return root;
+};
+
+</script>
+<script>
+// StatusLog: a disclosure holding a monospace log. Lives in shared/components until promoted into shared/ui.
+//   StatusLog({ label = 'Details', open = false })
+//   log.add('success' | 'message' | 'warning' | 'error', text)     log.clear()
+// Colour is never the only signal: success, warning and error lines carry a spoken prefix for screen readers.
+window.ArenaToolkit.StatusLog = function StatusLog({ label = 'Details', open = false } = {}) {
+  const h = window.ArenaToolkit._el;
+  const SPOKEN = { success: 'Success: ', warning: 'Warning: ', error: 'Error: ' };   // 'message' has none
+  const body = h('div', { className: 'atk-log__body', role: 'log' });
+  const root = h('details', { className: 'atk-log', open }, [h('summary', { className: 'atk-log__summary' }, label), body]);
+  root.add = (tone, text) => {
+    const line = h('div', { className: 'atk-log__line is-' + tone });
+    if (SPOKEN[tone]) line.appendChild(h('span', { className: 'atk-sr' }, SPOKEN[tone]));
+    line.appendChild(document.createTextNode(text));
+    body.appendChild(line);
+    body.scrollTop = body.scrollHeight;
+  };
+  root.clear = () => body.replaceChildren();
+  return root;
+};
+
+</script>
+<script>
+// Pure helpers for arena-merge: no DOM, no network.
+
+// A slug, or a full channel URL like https://www.are.na/user/channel-slug, to just the slug.
+function parseSlug(input) {
+  const trimmed = String(input ?? '').trim();
+  if (!trimmed) return null;
+  const m = trimmed.match(/^https?:\/\/(?:www\.)?are\.na\/[^/]+\/([^/?#]+)/i);
+  if (m) return decodeURIComponent(m[1]);
+  return trimmed;
+}
+
+function pluralBlocks(n) {
+  return `${n} block${n === 1 ? '' : 's'}`;
+}
+
+function truncate(s, n) {
+  s = String(s ?? '');
+  return s.length > n ? s.slice(0, n - 1) + '…' : s;
+}
+
+// v3 image objects use `.src` (not v2's `.url`); square first because the tiles are square.
+function thumbSrc(item) {
+  return item?.image?.square?.src || item?.image?.small?.src || item?.image?.medium?.src
+    || item?.embed?.thumbnail_url || null;
+}
+
+// What a thumbnail tile shows when there is no picture: a short text label.
+function thumbLabel(item) {
+  if (!item) return 'block';
+  if (item.class === 'Link') return truncate(item.title || item.source?.url || 'link', 24);
+  if (item.class === 'Text') {
+    const text = item.content?.plain || (typeof item.content === 'string' ? item.content : '') || 'text';
+    return truncate(text, 40);
+  }
+  if (item.class === 'Channel' || item.type === 'Channel') return `↳ ${truncate(item.title || 'channel', 24)}`;
+  return item.class || item.type || 'block';
+}
+
+// 'Image "sunset.jpg"' / 'Text #6', for log lines.
+function describeBlock(item) {
+  const kind = item.class || item.type || 'block';
+  const text = item.content?.plain ?? (typeof item.content === 'string' ? item.content : '');
+  const title = item.title || item.generated_title || text?.slice(0, 40) || '';
+  return title ? `${kind} "${truncate(title, 40)}"` : `${kind} #${item.id}`;
+}
+
+// A channel dropped into another channel is connected as a Channel; everything else as a Block.
+function connectableType(item) {
+  return (item.type === 'Channel' || item.class === 'Channel') ? 'Channel' : 'Block';
+}
+
+// existingIds: a Set of block ids already in the destination. Returns what a merge would add and skip.
+function planMerge(sourceContents, existingIds) {
+  const toAdd = sourceContents.filter(it => !existingIds.has(it.id));
+  return { toAdd, skipped: sourceContents.length - toAdd.length };
+}
+
+// The plain-language summary lines for the Transfer step, as data the view turns into text.
+function summaryLines({ toAdd, skipped, sourceTitle, destTitle, deleteFromSource, quietMode, destStatus }) {
+  const lines = [{ kind: 'add', toAdd, sourceTitle, destTitle }];
+  if (skipped > 0) lines.push({ kind: 'skip', skipped });
+  if (deleteFromSource) lines.push({ kind: 'remove', sourceTitle });
+  if (quietMode && destStatus !== 'private') lines.push({ kind: 'quiet', destStatus });
+  return lines;
+}
+
+</script>
+<script>
+
+// The merge run itself. Takes an are.na client and reports through hooks, so it has no DOM and can be tested.
+
+// Resolves to { added, skipped, failed, removed, statusChanged, cancelled }.
+// source / dest: { id, slug, title, status }. contents: the source's items (each has .id and .connection.id).
+// destIds: Set of block ids already in the destination.
+// opts: { deleteFromSource, quietMode }.
+// hooks: { onPhase(name), onProgress({value,max,label,detail}), onLog(tone,text), onCount(key,value), shouldCancel() }.
+async function runMerge({ client, source, dest, contents, destIds, opts = {}, dryRun = false, hooks = {} }) {
+  const { onPhase = () => {}, onProgress = () => {}, onLog = () => {}, onCount = () => {}, shouldCancel = () => false } = hooks;
+  const tag = dryRun ? '[dry run] ' : '';
+  const result = { added: 0, skipped: 0, failed: 0, removed: 0, statusChanged: false, cancelled: false };
+
+  const { toAdd, skipped } = planMerge(contents, destIds);
+  result.skipped = skipped;
+  onCount('total', contents.length);
+  onCount('skipped', skipped);
+  if (skipped) onLog('info', `${tag}${pluralBlocks(skipped)} already in "${dest.title}", skipping`);
+
+  if (opts.quietMode && dest.status !== 'private') {
+    onPhase('status');
+    onLog('info', `${tag}Setting "${dest.title}" to private while the merge runs`);
+    if (!dryRun) await client.updateChannel(dest.slug, { status: 'private' });
+    result.statusChanged = true;
+  }
+
+  onPhase('copy');
+  onProgress({ value: 0, max: toAdd.length, label: 'Copying blocks', detail: '' });
+  for (let i = 0; i < toAdd.length; i++) {
+    if (shouldCancel()) { result.cancelled = true; onLog('warn', 'Stopped before finishing'); break; }
+    const item = toAdd[i];
+    const name = describeBlock(item);
+    try {
+      if (!dryRun) {
+        await client.request('/connections', {}, {
+          method: 'POST',
+          body: { connectable_id: item.id, connectable_type: connectableType(item), channel_ids: [dest.id] },
+        });
+      }
+      result.added++;
+      onCount('added', result.added);
+      onLog('ok', `${tag}Added ${name}`);
+      if (opts.deleteFromSource) {
+        const connId = item.connection?.id;
+        if (!connId) {
+          onLog('warn', `${tag}Could not remove ${name} from "${source.title}": no connection id`);
+        } else {
+          if (!dryRun) await client.deleteConnection(connId);
+          result.removed++;
+          onCount('removed', result.removed);
+          onLog('ok', `${tag}Removed ${name} from "${source.title}"`);
+        }
+      }
+    } catch (err) {
+      result.failed++;
+      onCount('failed', result.failed);
+      onLog('err', `${tag}${name}: ${err.message}`);
+    }
+    onProgress({ value: i + 1, max: toAdd.length, label: 'Copying blocks', detail: `${i + 1} of ${toAdd.length}` });
+  }
+
+  if (result.statusChanged) {
+    onPhase('restore');
+    onLog('info', `${tag}Setting "${dest.title}" back to ${dest.status}`);
+    try {
+      if (!dryRun) await client.updateChannel(dest.slug, { status: dest.status });
+    } catch (err) {
+      onLog('err', `Could not restore "${dest.title}" to ${dest.status}: ${err.message}. Please check it on are.na.`);
+    }
+  }
+
+  onPhase('done');
+  return result;
+}
+
+</script>
+<script>
+// Are.na Merge: five-step wizard. Plain DOM, built from ArenaToolkit components.
+(function () {
+  const ATK = window.ArenaToolkit;
+  const h = (tag, attrs, kids) => ATK._el(tag, attrs, kids);
+
+  const throttle = createThrottle({
+    writeGap: 600,
+    onWait: (seconds) => notify(`are.na asked us to slow down. Waiting ${seconds}s, then carrying on.`),
+  });
+  const client = createArenaClient({ throttle });
+
+  const STEPS = [
+    { id: 'connect', label: 'Connect', description: 'Paste a token with write access.' },
+    { id: 'source', label: 'Source', description: 'Pick the channel to copy from.' },
+    { id: 'destination', label: 'Destination', description: 'Pick the channel to copy into.' },
+    { id: 'options', label: 'Options', description: 'Choose how the merge runs.' },
+    { id: 'transfer', label: 'Transfer', description: 'Check the summary, then run it.' },
+  ];
+
+  const state = {
+    step: 0, furthest: 0, user: null, myChannels: [],
+    source: null, dest: null, // { id, slug, title, status, user, contents }
+    opts: { deleteFromSource: false, quietMode: false },
+    status: { source: null, dest: null }, // { tone, text }
+    run: null,
+  };
+
+  const els = {
+    header: document.getElementById('header'),
+    rail: document.getElementById('step-rail'),
+    pane: document.getElementById('step-pane'),
+  };
+
+  // A short, polite notice in the live region at the top of the pane (rate limit waits).
+  let noticeTimer = null;
+  function notify(text) {
+    const live = document.getElementById('notice');
+    live.textContent = text;
+    live.hidden = false;
+    clearTimeout(noticeTimer);
+    noticeTimer = setTimeout(() => { live.hidden = true; }, 6000);
+  }
+
+  /* ── Auth ─────────────────────────────────────────────────── */
+  const auth = createAuthStep({
+    client,
+    requireWrite: true,
+    panel: true,
+    loadDetail: async (user) => {
+      state.myChannels = (await client.getUserContents(user.id, { type: 'Channel' })).filter(c => c && c.state !== 'deleted');
+      const n = state.myChannels.length;
+      return `${n} of your channel${n === 1 ? '' : 's'} loaded`;
+    },
+    onChange: (user) => {
+      state.user = user;
+      if (!user) {
+        Object.assign(state, { furthest: 0, step: 0, myChannels: [], source: null, dest: null, run: null, status: { source: null, dest: null } });
+      }
+      render();
+    },
+  });
+
+  /* ── Navigation ───────────────────────────────────────────── */
+  const canEnter = (i) => i <= state.furthest;
+
+  function go(i) {
+    if (i < 0 || i >= STEPS.length || !canEnter(i)) return;
+    state.step = i;
+    render();
+  }
+
+  function advance() {
+    state.furthest = Math.max(state.furthest, state.step + 1);
+    go(state.step + 1);
+  }
+
+  function renderRail() {
+    const items = STEPS.map((s, i) => ({
+      label: s.label,
+      description: s.description,
+      state: i === state.step ? 'current' : i < state.step ? 'done' : 'upcoming',
+    }));
+    const stepper = ATK.Stepper({ items });
+    stepper.querySelectorAll('.atk-stepper__item').forEach((item, i) => {
+      if (!canEnter(i)) item.classList.add('is-locked');
+      item.addEventListener('click', () => go(i));
+    });
+    els.rail.replaceChildren(stepper);
+  }
+
+  function nav({ back = true, next = null, extra = [] } = {}) {
+    const row = h('div', { className: 'step-nav' });
+    const right = h('div', { className: 'step-nav__right' }, extra.concat(
+      next ? [ATK.Button({ variant: next.variant || 'primary', children: next.label, disabled: next.disabled, onClick: next.onClick })] : []));
+    row.append(back ? ATK.Button({ variant: 'ghost', children: '← Back', onClick: () => go(state.step - 1) }) : h('span'), right);
+    return row;
+  }
+
+  /* ── Connect ──────────────────────────────────────────────── */
+  function stepConnect() {
+    return [
+      h('h2', null, 'Connect to are.na'),
+      auth.element,
+      nav({ back: false, next: { label: 'Continue →', disabled: !state.user, onClick: advance } }),
+    ];
+  }
+
+  /* ── Source and destination ───────────────────────────────── */
+  const ROLES = {
+    source: {
+      key: 'source', index: 1, title: 'Source channel', field: 'Source channel',
+      intro: [h('span', null, 'The channel you want to copy blocks '), h('strong', null, 'from'), h('span', null, '. Paste a slug or full are.na URL.')],
+      pickTitle: 'Pick the source channel',
+    },
+    dest: {
+      key: 'dest', index: 2, title: 'Destination channel', field: 'Destination channel',
+      intro: [h('span', null, 'The channel to add blocks '), h('strong', null, 'into'), h('span', null, '. You must own it or be a collaborator.')],
+      pickTitle: 'Pick the destination channel',
+    },
+  };
+
+  function setStatus(role, tone, text) {
+    state.status[role] = text ? { tone, text } : null;
+  }
+
+  // Loads a channel and its contents, then stores it as the source or destination.
+  async function loadChannel(role, rawInput) {
+    const slug = parseSlug(rawInput);
+    if (!slug) { setStatus(role, 'error', 'Paste a slug or URL.'); return render(); }
+    if (role === 'dest' && state.source && slug === state.source.slug) {
+      setStatus(role, 'error', 'Source and destination are the same channel.');
+      return render();
+    }
+    state[role] = null;
+    state.run = null;
+    state.furthest = Math.min(state.furthest, ROLES[role].index);
+    setStatus(role, 'info', 'Fetching channel…');
+    render();
+    try {
+      const ch = await client.getChannel(slug);
+      setStatus(role, 'info', 'Fetching blocks…');
+      render();
+      const contents = await client.getChannelContents(slug);
+      state[role] = { id: ch.id, slug: ch.slug, title: ch.title, status: ch.status, user: ch.user, contents, existingIds: new Set(contents.map(c => c.id)) };
+      const n = contents.length;
+      if (role === 'source') {
+        setStatus(role, n ? 'success' : 'error', n ? `Found ${pluralBlocks(n)}.` : 'That channel has no blocks to copy.');
+      } else {
+        const mine = state.myChannels.some(c => c.id === ch.id);
+        state.dest.writable = mine;
+        setStatus(role, mine ? 'success' : 'info',
+          mine ? `Found ${pluralBlocks(n)}. You can write to this channel.`
+               : `“${ch.title}” isn't among your ${state.myChannels.length} channels. If you collaborate on it you can still continue; the merge will fail with a clear error if you don't have access.`);
+      }
+    } catch (err) {
+      state[role] = null;
+      setStatus(role, 'error', `Couldn't load: ${describeConnectError(err)}`);
+    }
+    render();
+  }
+
+  function channelCard(ch) {
+    const thumbs = ch.contents.slice(0, 10).map(item => {
+      const src = thumbSrc(item);
+      return src
+        ? h('div', { className: 'thumb' }, h('img', { src, alt: '', loading: 'lazy' }))
+        : h('div', { className: 'thumb' }, thumbLabel(item));
+    });
+    return ATK.Card({
+      children: [
+        h('div', { className: 'card-title' }, ch.title),
+        h('div', { className: 'card-meta' }, `by ${ch.user?.full_name || ch.user?.name || ch.user?.slug || 'unknown'} · ${pluralBlocks(ch.contents.length)}`),
+        thumbs.length ? h('div', { className: 'thumbs' }, thumbs) : null,
+      ].filter(Boolean),
+    });
+  }
+
+  function stepChannel(role) {
+    const r = ROLES[role];
+    const input = ATK.Input({ placeholder: 'slug or https://www.are.na/user/channel', spellcheck: false });
+    input.setAttribute('aria-label', r.field);
+    input.value = state[role] ? state[role].slug : '';
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') loadChannel(role, input.value); });
+
+    const pick = h('button', { type: 'button', className: 'link-button' }, '↳ or pick from your channels');
+    pick.addEventListener('click', () => {
+      const other = state[role === 'source' ? 'dest' : 'source'];
+      openChannelPicker({
+        channels: state.myChannels.filter(c => !other || c.id !== other.id),
+        selected: state[role] ? [state[role].id] : [],
+        title: r.pickTitle,
+        confirmLabel: 'Use this channel',
+        multiple: false,
+        onConfirm: (ids) => {
+          const c = state.myChannels.find(x => x.id === ids[0]);
+          if (c) { input.value = c.slug; loadChannel(role, c.slug); }
+        },
+      });
+    });
+
+    const st = state.status[role];
+    const ch = state[role];
+    const ready = role === 'source' ? !!ch && ch.contents.length > 0 : !!ch;
+    return [
+      h('h2', null, r.title),
+      h('p', null, r.intro),
+      h('div', { className: 'stack' }, [
+        h('label', { className: 'field-label' }, r.field),
+        h('div', { className: 'row' }, [input, ATK.Button({ variant: 'secondary', children: 'Check', onClick: () => loadChannel(role, input.value) })]),
+        h('div', null, pick),
+      ]),
+      st ? ATK.StatusMessage({ tone: st.tone, children: st.text }) : null,
+      ch ? channelCard(ch) : null,
+      nav({ next: { label: 'Continue →', disabled: !ready, onClick: advance } }),
+    ].filter(Boolean);
+  }
+
+  /* ── Options ──────────────────────────────────────────────── */
+  function stepOptions() {
+    return [
+      h('h2', null, 'Options'),
+      h('p', null, 'Choose how the merge runs.'),
+      h('div', { className: 'stack stack--loose' }, [
+        ATK.Checkbox({
+          label: 'Remove blocks from source after merging',
+          description: 'The blocks themselves survive. Only their connection to the source channel goes.',
+          checked: state.opts.deleteFromSource,
+          onChange: (v) => { state.opts.deleteFromSource = v; state.run = null; },
+        }),
+        ATK.Checkbox({
+          label: 'Quiet mode: hide destination during transfer',
+          description: "Temporarily sets the destination to private so followers aren't notified for each block, then restores its original status at the end. Skipped on dry runs and when the channel is already private.",
+          checked: state.opts.quietMode,
+          onChange: (v) => { state.opts.quietMode = v; state.run = null; },
+        }),
+      ]),
+      nav({ next: { label: 'Continue →', onClick: advance } }),
+    ];
+  }
+
+  /* ── Transfer ─────────────────────────────────────────────── */
+  function newRun() {
+    return {
+      status: 'idle', dry: true, cancel: false,
+      progress: ATK.Progress({ label: 'Preparing…' }),
+      stats: ATK.StatGrid({ items: [
+        { key: 'added', label: 'Added' }, { key: 'skipped', label: 'Already there' },
+        { key: 'removed', label: 'Removed' }, { key: 'failed', label: 'Failed' },
+      ] }),
+      log: ATK.StatusLog({ label: 'Details' }),
+      result: null,
+    };
+  }
+
+  const LOG_TONES = { ok: 'success', info: 'message', warn: 'warning', err: 'error' };
+
+  async function runTransfer(dryRun) {
+    const run = state.run = newRun();
+    run.status = 'running';
+    run.dry = dryRun;
+    render();
+    const word = dryRun ? 'dry run' : 'merge';
+    run.log.add('message', `Starting ${word}: ${pluralBlocks(state.source.contents.length)}.`);
+    const phases = { status: 'Making the destination private…', copy: dryRun ? 'Dry run: merging…' : 'Merging…', restore: 'Restoring the destination…', done: 'Finished' };
+    try {
+      run.result = await runMerge({
+        client, source: state.source, dest: state.dest,
+        contents: state.source.contents, destIds: state.dest.existingIds,
+        opts: state.opts, dryRun,
+        hooks: {
+          onPhase: (p) => run.progress.update({ label: phases[p] || p }),
+          onProgress: (p) => run.progress.update(p),
+          onLog: (tone, text) => run.log.add(LOG_TONES[tone] || 'message', text),
+          onCount: (key, value) => run.stats.update({ [key]: value }),
+          shouldCancel: () => run.cancel,
+        },
+      });
+      run.status = 'done';
+      run.progress.update({ label: dryRun ? 'Dry run complete' : 'Transfer complete', variant: run.result.failed ? 'alert' : 'success' });
+    } catch (err) {
+      run.status = 'error';
+      run.error = describeConnectError(err);
+      run.log.add('error', run.error);
+      run.progress.update({ label: 'Stopped', variant: 'alert' });
+    }
+    if (state.run === run) render();
+  }
+
+  function confirmFullTransfer(returnFocus) {
+    const toAdd = planMerge(state.source.contents, state.dest.existingIds).toAdd.length;
+    const text = `This will add ${pluralBlocks(toAdd)} from “${state.source.title}” into “${state.dest.title}” on are.na`
+      + (state.opts.deleteFromSource ? `, then remove them from “${state.source.title}”` : '')
+      + '. The blocks themselves are not deleted.';
+    const close = () => { document.removeEventListener('keydown', onKey); modal.remove(); returnFocus?.focus(); };
+    const onKey = (e) => { if (e.key === 'Escape') close(); };
+    const ok = ATK.Button({ variant: 'primary', children: 'Run Full Merge', onClick: () => { document.removeEventListener('keydown', onKey); modal.remove(); runTransfer(false); } });
+    const modal = ATK.Modal({
+      title: 'Run Full Merge?',
+      children: h('p', null, text),
+      footer: [ATK.Button({ variant: 'ghost', children: 'Cancel', onClick: close }), ok],
+      onClose: () => document.removeEventListener('keydown', onKey),
+    });
+    document.addEventListener('keydown', onKey);
+    document.body.append(modal);
+    ok.focus();
+  }
+
+  function summaryNode() {
+    const { toAdd, skipped } = planMerge(state.source.contents, state.dest.existingIds);
+    const s = (t) => h('strong', null, t);
+    const lines = summaryLines({
+      toAdd: toAdd.length, skipped, sourceTitle: state.source.title, destTitle: state.dest.title,
+      deleteFromSource: state.opts.deleteFromSource, quietMode: state.opts.quietMode, destStatus: state.dest.status,
+    });
+    return h('div', { className: 'summary-box' }, lines.map(l => h('p', null,
+      l.kind === 'add' ? ['Add ', s(String(l.toAdd)), ` block${l.toAdd === 1 ? '' : 's'} from `, s(l.sourceTitle), ' into ', s(l.destTitle), '.']
+      : l.kind === 'skip' ? `${l.skipped} already there. Those will be skipped.`
+      : l.kind === 'remove' ? ['Then remove them from ', s(l.sourceTitle), '.']
+      : ['A full merge will set the destination to ', s('private'), ' while it runs and restore it to ', s(l.destStatus), ' at the end.'])));
+  }
+
+  function finishNode(run) {
+    const r = run.result;
+    if (!r) return null;
+    const dest = `https://www.are.na/${state.user.slug}/${state.dest.slug}`;
+    const src = `https://www.are.na/${state.source.user?.slug || state.user.slug}/${state.source.slug}`;
+    if (run.dry) {
+      return ATK.Card({ children: [
+        h('div', { className: 'card-title' }, 'Dry run complete'),
+        h('div', { className: 'card-meta' }, `${r.added} would be added, ${r.skipped} already there, ${r.failed} failed. Nothing on are.na has changed.`),
+        h('p', { className: 'action-hint' }, ['If that looks right, choose ', h('strong', null, 'Run Full Merge'), '.']),
+      ] });
+    }
+    return ATK.Card({ children: [
+      h('div', { className: 'card-title' }, r.cancelled ? 'Transfer stopped' : 'Transfer complete'),
+      h('div', { className: 'card-meta' }, `${r.added} added · ${r.skipped} already there · ${r.removed} removed · ${r.failed} failed`),
+      h('div', { className: 'row row--wrap' }, [
+        ATK.Button({ variant: 'secondary', children: `View ${state.dest.title} on are.na →`, onClick: () => window.open(dest, '_blank', 'noopener') }),
+        ATK.Button({ variant: 'secondary', children: 'View source channel →', onClick: () => window.open(src, '_blank', 'noopener') }),
+      ]),
+    ] });
+  }
+
+  function stepTransfer() {
+    const run = state.run;
+    const running = run?.status === 'running';
+    const fullDone = run?.status === 'done' && !run.dry;
+    // Emphasis follows the next sensible move: Dry Run first, then Run Full Merge once a dry run has been seen.
+    const dryDone = run?.status === 'done' && run.dry;
+    let realBtn;
+    const dryBtn = ATK.Button({ variant: dryDone || fullDone ? 'secondary' : 'primary', children: 'Dry Run', disabled: running, onClick: () => runTransfer(true) });
+    realBtn = ATK.Button({ variant: dryDone ? 'primary' : 'secondary', children: 'Run Full Merge', disabled: running, onClick: () => confirmFullTransfer(realBtn) });
+    const stopBtn = running ? ATK.Button({ variant: 'ghost', children: 'Stop', onClick: () => { run.cancel = true; } }) : null;
+
+    return [
+      h('h2', null, 'Review and transfer'),
+      summaryNode(),
+      h('div', { className: 'row row--wrap' }, [dryBtn, realBtn, stopBtn].filter(Boolean)),
+      h('p', { className: 'action-hint' }, 'Dry Run shows what would happen and changes nothing on are.na. Run Full Merge writes to your account.'),
+      run && run.status !== 'idle' ? h('div', { className: 'run' }, [run.progress, run.stats, finishNode(run), run.log].filter(Boolean)) : null,
+      nav({ next: null }),
+    ].filter(Boolean);
+  }
+
+  /* ── Render and header ────────────────────────────────────── */
+  function render() {
+    renderRail();
+    const kids = [stepConnect, () => stepChannel('source'), () => stepChannel('dest'), stepOptions, stepTransfer][state.step]();
+    els.pane.replaceChildren(...kids);
+  }
+
+  function mountHeader() {
+    const crumbs = h('nav', { className: 'crumbs', 'aria-label': 'Breadcrumb' },
+      h('ol', null, [
+        h('li', null, ATK.Link({ variant: 'muted', href: 'index.html', children: 'Are.na Tools' })),
+        h('li', { 'aria-current': 'page' }, 'Are.na Merge'),
+      ]));
+    els.header.append(crumbs, ATK.ThemeChooser());
+  }
+
+  mountHeader();
+  render();
+  auth.restore();
+})();
+
+</script>
+</body>
+</html>
