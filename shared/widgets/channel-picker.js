@@ -14,16 +14,22 @@ export function toggleId(ids, id) {
   return ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id];
 }
 
+// What a click on a row does: in multiple mode it toggles; in single mode it chooses just that one.
+export function selectId(ids, id, multiple = true) {
+  return multiple ? toggleId(ids, id) : [id];
+}
+
 function blockCount(c) {
   return c.counts?.contents ?? c.counts?.blocks ?? c.length ?? null;
 }
 
 // channels: [{ id, slug, title, visibility, counts }]; selected: [id]
 // onRefresh (optional): async () => fresh channels array. Adds a Refresh button that reloads the list and keeps the ticks.
+// multiple (default true): false makes it a pick-one list (radio buttons, no Clear); onConfirm still gets an array, of one id.
 // Returns { element, open(), close() }; the element is a Modal you append to document.body.
-export function openChannelPicker({ channels, selected = [], title = 'Pick channels', confirmLabel = 'Use', onConfirm, onCancel = null, onRefresh = null }) {
+export function openChannelPicker({ channels, selected = [], title = 'Pick channels', confirmLabel = 'Use', multiple = true, onConfirm, onCancel = null, onRefresh = null }) {
   const ATK = window.ArenaToolkit;
-  let chosen = [...selected];
+  let chosen = multiple ? [...selected] : selected.slice(0, 1);
   let query = '';
 
   const filter = ATK.Input({ type: 'search', placeholder: 'Filter by name or slug' });
@@ -36,7 +42,7 @@ export function openChannelPicker({ channels, selected = [], title = 'Pick chann
   const confirm = ATK.Button({ variant: 'primary', children: confirmLabel, onClick: () => { done(); onConfirm(chosen); } });
 
   function updateConfirm() {
-    confirm.textContent = `${confirmLabel} ${chosen.length} channel${chosen.length === 1 ? '' : 's'}`;
+    confirm.textContent = multiple ? `${confirmLabel} ${chosen.length} channel${chosen.length === 1 ? '' : 's'}` : confirmLabel;
     confirm.disabled = chosen.length === 0;
   }
 
@@ -55,9 +61,10 @@ export function openChannelPicker({ channels, selected = [], title = 'Pick chann
 
   function row(c) {
     const box = document.createElement('input');
-    box.type = 'checkbox';
+    box.type = multiple ? 'checkbox' : 'radio';
+    if (!multiple) box.name = 'atk-channel-pick';
     box.checked = chosen.includes(c.id);
-    box.addEventListener('change', () => { chosen = toggleId(chosen, c.id); updateConfirm(); });
+    box.addEventListener('change', () => { chosen = selectId(chosen, c.id, multiple); updateConfirm(); });
 
     const n = blockCount(c);
     const text = document.createElement('span');
@@ -122,7 +129,7 @@ export function openChannelPicker({ channels, selected = [], title = 'Pick chann
   const right = document.createElement('div');
   Object.assign(right.style, { display: 'flex', gap: 'var(--space-2)' });
   right.append(cancel, confirm);
-  footer.append(clear, right);
+  footer.append(multiple ? clear : document.createElement('span'), right);
 
   const modal = ATK.Modal({ title, children: body, footer, onClose: () => { if (onCancel) onCancel(); } });
   function done() { modal.remove(); }

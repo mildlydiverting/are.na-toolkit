@@ -32,7 +32,7 @@ export function createArenaClient({ token = null, fetchImpl = (...a) => globalTh
       credentials: 'omit',
       referrerPolicy: 'no-referrer',
     });
-    const res = throttle ? await throttle(doFetch) : await doFetch();
+    const res = throttle ? await throttle(doFetch, { write: method !== 'GET' }) : await doFetch();
 
     const text = await res.text();
     let data = null;
@@ -88,6 +88,8 @@ export function createArenaClient({ token = null, fetchImpl = (...a) => globalTh
       });
       return res?.data || [];
     },
+    // fields: any of title, description, status ('public' | 'closed' | 'private'). Owner or collaborator.
+    updateChannel: (idOrSlug, fields) => request(`/channels/${encodeURIComponent(idOrSlug)}`, {}, { method: 'PUT', body: fields }),
     // Takes the *connection* id (from a channel's contents, or createConnection), not a block id.
     // Removes the block from that channel only; the block itself stays. Resolves to null (204).
     deleteConnection: connectionId => request(`/connections/${encodeURIComponent(connectionId)}`, {}, { method: 'DELETE' }),

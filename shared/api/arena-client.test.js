@@ -123,3 +123,25 @@ describe('createArenaClient', () => {
     expect(throttle).toHaveBeenCalledOnce();
   });
 });
+
+describe('updateChannel and throttle hints', () => {
+  it('updateChannel PUTs the fields to the channel', async () => {
+    const { api, fetchImpl } = client([json(200, { id: 7, status: 'private' })]);
+    await api.updateChannel('my-channel', { status: 'private' });
+    const [url, init] = fetchImpl.mock.calls[0];
+    expect(url).toBe('https://api.are.na/v3/channels/my-channel');
+    expect(init.method).toBe('PUT');
+    expect(JSON.parse(init.body)).toEqual({ status: 'private' });
+  });
+
+  it('tells the throttle which requests are writes', async () => {
+    const calls = [];
+    const throttle = async (doFetch, opts) => { calls.push(opts); return doFetch(); };
+    const empty = { ok: true, status: 204, headers: { get: () => null }, text: async () => '' };
+    const queue = [json(200, { id: 1 }), empty];
+    const api = createArenaClient({ token: 't', fetchImpl: vi.fn(async () => queue.shift()), throttle });
+    await api.getBlock(1);
+    await api.deleteConnection(5);
+    expect(calls).toEqual([{ write: false }, { write: true }]);
+  });
+});

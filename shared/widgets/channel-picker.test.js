@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { filterChannels, toggleId } from './channel-picker.js';
+import { filterChannels, toggleId, selectId } from './channel-picker.js';
 
 const channels = [
   { id: 1, slug: 'drawing-ideas', title: 'Drawing ideas' },
@@ -40,5 +40,19 @@ describe('toggleId', () => {
     const ids = [1];
     toggleId(ids, 2);
     expect(ids).toEqual([1]);
+  });
+});
+
+describe('selectId', () => {
+  it('toggles in multiple mode', () => {
+    expect(selectId([1], 2, true)).toEqual([1, 2]);
+    expect(selectId([1, 2], 1, true)).toEqual([2]);
+  });
+  it('replaces the choice in single mode, and keeps it on a second click', () => {
+    expect(selectId([1], 2, false)).toEqual([2]);
+    expect(selectId([2], 2, false)).toEqual([2]);
+  });
+  it('defaults to multiple, so existing callers are unchanged', () => {
+    expect(selectId([1], 2)).toEqual([1, 2]);
   });
 });

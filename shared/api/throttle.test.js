@@ -78,3 +78,29 @@ describe('createThrottle', () => {
     expect(onWait.mock.calls).toEqual([[2, 1], [4, 2]]);
   });
 });
+
+describe('createThrottle writeGap', () => {
+  it('waits the write gap after a write, and the plain gap after a read', async () => {
+    const c = fakeClock();
+    const throttled = createThrottle({ ...c, gap: 150, writeGap: 600 });
+    const starts = [];
+    const go = (write) => throttled(async () => { starts.push(c.now()); return res(200); }, { write });
+    await go(true);   // write
+    await go(true);   // write again: should have waited 600
+    await go(false);  // read after a write: waits the write gap too (the safe side)
+    await go(false);  // read after a read: just 150
+    expect(starts[1] - starts[0]).toBeGreaterThanOrEqual(600);
+    expect(starts[2] - starts[1]).toBeGreaterThanOrEqual(600);
+    expect(starts[3] - starts[2]).toBeGreaterThanOrEqual(150);
+    expect(starts[3] - starts[2]).toBeLessThan(600);
+  });
+
+  it('defaults writeGap to gap, so existing callers are unchanged', async () => {
+    const c = fakeClock();
+    const throttled = createThrottle({ ...c, gap: 150 });
+    const starts = [];
+    for (const write of [true, true]) await throttled(async () => { starts.push(c.now()); return res(200); }, { write });
+    expect(starts[1] - starts[0]).toBeGreaterThanOrEqual(150);
+    expect(starts[1] - starts[0]).toBeLessThan(600);
+  });
+});
