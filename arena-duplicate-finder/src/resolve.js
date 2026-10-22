@@ -7,6 +7,7 @@
 // Blocks that belong to someone else can't be edited or marked (the API refuses), so they are only unconnected
 // from your channels. Everything written is on the blocks themselves, not on the connections.
 import { changedFields, blockTitle } from './review.js';
+import { findConnectionId } from './connections.js';
 
 export const DUPE_TOOL = 'arena-duplicate-finder';
 const MARKER = /^Duplicate of \[[^\]]*\]\([^)]*\)[^\n]*(\n\s*\n---\s*\n\s*\n?)?/;
@@ -32,7 +33,8 @@ export function isOwned(block, myUserId) {
 export const ownerName = (block) => block?.user?.name || block?.user?.username || 'someone else';
 
 // Pure: what would be done for this cluster. Nothing here touches the network.
-export function planResolution(cluster, decision, now = new Date(), myUserId = null) {
+// `connections` (optional): Map blockId -> lookup result from connections.js, used for the notes about other people's connections.
+export function planResolution(cluster, decision, now = new Date(), myUserId = null, connections = null) {
   const date = isoDay(now);
   const canonicalId = decision.canonicalId;
   const canonical = cluster.blocks.find(b => b.id === canonicalId);
@@ -49,11 +51,13 @@ export function planResolution(cluster, decision, now = new Date(), myUserId = n
     for (const p of cluster.places[b.id] || []) {
       const addKeeper = !keeperChannels.has(p.channelId);
       if (addKeeper) keeperChannels.add(p.channelId); // the first duplicate in a channel adds the keeper; later ones needn't
-      if (p.connectionId == null) notes.push(`Block ${b.id} in ${p.channelTitle} has no connection id, so it stays connected there.`);
+      if (p.connectionId == null && !p.unscanned) notes.push(`Block ${b.id} in ${p.channelTitle} has no connection id, so it stays connected there.`);
       channels.push({ ...p, addKeeper });
     }
     const foreign = isOwned(b, myUserId) === false;
     if (foreign) notes.push(`Block ${b.id} belongs to ${ownerName(b)}: it can't be marked as a duplicate, only removed from your channels. It is not deleted or changed.`);
+    const others = connections?.get(b.id)?.others || 0;
+    if (others) notes.push(`Block ${b.id} is also connected ${others} time${others === 1 ? '' : 's'} by other people. Those connections stay on it.`);
     merges.push({
       blockId: b.id,
       title: blockTitle(b),
@@ -64,7 +68,6 @@ export function planResolution(cluster, decision, now = new Date(), myUserId = n
       description: markDescription(b.description?.markdown ?? b.description?.plain ?? '', canonicalId, date),
     });
   }
-  if (merges.length) notes.push('Duplicates may also sit in channels you did not scan. Those connections are left alone.');
 
   return { canonicalId, canonicalTitle: blockTitle(canonical), edit: Object.keys(fields).length ? { blockId: canonicalId, fields } : null, merges, notes };
 }
@@ -77,11 +80,11 @@ export function describePlan(plan, { dryRun = true } = {}) {
   for (const m of plan.merges) {
     for (const c of m.channels) {
       if (c.addKeeper) lines.push(say(`add block ${plan.canonicalId} to ${c.channelTitle}`));
-      if (c.connectionId != null) lines.push(say(`remove block ${m.blockId} from ${c.channelTitle}`));
+      if (c.connectionId != null || c.unscanned) lines.push(say(`remove block ${m.blockId} from ${c.channelTitle}${c.unscanned ? ' (not in your scan, so it will be looked up)' : ''}`));
     }
     if (!m.foreign) lines.push(say(`mark block ${m.blockId} as a duplicate of ${plan.canonicalId}`));
   }
-  if (!plan.edit && !plan.merges.length) lines.push(dryRun ? 'Nothing to do: every other block is set to "Leave alone".' : 'Nothing to do.');
+  if (!plan.edit && !plan.merges.length) lines.push(dryRun ? 'Nothing to do: every other block is set to "Leave unchanged".' : 'Nothing to do.');
   return { lines, notes: plan.notes };
 }
 
@@ -104,8 +107,14 @@ export async function executeResolution(client, plan, { onStep = () => {} } = {}
     for (const c of m.channels) {
       let ok = true;
       if (c.addKeeper) ok = await attempt(`Added block ${plan.canonicalId} to ${c.channelTitle}`, () => client.createConnection({ id: plan.canonicalId, channels: [c.channelId] }));
-      if (ok && c.connectionId != null) {
-        const removed = await attempt(`Removed block ${m.blockId} from ${c.channelTitle}`, () => client.deleteConnection(c.connectionId));
+      let connectionId = c.connectionId;
+      if (ok && connectionId == null && c.unscanned) {
+        try { connectionId = await findConnectionId(client, c.channelId, m.blockId); }
+        catch (err) { failed.push({ message: `Looking for block ${m.blockId} in ${c.channelTitle} failed: ${err?.message || err}` }); }
+        if (connectionId == null) failed.push({ message: `Couldn't find block ${m.blockId} in ${c.channelTitle}, so it stays connected there.` });
+      }
+      if (ok && connectionId != null) {
+        const removed = await attempt(`Removed block ${m.blockId} from ${c.channelTitle}`, () => client.deleteConnection(connectionId));
         if (removed) record.removedFrom.push({ channelId: c.channelId, channelTitle: c.channelTitle });
       }
     }

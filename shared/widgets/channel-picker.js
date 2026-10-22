@@ -19,8 +19,9 @@ function blockCount(c) {
 }
 
 // channels: [{ id, slug, title, visibility, counts }]; selected: [id]
+// onRefresh (optional): async () => fresh channels array. Adds a Refresh button that reloads the list and keeps the ticks.
 // Returns { element, open(), close() }; the element is a Modal you append to document.body.
-export function openChannelPicker({ channels, selected = [], title = 'Pick channels', confirmLabel = 'Use', onConfirm, onCancel = null }) {
+export function openChannelPicker({ channels, selected = [], title = 'Pick channels', confirmLabel = 'Use', onConfirm, onCancel = null, onRefresh = null }) {
   const ATK = window.ArenaToolkit;
   let chosen = [...selected];
   let query = '';
@@ -83,9 +84,38 @@ export function openChannelPicker({ channels, selected = [], title = 'Pick chann
   const clear = ATK.Button({ variant: 'ghost', children: 'Clear', onClick: () => { chosen = []; renderList(); } });
   const cancel = ATK.Button({ variant: 'secondary', children: 'Cancel', onClick: () => { done(); if (onCancel) onCancel(); } });
 
+  const status = document.createElement('p');
+  status.className = 'muted';
+  status.setAttribute('role', 'status');
+  status.hidden = true;
+
+  const refresh = onRefresh && ATK.Button({
+    variant: 'secondary', children: 'Refresh list',
+    onClick: async () => {
+      refresh.disabled = true;
+      refresh.textContent = 'Refreshing…';
+      status.hidden = true;
+      try {
+        channels = await onRefresh();
+        status.textContent = `${channels.length} channel${channels.length === 1 ? '' : 's'} loaded.`;
+        renderList();
+      } catch (err) {
+        status.textContent = `Couldn't refresh the list: ${err?.message || err}`;
+      }
+      status.hidden = false;
+      refresh.disabled = false;
+      refresh.textContent = 'Refresh list';
+    },
+  });
+
+  const top = document.createElement('div');
+  Object.assign(top.style, { display: 'flex', gap: 'var(--space-2)', alignItems: 'center' });
+  Object.assign(filter.style, { flex: '1', minWidth: '0' });
+  top.append(...[filter, refresh].filter(Boolean));
+
   const body = document.createElement('div');
   Object.assign(body.style, { display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' });
-  body.append(filter, list);
+  body.append(top, status, list);
 
   const footer = document.createElement('div');
   Object.assign(footer.style, { display: 'flex', justifyContent: 'space-between', gap: 'var(--space-2)', width: '100%' });

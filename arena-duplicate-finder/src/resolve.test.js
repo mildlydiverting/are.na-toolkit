@@ -190,3 +190,43 @@ describe('blocks that belong to someone else', () => {
     expect(plan.notes.join(' ')).toMatch(/can't be edited/);
   });
 });
+
+describe('channels outside the scan', () => {
+  // Dupe 2 also sits in ch30, which the scan never read: no connection id yet.
+  function withUnscanned() {
+    const { cluster, decision } = sample();
+    cluster.places[2] = [...cluster.places[2], { channelId: 30, channelSlug: 'ch30', channelTitle: 'Tablescape', connectionId: null, unscanned: true }];
+    return { cluster, decision };
+  }
+
+  it('adds the keeper there and says the duplicate will be looked up', () => {
+    const { cluster, decision } = withUnscanned();
+    const { lines } = describePlan(planResolution(cluster, decision, NOW), { dryRun: true });
+    expect(lines).toContain('Would add block 1 to Tablescape');
+    expect(lines).toContain('Would remove block 2 from Tablescape (not in your scan, so it will be looked up)');
+  });
+
+  it('finds the connection id, then removes the duplicate', async () => {
+    const { cluster, decision } = withUnscanned();
+    const client = fakeClient();
+    client.request = vi.fn(async () => ({ data: [{ id: 2, connection: { id: 999 } }], meta: { has_more_pages: false } }));
+    const out = await executeResolution(client, planResolution(cluster, decision, NOW));
+    expect(client.calls).toContainEqual(['deleteConnection', 999]);
+    expect(out.failed).toEqual([]);
+    expect(out.undo.dupes[0].removedFrom.map(c => c.channelId)).toContain(30);
+  });
+
+  it('leaves the duplicate connected, and says so, if it cannot be found', async () => {
+    const { cluster, decision } = withUnscanned();
+    const client = fakeClient();
+    client.request = vi.fn(async () => ({ data: [], meta: { has_more_pages: false } }));
+    const out = await executeResolution(client, planResolution(cluster, decision, NOW));
+    expect(out.failed.map(f => f.message)).toEqual(["Couldn't find block 2 in Tablescape, so it stays connected there."]);
+  });
+
+  it('notes connections other people made, which stay on the duplicate', () => {
+    const { cluster, decision } = sample();
+    const plan = planResolution(cluster, decision, NOW, null, new Map([[2, { total: 5, own: [], others: 4 }]]));
+    expect(plan.notes).toContain('Block 2 is also connected 4 times by other people. Those connections stay on it.');
+  });
+});

@@ -26,6 +26,11 @@
     pane: document.getElementById('step-pane'),
   };
 
+  async function loadChannels(user = state.user) {
+    state.myChannels = (await client.getUserContents(user.id, { type: 'Channel' })).filter(c => c && c.state !== 'deleted');
+    return state.myChannels;
+  }
+
   /* ── Auth ─────────────────────────────────────────────────── */
   const auth = createAuthStep({
     client,
@@ -33,7 +38,7 @@
     panel: true,
     // Loaded at connect time, as arena-merge does, so the Scope step has its list ready.
     loadDetail: async (user) => {
-      state.myChannels = (await client.getUserContents(user.id, { type: 'Channel' })).filter(c => c && c.state !== 'deleted');
+      await loadChannels(user);
       const n = state.myChannels.length;
       return `${n} of your channel${n === 1 ? '' : 's'} loaded`;
     },
@@ -122,6 +127,7 @@
           selected: state.channelIds.length ? state.channelIds : offenders,
           title: 'Pick channels to scan',
           confirmLabel: 'Scan',
+          onRefresh: () => loadChannels(),
           onConfirm: (ids) => { state.channelIds = ids; render(); },
         });
       },
@@ -229,6 +235,13 @@
           detail: `${p.blocksFetched} blocks fetched · ${p.clusterCount} group${p.clusterCount === 1 ? '' : 's'} so far`,
         }),
       });
+      progress.update({ value: 0, max: 1, label: 'Checking where each block is connected', detail: '' });
+      const inGroups = scan.result.clusters.flatMap(c => c.blocks);
+      scan.connections = await lookupAll(client, inGroups, {
+        control,
+        onProgress: ({ done, count }) => progress.update({ value: done, max: count, label: 'Checking where each block is connected', detail: `${done} of ${count} blocks` }),
+      });
+      scan.result.clusters = addUnscannedPlaces(scan.result.clusters, scan.connections);
       scan.status = 'done';
       for (const sk of scan.result.skipped) {
         ATK.Notice.show({ message: `Couldn't read ${sk.channel.title || sk.channel.slug}, so it was skipped.`, variant: 'alert', duration: 8000 });
@@ -285,7 +298,7 @@
 
   /* Resolve one group: a dry run only describes it; live runs write to are.na, then keep the record for Done and Undo. */
   async function resolveCluster({ item, decision, dryRun }) {
-    const plan = planResolution(item.cluster, decision, new Date(), state.user?.id ?? null);
+    const plan = planResolution(item.cluster, decision, new Date(), state.user?.id ?? null, state.scan?.connections);
     if (dryRun) return { ...describePlan(plan, { dryRun: true }), done: [], failed: [], undo: null };
     const out = await executeResolution(client, plan);
     const { notes } = describePlan(plan, { dryRun: false });
@@ -312,10 +325,11 @@
     if (!scan || scan.status !== 'done') return [h('p', { className: 'muted' }, 'Run a scan first.'), nav({})];
     if (!scan.review) {
       scan.decisions = {};
+      scan.items = orderClusters(scan.result.clusters);
       scan.review = createReviewView({
-        items: orderClusters(scan.result.clusters), decisions: scan.decisions, onFinish: advance,
+        items: scan.items, decisions: scan.decisions, onFinish: advance,
         onResolve: resolveCluster, onUndo: undoCluster,
-        getConnectionCount: async (id) => (await client.request(`/blocks/${id}/connections`, { per: 1 }))?.meta?.total_count ?? 0,
+        connectionInfo: (id) => scan.connections?.get(id),
         myUserId: state.user?.id ?? null,
       });
     }
@@ -326,17 +340,68 @@
     if (state.step === 4 && state.scan?.review) state.scan.review.handleKey(e);
   });
 
-  function stepPlaceholder(i) {
+  /* Done: totals, the orphans to tidy by hand, and the report. */
+  function downloadJson(name, data) {
+    const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+    const a = h('a', { href: url, download: name });
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function stepDone() {
+    const scan = state.scan;
+    if (!scan?.items) return [h('h2', null, '6. Done'), h('p', { className: 'muted' }, 'Nothing has been reviewed yet.'), nav({})];
+    const summary = summarise(scan.items, scan.decisions, loadUndo(localStorage));
+    const orphans = loadOrphans(localStorage);
+    const { groups: g } = summary;
+    const plural = (n, one, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+
+    const totals = h('ul', { className: 'done-totals' }, [
+      h('li', null, `${plural(g.resolved, 'group')} resolved, ${g.skipped} skipped, ${g.pending} not reviewed`),
+      h('li', null, `${plural(summary.blocksMarked, 'duplicate')} marked in their description`),
+      h('li', null, `${plural(summary.connectionsRemoved, 'connection')} removed from your channels`),
+      summary.notYours ? h('li', null, `${plural(summary.notYours, 'block')} owned by other people, unlinked from your channels but not edited`) : null,
+    ].filter(Boolean));
+    const problems = summary.withProblems
+      ? h('p', { className: 'atk-note', role: 'alert' }, `${plural(summary.withProblems, 'group')} resolved with problems. Go back to Review to see which, or check the report.`)
+      : null;
+
+    const orphanBlock = h('section', { className: 'done-section' }, [
+      h('h3', { className: 'review-subhead' }, `Orphans (${orphans.length})`),
+      h('p', { className: 'muted' }, 'Duplicates that no longer sit in any channel you scanned. They still exist on are.na, so delete them there if you want them gone. This list is kept in this browser across sessions.'),
+      orphans.length
+        ? h('div', { className: 'row' }, ATK.Button({
+            variant: 'secondary', children: 'Copy all URLs',
+            onClick: async () => {
+              try { await navigator.clipboard.writeText(orphanUrls(orphans).join('\n')); ATK.Notice.show({ message: `Copied ${plural(orphans.length, 'URL')}.`, variant: 'success' }); }
+              catch { ATK.Notice.show({ message: "Couldn't copy to the clipboard. Select the links below instead.", variant: 'alert', duration: 8000 }); }
+            },
+          }))
+        : null,
+      orphans.length ? h('ul', { className: 'done-orphans' }, orphans.map(o => h('li', null, h('a', { href: `https://www.are.na/block/${o.id}`, target: '_blank', rel: 'noopener' }, `Block ${o.id}`)))) : null,
+    ].filter(Boolean));
+
+    const exportReport = () => downloadJson(`arena-duplicate-report-${new Date().toISOString().slice(0, 10)}.json`, buildReport({
+      user: state.user, channels: state.myChannels.filter(c => state.channelIds.includes(c.id)), detectors: state.detectors,
+      items: scan.items, decisions: scan.decisions, summary, orphans,
+    }));
+
     return [
-      h('h2', null, `${i + 1}. ${STEPS[i].label}`),
-      h('p', { className: 'muted' }, 'Not built yet.'),
-      nav({ next: i < STEPS.length - 1 ? { label: 'Continue →', onClick: advance } : null }),
-    ];
+      h('h2', null, '6. Done'),
+      totals, problems, orphanBlock,
+      h('div', { className: 'row' }, [
+        ATK.Button({ variant: 'secondary', children: 'Export scan report', onClick: exportReport }),
+        ATK.Button({ variant: 'primary', children: 'Scan another set', onClick: () => { state.scan = null; state.furthest = Math.min(state.furthest, 1); go(1); } }),
+      ]),
+      nav({}),
+    ].filter(Boolean);
   }
 
   function render() {
     renderRail();
-    const kids = state.step === 0 ? stepConnect() : state.step === 1 ? stepScope() : state.step === 2 ? stepDetect() : state.step === 3 ? stepScan() : state.step === 4 ? stepReview() : stepPlaceholder(state.step);
+    const kids = state.step === 0 ? stepConnect() : state.step === 1 ? stepScope() : state.step === 2 ? stepDetect() : state.step === 3 ? stepScan() : state.step === 4 ? stepReview() : stepDone();
     els.pane.replaceChildren(...kids);
   }
 
