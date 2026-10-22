@@ -223,7 +223,7 @@
       h('div', { className: 'stack stack--loose' }, [
         ATK.Checkbox({
           label: 'Remove blocks from source after merging',
-          description: 'The blocks themselves survive. Only their connection to the source channel goes.',
+          description: 'Empties the source: every block ends up only in the destination, including blocks that were already there. The blocks themselves survive; only their connection to the source channel goes.',
           checked: state.opts.deleteFromSource,
           onChange: (v) => { state.opts.deleteFromSource = v; state.run = null; },
         }),
@@ -314,8 +314,8 @@
     });
     return h('div', { className: 'summary-box' }, lines.map(l => h('p', null,
       l.kind === 'add' ? ['Add ', s(String(l.toAdd)), ` block${l.toAdd === 1 ? '' : 's'} from `, s(l.sourceTitle), ' into ', s(l.destTitle), '.']
-      : l.kind === 'skip' ? `${l.skipped} already there. Those will be skipped.`
-      : l.kind === 'remove' ? ['Then remove them from ', s(l.sourceTitle), '.']
+      : l.kind === 'skip' ? `${l.skipped} already there. Those will not be copied again${state.opts.deleteFromSource ? ', but will still be removed from the source' : ''}.`
+      : l.kind === 'remove' ? ['Remove every block from ', s(l.sourceTitle), ' once it is in the destination.']
       : ['A full merge will set the destination to ', s('private'), ' while it runs and restore it to ', s(l.destStatus), ' at the end.'])));
   }
 
@@ -357,6 +357,17 @@
       summaryNode(),
       h('div', { className: 'row row--wrap' }, [dryBtn, realBtn, stopBtn].filter(Boolean)),
       h('p', { className: 'action-hint' }, 'Dry Run shows what would happen and changes nothing on are.na. Run Full Merge writes to your account.'),
+      h('details', { className: 'how' }, [
+        h('summary', null, 'How the merge works'),
+        h('ul', null, [
+          'Blocks are matched by their are.na id. A block already in the destination is not copied again.',
+          'With "Remove blocks from source", every block leaves the source, including ones that were already in the destination. Only the connection is removed; the block itself is never deleted.',
+          'Blocks are handled one at a time: copy, then remove. If a run stops part-way, the blocks done so far stay done and the rest are untouched.',
+          'A block that fails is reported and the run carries on. A failed copy is never removed from the source.',
+          'Quiet mode sets the destination to private while a full merge runs, then restores it. A dry run never changes it.',
+          'Blocks are not compared by URL or image yet, only by id.',
+        ].map(t => h('li', null, t))),
+      ]),
       run && run.status !== 'idle' ? h('div', { className: 'run' }, [run.progress, run.stats, finishNode(run), run.log].filter(Boolean)) : null,
       nav({ next: null }),
     ].filter(Boolean);

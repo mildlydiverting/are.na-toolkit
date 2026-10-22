@@ -36,6 +36,18 @@ describe('runMerge', () => {
     expect(r.added).toBe(2);
     expect(r.skipped).toBe(1);
   });
+  it('also removes blocks already in the destination from the source, without copying them again', async () => {
+    const client = fakeClient();
+    const r = await runMerge({ ...base, client, destIds: new Set([2]), opts: { deleteFromSource: true } });
+    expect(r).toMatchObject({ added: 2, skipped: 1, removed: 3, failed: 0 });
+    expect(client.calls.filter(c => c[0] === 'request').map(c => c[2].connectable_id)).toEqual([1, 3]);
+    expect(client.calls.filter(c => c[0] === 'delete').map(c => c[1])).toEqual([101, 102, 103]);
+  });
+  it('leaves already-there blocks in the source when removal is off', async () => {
+    const client = fakeClient();
+    await runMerge({ ...base, client, destIds: new Set([2]) });
+    expect(client.deleteConnection).not.toHaveBeenCalled();
+  });
   it('makes no write calls on a dry run but reports the same counts', async () => {
     const client = fakeClient();
     const r = await runMerge({ ...base, client, dryRun: true, opts: { deleteFromSource: true, quietMode: true } });
@@ -91,12 +103,26 @@ describe('runMerge', () => {
     await runMerge({ ...base, client, contents: [], hooks: { onProgress: p => empty.push([p.value, p.max]) } });
     expect(empty).toEqual([[0, 0]]);
   });
-  it('warns rather than failing when a block has no connection id', async () => {
+  it('counts a missing connection id as a failure to remove, but the block is still added', async () => {
     const client = fakeClient();
-    const log = [];
-    const r = await runMerge({ ...base, client, contents: [{ id: 9, class: 'Image' }], opts: { deleteFromSource: true }, hooks: { onLog: (t, x) => log.push(t) } });
+    const r = await runMerge({ ...base, client, contents: [{ id: 9, class: 'Image' }], opts: { deleteFromSource: true } });
     expect(r.added).toBe(1);
     expect(r.removed).toBe(0);
-    expect(log).toContain('warn');
+    expect(r.failed).toBe(1);
+  });
+  it('treats a 422 from are.na as already there, not a failure', async () => {
+    const client = fakeClient();
+    client.request = vi.fn(async () => { throw Object.assign(new Error('exists'), { status: 422 }); });
+    const r = await runMerge({ ...base, client, contents: [items[0]], opts: { deleteFromSource: true } });
+    expect(r).toMatchObject({ added: 0, skipped: 1, failed: 0, removed: 1 });
+    expect(client.deleteConnection).toHaveBeenCalledWith(101);
+  });
+  it('carries on without quiet mode if the destination cannot be made private', async () => {
+    const client = fakeClient();
+    client.updateChannel = vi.fn(async () => { throw new Error('nope'); });
+    const r = await runMerge({ ...base, client, opts: { quietMode: true } });
+    expect(r.added).toBe(3);
+    expect(r.statusChanged).toBe(false);
+    expect(client.updateChannel).toHaveBeenCalledTimes(1);
   });
 });
