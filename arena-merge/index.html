@@ -372,6 +372,7 @@ a:visited, a:active { color: var(--link-color); }
 }
 
 @media (max-width: 720px) {
+  .rail { position: static; }   /* a sticky row would sit on top of the page content as it scrolls */
   .steps { flex-direction: row; flex-wrap: wrap; gap: var(--space-2); }
   .steps::before { display: none; }
   .step { width: auto; padding-right: var(--space-3); }
@@ -649,6 +650,8 @@ a:visited, a:active { color: var(--link-color); }
 /* ──────────────────────────────────────────────────────────────
    Transfer / progress
    ────────────────────────────────────────────────────────────── */
+.progress .atk-stats { margin-top: var(--space-4); }
+
 .action-hint { font-size: var(--fs-sm); color: var(--text-muted); margin-top: var(--space-2); }
 
 .summary-box {
@@ -700,72 +703,68 @@ a:visited, a:active { color: var(--link-color); }
   transition: width var(--t-fast);
 }
 
-.counters {
+/* ──────────────────────────────────────────────────────────────
+   StatGrid and StatusLog — tool-local components, written to lift out.
+   They use design-system tokens only (no tool names or state) and are
+   created by window.ArenaToolkit.StatGrid / .StatusLog (see the script
+   "Tool-local components"). Candidates for shared/ui.
+   ────────────────────────────────────────────────────────────── */
+
+/* StatGrid — a row of labelled counts that wraps to 2×2 on narrow screens */
+.atk-stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: var(--space-3);
-  margin-top: var(--space-4);
 }
-
-@media (max-width: 480px) {
-  .counters { grid-template-columns: repeat(2, 1fr); }
-}
-
-.counter {
+.atk-stat {
   padding: var(--space-3);
-  background: var(--bg-sunken);
+  background: var(--surface-sunken);
   border-radius: var(--radius-sm);
   text-align: center;
 }
-
-.counter-val {
+.atk-stat__value {
   display: block;
   font-size: var(--fs-xl);
   font-weight: var(--fw-semibold);
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
 }
-
-.counter-label {
+.atk-stat__label {
   display: block;
+  margin-top: var(--space-1);
   font-size: var(--fs-xs);
   letter-spacing: var(--tracking-caps);
   text-transform: uppercase;
   color: var(--text-muted);
-  margin-top: var(--space-1);
 }
 
-.log-details {
-  margin-top: var(--space-4);
-}
-
-.log-details summary {
+/* StatusLog — a disclosure holding a monospace log. Green = success, grey = message,
+   orange = warning, red = error. Tone also reaches screen readers as a spoken prefix.
+   Contrast on --surface-sunken (Light / Dark / Dawn / Dusk): success 4.29 / 7.78 / 3.66 / 8.11,
+   message 10.79 / 10.03 / 7.14 / 8.36, error 4.72 / 4.03 / 2.76 / 4.21, warning 3.34 / 4.86 / 2.98 / 5.07.
+   Dawn's error and warning fall short of 4.5:1; they are the system's own colours, recorded not changed. */
+.atk-log { margin-top: var(--space-4); }
+.atk-log__summary {
   font-size: var(--fs-sm);
   color: var(--text-muted);
   cursor: pointer;
   padding: var(--space-2) 0;
 }
-
-.log {
+.atk-log__body {
   margin-top: var(--space-2);
   font-family: var(--font-mono);
   font-size: var(--fs-sm);
-  background: var(--bg-sunken);
+  background: var(--surface-sunken);
   padding: var(--space-3);
   border-radius: var(--radius-sm);
   max-height: 240px;
   overflow-y: auto;
 }
-
-.log-line {
-  padding: 2px 0;
-  color: var(--text-secondary);
-  line-height: var(--lh-tight);
-}
-
-.log-line.is-ok   { color: var(--color-success); }
-.log-line.is-warn { color: var(--color-warning); }
-.log-line.is-err  { color: var(--color-error); }
+.atk-log__line { padding: 2px 0; color: var(--text-secondary); line-height: var(--lh-tight); }
+.atk-log__line.is-success { color: var(--accent-success); }
+.atk-log__line.is-warning { color: var(--accent-alert); }
+.atk-log__line.is-error   { color: var(--accent-private); }
+.atk-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* ──────────────────────────────────────────────────────────────
    Footer
@@ -1897,6 +1896,40 @@ dialog.picker::backdrop {
   // Theme chooser: applies the saved/system theme straight away
   document.getElementById('theme-slot').replaceWith(ArenaToolkit.ThemeChooser());
   </script>
+  <script>
+  /* Tool-local components — written to lift out into shared/ui (see arena-duplicate-finder/src/components for the pattern) */
+  window.ArenaToolkit.StatGrid = function StatGrid({ items = [] } = {}) {
+    const h = window.ArenaToolkit._el;
+    const values = {};
+    const root = h('div', { className: 'atk-stats' });
+    items.forEach(({ key, label, value = 0 }) => {
+      values[key] = h('span', { className: 'atk-stat__value' }, String(value));
+      root.appendChild(h('div', { className: 'atk-stat' }, [values[key], h('span', { className: 'atk-stat__label' }, label)]));
+    });
+    // update({ added: 3, failed: 0 }) changes the named counts in place
+    root.update = (next = {}) => {
+      Object.keys(next).forEach(k => { if (values[k]) values[k].textContent = String(next[k]); });
+    };
+    return root;
+  };
+
+  window.ArenaToolkit.StatusLog = function StatusLog({ label = 'Details', open = false } = {}) {
+    const h = window.ArenaToolkit._el;
+    const SPOKEN = { success: 'Success: ', warning: 'Warning: ', error: 'Error: ' };   // 'message' has none
+    const body = h('div', { className: 'atk-log__body', role: 'log' });
+    const root = h('details', { className: 'atk-log', open }, [h('summary', { className: 'atk-log__summary' }, label), body]);
+    // add('success' | 'message' | 'warning' | 'error', text)
+    root.add = (tone, text) => {
+      const line = h('div', { className: 'atk-log__line is-' + tone });
+      if (SPOKEN[tone]) line.appendChild(h('span', { className: 'atk-sr' }, SPOKEN[tone]));
+      line.appendChild(document.createTextNode(text));
+      body.appendChild(line);
+      body.scrollTop = body.scrollHeight;
+    };
+    root.clear = () => body.replaceChildren();
+    return root;
+  };
+  </script>
 
   <div class="page-title">
     <h1>Are.na Merge</h1>
@@ -2053,19 +2086,11 @@ dialog.picker::backdrop {
             <div class="progress-fill" id="progress-fill"></div>
           </div>
 
-          <div class="counters">
-            <div class="counter"><span class="counter-val" id="count-added">0</span><span class="counter-label">Added</span></div>
-            <div class="counter"><span class="counter-val" id="count-skipped">0</span><span class="counter-label">Already there</span></div>
-            <div class="counter"><span class="counter-val" id="count-removed">0</span><span class="counter-label">Removed</span></div>
-            <div class="counter"><span class="counter-val" id="count-failed">0</span><span class="counter-label">Failed</span></div>
-          </div>
+          <div id="stats-slot"></div>
 
           <div class="card" id="finish-summary" hidden></div>
 
-          <details class="log-details">
-            <summary>Details</summary>
-            <div class="log" id="log"></div>
-          </details>
+          <div id="log-slot"></div>
         </div>
       </section>
 
@@ -2815,27 +2840,29 @@ function describeBlock(item) {
   return title ? `${kind} "${truncate(title, 40)}"` : `${kind} #${item.id}`;
 }
 
+const statGrid = ArenaToolkit.StatGrid({ items: [
+  { key: 'added', label: 'Added' },
+  { key: 'skipped', label: 'Already there' },
+  { key: 'removed', label: 'Removed' },
+  { key: 'failed', label: 'Failed' },
+] });
+document.getElementById('stats-slot').replaceWith(statGrid);
+const statusLog = ArenaToolkit.StatusLog({ label: 'Details' });
+document.getElementById('log-slot').replaceWith(statusLog);
+
 function updateCounts(c, done, total) {
-  document.getElementById('count-added').textContent = c.added;
-  document.getElementById('count-skipped').textContent = c.skipped;
-  document.getElementById('count-removed').textContent = c.removed;
-  document.getElementById('count-failed').textContent = c.failed;
+  statGrid.update(c);
   document.getElementById('progress-count').textContent = `${done} / ${total}`;
   const pct = total === 0 ? 100 : Math.round((done / total) * 100);
   document.getElementById('progress-fill').style.width = pct + '%';
 }
-
 function updatePhase(label) {
   document.getElementById('progress-phase').textContent = label;
 }
 
+const LOG_TONES = { ok: 'success', info: 'message', warn: 'warning', err: 'error' };
 function log(level, message) {
-  const line = document.createElement('div');
-  line.className = 'log-line is-' + level;
-  line.textContent = message;
-  const logEl = document.getElementById('log');
-  logEl.appendChild(line);
-  logEl.scrollTop = logEl.scrollHeight;
+  statusLog.add(LOG_TONES[level] || 'message', message);
 }
 
 </script>
