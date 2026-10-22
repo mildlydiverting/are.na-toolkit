@@ -4,7 +4,7 @@ Agent-facing. Last updated 2026-10-22. Read `CLAUDE.md` and `AGENTS.md` first, t
 
 ## State
 
-All six steps are built and have been tried live by Kim against her test channels (`zz-test-channel`, `zz-test-channel-two`): Connect, Scope, Detect, Scan, Review (with live Resolve and Undo), Done. The one exception is Done, which is built but not yet tried by her. **Not shipped:** no `docs/` copy, no card on `docs/index.html`, no preview image. 267 tests green.
+All six steps are built and have been tried live by Kim against her test channels (`zz-test-channel`, `zz-test-channel-two`): Connect, Scope, Detect, Scan, Review (with live Resolve and Undo), Done. The one exception is Done, which is built but not yet tried by her. **Shipped 2026-10-22:** `docs/arena-duplicate-finder.html`, a card on `docs/index.html`, and a preview image (the Connect screen only; replace it with a Review screenshot). 267 tests green.
 
 | Piece | Where |
 |---|---|
@@ -50,7 +50,7 @@ All six steps are built and have been tried live by Kim against her test channel
 
 1. Kim to try the Done step and the unscanned-channel flow (e.g. blocks 39753062 and 39753053 with `teaching-tablescape` outside the scan).
 2. Error paths: auth failures mid-run, missing permissions, 429 during Resolve.
-3. Ship: `node arena-duplicate-finder/build.js --docs`, fifth card on `docs/index.html`, preview jpg, `README.md` is written, update `AGENTS.md` §1 status to shipped. Needs Kim's go-ahead.
+3. Replace the preview jpg with a Review screenshot. After any change: `node arena-duplicate-finder/build.js --docs` (rule 5).
 4. Later: keyboard shortcut polish, promoting Radio/Notice/Checkbox into `shared/ui` (change the design-system artifact too, rule 8).
 
 ## Ideas for later

@@ -161,6 +161,29 @@ are.na doesn't expose connection details (position, who connected a block, when)
 
 ---
 
+## Are.na Duplicate Finder
+
+![The Are.na Duplicate Finder, showing its six steps and the Connect to are.na screen](docs/arena-duplicate-finder-preview.jpg)
+
+**[Try it](https://mildlydiverting.github.io/are.na-toolkit/arena-duplicate-finder.html)**
+
+Finds blocks you've saved more than once, such as the same Pinterest or Instagram image imported again and again. You pick the block to keep in each group, and the rest are moved onto it and marked as duplicates. Needs a personal access token that can write.
+
+**What it does:**
+- Scans the channels you choose, and matches on the same source address, an address in the description, or the same title and description
+- Checks where each matching block is connected across all of are.na, and shows how many connections each has (total, yours, other people's)
+- Shows one group at a time, with each block's picture, owner, date, source and channels. Warns when the titles or picture shapes differ, in case they are not really duplicates
+- For each block: keep it, leave it unchanged, or merge its connections onto the keeper and orphan it
+- Adds the keeper to every channel of yours the duplicate was in, removes the duplicate, and adds a "Duplicate of …" line and `dupe_of` metadata to it. Nothing is deleted
+- Has a dry run, on by default, and undo for the last groups you resolved
+- Lists orphaned blocks at the end, with a copy-all-URLs button and a JSON report
+
+Blocks owned by other people are removed from your channels but never edited.
+
+**Build:** built from `arena-duplicate-finder/src/` by `node arena-duplicate-finder/build.js`. See `arena-duplicate-finder/README.md`.
+
+---
+
 ## Technical notes
 
 All the tools share the same constraints:
@@ -253,6 +276,7 @@ are.na-toolkit/
 │   ├── arena-picks.html
 │   ├── arena-merge.html
 │   ├── arena-palimpsest.html
+│   ├── arena-duplicate-finder.html
 │   └── *.jpg, *.png               # Screenshots
 ├── arena-hypernormalisation/
 │   └── index.html                 # Single-file tool
@@ -264,6 +288,10 @@ are.na-toolkit/
 │   └── index.html                 # Single-file tool
 ├── arena-palimpsest/
 │   ├── src/                       # Source files (shell, JS, CSS, tests)
+│   ├── dist/                      # Built output
+│   └── build.js                   # Uses scripts/include-resolver.js
+├── arena-duplicate-finder/
+│   ├── src/                       # Source files (shell, steps, logic, tests)
 │   ├── dist/                      # Built output
 │   └── build.js                   # Uses scripts/include-resolver.js
 ├── shared/                        # Code shared by tools on the build pipeline
