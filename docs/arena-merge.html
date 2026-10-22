@@ -557,6 +557,8 @@ a:visited, a:active { color: var(--link-color); }
   line-height: var(--lh-tight);
 }
 
+.thumb:has(> img) { padding: 0; }
+
 .thumb img {
   width: 100%;
   height: 100%;
@@ -2517,18 +2519,20 @@ function renderPreview(container, channel, contents) {
     </div>`;
 }
 
+// v3 image objects use `.src` (not v2's `.url`); square first because the tiles are square.
+function thumbSrc(item) {
+  return item.image?.square?.src || item.image?.small?.src || item.image?.medium?.src
+      || item.embed?.thumbnail_url || null;
+}
+
 function renderThumb(item) {
-  if (item.class === 'Image' || item.class === 'Media' || item.class === 'Attachment') {
-    const src = item.image?.thumb?.url || item.image?.square?.url || item.image?.display?.url;
-    if (src) return `<div class="thumb"><img src="${esc(src)}" alt="" loading="lazy"></div>`;
-  }
+  const src = thumbSrc(item);
+  if (src) return `<div class="thumb"><img src="${esc(src)}" alt="" loading="lazy"></div>`;
   if (item.class === 'Link') {
-    const src = item.image?.thumb?.url || item.image?.square?.url;
-    if (src) return `<div class="thumb"><img src="${esc(src)}" alt="" loading="lazy"></div>`;
     return `<div class="thumb">${esc(truncate(item.title || item.source?.url || 'link', 24))}</div>`;
   }
   if (item.class === 'Text') {
-    return `<div class="thumb">${esc(truncate(item.content_html?.replace(/<[^>]+>/g, '') || item.content || 'text', 40))}</div>`;
+    return `<div class="thumb">${esc(truncate(item.content?.plain || item.content_html?.replace(/<[^>]+>/g, '') || (typeof item.content === 'string' ? item.content : '') || 'text', 40))}</div>`;
   }
   if (item.class === 'Channel' || item.type === 'Channel') {
     return `<div class="thumb">↳ ${esc(truncate(item.title || 'channel', 24))}</div>`;
@@ -2807,7 +2811,7 @@ function renderFinishSummary(counts) {
 
 function describeBlock(item) {
   const kind = item.class || item.type || 'block';
-  const title = item.title || item.generated_title || item.content?.slice(0, 40) || '';
+  const title = item.title || item.generated_title || (item.content?.plain ?? (typeof item.content === 'string' ? item.content : ''))?.slice(0, 40) || '';
   return title ? `${kind} "${truncate(title, 40)}"` : `${kind} #${item.id}`;
 }
 
