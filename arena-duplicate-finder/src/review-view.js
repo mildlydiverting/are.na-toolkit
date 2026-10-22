@@ -3,7 +3,7 @@
 // Resolving writes to are.na through the callbacks below; with dryRun on (the default) it only shows what would happen.
 //   onResolve({ item, decision, dryRun }) -> Promise<{ lines, notes, done, failed, undo }>
 //   onUndo(undo) -> Promise<{ failed }>
-//   getConnectionCount(blockId) -> Promise<number>: every channel the block is in, not just the scanned ones
+//   connectionInfo(blockId) -> lookup result from connections.js (every channel the block is in, not just the scanned ones), or undefined
 
 // Only the card row runs on to the right-hand edge of the window; the rest of the pane keeps the content column.
 // Negative right margin pulls the scroller out to the edge, matching padding keeps the last card clear of it.
@@ -19,7 +19,7 @@ function fitCardsToWindow(cards) {
   requestAnimationFrame(fit);
 }
 
-function createReviewView({ items, decisions, onFinish, onResolve, onUndo, getConnectionCount = null, myUserId = null }) {
+function createReviewView({ items, decisions, onFinish, onResolve, onUndo, connectionInfo = null, myUserId = null }) {
   const ATK = window.ArenaToolkit;
   const h = (tag, attrs, kids) => ATK._el(tag, attrs, kids);
 
@@ -48,53 +48,41 @@ function createReviewView({ items, decisions, onFinish, onResolve, onUndo, getCo
   function card(item, b, i, d) {
     const keeper = b.id === d.canonicalId;
     const places = item.cluster.places[b.id] || [];
-    const chooser = ATK.Radio({
-      label: keeper ? 'Keeping this one' : 'Keep this one', value: b.id, name: `keep-${item.cluster.id}`, checked: keeper,
-      onChange: () => chooseKeeper(b.id),
-    });
-    let action = h('span', { className: 'muted' }, 'Other blocks merge into this one');
-    if (!keeper) {
-      action = ATK.Select({
-        options: [{ value: 'merge', label: 'Merge connections' }, { value: 'leave', label: 'Leave alone' }],
-        value: d.actions[b.id],
-        onChange: (e) => { d.actions[b.id] = e.target.value; },
-      });
-      action.setAttribute('aria-label', `What to do with block ${b.id}`);
-    }
+    // Three choices per card, level across cards. The keeper's other two are greyed out: to change the keeper, keep another block.
+    const pick = (label, value, checked, onChange, disabled = false) =>
+      ATK.Radio({ label, value, name: `choice-${item.cluster.id}-${b.id}`, checked, disabled, onChange });
+    // The line is always laid out (hidden on non-keepers) so the radios don't shift when the keeper changes.
+    const keeperNote = h('div', { className: 'review-card__keeper-note muted', 'aria-hidden': keeper ? null : 'true', style: keeper ? null : 'visibility: hidden' }, 'Other blocks merge into this one');
+    const choices = h('div', { className: 'review-card__choices', role: 'radiogroup', 'aria-label': `What to do with block ${b.id}` }, [
+      keeperNote,
+      pick(keeper ? 'Keeping this one' : 'Keep this one', 'keep', keeper, () => chooseKeeper(b.id)),
+      pick('Leave unchanged', 'leave', !keeper && d.actions[b.id] === 'leave', () => { d.actions[b.id] = 'leave'; }, keeper),
+      pick('Merge connections and orphan', 'merge', !keeper && d.actions[b.id] === 'merge', () => { d.actions[b.id] = 'merge'; }, keeper),
+    ]);
     return h('div', { className: `review-card${keeper ? ' is-keeper' : ''}${isOwned(b, myUserId) === false ? ' is-foreign' : ''}` }, [
       h('div', { className: 'review-card__thumb' }, [thumb(b), h('span', { className: 'review-card__num', 'aria-hidden': 'true' }, String(i + 1))]),
       h('div', { className: 'review-card__title' }, blockTitle(b)),
+      h('div', { className: 'review-card__id' }, link(`https://www.are.na/block/${b.id}`, `Block ${b.id}`)),
       h('dl', { className: 'review-card__facts' }, [
         fact('Owner', ownerLine(b)),
         fact('Added', dateOf(b)),
-        getConnectionCount ? fact('Connections', h('span', { 'data-connections': String(b.id) }, connectionText(b.id))) : null,
-        fact('In', places.length ? h('span', { className: 'review-card__channels' }, places.map(p =>
-          h('a', { href: `https://www.are.na/channel/${p.channelSlug}`, target: '_blank', rel: 'noopener' }, ATK.Badge({ children: p.channelTitle })))) : null),
+        connectionInfo ? fact('Connections', connectionSummary(connectionInfo(b.id))) : null,
+        fact('Your channels', places.length ? h('span', { className: 'review-card__channels' }, places.map(p =>
+          h('a', { href: `https://www.are.na/channel/${p.channelSlug}`, target: '_blank', rel: 'noopener', title: p.unscanned ? 'Not in your scan' : null }, ATK.Badge({ children: p.channelTitle })))) : null),
+        imageFactsRow(b),
         hasAlt(b) ? fact('Alt text', blockAlt(b) || h('span', { className: 'muted' }, 'None')) : null,
         fact('Source', sourceLine(b)),
       ].filter(Boolean)),
       descriptionEl(b),
-      link(`https://www.are.na/block/${b.id}`, 'View on are.na'),
-      chooser,
-      action,
+      choices,
     ].filter(Boolean));
   }
 
-  // Total connections come from are.na one block at a time, fetched when a group is shown and then remembered.
-  const connectionCounts = new Map();
-  const connectionText = (id) => (connectionCounts.has(id) ? connectionCounts.get(id) : '…');
-  function loadConnectionCounts(item) {
-    if (!getConnectionCount) return;
-    for (const b of item.cluster.blocks) {
-      if (connectionCounts.has(b.id)) continue;
-      connectionCounts.set(b.id, '…');
-      getConnectionCount(b.id)
-        .then((n) => `${n} in total`, () => '?')
-        .then((text) => {
-          connectionCounts.set(b.id, text);
-          root.querySelectorAll(`[data-connections="${b.id}"]`).forEach(el => { el.textContent = text; });
-        });
-    }
+  function imageFactsRow(b) {
+    const f = imageFacts(b);
+    if (!f) return null;
+    const text = [f.dimensions, f.size].filter(Boolean).join(' · ');
+    return fact('Image', text ? h('span', { title: f.filename || null }, text) : null);
   }
 
   const fact = (label, value) => (value ? h('div', { className: 'review-card__fact' }, [h('dt', null, label), h('dd', null, value)]) : null);
@@ -193,6 +181,10 @@ function createReviewView({ items, decisions, onFinish, onResolve, onUndo, getCo
       label: 'Dry run', description: 'Show what Resolve would do, and change nothing in are.na.',
       checked: dryRun, disabled: busy, onChange: (on) => (on ? setDryRun(true) : confirmLive()),
     });
+    const different = looksDifferent(blocks);
+    const differentNote = different.length
+      ? h('p', { className: 'atk-note', role: 'status' }, `These may not be duplicates: ${different.join(' and ')}. Set a block to “Leave unchanged” if it is a different picture.`)
+      : null;
     const cards = h('div', { className: 'review-cards' }, blocks.map((b, i) => card(item, b, i, d)));
     fitCardsToWindow(cards);
 
@@ -202,7 +194,7 @@ function createReviewView({ items, decisions, onFinish, onResolve, onUndo, getCo
       ATK.Button({ variant: 'ghost', children: 'Next →', disabled: index === items.length - 1, onClick: () => move(1) }),
     ]);
     const liveNote = dryRun ? null : h('p', { className: 'atk-note', role: 'status' }, 'Dry run is off: Resolve group writes to are.na straight away.');
-    const actions = h('div', { className: 'step-nav' }, [
+    const buttons = h('div', { className: 'step-nav' }, [
       dryToggle,
       h('div', { className: 'row' }, [
         ATK.Button({ variant: 'ghost', children: 'Undo', disabled: busy || !undoStack.length, onClick: undo }),
@@ -211,13 +203,12 @@ function createReviewView({ items, decisions, onFinish, onResolve, onUndo, getCo
       ]),
     ]);
 
-    root.replaceChildren(
-      header, progress, pager, cards, details(item, d),
-      liveNote, actions, reportEl(),
+    root.replaceChildren(...[
+      header, progress, pager, differentNote, cards, details(item, d),
+      h('div', { className: `review-actions${dryRun ? '' : ' is-live'}` }, [buttons, liveNote, reportEl()].filter(Boolean)),
       h('div', { className: 'row' }, [finishNow, ATK.Button({ variant: 'ghost', size: 'sm', children: 'Keyboard shortcuts (?)', onClick: openHelp })]),
       live,
-    );
-    loadConnectionCounts(item);
+    ].filter(Boolean));
   }
 
   /* ── Actions ───────────────────────────────────────────────── */

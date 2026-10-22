@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { defaultDecision, chooseCanonical, changedFields, copyOptions, orderClusters, tally, nextPending, blockTitle } from './review.js';
+import { defaultDecision, chooseCanonical, changedFields, copyOptions, orderClusters, tally, nextPending, blockTitle, imageFacts, looksDifferent } from './review.js';
 
 const block = (id, extra = {}) => ({ id, type: 'Image', title: `T${id}`, description: { plain: `D${id}` }, image: { alt_text: '' }, ...extra });
 const cluster = (id, blocks, channelIds = [1], places = {}) => ({ id, blocks, channelIds, scope: channelIds.length > 1 ? 'cross' : 'single', places });
@@ -105,5 +105,28 @@ describe('blockTitle', () => {
     expect(blockTitle({ id: 5, title: 'Mine' })).toBe('Mine');
     expect(blockTitle({ id: 5, generated_title: 'Gen' })).toBe('Gen');
     expect(blockTitle({ id: 5 })).toBe('Block 5');
+  });
+});
+
+describe('imageFacts', () => {
+  it('reads pixel size, file size and filename', () => {
+    expect(imageFacts({ image: { width: 1920, height: 1675, file_size: 566963, filename: 'a.jpg' } })).toEqual({ dimensions: '1920 × 1675', size: '554 KB', filename: 'a.jpg' });
+    expect(imageFacts({ image: { file_size: 2 * 1048576 } }).size).toBe('2.0 MB');
+  });
+  it('is null for blocks that are not images', () => {
+    expect(imageFacts({ id: 1 })).toBeNull();
+  });
+});
+
+describe('looksDifferent', () => {
+  it('flags different titles', () => {
+    expect(looksDifferent([{ title: 'Terepeza' }, { title: 'Daphne' }])).toEqual(['the titles differ']);
+  });
+  it('flags different proportions', () => {
+    expect(looksDifferent([{ image: { aspect_ratio: 1.1463 } }, { image: { aspect_ratio: 1.3251 } }])).toEqual(['the pictures have different proportions']);
+  });
+  it('is quiet for the same title and shape, or when titles are missing', () => {
+    expect(looksDifferent([{ title: 'Print ', image: { aspect_ratio: 1.5 } }, { title: 'print', image: { aspect_ratio: 1.51 } }])).toEqual([]);
+    expect(looksDifferent([{ title: 'Only one' }, {}])).toEqual([]);
   });
 });

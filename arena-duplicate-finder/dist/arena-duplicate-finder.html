@@ -1422,6 +1422,9 @@ body {
   border: 1px solid var(--border-card);
   border-radius: var(--radius-sm);
 }
+.review-card__choices { display: flex; flex-direction: column; gap: var(--space-1); margin-top: auto; padding-top: var(--space-2); } /* margin-top:auto lines the choices up across cards of different heights */
+.review-actions { display: flex; flex-direction: column; gap: var(--space-3); }
+.review-actions.is-live { padding: var(--space-3); border: 2px solid var(--accent-primary); border-radius: var(--radius-sm); } /* dry run off: everything that writes sits inside the frame */
 .review-card.is-foreign { border-style: dashed; border-color: var(--border-strong); }
 .review-card.is-keeper { border-style: solid; border-color: var(--accent-primary); box-shadow: 0 0 0 1px var(--accent-primary); }
 .review-card__thumb { position: relative; }
@@ -1439,6 +1442,7 @@ body {
   text-align: center;
 }
 .review-card__title { font: 700 16px/22px var(--font-sans); overflow-wrap: anywhere; }
+.review-card__id { font: var(--text-body); margin-top: calc(-1 * var(--space-1)); }
 .review-card__channels { display: flex; flex-wrap: wrap; gap: var(--space-nudge); }
 .review-card__channels a { text-decoration: none; }
 .review-details { display: flex; flex-direction: column; gap: var(--space-3); }
@@ -1460,7 +1464,7 @@ body {
 .review-problems { list-style-position: inside; }
 
 .review-card__facts { display: flex; flex-direction: column; gap: var(--space-nudge); margin: 0; font: var(--text-body); }
-.review-card__fact { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: var(--space-1); }
+.review-card__fact { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: var(--space-1); }
 .review-card__fact dt { color: var(--text-muted); }
 .review-card__fact dd { margin: 0; overflow-wrap: anywhere; }
 .review-card__description { font: var(--text-body); color: var(--text-secondary); overflow-wrap: anywhere; white-space: pre-wrap; }
@@ -1473,6 +1477,10 @@ body {
   text-decoration: underline;
   cursor: pointer;
 }
+
+.done-totals { margin: 0; padding-left: var(--space-4); font: var(--text-body); }
+.done-section { display: flex; flex-direction: column; gap: var(--space-2); }
+.done-orphans { margin: 0; padding-left: var(--space-4); max-height: 240px; overflow-y: auto; }
 
 </style>
 </head>
@@ -2558,8 +2566,9 @@ function blockCount(c) {
 }
 
 // channels: [{ id, slug, title, visibility, counts }]; selected: [id]
+// onRefresh (optional): async () => fresh channels array. Adds a Refresh button that reloads the list and keeps the ticks.
 // Returns { element, open(), close() }; the element is a Modal you append to document.body.
-function openChannelPicker({ channels, selected = [], title = 'Pick channels', confirmLabel = 'Use', onConfirm, onCancel = null }) {
+function openChannelPicker({ channels, selected = [], title = 'Pick channels', confirmLabel = 'Use', onConfirm, onCancel = null, onRefresh = null }) {
   const ATK = window.ArenaToolkit;
   let chosen = [...selected];
   let query = '';
@@ -2622,9 +2631,38 @@ function openChannelPicker({ channels, selected = [], title = 'Pick channels', c
   const clear = ATK.Button({ variant: 'ghost', children: 'Clear', onClick: () => { chosen = []; renderList(); } });
   const cancel = ATK.Button({ variant: 'secondary', children: 'Cancel', onClick: () => { done(); if (onCancel) onCancel(); } });
 
+  const status = document.createElement('p');
+  status.className = 'muted';
+  status.setAttribute('role', 'status');
+  status.hidden = true;
+
+  const refresh = onRefresh && ATK.Button({
+    variant: 'secondary', children: 'Refresh list',
+    onClick: async () => {
+      refresh.disabled = true;
+      refresh.textContent = 'Refreshing…';
+      status.hidden = true;
+      try {
+        channels = await onRefresh();
+        status.textContent = `${channels.length} channel${channels.length === 1 ? '' : 's'} loaded.`;
+        renderList();
+      } catch (err) {
+        status.textContent = `Couldn't refresh the list: ${err?.message || err}`;
+      }
+      status.hidden = false;
+      refresh.disabled = false;
+      refresh.textContent = 'Refresh list';
+    },
+  });
+
+  const top = document.createElement('div');
+  Object.assign(top.style, { display: 'flex', gap: 'var(--space-2)', alignItems: 'center' });
+  Object.assign(filter.style, { flex: '1', minWidth: '0' });
+  top.append(...[filter, refresh].filter(Boolean));
+
   const body = document.createElement('div');
   Object.assign(body.style, { display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' });
-  body.append(filter, list);
+  body.append(top, status, list);
 
   const footer = document.createElement('div');
   Object.assign(footer.style, { display: 'flex', justifyContent: 'space-between', gap: 'var(--space-2)', width: '100%' });
@@ -2921,6 +2959,29 @@ const blockDescription = b => b.description?.markdown ?? b.description?.plain ??
 const blockAlt = b => b.image?.alt_text ?? '';
 const hasAlt = b => b.type === 'Image';
 
+// What the API says about an image file. Note image.src is are.na's own copy (it contains the block id), so it
+// can never match another block; the original web address is only ever source.url.
+function imageFacts(b) {
+  const im = b.image;
+  if (!im) return null;
+  const kb = im.file_size ? (im.file_size >= 1048576 ? `${(im.file_size / 1048576).toFixed(1)} MB` : `${Math.round(im.file_size / 1024)} KB`) : null;
+  return {
+    dimensions: im.width && im.height ? `${im.width} × ${im.height}` : null,
+    size: kb,
+    filename: im.filename || null,
+  };
+}
+
+// Reasons a group may be different pictures from the same page. Advice only: nothing is split or hidden.
+function looksDifferent(blocks) {
+  const reasons = [];
+  const titles = blocks.map(b => (b.title || '').trim().toLowerCase()).filter(Boolean);
+  if (titles.length > 1 && new Set(titles).size > 1) reasons.push('the titles differ');
+  const ratios = blocks.map(b => b.image?.aspect_ratio).filter(Boolean);
+  if (ratios.length > 1 && Math.max(...ratios) / Math.min(...ratios) > 1.02) reasons.push('the pictures have different proportions');
+  return reasons;
+}
+
 const FIELD_READERS = { title: b => b.title || '', description: blockDescription, alt_text: blockAlt };
 
 function editsFor(block) {
@@ -2994,6 +3055,82 @@ function nextPending(items, decisions, from, dir = 1) {
 
 </script>
 <script>
+// Where each block sits across all of are.na, not just the scanned channels. Read-only. No DOM.
+//   GET /blocks/{id}/connections lists the channels (and a total), but gives no connection id;
+//   an id is only found by reading a channel's contents, which resolve.js does at the last moment.
+
+// total: every connection to the block, by anyone. own: the channels you connected it into.
+// A failed lookup is stored as { error } so one bad block doesn't stop the rest.
+async function lookupBlockConnections(client, blockId, { per = 100 } = {}) {
+  const path = `/blocks/${encodeURIComponent(blockId)}/connections`;
+  const first = await client.request(path, { per: 1 });
+  const total = first?.meta?.total_count ?? 0;
+  const own = [];
+  for (let page = 1; ; page++) {
+    const body = await client.request(path, { filter: 'OWN', page, per });
+    for (const ch of body?.data || []) own.push({ id: ch.id, slug: ch.slug, title: ch.title || ch.slug });
+    if (!body?.meta?.has_more_pages) break;
+  }
+  return { total, own, others: Math.max(0, total - own.length) };
+}
+
+// blocks: the blocks in the groups. Returns Map blockId -> lookup result.
+// onProgress({ done, count }) fires after each block; control.checkpoint() lets the scan pause between requests.
+async function lookupAll(client, blocks, { control = null, onProgress = () => {} } = {}) {
+  const out = new Map();
+  const unique = [...new Map(blocks.map(b => [b.id, b])).values()];
+  for (const [i, b] of unique.entries()) {
+    if (control) await control.checkpoint();
+    try {
+      out.set(b.id, await lookupBlockConnections(client, b.id));
+    } catch (err) {
+      if (err?.status === 401) throw err;
+      out.set(b.id, { error: err?.message || 'lookup failed' });
+    }
+    onProgress({ done: i + 1, count: unique.length });
+  }
+  return out;
+}
+
+// Adds the channels you own that the scan didn't read to each group's `places`, flagged `unscanned`
+// (no connection id yet). Returns new clusters; the originals are untouched.
+function addUnscannedPlaces(clusters, info) {
+  return clusters.map(c => {
+    const places = {};
+    const channelIds = new Set(c.channelIds);
+    for (const b of c.blocks) {
+      const known = c.places[b.id] || [];
+      const seen = new Set(known.map(p => p.channelId));
+      const extra = (info.get(b.id)?.own || [])
+        .filter(ch => !seen.has(ch.id))
+        .map(ch => ({ channelId: ch.id, channelSlug: ch.slug, channelTitle: ch.title, connectionId: null, unscanned: true }));
+      extra.forEach(p => channelIds.add(p.channelId));
+      places[b.id] = [...known, ...extra];
+    }
+    return { ...c, places, channelIds: [...channelIds] };
+  });
+}
+
+// Reads a channel's contents until the block turns up, and returns its connection id (null if it isn't there).
+async function findConnectionId(client, channelId, blockId, { per = 100 } = {}) {
+  for (let page = 1; ; page++) {
+    const body = await client.request(`/channels/${encodeURIComponent(channelId)}/contents`, { page, per });
+    const hit = (body?.data || []).find(item => item?.id === blockId && item.type !== 'Channel' && item.base_type !== 'Channel');
+    if (hit) return hit.connection?.id ?? null;
+    if (!body?.meta?.has_more_pages) return null;
+  }
+}
+
+// "7 in total: 2 yours, 5 by others", or a stand-in while it's unknown.
+function connectionSummary(info) {
+  if (!info) return '…';
+  if (info.error) return '?';
+  const { total, own, others } = info;
+  return `${total} in total: ${own.length} yours, ${others} by others`;
+}
+
+</script>
+<script>
 // Resolve: turn a decision into are.na writes, run them, and be able to take them back. No DOM.
 // For a keeper C and each duplicate D set to "merge":
 //   1. (once) edit C if its details were changed
@@ -3027,7 +3164,8 @@ function isOwned(block, myUserId) {
 const ownerName = (block) => block?.user?.name || block?.user?.username || 'someone else';
 
 // Pure: what would be done for this cluster. Nothing here touches the network.
-function planResolution(cluster, decision, now = new Date(), myUserId = null) {
+// `connections` (optional): Map blockId -> lookup result from connections.js, used for the notes about other people's connections.
+function planResolution(cluster, decision, now = new Date(), myUserId = null, connections = null) {
   const date = isoDay(now);
   const canonicalId = decision.canonicalId;
   const canonical = cluster.blocks.find(b => b.id === canonicalId);
@@ -3044,11 +3182,13 @@ function planResolution(cluster, decision, now = new Date(), myUserId = null) {
     for (const p of cluster.places[b.id] || []) {
       const addKeeper = !keeperChannels.has(p.channelId);
       if (addKeeper) keeperChannels.add(p.channelId); // the first duplicate in a channel adds the keeper; later ones needn't
-      if (p.connectionId == null) notes.push(`Block ${b.id} in ${p.channelTitle} has no connection id, so it stays connected there.`);
+      if (p.connectionId == null && !p.unscanned) notes.push(`Block ${b.id} in ${p.channelTitle} has no connection id, so it stays connected there.`);
       channels.push({ ...p, addKeeper });
     }
     const foreign = isOwned(b, myUserId) === false;
     if (foreign) notes.push(`Block ${b.id} belongs to ${ownerName(b)}: it can't be marked as a duplicate, only removed from your channels. It is not deleted or changed.`);
+    const others = connections?.get(b.id)?.others || 0;
+    if (others) notes.push(`Block ${b.id} is also connected ${others} time${others === 1 ? '' : 's'} by other people. Those connections stay on it.`);
     merges.push({
       blockId: b.id,
       title: blockTitle(b),
@@ -3059,7 +3199,6 @@ function planResolution(cluster, decision, now = new Date(), myUserId = null) {
       description: markDescription(b.description?.markdown ?? b.description?.plain ?? '', canonicalId, date),
     });
   }
-  if (merges.length) notes.push('Duplicates may also sit in channels you did not scan. Those connections are left alone.');
 
   return { canonicalId, canonicalTitle: blockTitle(canonical), edit: Object.keys(fields).length ? { blockId: canonicalId, fields } : null, merges, notes };
 }
@@ -3072,11 +3211,11 @@ function describePlan(plan, { dryRun = true } = {}) {
   for (const m of plan.merges) {
     for (const c of m.channels) {
       if (c.addKeeper) lines.push(say(`add block ${plan.canonicalId} to ${c.channelTitle}`));
-      if (c.connectionId != null) lines.push(say(`remove block ${m.blockId} from ${c.channelTitle}`));
+      if (c.connectionId != null || c.unscanned) lines.push(say(`remove block ${m.blockId} from ${c.channelTitle}${c.unscanned ? ' (not in your scan, so it will be looked up)' : ''}`));
     }
     if (!m.foreign) lines.push(say(`mark block ${m.blockId} as a duplicate of ${plan.canonicalId}`));
   }
-  if (!plan.edit && !plan.merges.length) lines.push(dryRun ? 'Nothing to do: every other block is set to "Leave alone".' : 'Nothing to do.');
+  if (!plan.edit && !plan.merges.length) lines.push(dryRun ? 'Nothing to do: every other block is set to "Leave unchanged".' : 'Nothing to do.');
   return { lines, notes: plan.notes };
 }
 
@@ -3099,8 +3238,14 @@ async function executeResolution(client, plan, { onStep = () => {} } = {}) {
     for (const c of m.channels) {
       let ok = true;
       if (c.addKeeper) ok = await attempt(`Added block ${plan.canonicalId} to ${c.channelTitle}`, () => client.createConnection({ id: plan.canonicalId, channels: [c.channelId] }));
-      if (ok && c.connectionId != null) {
-        const removed = await attempt(`Removed block ${m.blockId} from ${c.channelTitle}`, () => client.deleteConnection(c.connectionId));
+      let connectionId = c.connectionId;
+      if (ok && connectionId == null && c.unscanned) {
+        try { connectionId = await findConnectionId(client, c.channelId, m.blockId); }
+        catch (err) { failed.push({ message: `Looking for block ${m.blockId} in ${c.channelTitle} failed: ${err?.message || err}` }); }
+        if (connectionId == null) failed.push({ message: `Couldn't find block ${m.blockId} in ${c.channelTitle}, so it stays connected there.` });
+      }
+      if (ok && connectionId != null) {
+        const removed = await attempt(`Removed block ${m.blockId} from ${c.channelTitle}`, () => client.deleteConnection(connectionId));
         if (removed) record.removedFrom.push({ channelId: c.channelId, channelTitle: c.channelTitle });
       }
     }
@@ -3176,12 +3321,66 @@ function dropUndo(storage, clusterId) {
 
 </script>
 <script>
+// The Done step: what a Review session changed, as numbers, a list of orphans, and a downloadable report.
+
+const blockUrl = (id) => `https://www.are.na/block/${id}`;
+
+// Counts for this scan only. `undoEntries` are the stored resolutions (see history.js); only those
+// for clusters this scan resolved are counted, so older sessions and undone groups don't leak in.
+function summarise(items, decisions, undoEntries) {
+  const groups = tally(items, decisions);
+  const resolvedIds = new Set(items.filter(i => decisions[i.cluster.id]?.status === 'resolved').map(i => i.cluster.id));
+  const entries = undoEntries.filter(e => resolvedIds.has(e.clusterId));
+  let blocksMarked = 0, connectionsRemoved = 0, notYours = 0;
+  for (const e of entries) {
+    for (const d of e.dupes) {
+      if (d.marked) blocksMarked++;
+      connectionsRemoved += d.removedFrom?.length || 0;
+      if (d.foreign) notYours++;
+    }
+  }
+  const withProblems = items.filter(i => decisions[i.cluster.id]?.problems?.length).length;
+  return { groups, blocksMarked, connectionsRemoved, notYours, withProblems };
+}
+
+// Orphans are blocks that lost every connection we could remove; listed for manual clean-up on are.na.
+function orphanUrls(orphans) {
+  return orphans.map(o => blockUrl(o.id));
+}
+
+// The JSON for "Export scan report": settings, every group with its decision, and the totals.
+function buildReport({ now = new Date(), user, channels, detectors, items, decisions, summary, orphans }) {
+  return {
+    tool: 'arena-duplicate-finder',
+    generated_at: now.toISOString(),
+    user: user ? { id: user.id, slug: user.slug } : null,
+    channels: channels.map(c => ({ id: c.id, slug: c.slug, title: c.title })),
+    detectors,
+    summary,
+    groups: items.map(({ cluster, label }) => {
+      const d = decisions[cluster.id];
+      return {
+        id: cluster.id,
+        matched_on: label,
+        status: d?.status || 'pending',
+        canonical: d?.canonicalId ?? null,
+        actions: d?.actions ?? null,
+        problems: d?.problems ?? [],
+        blocks: cluster.blocks.map(b => ({ id: b.id, url: blockUrl(b.id), title: b.title || null })),
+      };
+    }),
+    orphans: orphans.map(o => ({ ...o, url: blockUrl(o.id) })),
+  };
+}
+
+</script>
+<script>
 // Review view: one cluster at a time. DOM only; the rules live in review.js.
 // items: orderClusters() output; decisions: { [clusterId]: decision }, filled in as the person works.
 // Resolving writes to are.na through the callbacks below; with dryRun on (the default) it only shows what would happen.
 //   onResolve({ item, decision, dryRun }) -> Promise<{ lines, notes, done, failed, undo }>
 //   onUndo(undo) -> Promise<{ failed }>
-//   getConnectionCount(blockId) -> Promise<number>: every channel the block is in, not just the scanned ones
+//   connectionInfo(blockId) -> lookup result from connections.js (every channel the block is in, not just the scanned ones), or undefined
 
 // Only the card row runs on to the right-hand edge of the window; the rest of the pane keeps the content column.
 // Negative right margin pulls the scroller out to the edge, matching padding keeps the last card clear of it.
@@ -3197,7 +3396,7 @@ function fitCardsToWindow(cards) {
   requestAnimationFrame(fit);
 }
 
-function createReviewView({ items, decisions, onFinish, onResolve, onUndo, getConnectionCount = null, myUserId = null }) {
+function createReviewView({ items, decisions, onFinish, onResolve, onUndo, connectionInfo = null, myUserId = null }) {
   const ATK = window.ArenaToolkit;
   const h = (tag, attrs, kids) => ATK._el(tag, attrs, kids);
 
@@ -3226,53 +3425,41 @@ function createReviewView({ items, decisions, onFinish, onResolve, onUndo, getCo
   function card(item, b, i, d) {
     const keeper = b.id === d.canonicalId;
     const places = item.cluster.places[b.id] || [];
-    const chooser = ATK.Radio({
-      label: keeper ? 'Keeping this one' : 'Keep this one', value: b.id, name: `keep-${item.cluster.id}`, checked: keeper,
-      onChange: () => chooseKeeper(b.id),
-    });
-    let action = h('span', { className: 'muted' }, 'Other blocks merge into this one');
-    if (!keeper) {
-      action = ATK.Select({
-        options: [{ value: 'merge', label: 'Merge connections' }, { value: 'leave', label: 'Leave alone' }],
-        value: d.actions[b.id],
-        onChange: (e) => { d.actions[b.id] = e.target.value; },
-      });
-      action.setAttribute('aria-label', `What to do with block ${b.id}`);
-    }
+    // Three choices per card, level across cards. The keeper's other two are greyed out: to change the keeper, keep another block.
+    const pick = (label, value, checked, onChange, disabled = false) =>
+      ATK.Radio({ label, value, name: `choice-${item.cluster.id}-${b.id}`, checked, disabled, onChange });
+    // The line is always laid out (hidden on non-keepers) so the radios don't shift when the keeper changes.
+    const keeperNote = h('div', { className: 'review-card__keeper-note muted', 'aria-hidden': keeper ? null : 'true', style: keeper ? null : 'visibility: hidden' }, 'Other blocks merge into this one');
+    const choices = h('div', { className: 'review-card__choices', role: 'radiogroup', 'aria-label': `What to do with block ${b.id}` }, [
+      keeperNote,
+      pick(keeper ? 'Keeping this one' : 'Keep this one', 'keep', keeper, () => chooseKeeper(b.id)),
+      pick('Leave unchanged', 'leave', !keeper && d.actions[b.id] === 'leave', () => { d.actions[b.id] = 'leave'; }, keeper),
+      pick('Merge connections and orphan', 'merge', !keeper && d.actions[b.id] === 'merge', () => { d.actions[b.id] = 'merge'; }, keeper),
+    ]);
     return h('div', { className: `review-card${keeper ? ' is-keeper' : ''}${isOwned(b, myUserId) === false ? ' is-foreign' : ''}` }, [
       h('div', { className: 'review-card__thumb' }, [thumb(b), h('span', { className: 'review-card__num', 'aria-hidden': 'true' }, String(i + 1))]),
       h('div', { className: 'review-card__title' }, blockTitle(b)),
+      h('div', { className: 'review-card__id' }, link(`https://www.are.na/block/${b.id}`, `Block ${b.id}`)),
       h('dl', { className: 'review-card__facts' }, [
         fact('Owner', ownerLine(b)),
         fact('Added', dateOf(b)),
-        getConnectionCount ? fact('Connections', h('span', { 'data-connections': String(b.id) }, connectionText(b.id))) : null,
-        fact('In', places.length ? h('span', { className: 'review-card__channels' }, places.map(p =>
-          h('a', { href: `https://www.are.na/channel/${p.channelSlug}`, target: '_blank', rel: 'noopener' }, ATK.Badge({ children: p.channelTitle })))) : null),
+        connectionInfo ? fact('Connections', connectionSummary(connectionInfo(b.id))) : null,
+        fact('Your channels', places.length ? h('span', { className: 'review-card__channels' }, places.map(p =>
+          h('a', { href: `https://www.are.na/channel/${p.channelSlug}`, target: '_blank', rel: 'noopener', title: p.unscanned ? 'Not in your scan' : null }, ATK.Badge({ children: p.channelTitle })))) : null),
+        imageFactsRow(b),
         hasAlt(b) ? fact('Alt text', blockAlt(b) || h('span', { className: 'muted' }, 'None')) : null,
         fact('Source', sourceLine(b)),
       ].filter(Boolean)),
       descriptionEl(b),
-      link(`https://www.are.na/block/${b.id}`, 'View on are.na'),
-      chooser,
-      action,
+      choices,
     ].filter(Boolean));
   }
 
-  // Total connections come from are.na one block at a time, fetched when a group is shown and then remembered.
-  const connectionCounts = new Map();
-  const connectionText = (id) => (connectionCounts.has(id) ? connectionCounts.get(id) : '…');
-  function loadConnectionCounts(item) {
-    if (!getConnectionCount) return;
-    for (const b of item.cluster.blocks) {
-      if (connectionCounts.has(b.id)) continue;
-      connectionCounts.set(b.id, '…');
-      getConnectionCount(b.id)
-        .then((n) => `${n} in total`, () => '?')
-        .then((text) => {
-          connectionCounts.set(b.id, text);
-          root.querySelectorAll(`[data-connections="${b.id}"]`).forEach(el => { el.textContent = text; });
-        });
-    }
+  function imageFactsRow(b) {
+    const f = imageFacts(b);
+    if (!f) return null;
+    const text = [f.dimensions, f.size].filter(Boolean).join(' · ');
+    return fact('Image', text ? h('span', { title: f.filename || null }, text) : null);
   }
 
   const fact = (label, value) => (value ? h('div', { className: 'review-card__fact' }, [h('dt', null, label), h('dd', null, value)]) : null);
@@ -3371,6 +3558,10 @@ function createReviewView({ items, decisions, onFinish, onResolve, onUndo, getCo
       label: 'Dry run', description: 'Show what Resolve would do, and change nothing in are.na.',
       checked: dryRun, disabled: busy, onChange: (on) => (on ? setDryRun(true) : confirmLive()),
     });
+    const different = looksDifferent(blocks);
+    const differentNote = different.length
+      ? h('p', { className: 'atk-note', role: 'status' }, `These may not be duplicates: ${different.join(' and ')}. Set a block to “Leave unchanged” if it is a different picture.`)
+      : null;
     const cards = h('div', { className: 'review-cards' }, blocks.map((b, i) => card(item, b, i, d)));
     fitCardsToWindow(cards);
 
@@ -3380,7 +3571,7 @@ function createReviewView({ items, decisions, onFinish, onResolve, onUndo, getCo
       ATK.Button({ variant: 'ghost', children: 'Next →', disabled: index === items.length - 1, onClick: () => move(1) }),
     ]);
     const liveNote = dryRun ? null : h('p', { className: 'atk-note', role: 'status' }, 'Dry run is off: Resolve group writes to are.na straight away.');
-    const actions = h('div', { className: 'step-nav' }, [
+    const buttons = h('div', { className: 'step-nav' }, [
       dryToggle,
       h('div', { className: 'row' }, [
         ATK.Button({ variant: 'ghost', children: 'Undo', disabled: busy || !undoStack.length, onClick: undo }),
@@ -3389,13 +3580,12 @@ function createReviewView({ items, decisions, onFinish, onResolve, onUndo, getCo
       ]),
     ]);
 
-    root.replaceChildren(
-      header, progress, pager, cards, details(item, d),
-      liveNote, actions, reportEl(),
+    root.replaceChildren(...[
+      header, progress, pager, differentNote, cards, details(item, d),
+      h('div', { className: `review-actions${dryRun ? '' : ' is-live'}` }, [buttons, liveNote, reportEl()].filter(Boolean)),
       h('div', { className: 'row' }, [finishNow, ATK.Button({ variant: 'ghost', size: 'sm', children: 'Keyboard shortcuts (?)', onClick: openHelp })]),
       live,
-    );
-    loadConnectionCounts(item);
+    ].filter(Boolean));
   }
 
   /* ── Actions ───────────────────────────────────────────────── */
@@ -3643,6 +3833,11 @@ function pruneIds(ids, channels) {
     pane: document.getElementById('step-pane'),
   };
 
+  async function loadChannels(user = state.user) {
+    state.myChannels = (await client.getUserContents(user.id, { type: 'Channel' })).filter(c => c && c.state !== 'deleted');
+    return state.myChannels;
+  }
+
   /* ── Auth ─────────────────────────────────────────────────── */
   const auth = createAuthStep({
     client,
@@ -3650,7 +3845,7 @@ function pruneIds(ids, channels) {
     panel: true,
     // Loaded at connect time, as arena-merge does, so the Scope step has its list ready.
     loadDetail: async (user) => {
-      state.myChannels = (await client.getUserContents(user.id, { type: 'Channel' })).filter(c => c && c.state !== 'deleted');
+      await loadChannels(user);
       const n = state.myChannels.length;
       return `${n} of your channel${n === 1 ? '' : 's'} loaded`;
     },
@@ -3739,6 +3934,7 @@ function pruneIds(ids, channels) {
           selected: state.channelIds.length ? state.channelIds : offenders,
           title: 'Pick channels to scan',
           confirmLabel: 'Scan',
+          onRefresh: () => loadChannels(),
           onConfirm: (ids) => { state.channelIds = ids; render(); },
         });
       },
@@ -3846,6 +4042,13 @@ function pruneIds(ids, channels) {
           detail: `${p.blocksFetched} blocks fetched · ${p.clusterCount} group${p.clusterCount === 1 ? '' : 's'} so far`,
         }),
       });
+      progress.update({ value: 0, max: 1, label: 'Checking where each block is connected', detail: '' });
+      const inGroups = scan.result.clusters.flatMap(c => c.blocks);
+      scan.connections = await lookupAll(client, inGroups, {
+        control,
+        onProgress: ({ done, count }) => progress.update({ value: done, max: count, label: 'Checking where each block is connected', detail: `${done} of ${count} blocks` }),
+      });
+      scan.result.clusters = addUnscannedPlaces(scan.result.clusters, scan.connections);
       scan.status = 'done';
       for (const sk of scan.result.skipped) {
         ATK.Notice.show({ message: `Couldn't read ${sk.channel.title || sk.channel.slug}, so it was skipped.`, variant: 'alert', duration: 8000 });
@@ -3902,7 +4105,7 @@ function pruneIds(ids, channels) {
 
   /* Resolve one group: a dry run only describes it; live runs write to are.na, then keep the record for Done and Undo. */
   async function resolveCluster({ item, decision, dryRun }) {
-    const plan = planResolution(item.cluster, decision, new Date(), state.user?.id ?? null);
+    const plan = planResolution(item.cluster, decision, new Date(), state.user?.id ?? null, state.scan?.connections);
     if (dryRun) return { ...describePlan(plan, { dryRun: true }), done: [], failed: [], undo: null };
     const out = await executeResolution(client, plan);
     const { notes } = describePlan(plan, { dryRun: false });
@@ -3929,10 +4132,11 @@ function pruneIds(ids, channels) {
     if (!scan || scan.status !== 'done') return [h('p', { className: 'muted' }, 'Run a scan first.'), nav({})];
     if (!scan.review) {
       scan.decisions = {};
+      scan.items = orderClusters(scan.result.clusters);
       scan.review = createReviewView({
-        items: orderClusters(scan.result.clusters), decisions: scan.decisions, onFinish: advance,
+        items: scan.items, decisions: scan.decisions, onFinish: advance,
         onResolve: resolveCluster, onUndo: undoCluster,
-        getConnectionCount: async (id) => (await client.request(`/blocks/${id}/connections`, { per: 1 }))?.meta?.total_count ?? 0,
+        connectionInfo: (id) => scan.connections?.get(id),
         myUserId: state.user?.id ?? null,
       });
     }
@@ -3943,17 +4147,68 @@ function pruneIds(ids, channels) {
     if (state.step === 4 && state.scan?.review) state.scan.review.handleKey(e);
   });
 
-  function stepPlaceholder(i) {
+  /* Done: totals, the orphans to tidy by hand, and the report. */
+  function downloadJson(name, data) {
+    const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+    const a = h('a', { href: url, download: name });
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function stepDone() {
+    const scan = state.scan;
+    if (!scan?.items) return [h('h2', null, '6. Done'), h('p', { className: 'muted' }, 'Nothing has been reviewed yet.'), nav({})];
+    const summary = summarise(scan.items, scan.decisions, loadUndo(localStorage));
+    const orphans = loadOrphans(localStorage);
+    const { groups: g } = summary;
+    const plural = (n, one, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+
+    const totals = h('ul', { className: 'done-totals' }, [
+      h('li', null, `${plural(g.resolved, 'group')} resolved, ${g.skipped} skipped, ${g.pending} not reviewed`),
+      h('li', null, `${plural(summary.blocksMarked, 'duplicate')} marked in their description`),
+      h('li', null, `${plural(summary.connectionsRemoved, 'connection')} removed from your channels`),
+      summary.notYours ? h('li', null, `${plural(summary.notYours, 'block')} owned by other people, unlinked from your channels but not edited`) : null,
+    ].filter(Boolean));
+    const problems = summary.withProblems
+      ? h('p', { className: 'atk-note', role: 'alert' }, `${plural(summary.withProblems, 'group')} resolved with problems. Go back to Review to see which, or check the report.`)
+      : null;
+
+    const orphanBlock = h('section', { className: 'done-section' }, [
+      h('h3', { className: 'review-subhead' }, `Orphans (${orphans.length})`),
+      h('p', { className: 'muted' }, 'Duplicates that no longer sit in any channel you scanned. They still exist on are.na, so delete them there if you want them gone. This list is kept in this browser across sessions.'),
+      orphans.length
+        ? h('div', { className: 'row' }, ATK.Button({
+            variant: 'secondary', children: 'Copy all URLs',
+            onClick: async () => {
+              try { await navigator.clipboard.writeText(orphanUrls(orphans).join('\n')); ATK.Notice.show({ message: `Copied ${plural(orphans.length, 'URL')}.`, variant: 'success' }); }
+              catch { ATK.Notice.show({ message: "Couldn't copy to the clipboard. Select the links below instead.", variant: 'alert', duration: 8000 }); }
+            },
+          }))
+        : null,
+      orphans.length ? h('ul', { className: 'done-orphans' }, orphans.map(o => h('li', null, h('a', { href: `https://www.are.na/block/${o.id}`, target: '_blank', rel: 'noopener' }, `Block ${o.id}`)))) : null,
+    ].filter(Boolean));
+
+    const exportReport = () => downloadJson(`arena-duplicate-report-${new Date().toISOString().slice(0, 10)}.json`, buildReport({
+      user: state.user, channels: state.myChannels.filter(c => state.channelIds.includes(c.id)), detectors: state.detectors,
+      items: scan.items, decisions: scan.decisions, summary, orphans,
+    }));
+
     return [
-      h('h2', null, `${i + 1}. ${STEPS[i].label}`),
-      h('p', { className: 'muted' }, 'Not built yet.'),
-      nav({ next: i < STEPS.length - 1 ? { label: 'Continue →', onClick: advance } : null }),
-    ];
+      h('h2', null, '6. Done'),
+      totals, problems, orphanBlock,
+      h('div', { className: 'row' }, [
+        ATK.Button({ variant: 'secondary', children: 'Export scan report', onClick: exportReport }),
+        ATK.Button({ variant: 'primary', children: 'Scan another set', onClick: () => { state.scan = null; state.furthest = Math.min(state.furthest, 1); go(1); } }),
+      ]),
+      nav({}),
+    ].filter(Boolean);
   }
 
   function render() {
     renderRail();
-    const kids = state.step === 0 ? stepConnect() : state.step === 1 ? stepScope() : state.step === 2 ? stepDetect() : state.step === 3 ? stepScan() : state.step === 4 ? stepReview() : stepPlaceholder(state.step);
+    const kids = state.step === 0 ? stepConnect() : state.step === 1 ? stepScope() : state.step === 2 ? stepDetect() : state.step === 3 ? stepScan() : state.step === 4 ? stepReview() : stepDone();
     els.pane.replaceChildren(...kids);
   }
 

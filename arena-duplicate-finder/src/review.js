@@ -7,6 +7,29 @@ export const blockDescription = b => b.description?.markdown ?? b.description?.p
 export const blockAlt = b => b.image?.alt_text ?? '';
 export const hasAlt = b => b.type === 'Image';
 
+// What the API says about an image file. Note image.src is are.na's own copy (it contains the block id), so it
+// can never match another block; the original web address is only ever source.url.
+export function imageFacts(b) {
+  const im = b.image;
+  if (!im) return null;
+  const kb = im.file_size ? (im.file_size >= 1048576 ? `${(im.file_size / 1048576).toFixed(1)} MB` : `${Math.round(im.file_size / 1024)} KB`) : null;
+  return {
+    dimensions: im.width && im.height ? `${im.width} × ${im.height}` : null,
+    size: kb,
+    filename: im.filename || null,
+  };
+}
+
+// Reasons a group may be different pictures from the same page. Advice only: nothing is split or hidden.
+export function looksDifferent(blocks) {
+  const reasons = [];
+  const titles = blocks.map(b => (b.title || '').trim().toLowerCase()).filter(Boolean);
+  if (titles.length > 1 && new Set(titles).size > 1) reasons.push('the titles differ');
+  const ratios = blocks.map(b => b.image?.aspect_ratio).filter(Boolean);
+  if (ratios.length > 1 && Math.max(...ratios) / Math.min(...ratios) > 1.02) reasons.push('the pictures have different proportions');
+  return reasons;
+}
+
 const FIELD_READERS = { title: b => b.title || '', description: blockDescription, alt_text: blockAlt };
 
 function editsFor(block) {

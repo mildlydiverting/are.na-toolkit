@@ -6,7 +6,7 @@
 
 ## 1. State of play
 
-Five browser tools shipped and live on GitHub Pages (four standalone, one — palimpsest — on the new build pipeline). A sixth, arena-duplicate-finder, is in progress on the same pipeline. One Python migration tool half-built. Repo on `main`.
+Five browser tools shipped and live on GitHub Pages (four standalone, one — palimpsest — on the new build pipeline). A sixth, arena-duplicate-finder, is fully built on the same pipeline but not yet shipped. One Python migration tool half-built. Repo on `main`.
 
 | Tool | Path | Status |
 |---|---|---|
@@ -15,7 +15,7 @@ Five browser tools shipped and live on GitHub Pages (four standalone, one — pa
 | **Picks** random browser | synced from sibling repo | Shipped. Source at github.com/mildlydiverting/are.na-picks; copy at `docs/arena-picks.html`. |
 | **Merge** channel copier | `arena-merge/` | Shipped. Single file (`index.html`), still on the old shape; copy at `docs/arena-merge.html`. Writes to are.na, so it needs a write-scope token. |
 | **Palimpsest** block inspector | `arena-palimpsest/` | Shipped (v1.1, read-only). First tool on the shared build pipeline; its look comes from the shared design-system components. See `arena-palimpsest/NOTES.md`. |
-| **Duplicate finder** | `arena-duplicate-finder/` | In progress (not on the live directory yet). Built so far: tool shell, stepper, Connect step with write check, Scope step, channel picker, saved scan sets, clustering logic with tests. Plan: `_claude/arena-duplicate-finder-build-plan.md`. |
+| **Duplicate finder** | `arena-duplicate-finder/` | Built, all six steps, live-tested on test channels; not shipped (no `docs/` copy or index card yet). Scan, connection lookup across all your channels, Review with dry run, Resolve and Undo, Done. See `arena-duplicate-finder/NOTES.md` and `README.md`. Plan: `_claude/arena-duplicate-finder-build-plan.md`. |
 | **Arena Uploader** (Pinterest → are.na) | `arena-uploader/` | Prototype only. Still on v2 API; credentials still inline. Not production-ready. |
 
 Live directory: <https://mildlydiverting.github.io/are.na-toolkit/>
@@ -55,7 +55,7 @@ See `CLAUDE.md`.
 - **arena-hypernormalisation** — small deferred items, see `arena-hypernormalisation/NOTES.md`.
 - **arena-uploader** — needs v2→v3 API migration, credential extraction, dry-run mode before any live run.
 - **Toolkit architecture migration** — started. The shared build pipeline exists (`scripts/include-resolver.js`, `scripts/build-all.js`, Vitest, `shared/`), and palimpsest is the first tool on it. The other tools migrate when next touched. Plan in `_claude/toolkit-architecture-plan.md`; where the build departs from it (ES-module sources, `--watch` instead of dev mode), see `arena-palimpsest/NOTES.md`.
-- **arena-duplicate-finder** — remaining steps and design in `_claude/arena-duplicate-finder-build-plan.md`; check `git log -- arena-duplicate-finder` for how far it has got.
+- **arena-duplicate-finder** — what's left (error paths, ship steps, orphanage-channel idea) is in `arena-duplicate-finder/NOTES.md`; original design in `_claude/arena-duplicate-finder-build-plan.md`.
 - **arena-palimpsest v2: metadata editing, then a tagging tool** — **Phase 1 (block metadata editor) built and live-tested 21 Oct 2026; Phase 2 (design-system pattern), the tagging tool and the optional index not started:** `_claude/arena-palimpsest-v2-editing-and-tagging-plan.md`. Decisions already made: an Edit toggle with a Review step and one Save; tags stored as a JSON array written as text (`["a", "b"]`) in one string value under `tags`; blocks first. Ask Kim before starting each next phase, as always. Also in that plan: a goby.garden comparison (connection-scoped metadata) and an assessment of the official `@aredotna/sdk` (recommendation: keep our own client for Phase 1; run a short spike before the tagging tool).
 - **arena-palimpsest v1.x leftovers** — JSON/Markdown export, channel URLs as input, and a list of manual checks never done (private block or channel, a `dupe_of` block, phone width, every theme across the whole page). See `arena-palimpsest/NOTES.md`.
 - **Design-system snapshot** — the Dropbox copy of the artifact (`…/_references-design-languages/arena-toolkit/`) is behind the live artifact. Re-syncing it is a one-prompt task (see `md-design-system/handoff-themes-and-patterns.md` §4.2).
