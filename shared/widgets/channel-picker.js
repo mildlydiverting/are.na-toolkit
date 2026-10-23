@@ -25,10 +25,12 @@ function blockCount(c) {
 
 // channels: [{ id, slug, title, visibility, counts }]; selected: [id]
 // onRefresh (optional): async () => fresh channels array. Adds a Refresh button that reloads the list and keeps the ticks.
+// disabledIds (optional): ids shown greyed out and unselectable.
 // multiple (default true): false makes it a pick-one list (radio buttons, no Clear); onConfirm still gets an array, of one id.
 // Returns { element, open(), close() }; the element is a Modal you append to document.body.
-export function openChannelPicker({ channels, selected = [], title = 'Pick channels', confirmLabel = 'Use', multiple = true, onConfirm, onCancel = null, onRefresh = null }) {
+export function openChannelPicker({ channels, selected = [], title = 'Pick channels', confirmLabel = 'Use', multiple = true, disabledIds = [], onConfirm, onCancel = null, onRefresh = null }) {
   const ATK = window.ArenaToolkit;
+  const disabledSet = new Set(disabledIds);
   let chosen = multiple ? [...selected] : selected.slice(0, 1);
   let query = '';
 
@@ -59,33 +61,31 @@ export function openChannelPicker({ channels, selected = [], title = 'Pick chann
     updateConfirm();
   }
 
+  // Uses ArenaToolkit.Checkbox / Radio (shared/components), so the ticks match the rest of the toolkit.
   function row(c) {
-    const box = document.createElement('input');
-    box.type = multiple ? 'checkbox' : 'radio';
-    if (!multiple) box.name = 'atk-channel-pick';
-    box.checked = chosen.includes(c.id);
-    box.addEventListener('change', () => { chosen = selectId(chosen, c.id, multiple); updateConfirm(); });
-
     const n = blockCount(c);
-    const text = document.createElement('span');
-    Object.assign(text.style, { flex: '1', minWidth: '0' });
-    const name = document.createElement('span');
-    name.textContent = c.title || c.slug;
-    const meta = document.createElement('span');
-    meta.textContent = `${n ?? '?'} block${n === 1 ? '' : 's'} · ${c.slug}`;
-    Object.assign(meta.style, { display: 'block', color: 'var(--text-muted)', font: 'var(--text-body-sm)' });
-    text.append(name, meta);
+    const common = {
+      label: c.title || c.slug,
+      description: `${n ?? '?'} block${n === 1 ? '' : 's'} · ${c.slug}`,
+      checked: chosen.includes(c.id),
+      disabled: disabledSet.has(c.id),
+    };
+    const control = multiple
+      ? ATK.Checkbox({ ...common, onChange: () => { chosen = selectId(chosen, c.id, multiple); updateConfirm(); } })
+      : ATK.Radio({ ...common, name: 'atk-channel-pick', value: c.id, onChange: () => { chosen = selectId(chosen, c.id, multiple); updateConfirm(); } });
+    control.style.flex = '1';
+    control.style.minWidth = '0';
 
-    const label = document.createElement('label');
-    Object.assign(label.style, {
-      display: 'flex', alignItems: 'center', gap: 'var(--space-2)', cursor: 'pointer',
+    const line = document.createElement('div');
+    Object.assign(line.style, {
+      display: 'flex', alignItems: 'center', gap: 'var(--space-2)',
       padding: 'var(--space-2) var(--space-1)', borderBottom: '1px solid var(--border-card)',
     });
-    label.append(box, text);
+    line.append(control);
     if (c.visibility && c.visibility !== 'public') {
-      label.append(ATK.Badge({ variant: c.visibility === 'private' ? 'private' : 'default', children: c.visibility }));
+      line.append(ATK.Badge({ variant: c.visibility === 'private' ? 'private' : 'default', children: c.visibility }));
     }
-    return label;
+    return line;
   }
 
   const clear = ATK.Button({ variant: 'ghost', children: 'Clear', onClick: () => { chosen = []; renderList(); } });
