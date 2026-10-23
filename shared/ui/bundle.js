@@ -562,7 +562,9 @@
     var root = el('div', { className: 'atk-auth' });
 
     function status(s) {
-      return s ? StatusMessage({ tone: s.tone, label: s.label, children: s.message }) : null;
+      if (!s) return null;
+      if (s.tone === 'error') return Notice({ variant: 'error', title: s.label, children: s.message });
+      return StatusMessage({ tone: s.tone, label: s.label, children: s.message });
     }
 
     function rememberCheck() {
@@ -851,7 +853,7 @@
   }
 
   var toastStack = null;
-  var toastSide = 'left';
+  var toastSide = 'right';
   function toastParent() {
     if (!toastStack || !toastStack.isConnected) {
       toastStack = el('div', { className: 'atk-toast-stack' });

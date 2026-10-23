@@ -43,7 +43,7 @@ All six steps are built and have been tried live by Kim against her test channel
 - **`image.src` is are.na's own copy** (the URL contains the block id), so it can't identify duplicates. The only original address is `source.url`. `image.filename` is a file hash: shown as a hover hint, not used for matching.
 - **Write-scope check** is `DELETE /connections/0` (403 = read-only, 404 = can write), as in arena-merge.
 - **Source `.js` files are ES modules;** the build strips `import`/`export` and inlines everything into one global scope. Avoid top-level name clashes. macOS `sed` has no `\b`: use `perl -pi -e`.
-- **Design:** `shared/ui` is the one design language. Warnings use two patterns taken from are.na: a navy **Toast** at bottom left (dismissable; now in `shared/ui`) and a pale inline `.atk-note` box. Red = private channel only; orange = warning.
+- **Design:** `shared/ui` is the one design language. Warnings use two patterns taken from are.na: a navy **Toast** at bottom right (dismissable; now in `shared/ui`) and a pale inline `.atk-note` box. Red = private channel only; orange = warning.
 - Naming: "connection" means only are.na's connection object. The token step is "Connect to are.na".
 
 ## Next

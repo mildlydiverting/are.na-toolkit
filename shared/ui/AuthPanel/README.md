@@ -14,7 +14,7 @@ Pure presentation. It makes no requests and stores nothing: `shared/widgets/auth
 
 Merges keys into the state and redraws: `user`, `detail` (the chip's second line), `status`, `requireWrite`, `writeMessage`, `remember`.
 
-`status` is `null` or `{ tone: 'error' | 'info', label?, message }` and is drawn with StatusMessage: below the form when signed out, above the chip when signed in (panel).
+`status` is `null` or `{ tone: 'error' | 'info', label?, message }` and is drawn as a Notice when it is an error and as a StatusMessage line otherwise: below the form when signed out, above the chip when signed in (panel).
 
 ## Behaviour
 

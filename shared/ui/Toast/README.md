@@ -6,7 +6,7 @@ Use it for things that happened ("Copied 3 URLs.", "are.na asked us to slow down
 
 - `Toast.show({ message, title?, variant?, duration? })` — returns `{ dismiss }`. `variant` is as for Notice (`info`, `success`, `warning`, `error`; the older `default`, `notification` and `alert` still work). `duration` is in milliseconds, default 4000; `0` keeps it until dismissed.
 - `Toast.dismissAll()`
-- `Toast.setPosition('left' | 'right')` — default `'left'`. are.na itself uses the bottom right.
+- `Toast.setPosition('left' | 'right')` — default `'right'`, as on are.na.
 
 ## Behaviour
 

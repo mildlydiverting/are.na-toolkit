@@ -329,7 +329,7 @@
   transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 .atk-input:hover { border-color: var(--border-strong); }
-.atk-input:focus { border-color: var(--border-focus); }
+.atk-input:focus { border-color: var(--accent-focus); }
 .atk-input::placeholder { color: var(--text-faint); }
 .atk-input:disabled {
   color: var(--text-faint);
@@ -935,7 +935,7 @@
   transition: border-color 120ms ease;
 }
 .atk-select:hover { border-color: var(--border-strong); }
-.atk-select:focus { border-color: var(--border-focus); }
+.atk-select:focus { border-color: var(--accent-focus); }
 .atk-select:disabled {
   color: var(--text-faint);
   background-color: var(--surface-sunken);
@@ -963,7 +963,7 @@
   transition: border-color 120ms ease;
 }
 .atk-textarea:hover { border-color: var(--border-strong); }
-.atk-textarea:focus { border-color: var(--border-focus); }
+.atk-textarea:focus { border-color: var(--accent-focus); }
 .atk-textarea::placeholder { color: var(--text-faint); }
 .atk-textarea:disabled {
   color: var(--text-faint);
@@ -1597,7 +1597,6 @@ body {
   gap: var(--space-2);
 }
 
-#notice { max-width: 1100px; margin: 0 auto; padding: 0 var(--space-3); }
 
 .header-tools { display: flex; align-items: center; gap: var(--space-3); }
 .account-slot[hidden] { display: none; }
@@ -1616,7 +1615,6 @@ body {
       <p class="lede" id="lede">Add every block from one <a href="https://www.are.na" target="_blank" rel="noopener">Are.na</a> channel into another, in one go.</p>
     </div>
 
-    <p class="atk-status atk-status--info" id="notice" role="status" hidden></p>
 
     <div class="merge-layout">
       <aside class="step-rail" id="step-rail" aria-label="Steps"></aside>
@@ -2191,7 +2189,9 @@ body {
     var root = el('div', { className: 'atk-auth' });
 
     function status(s) {
-      return s ? StatusMessage({ tone: s.tone, label: s.label, children: s.message }) : null;
+      if (!s) return null;
+      if (s.tone === 'error') return Notice({ variant: 'error', title: s.label, children: s.message });
+      return StatusMessage({ tone: s.tone, label: s.label, children: s.message });
     }
 
     function rememberCheck() {
@@ -2480,7 +2480,7 @@ body {
   }
 
   var toastStack = null;
-  var toastSide = 'left';
+  var toastSide = 'right';
   function toastParent() {
     if (!toastStack || !toastStack.isConnected) {
       toastStack = el('div', { className: 'atk-toast-stack' });
@@ -3363,7 +3363,7 @@ async function runMerge({ client, source, dest, contents, destIds, opts = {}, dr
 
   const throttle = createThrottle({
     writeGap: 600,
-    onWait: (seconds) => notify(`are.na asked us to slow down. Waiting ${seconds}s, then carrying on.`),
+    onWait: (seconds) => ATK.Toast.show({ variant: 'warning', message: `are.na asked us to slow down. Waiting ${seconds}s, then carrying on.`, duration: Math.max(4000, seconds * 1000) }),
   });
   const client = createArenaClient({ throttle });
 
@@ -3389,16 +3389,6 @@ async function runMerge({ client, source, dest, contents, destIds, opts = {}, dr
     rail: document.getElementById('step-rail'),
     pane: document.getElementById('step-pane'),
   };
-
-  // A short, polite notice in the live region at the top of the pane (rate limit waits).
-  let noticeTimer = null;
-  function notify(text) {
-    const live = document.getElementById('notice');
-    live.textContent = text;
-    live.hidden = false;
-    clearTimeout(noticeTimer);
-    noticeTimer = setTimeout(() => { live.hidden = true; }, 6000);
-  }
 
   async function loadChannels(user = state.user) {
     state.myChannels = (await client.getUserContents(user.id, { type: 'Channel' })).filter(c => c && c.state !== 'deleted');

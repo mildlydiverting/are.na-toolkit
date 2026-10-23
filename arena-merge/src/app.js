@@ -5,7 +5,7 @@
 
   const throttle = createThrottle({
     writeGap: 600,
-    onWait: (seconds) => notify(`are.na asked us to slow down. Waiting ${seconds}s, then carrying on.`),
+    onWait: (seconds) => ATK.Toast.show({ variant: 'warning', message: `are.na asked us to slow down. Waiting ${seconds}s, then carrying on.`, duration: Math.max(4000, seconds * 1000) }),
   });
   const client = createArenaClient({ throttle });
 
@@ -31,16 +31,6 @@
     rail: document.getElementById('step-rail'),
     pane: document.getElementById('step-pane'),
   };
-
-  // A short, polite notice in the live region at the top of the pane (rate limit waits).
-  let noticeTimer = null;
-  function notify(text) {
-    const live = document.getElementById('notice');
-    live.textContent = text;
-    live.hidden = false;
-    clearTimeout(noticeTimer);
-    noticeTimer = setTimeout(() => { live.hidden = true; }, 6000);
-  }
 
   async function loadChannels(user = state.user) {
     state.myChannels = (await client.getUserContents(user.id, { type: 'Channel' })).filter(c => c && c.state !== 'deleted');

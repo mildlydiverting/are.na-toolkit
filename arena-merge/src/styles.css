@@ -159,7 +159,6 @@ body {
   gap: var(--space-2);
 }
 
-#notice { max-width: 1100px; margin: 0 auto; padding: 0 var(--space-3); }
 
 .header-tools { display: flex; align-items: center; gap: var(--space-3); }
 .account-slot[hidden] { display: none; }

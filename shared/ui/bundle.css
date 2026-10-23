@@ -72,7 +72,7 @@
   transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 .atk-input:hover { border-color: var(--border-strong); }
-.atk-input:focus { border-color: var(--border-focus); }
+.atk-input:focus { border-color: var(--accent-focus); }
 .atk-input::placeholder { color: var(--text-faint); }
 .atk-input:disabled {
   color: var(--text-faint);
@@ -678,7 +678,7 @@
   transition: border-color 120ms ease;
 }
 .atk-select:hover { border-color: var(--border-strong); }
-.atk-select:focus { border-color: var(--border-focus); }
+.atk-select:focus { border-color: var(--accent-focus); }
 .atk-select:disabled {
   color: var(--text-faint);
   background-color: var(--surface-sunken);
@@ -706,7 +706,7 @@
   transition: border-color 120ms ease;
 }
 .atk-textarea:hover { border-color: var(--border-strong); }
-.atk-textarea:focus { border-color: var(--border-focus); }
+.atk-textarea:focus { border-color: var(--accent-focus); }
 .atk-textarea::placeholder { color: var(--text-faint); }
 .atk-textarea:disabled {
   color: var(--text-faint);
