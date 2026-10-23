@@ -555,7 +555,9 @@
   pointer-events: none;
 }
 
-/* Actions row — hover-revealed. Mirrors are.na's .c-hRIxJA pattern. */
+/* Actions row — hover-revealed. Mirrors are.na's .c-hRIxJA pattern.
+   Two buttons split the row 50/50; one button fills it. Gap is the margin
+   between them, and the row's padding is the margin to the block edge. */
 .atk-block__actions {
   position: absolute;
   left: 0;
@@ -579,10 +581,13 @@
   pointer-events: auto;
 }
 
-/* Individual action button — same size as a toolkit Button (md), but bare until hovered */
+/* Individual action button — equal-width (flex: 1 1 0), translucent-card base.
+   Hover thickens the border and makes the fill fully opaque. */
 .atk-block__action {
   all: unset;
   box-sizing: border-box;
+  flex: 1 1 0;                 /* equal split with siblings; a lone child fills */
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -594,7 +599,7 @@
   font-weight: 700;            /* matches .atk-btn */
   line-height: 1;              /* matches .atk-btn */
   color: var(--text-primary);
-  background: transparent;
+  background: color-mix(in oklab, var(--surface-card) 70%, transparent);
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -603,15 +608,20 @@
 }
 .atk-block__action:hover {
   border-color: var(--border-strong);
-  background: var(--surface-card);
+  background: var(--surface-card);      /* opaque, stronger */
 }
 .atk-block__action:focus-visible {
   border-color: var(--border-focus);
   outline: none;
 }
-/* A lone action fills the row — e.g. a block that only offers "Connect →" */
-.atk-block__actions .atk-block__action:only-child {
-  flex: 1;
+/* Greyed-out state — e.g. "Following" on a channel you already follow. */
+.atk-block__action[aria-disabled="true"],
+.atk-block__action:disabled {
+  color: var(--text-faint);
+  background: color-mix(in oklab, var(--surface-sunken) 70%, transparent);
+  border-color: transparent;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 /* Badge — filled brand & nsfw variants (NEW / BETA / API / NSFW chips) */
@@ -1138,8 +1148,7 @@
 }
 .atk-auth__who strong { color: var(--text-primary); }
 
-</style>
-<style>
+/* ── checkbox ── */
 /* Checkbox. The resting border is --text-muted, not --border-input: the latter is 1.35:1 on the page in Light,
    and a control's edge needs 3:1 (WCAG 1.4.11). --text-muted clears 3:1 in all four themes (3.82 in Dawn, 4.69+ elsewhere). */
 .atk-checkbox {
@@ -1188,8 +1197,7 @@
 .atk-checkbox-label { color: var(--text-primary); font: var(--text-ui); }
 .atk-checkbox-desc { color: var(--text-muted); font: var(--text-body-sm); }
 
-</style>
-<style>
+/* ── radio ── */
 /* Radio. Resting border is --text-muted for 3:1 contrast, as in Checkbox. */
 .atk-radio { display: inline-flex; align-items: flex-start; gap: var(--space-2); cursor: pointer; }
 .atk-radio-input { position: absolute; opacity: 0; width: 16px; height: 16px; margin: 0; cursor: inherit; }
@@ -1217,8 +1225,7 @@
 .atk-radio-label { color: var(--text-primary); font: var(--text-ui); }
 .atk-radio-desc { color: var(--text-muted); font: var(--text-body-sm); }
 
-</style>
-<style>
+/* ── progress ── */
 /* Progress */
 .atk-progress { display: flex; flex-direction: column; gap: var(--space-nudge); }
 .atk-progress-row { display: flex; justify-content: space-between; gap: var(--space-3); }
@@ -1244,6 +1251,88 @@
 @keyframes atk-progress-slide { from { margin-left: -30%; } to { margin-left: 100%; } }
 @media (prefers-reduced-motion: reduce) {
   .atk-progress.is-indeterminate .atk-progress-fill { animation: none; margin-left: 0; width: 100%; opacity: 0.4; }
+}
+
+/* ── stat-grid ── */
+/* StatGrid */
+.atk-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--space-3);
+}
+.atk-stat {
+  padding: var(--space-3);
+  background: var(--surface-sunken);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+.atk-stat__value {
+  display: block;
+  font: var(--text-h3);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.atk-stat__label {
+  display: block;
+  margin-top: var(--space-1);
+  font: var(--text-caption);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ── status-log ── */
+/* StatusLog. Green = success, grey = message, orange = warning, red = error.
+   Contrast on --surface-sunken (Light / Dark / Dawn / Dusk): success 4.29 / 7.78 / 3.66 / 8.11,
+   message 10.79 / 10.03 / 7.14 / 8.36, error 4.72 / 4.03 / 2.76 / 4.21, warning 3.34 / 4.86 / 2.98 / 5.07.
+   Dawn's error and warning fall short of 4.5:1; they are the system's own colours, recorded not changed. */
+.atk-log { margin-top: var(--space-3); }
+.atk-log__summary {
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: var(--space-2) 0;
+}
+.atk-log__body {
+  margin-top: var(--space-2);
+  font: var(--text-body-sm);
+  font-family: var(--font-mono);
+  background: var(--surface-sunken);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  max-height: 240px;
+  overflow-y: auto;
+}
+.atk-log__line { padding: 2px 0; color: var(--text-secondary); line-height: 1.3; }
+.atk-log__line.is-success { color: var(--accent-success); }
+.atk-log__line.is-warning { color: var(--accent-alert); }
+.atk-log__line.is-error   { color: var(--accent-private); }
+.atk-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ── footer ── */
+.atk-footer {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-3) var(--space-8);
+  border-top: 1px solid var(--border-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+}
+.atk-footer__title { margin: 0; font: var(--text-ui-strong); color: var(--text-heading); }
+.atk-footer p { margin: 0; max-width: 60em; }
+.atk-footer a { color: inherit; }
+.atk-footer a:hover { color: var(--text-primary); }
+
+/* ── busy ── */
+/* A gentle pulse for "working on it" text: 1 -> 0.5 -> 1 over six seconds. Add class atk-busy to any element.
+   The auth panel's info line is always a progress message ("Checking token…", "Loading your channels…"), so it pulses too. */
+@keyframes atk-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+.atk-busy, .atk-auth .atk-status--info { animation: atk-pulse 6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .atk-busy, .atk-auth .atk-status--info { animation: none; }
 }
 
 </style>
@@ -1502,6 +1591,8 @@ body {
     </div>
   </main>
 
+  <footer id="footer"></footer>
+
 <script>
 /* ArenaToolkit — component bundle. Classic script, assigns window.ArenaToolkit. */
 (function () {
@@ -1631,9 +1722,11 @@ body {
         var tag = a.href ? 'a' : 'button';
         var attrs = {
           className: 'atk-block__action',
-          href: a.href || null,
+          href: a.disabled ? null : (a.href || null),
           type: a.href ? null : 'button',
-          onclick: a.onClick
+          disabled: (!a.href && a.disabled) ? '' : null,
+          'aria-disabled': a.disabled ? 'true' : null,
+          onclick: a.disabled ? null : a.onClick
         };
         return el(tag, attrs, a.label);
       });
@@ -2159,7 +2252,184 @@ body {
     return root;
   }
 
+  /* ── Checkbox, Radio, Progress, StatGrid, StatusLog, Footer ── */
+
+  // (which means publishing it to the design-system artifact, so it needs Kim's go-ahead).
+  // A native input sits inside the label, so keyboard, focus and screen readers behave as usual.
+  function Checkbox({ label, description, checked = false, disabled = false, indeterminate = false, name, id, onChange } = {}) {
+    const h = el;
+    const input = h('input', { type: 'checkbox', className: 'atk-checkbox-input', checked, disabled });
+    if (name) input.name = name;
+    if (id) input.id = id;
+    input.indeterminate = indeterminate;
+    if (onChange) input.addEventListener('change', () => onChange(input.checked));
+
+    const box = h('span', { className: 'atk-checkbox-box', 'aria-hidden': 'true' });
+    box.innerHTML = '<svg class="atk-checkbox-tick" viewBox="0 0 12 12" width="12" height="12"><path d="M2.5 6.5l2.5 2.5 4.5-5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="atk-checkbox-bar"></span>';
+
+    const text = h('span', { className: 'atk-checkbox-text' }, [
+      h('span', { className: 'atk-checkbox-label' }, label),
+      description ? h('span', { className: 'atk-checkbox-desc' }, description) : null,
+    ].filter(Boolean));
+
+    return h('label', { className: 'atk-checkbox' }, [input, box, text]);
+  }
+
+  // A native radio input sits inside the label, so arrow keys, focus and screen readers behave as usual.
+  function Radio({ label, description, value, name, checked = false, disabled = false, onChange } = {}) {
+    const h = el;
+    const input = h('input', { type: 'radio', className: 'atk-radio-input', checked, disabled, name, value });
+    if (onChange) input.addEventListener('change', () => { if (input.checked) onChange(value); });
+
+    const ring = h('span', { className: 'atk-radio-ring', 'aria-hidden': 'true' }, h('span', { className: 'atk-radio-dot' }));
+    const text = h('span', { className: 'atk-radio-text' }, [
+      h('span', { className: 'atk-radio-label' }, label),
+      description ? h('span', { className: 'atk-radio-desc' }, description) : null,
+    ].filter(Boolean));
+    return h('label', { className: 'atk-radio' }, [input, ring, text]);
+  }
+
+  //   StatGrid({ items: [{ key, label, value = 0 }] })
+  //   grid.update({ added: 3, failed: 0 })   changes the named counts in place
+  function StatGrid({ items = [] } = {}) {
+    const h = el;
+    const values = {};
+    const root = h('div', { className: 'atk-stats' });
+    items.forEach(({ key, label, value = 0 }) => {
+      values[key] = h('span', { className: 'atk-stat__value' }, String(value));
+      root.appendChild(h('div', { className: 'atk-stat' }, [values[key], h('span', { className: 'atk-stat__label' }, label)]));
+    });
+    root.update = (next = {}) => {
+      Object.keys(next).forEach(k => { if (values[k]) values[k].textContent = String(next[k]); });
+    };
+    return root;
+  }
+
+  //   StatusLog({ label = 'Details', open = false })
+  //   log.add('success' | 'message' | 'warning' | 'error', text)     log.clear()
+  // Colour is never the only signal: success, warning and error lines carry a spoken prefix for screen readers.
+  function StatusLog({ label = 'Details', open = false } = {}) {
+    const h = el;
+    const SPOKEN = { success: 'Success: ', warning: 'Warning: ', error: 'Error: ' };   // 'message' has none
+    const body = h('div', { className: 'atk-log__body', role: 'log' });
+    const root = h('details', { className: 'atk-log', open }, [h('summary', { className: 'atk-log__summary' }, label), body]);
+    root.add = (tone, text) => {
+      const line = h('div', { className: 'atk-log__line is-' + tone });
+      if (SPOKEN[tone]) line.appendChild(h('span', { className: 'atk-sr' }, SPOKEN[tone]));
+      line.appendChild(document.createTextNode(text));
+      body.appendChild(line);
+      body.scrollTop = body.scrollHeight;
+    };
+    root.clear = () => body.replaceChildren();
+    return root;
+  }
+
+  //   Footer({ toolNote, homeHref })   toolNote: optional string or node, shown first under the heading. homeHref: the collection's index page.
+  // Put <footer id="footer"></footer> in the page and call document.getElementById('footer').replaceWith(ArenaToolkit.Footer({...})).
+  function Footer({ toolNote = null, homeHref = '../index.html' } = {}) {
+    const h = el;
+    const a = (href, text) => h('a', { href, target: '_blank', rel: 'noopener' }, text);
+    const REPO = 'https://github.com/mildlydiverting/are.na-toolkit';
+    return h('footer', { className: 'atk-footer' }, [
+      h('h2', { className: 'atk-footer__title' }, 'About'),
+      toolNote ? h('p', null, toolNote) : null,
+      h('p', null, ['Runs locally in your browser. Your data is only sent to ', a('https://www.are.na/developers', h('code', null, 'api.are.na')), '.']),
+      h('p', null, [
+        'Part of a collection of ', h('a', { href: homeHref }, 'Are.na Tools and Toys'),
+        ' built on the ', a('https://www.are.na/developers', 'are.na API'), ' by ', a('https://www.mildlydiverting.com', 'Kim Plowright'),
+        '. Not affiliated with or endorsed by ', a('https://www.are.na', 'are.na'), '.',
+      ]),
+      h('p', null, [
+        h('em', null, 'Vibe-coded.'),
+        " This tool was built with an AI assistant (and a slight sheepish sense of guilt). It works for me and is tested, but no guarantees the robot and I haven't fucked it up somehow: try it on something unimportant first, and use the dry run options to check it does what you expect. Source on ",
+        a(REPO, 'GitHub'), ' under the ', a(`${REPO}/blob/main/LICENSE`, 'MIT license'), '. Found a bug? Let me know in ',
+        a(`${REPO}/issues`, 'GitHub issues'), '. Be kind, I am a gentle soul.',
+      ]),
+      h('p', null, [
+        'Want to know more? Find me on ', a('https://www.are.na/kim-plowright', 'Are.na'), ', ',
+        a('https://www.instagram.com/mildlydiverting/', 'Instagram'), ', ',
+        a('https://bsky.app/profile/mildlydiverting.bsky.social', 'Bluesky'), ', get my ',
+        a('https://www.mildlydiverting.com/newsletter', 'newsletter'), ' or ',
+        a('https://www.mildlydiverting.com/classes-workshops-teaching', 'come to my drawing classes in Canterbury or Ramsgate, UK'), '.',
+      ]),
+    ].filter(Boolean));
+  }
+
+  // Progress: a thin bar with a label row.
+  // Finite (value and max > 0) or indeterminate (no value, or no usable max): update() can switch between them at any time.
+  //   Progress({ value, max, label, detail, variant })   variant: 'default' | 'success' | 'alert'
+  //   bar.update({ value, max, label, detail, variant })  changes only the keys you pass
+  // detail is text or a node. aria-valuetext is built from label + detail, so a screen reader says
+  // "Dry run: merging, 16 of 20" rather than just "80%".
+
+  // Pure: what the bar should show for a value and a max.
+  function progressModel({ value = null, max = 100 } = {}) {
+    const finite = value != null && Number.isFinite(value) && Number.isFinite(max) && max > 0;
+    if (!finite) return { indeterminate: true, pct: null, now: null, max: null };
+    const now = Math.min(max, Math.max(0, value));
+    return { indeterminate: false, pct: (now / max) * 100, now, max };
+  }
+
+  // Pure: the text a node or string contributes to a spoken description.
+  function plainText(x) {
+    if (x == null) return '';
+    return typeof x === 'string' ? x : String(x.textContent ?? '');
+  }
+
+  // Pure: "label, detail" for aria-valuetext.
+  function spokenProgress({ label = '', detail = '' } = {}) {
+    return [plainText(label), plainText(detail)].filter(Boolean).join(', ');
+  }
+
+  function Progress(initial = {}) {
+    const h = el;
+    const state = { value: null, max: 100, label: '', detail: '', variant: 'default', ...initial };
+    const labelEl = h('span', { className: 'atk-progress-label' });
+    const detailEl = h('span', { className: 'atk-progress-detail' });
+    const fill = h('div', { className: 'atk-progress-fill' });
+    const track = h('div', { className: 'atk-progress-track', role: 'progressbar', 'aria-valuemin': '0' }, fill);
+    const root = h('div', { className: 'atk-progress' }, [
+      h('div', { className: 'atk-progress-row' }, [labelEl, detailEl]),
+      track,
+    ]);
+
+    function render() {
+      const m = progressModel(state);
+      root.className = `atk-progress atk-progress--${state.variant}${m.indeterminate ? ' is-indeterminate' : ''}`;
+      labelEl.textContent = state.label;
+      if (typeof state.detail === 'string' || state.detail == null) detailEl.textContent = state.detail ?? '';
+      else detailEl.replaceChildren(state.detail);
+      if (m.indeterminate) {
+        track.removeAttribute('aria-valuenow');
+        track.removeAttribute('aria-valuemax');
+        fill.style.width = '';
+      } else {
+        track.setAttribute('aria-valuemax', String(m.max));
+        track.setAttribute('aria-valuenow', String(m.now));
+        fill.style.width = `${m.pct}%`;
+      }
+      track.setAttribute('aria-label', plainText(state.label) || 'Progress');
+      const spoken = spokenProgress(state);
+      if (spoken) track.setAttribute('aria-valuetext', spoken); else track.removeAttribute('aria-valuetext');
+    }
+
+    root.update = function update(next = {}) {
+      for (const k of ['value', 'max', 'label', 'detail', 'variant']) if (k in next) state[k] = next[k];
+      render();
+    };
+    render();
+    return root;
+  }
+  Progress.model = progressModel;
+  Progress.spoken = spokenProgress;
+
   window.ArenaToolkit = {
+    Checkbox: Checkbox,
+    Radio: Radio,
+    Progress: Progress,
+    StatGrid: StatGrid,
+    StatusLog: StatusLog,
+    Footer: Footer,
     ChannelRow: ChannelRow,
     ChannelList: ChannelList,
     ThemeChooser: ThemeChooser,
@@ -2578,10 +2848,12 @@ function blockCount(c) {
 
 // channels: [{ id, slug, title, visibility, counts }]; selected: [id]
 // onRefresh (optional): async () => fresh channels array. Adds a Refresh button that reloads the list and keeps the ticks.
+// disabledIds (optional): ids shown greyed out and unselectable.
 // multiple (default true): false makes it a pick-one list (radio buttons, no Clear); onConfirm still gets an array, of one id.
 // Returns { element, open(), close() }; the element is a Modal you append to document.body.
-function openChannelPicker({ channels, selected = [], title = 'Pick channels', confirmLabel = 'Use', multiple = true, onConfirm, onCancel = null, onRefresh = null }) {
+function openChannelPicker({ channels, selected = [], title = 'Pick channels', confirmLabel = 'Use', multiple = true, disabledIds = [], onConfirm, onCancel = null, onRefresh = null }) {
   const ATK = window.ArenaToolkit;
+  const disabledSet = new Set(disabledIds);
   let chosen = multiple ? [...selected] : selected.slice(0, 1);
   let query = '';
 
@@ -2612,33 +2884,31 @@ function openChannelPicker({ channels, selected = [], title = 'Pick channels', c
     updateConfirm();
   }
 
+  // Uses ArenaToolkit.Checkbox / Radio (shared/ui bundle), so the ticks match the rest of the toolkit.
   function row(c) {
-    const box = document.createElement('input');
-    box.type = multiple ? 'checkbox' : 'radio';
-    if (!multiple) box.name = 'atk-channel-pick';
-    box.checked = chosen.includes(c.id);
-    box.addEventListener('change', () => { chosen = selectId(chosen, c.id, multiple); updateConfirm(); });
-
     const n = blockCount(c);
-    const text = document.createElement('span');
-    Object.assign(text.style, { flex: '1', minWidth: '0' });
-    const name = document.createElement('span');
-    name.textContent = c.title || c.slug;
-    const meta = document.createElement('span');
-    meta.textContent = `${n ?? '?'} block${n === 1 ? '' : 's'} · ${c.slug}`;
-    Object.assign(meta.style, { display: 'block', color: 'var(--text-muted)', font: 'var(--text-body-sm)' });
-    text.append(name, meta);
+    const common = {
+      label: c.title || c.slug,
+      description: `${n ?? '?'} block${n === 1 ? '' : 's'} · ${c.slug}`,
+      checked: chosen.includes(c.id),
+      disabled: disabledSet.has(c.id),
+    };
+    const control = multiple
+      ? ATK.Checkbox({ ...common, onChange: () => { chosen = selectId(chosen, c.id, multiple); updateConfirm(); } })
+      : ATK.Radio({ ...common, name: 'atk-channel-pick', value: c.id, onChange: () => { chosen = selectId(chosen, c.id, multiple); updateConfirm(); } });
+    control.style.flex = '1';
+    control.style.minWidth = '0';
 
-    const label = document.createElement('label');
-    Object.assign(label.style, {
-      display: 'flex', alignItems: 'center', gap: 'var(--space-2)', cursor: 'pointer',
+    const line = document.createElement('div');
+    Object.assign(line.style, {
+      display: 'flex', alignItems: 'center', gap: 'var(--space-2)',
       padding: 'var(--space-2) var(--space-1)', borderBottom: '1px solid var(--border-card)',
     });
-    label.append(box, text);
+    line.append(control);
     if (c.visibility && c.visibility !== 'public') {
-      label.append(ATK.Badge({ variant: c.visibility === 'private' ? 'private' : 'default', children: c.visibility }));
+      line.append(ATK.Badge({ variant: c.visibility === 'private' ? 'private' : 'default', children: c.visibility }));
     }
-    return label;
+    return line;
   }
 
   const clear = ATK.Button({ variant: 'ghost', children: 'Clear', onClick: () => { chosen = []; renderList(); } });
@@ -2691,117 +2961,6 @@ function openChannelPicker({ channels, selected = [], title = 'Pick channels', c
   document.body.append(modal);
   setTimeout(() => filter.focus(), 50);
   return { element: modal, close: done };
-}
-
-</script>
-<script>
-// Checkbox: a boolean control with an optional description. Lives in shared/components until promoted into shared/ui
-// (which means publishing it to the design-system artifact, so it needs Kim's go-ahead).
-// A native input sits inside the label, so keyboard, focus and screen readers behave as usual.
-window.ArenaToolkit.Checkbox = function Checkbox({ label, description, checked = false, disabled = false, indeterminate = false, name, id, onChange } = {}) {
-  const h = window.ArenaToolkit._el;
-  const input = h('input', { type: 'checkbox', className: 'atk-checkbox-input', checked, disabled });
-  if (name) input.name = name;
-  if (id) input.id = id;
-  input.indeterminate = indeterminate;
-  if (onChange) input.addEventListener('change', () => onChange(input.checked));
-
-  const box = h('span', { className: 'atk-checkbox-box', 'aria-hidden': 'true' });
-  box.innerHTML = '<svg class="atk-checkbox-tick" viewBox="0 0 12 12" width="12" height="12"><path d="M2.5 6.5l2.5 2.5 4.5-5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="atk-checkbox-bar"></span>';
-
-  const text = h('span', { className: 'atk-checkbox-text' }, [
-    h('span', { className: 'atk-checkbox-label' }, label),
-    description ? h('span', { className: 'atk-checkbox-desc' }, description) : null,
-  ].filter(Boolean));
-
-  return h('label', { className: 'atk-checkbox' }, [input, box, text]);
-};
-
-</script>
-<script>
-// Radio: one choice from a group, grouped by `name`. Lives in shared/components until promoted into shared/ui.
-// A native radio input sits inside the label, so arrow keys, focus and screen readers behave as usual.
-window.ArenaToolkit.Radio = function Radio({ label, description, value, name, checked = false, disabled = false, onChange } = {}) {
-  const h = window.ArenaToolkit._el;
-  const input = h('input', { type: 'radio', className: 'atk-radio-input', checked, disabled, name, value });
-  if (onChange) input.addEventListener('change', () => { if (input.checked) onChange(value); });
-
-  const ring = h('span', { className: 'atk-radio-ring', 'aria-hidden': 'true' }, h('span', { className: 'atk-radio-dot' }));
-  const text = h('span', { className: 'atk-radio-text' }, [
-    h('span', { className: 'atk-radio-label' }, label),
-    description ? h('span', { className: 'atk-radio-desc' }, description) : null,
-  ].filter(Boolean));
-  return h('label', { className: 'atk-radio' }, [input, ring, text]);
-};
-
-</script>
-<script>
-// Progress: a thin bar with a label row. Lives in shared/components until promoted into shared/ui.
-// Finite (value and max > 0) or indeterminate (no value, or no usable max): update() can switch between them at any time.
-//   Progress({ value, max, label, detail, variant })   variant: 'default' | 'success' | 'alert'
-//   bar.update({ value, max, label, detail, variant })  changes only the keys you pass
-// detail is text or a node. aria-valuetext is built from label + detail, so a screen reader says
-// "Dry run: merging, 16 of 20" rather than just "80%".
-
-// Pure: what the bar should show for a value and a max.
-function progressModel({ value = null, max = 100 } = {}) {
-  const finite = value != null && Number.isFinite(value) && Number.isFinite(max) && max > 0;
-  if (!finite) return { indeterminate: true, pct: null, now: null, max: null };
-  const now = Math.min(max, Math.max(0, value));
-  return { indeterminate: false, pct: (now / max) * 100, now, max };
-}
-
-// Pure: the text a node or string contributes to a spoken description.
-function plainText(x) {
-  if (x == null) return '';
-  return typeof x === 'string' ? x : String(x.textContent ?? '');
-}
-
-// Pure: "label, detail" for aria-valuetext.
-function spokenProgress({ label = '', detail = '' } = {}) {
-  return [plainText(label), plainText(detail)].filter(Boolean).join(', ');
-}
-
-if (typeof window !== 'undefined' && window.ArenaToolkit) {
-  window.ArenaToolkit.Progress = function Progress(initial = {}) {
-    const h = window.ArenaToolkit._el;
-    const state = { value: null, max: 100, label: '', detail: '', variant: 'default', ...initial };
-    const labelEl = h('span', { className: 'atk-progress-label' });
-    const detailEl = h('span', { className: 'atk-progress-detail' });
-    const fill = h('div', { className: 'atk-progress-fill' });
-    const track = h('div', { className: 'atk-progress-track', role: 'progressbar', 'aria-valuemin': '0' }, fill);
-    const root = h('div', { className: 'atk-progress' }, [
-      h('div', { className: 'atk-progress-row' }, [labelEl, detailEl]),
-      track,
-    ]);
-
-    function render() {
-      const m = progressModel(state);
-      root.className = `atk-progress atk-progress--${state.variant}${m.indeterminate ? ' is-indeterminate' : ''}`;
-      labelEl.textContent = state.label;
-      if (typeof state.detail === 'string' || state.detail == null) detailEl.textContent = state.detail ?? '';
-      else detailEl.replaceChildren(state.detail);
-      if (m.indeterminate) {
-        track.removeAttribute('aria-valuenow');
-        track.removeAttribute('aria-valuemax');
-        fill.style.width = '';
-      } else {
-        track.setAttribute('aria-valuemax', String(m.max));
-        track.setAttribute('aria-valuenow', String(m.now));
-        fill.style.width = `${m.pct}%`;
-      }
-      track.setAttribute('aria-label', plainText(state.label) || 'Progress');
-      const spoken = spokenProgress(state);
-      if (spoken) track.setAttribute('aria-valuetext', spoken); else track.removeAttribute('aria-valuetext');
-    }
-
-    root.update = function update(next = {}) {
-      for (const k of ['value', 'max', 'label', 'detail', 'variant']) if (k in next) state[k] = next[k];
-      render();
-    };
-    render();
-    return root;
-  };
 }
 
 </script>
@@ -4274,5 +4433,6 @@ function pruneIds(ids, channels) {
 })();
 
 </script>
+  <script>document.getElementById('footer').replaceWith(ArenaToolkit.Footer({ toolNote: 'Resolving a group marks the duplicates in their description and unlinks them from your channels. The blocks themselves are never deleted.' }));</script>
 </body>
 </html>

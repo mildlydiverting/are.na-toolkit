@@ -1,0 +1,21 @@
+<!-- @dsCard group="Feedback" height=260 -->
+<!doctype html>
+<html>
+<head><style>
+  body { margin: 0; padding: 20px; background: var(--surface-page); font-family: var(--font-sans); display: flex; flex-direction: column; gap: 15px; }
+  #root { display: flex; flex-direction: column; gap: 16px; align-items: stretch; }
+</style></head>
+<body>
+<div id="root"></div>
+<script>
+  var atk = window.ArenaToolkit;
+  var root = document.getElementById('root');
+  var log = atk.StatusLog({ label: 'Details', open: true });
+  log.add('message', 'Starting merge: 4 blocks.');
+  log.add('success', 'Added Image "sunset"');
+  log.add('warning', 'Stopped before finishing');
+  log.add('error', 'Link "A link": something went wrong');
+  root.appendChild(log);
+</script>
+</body>
+</html>

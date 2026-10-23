@@ -61,7 +61,7 @@ export function openChannelPicker({ channels, selected = [], title = 'Pick chann
     updateConfirm();
   }
 
-  // Uses ArenaToolkit.Checkbox / Radio (shared/components), so the ticks match the rest of the toolkit.
+  // Uses ArenaToolkit.Checkbox / Radio (shared/ui bundle), so the ticks match the rest of the toolkit.
   function row(c) {
     const n = blockCount(c);
     const common = {

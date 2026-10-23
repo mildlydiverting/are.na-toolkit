@@ -1,0 +1,19 @@
+<!-- @dsCard group="Forms" height=230 -->
+<!doctype html>
+<html>
+<head><style>
+  body { margin: 0; padding: 20px; background: var(--surface-page); font-family: var(--font-sans); display: flex; flex-direction: column; gap: 15px; }
+  #root { display: flex; flex-direction: column; gap: 16px; align-items: flex-start; }
+</style></head>
+<body>
+<div id="root"></div>
+<script>
+  var atk = window.ArenaToolkit;
+  var root = document.getElementById('root');
+  root.appendChild(atk.Checkbox({ label: 'Remove blocks from source after merging', description: 'The blocks themselves survive. Only their connection to the source channel goes.' }));
+  root.appendChild(atk.Checkbox({ label: 'Ticked', checked: true }));
+  root.appendChild(atk.Checkbox({ label: 'Mixed', indeterminate: true }));
+  root.appendChild(atk.Checkbox({ label: 'Disabled', disabled: true }));
+</script>
+</body>
+</html>

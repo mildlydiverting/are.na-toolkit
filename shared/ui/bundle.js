@@ -126,9 +126,11 @@
         var tag = a.href ? 'a' : 'button';
         var attrs = {
           className: 'atk-block__action',
-          href: a.href || null,
+          href: a.disabled ? null : (a.href || null),
           type: a.href ? null : 'button',
-          onclick: a.onClick
+          disabled: (!a.href && a.disabled) ? '' : null,
+          'aria-disabled': a.disabled ? 'true' : null,
+          onclick: a.disabled ? null : a.onClick
         };
         return el(tag, attrs, a.label);
       });
@@ -654,7 +656,184 @@
     return root;
   }
 
+  /* ── Checkbox, Radio, Progress, StatGrid, StatusLog, Footer ── */
+
+  // (which means publishing it to the design-system artifact, so it needs Kim's go-ahead).
+  // A native input sits inside the label, so keyboard, focus and screen readers behave as usual.
+  function Checkbox({ label, description, checked = false, disabled = false, indeterminate = false, name, id, onChange } = {}) {
+    const h = el;
+    const input = h('input', { type: 'checkbox', className: 'atk-checkbox-input', checked, disabled });
+    if (name) input.name = name;
+    if (id) input.id = id;
+    input.indeterminate = indeterminate;
+    if (onChange) input.addEventListener('change', () => onChange(input.checked));
+
+    const box = h('span', { className: 'atk-checkbox-box', 'aria-hidden': 'true' });
+    box.innerHTML = '<svg class="atk-checkbox-tick" viewBox="0 0 12 12" width="12" height="12"><path d="M2.5 6.5l2.5 2.5 4.5-5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="atk-checkbox-bar"></span>';
+
+    const text = h('span', { className: 'atk-checkbox-text' }, [
+      h('span', { className: 'atk-checkbox-label' }, label),
+      description ? h('span', { className: 'atk-checkbox-desc' }, description) : null,
+    ].filter(Boolean));
+
+    return h('label', { className: 'atk-checkbox' }, [input, box, text]);
+  }
+
+  // A native radio input sits inside the label, so arrow keys, focus and screen readers behave as usual.
+  function Radio({ label, description, value, name, checked = false, disabled = false, onChange } = {}) {
+    const h = el;
+    const input = h('input', { type: 'radio', className: 'atk-radio-input', checked, disabled, name, value });
+    if (onChange) input.addEventListener('change', () => { if (input.checked) onChange(value); });
+
+    const ring = h('span', { className: 'atk-radio-ring', 'aria-hidden': 'true' }, h('span', { className: 'atk-radio-dot' }));
+    const text = h('span', { className: 'atk-radio-text' }, [
+      h('span', { className: 'atk-radio-label' }, label),
+      description ? h('span', { className: 'atk-radio-desc' }, description) : null,
+    ].filter(Boolean));
+    return h('label', { className: 'atk-radio' }, [input, ring, text]);
+  }
+
+  //   StatGrid({ items: [{ key, label, value = 0 }] })
+  //   grid.update({ added: 3, failed: 0 })   changes the named counts in place
+  function StatGrid({ items = [] } = {}) {
+    const h = el;
+    const values = {};
+    const root = h('div', { className: 'atk-stats' });
+    items.forEach(({ key, label, value = 0 }) => {
+      values[key] = h('span', { className: 'atk-stat__value' }, String(value));
+      root.appendChild(h('div', { className: 'atk-stat' }, [values[key], h('span', { className: 'atk-stat__label' }, label)]));
+    });
+    root.update = (next = {}) => {
+      Object.keys(next).forEach(k => { if (values[k]) values[k].textContent = String(next[k]); });
+    };
+    return root;
+  }
+
+  //   StatusLog({ label = 'Details', open = false })
+  //   log.add('success' | 'message' | 'warning' | 'error', text)     log.clear()
+  // Colour is never the only signal: success, warning and error lines carry a spoken prefix for screen readers.
+  function StatusLog({ label = 'Details', open = false } = {}) {
+    const h = el;
+    const SPOKEN = { success: 'Success: ', warning: 'Warning: ', error: 'Error: ' };   // 'message' has none
+    const body = h('div', { className: 'atk-log__body', role: 'log' });
+    const root = h('details', { className: 'atk-log', open }, [h('summary', { className: 'atk-log__summary' }, label), body]);
+    root.add = (tone, text) => {
+      const line = h('div', { className: 'atk-log__line is-' + tone });
+      if (SPOKEN[tone]) line.appendChild(h('span', { className: 'atk-sr' }, SPOKEN[tone]));
+      line.appendChild(document.createTextNode(text));
+      body.appendChild(line);
+      body.scrollTop = body.scrollHeight;
+    };
+    root.clear = () => body.replaceChildren();
+    return root;
+  }
+
+  //   Footer({ toolNote, homeHref })   toolNote: optional string or node, shown first under the heading. homeHref: the collection's index page.
+  // Put <footer id="footer"></footer> in the page and call document.getElementById('footer').replaceWith(ArenaToolkit.Footer({...})).
+  function Footer({ toolNote = null, homeHref = '../index.html' } = {}) {
+    const h = el;
+    const a = (href, text) => h('a', { href, target: '_blank', rel: 'noopener' }, text);
+    const REPO = 'https://github.com/mildlydiverting/are.na-toolkit';
+    return h('footer', { className: 'atk-footer' }, [
+      h('h2', { className: 'atk-footer__title' }, 'About'),
+      toolNote ? h('p', null, toolNote) : null,
+      h('p', null, ['Runs locally in your browser. Your data is only sent to ', a('https://www.are.na/developers', h('code', null, 'api.are.na')), '.']),
+      h('p', null, [
+        'Part of a collection of ', h('a', { href: homeHref }, 'Are.na Tools and Toys'),
+        ' built on the ', a('https://www.are.na/developers', 'are.na API'), ' by ', a('https://www.mildlydiverting.com', 'Kim Plowright'),
+        '. Not affiliated with or endorsed by ', a('https://www.are.na', 'are.na'), '.',
+      ]),
+      h('p', null, [
+        h('em', null, 'Vibe-coded.'),
+        " This tool was built with an AI assistant (and a slight sheepish sense of guilt). It works for me and is tested, but no guarantees the robot and I haven't fucked it up somehow: try it on something unimportant first, and use the dry run options to check it does what you expect. Source on ",
+        a(REPO, 'GitHub'), ' under the ', a(`${REPO}/blob/main/LICENSE`, 'MIT license'), '. Found a bug? Let me know in ',
+        a(`${REPO}/issues`, 'GitHub issues'), '. Be kind, I am a gentle soul.',
+      ]),
+      h('p', null, [
+        'Want to know more? Find me on ', a('https://www.are.na/kim-plowright', 'Are.na'), ', ',
+        a('https://www.instagram.com/mildlydiverting/', 'Instagram'), ', ',
+        a('https://bsky.app/profile/mildlydiverting.bsky.social', 'Bluesky'), ', get my ',
+        a('https://www.mildlydiverting.com/newsletter', 'newsletter'), ' or ',
+        a('https://www.mildlydiverting.com/classes-workshops-teaching', 'come to my drawing classes in Canterbury or Ramsgate, UK'), '.',
+      ]),
+    ].filter(Boolean));
+  }
+
+  // Progress: a thin bar with a label row.
+  // Finite (value and max > 0) or indeterminate (no value, or no usable max): update() can switch between them at any time.
+  //   Progress({ value, max, label, detail, variant })   variant: 'default' | 'success' | 'alert'
+  //   bar.update({ value, max, label, detail, variant })  changes only the keys you pass
+  // detail is text or a node. aria-valuetext is built from label + detail, so a screen reader says
+  // "Dry run: merging, 16 of 20" rather than just "80%".
+
+  // Pure: what the bar should show for a value and a max.
+  function progressModel({ value = null, max = 100 } = {}) {
+    const finite = value != null && Number.isFinite(value) && Number.isFinite(max) && max > 0;
+    if (!finite) return { indeterminate: true, pct: null, now: null, max: null };
+    const now = Math.min(max, Math.max(0, value));
+    return { indeterminate: false, pct: (now / max) * 100, now, max };
+  }
+
+  // Pure: the text a node or string contributes to a spoken description.
+  function plainText(x) {
+    if (x == null) return '';
+    return typeof x === 'string' ? x : String(x.textContent ?? '');
+  }
+
+  // Pure: "label, detail" for aria-valuetext.
+  function spokenProgress({ label = '', detail = '' } = {}) {
+    return [plainText(label), plainText(detail)].filter(Boolean).join(', ');
+  }
+
+  function Progress(initial = {}) {
+    const h = el;
+    const state = { value: null, max: 100, label: '', detail: '', variant: 'default', ...initial };
+    const labelEl = h('span', { className: 'atk-progress-label' });
+    const detailEl = h('span', { className: 'atk-progress-detail' });
+    const fill = h('div', { className: 'atk-progress-fill' });
+    const track = h('div', { className: 'atk-progress-track', role: 'progressbar', 'aria-valuemin': '0' }, fill);
+    const root = h('div', { className: 'atk-progress' }, [
+      h('div', { className: 'atk-progress-row' }, [labelEl, detailEl]),
+      track,
+    ]);
+
+    function render() {
+      const m = progressModel(state);
+      root.className = `atk-progress atk-progress--${state.variant}${m.indeterminate ? ' is-indeterminate' : ''}`;
+      labelEl.textContent = state.label;
+      if (typeof state.detail === 'string' || state.detail == null) detailEl.textContent = state.detail ?? '';
+      else detailEl.replaceChildren(state.detail);
+      if (m.indeterminate) {
+        track.removeAttribute('aria-valuenow');
+        track.removeAttribute('aria-valuemax');
+        fill.style.width = '';
+      } else {
+        track.setAttribute('aria-valuemax', String(m.max));
+        track.setAttribute('aria-valuenow', String(m.now));
+        fill.style.width = `${m.pct}%`;
+      }
+      track.setAttribute('aria-label', plainText(state.label) || 'Progress');
+      const spoken = spokenProgress(state);
+      if (spoken) track.setAttribute('aria-valuetext', spoken); else track.removeAttribute('aria-valuetext');
+    }
+
+    root.update = function update(next = {}) {
+      for (const k of ['value', 'max', 'label', 'detail', 'variant']) if (k in next) state[k] = next[k];
+      render();
+    };
+    render();
+    return root;
+  }
+  Progress.model = progressModel;
+  Progress.spoken = spokenProgress;
+
   window.ArenaToolkit = {
+    Checkbox: Checkbox,
+    Radio: Radio,
+    Progress: Progress,
+    StatGrid: StatGrid,
+    StatusLog: StatusLog,
+    Footer: Footer,
     ChannelRow: ChannelRow,
     ChannelList: ChannelList,
     ThemeChooser: ThemeChooser,

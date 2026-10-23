@@ -1,0 +1,20 @@
+<!-- @dsCard group="Forms" height=230 -->
+<!doctype html>
+<html>
+<head><style>
+  body { margin: 0; padding: 20px; background: var(--surface-page); font-family: var(--font-sans); display: flex; flex-direction: column; gap: 15px; }
+  #root { display: flex; flex-direction: column; gap: 16px; align-items: flex-start; }
+</style></head>
+<body>
+<div id="root"></div>
+<script>
+  var atk = window.ArenaToolkit;
+  var root = document.getElementById('root');
+  var name = 'demo';
+  root.appendChild(atk.Radio({ label: 'Public', description: 'Anyone can see this channel.', name: name, value: 'public', checked: true }));
+  root.appendChild(atk.Radio({ label: 'Closed', description: 'Anyone can see it; only collaborators can add.', name: name, value: 'closed' }));
+  root.appendChild(atk.Radio({ label: 'Private', name: name, value: 'private' }));
+  root.appendChild(atk.Radio({ label: 'Disabled', name: name, value: 'x', disabled: true }));
+</script>
+</body>
+</html>

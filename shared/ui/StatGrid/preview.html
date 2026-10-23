@@ -1,0 +1,17 @@
+<!-- @dsCard group="Feedback" height=150 -->
+<!doctype html>
+<html>
+<head><style>
+  body { margin: 0; padding: 20px; background: var(--surface-page); font-family: var(--font-sans); display: flex; flex-direction: column; gap: 15px; }
+  #root { display: flex; flex-direction: column; gap: 16px; align-items: stretch; }
+</style></head>
+<body>
+<div id="root"></div>
+<script>
+  var atk = window.ArenaToolkit;
+  var root = document.getElementById('root');
+  var g = atk.StatGrid({ items: [{ key: 'added', label: 'Added', value: 12 }, { key: 'skipped', label: 'Already there', value: 3 }, { key: 'removed', label: 'Removed', value: 12 }, { key: 'failed', label: 'Failed', value: 0 }] });
+  root.appendChild(g);
+</script>
+</body>
+</html>

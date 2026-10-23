@@ -313,7 +313,9 @@
   pointer-events: none;
 }
 
-/* Actions row — hover-revealed. Mirrors are.na's .c-hRIxJA pattern. */
+/* Actions row — hover-revealed. Mirrors are.na's .c-hRIxJA pattern.
+   Two buttons split the row 50/50; one button fills it. Gap is the margin
+   between them, and the row's padding is the margin to the block edge. */
 .atk-block__actions {
   position: absolute;
   left: 0;
@@ -337,10 +339,13 @@
   pointer-events: auto;
 }
 
-/* Individual action button — same size as a toolkit Button (md), but bare until hovered */
+/* Individual action button — equal-width (flex: 1 1 0), translucent-card base.
+   Hover thickens the border and makes the fill fully opaque. */
 .atk-block__action {
   all: unset;
   box-sizing: border-box;
+  flex: 1 1 0;                 /* equal split with siblings; a lone child fills */
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -352,7 +357,7 @@
   font-weight: 700;            /* matches .atk-btn */
   line-height: 1;              /* matches .atk-btn */
   color: var(--text-primary);
-  background: transparent;
+  background: color-mix(in oklab, var(--surface-card) 70%, transparent);
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -361,15 +366,20 @@
 }
 .atk-block__action:hover {
   border-color: var(--border-strong);
-  background: var(--surface-card);
+  background: var(--surface-card);      /* opaque, stronger */
 }
 .atk-block__action:focus-visible {
   border-color: var(--border-focus);
   outline: none;
 }
-/* A lone action fills the row — e.g. a block that only offers "Connect →" */
-.atk-block__actions .atk-block__action:only-child {
-  flex: 1;
+/* Greyed-out state — e.g. "Following" on a channel you already follow. */
+.atk-block__action[aria-disabled="true"],
+.atk-block__action:disabled {
+  color: var(--text-faint);
+  background: color-mix(in oklab, var(--surface-sunken) 70%, transparent);
+  border-color: transparent;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 /* Badge — filled brand & nsfw variants (NEW / BETA / API / NSFW chips) */
@@ -895,3 +905,190 @@
   color: var(--text-secondary);
 }
 .atk-auth__who strong { color: var(--text-primary); }
+
+/* ── checkbox ── */
+/* Checkbox. The resting border is --text-muted, not --border-input: the latter is 1.35:1 on the page in Light,
+   and a control's edge needs 3:1 (WCAG 1.4.11). --text-muted clears 3:1 in all four themes (3.82 in Dawn, 4.69+ elsewhere). */
+.atk-checkbox {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+.atk-checkbox-input {
+  position: absolute;
+  opacity: 0;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: inherit;
+}
+.atk-checkbox-box {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  border: 1px solid var(--text-muted);
+  border-radius: var(--radius-sm);
+  background: var(--surface-page);
+  color: var(--surface-page); /* same pairing as the primary button: dark on pale accents, light on navy */
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.atk-checkbox:hover .atk-checkbox-box { border-color: var(--text-primary); }
+.atk-checkbox-input:focus-visible + .atk-checkbox-box { outline: 2px solid var(--accent-focus); outline-offset: 2px; }
+.atk-checkbox-input:checked + .atk-checkbox-box,
+.atk-checkbox-input:indeterminate + .atk-checkbox-box {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+.atk-checkbox-tick, .atk-checkbox-bar { display: none; }
+.atk-checkbox-input:checked + .atk-checkbox-box .atk-checkbox-tick { display: block; }
+.atk-checkbox-input:indeterminate + .atk-checkbox-box .atk-checkbox-tick { display: none; }
+.atk-checkbox-input:indeterminate + .atk-checkbox-box .atk-checkbox-bar { display: block; width: 8px; height: 2px; background: currentColor; }
+.atk-checkbox-input:disabled ~ * { opacity: 0.5; }
+.atk-checkbox-input:disabled + .atk-checkbox-box { cursor: not-allowed; }
+.atk-checkbox-text { display: flex; flex-direction: column; gap: 2px; }
+.atk-checkbox-label { color: var(--text-primary); font: var(--text-ui); }
+.atk-checkbox-desc { color: var(--text-muted); font: var(--text-body-sm); }
+
+/* ── radio ── */
+/* Radio. Resting border is --text-muted for 3:1 contrast, as in Checkbox. */
+.atk-radio { display: inline-flex; align-items: flex-start; gap: var(--space-2); cursor: pointer; }
+.atk-radio-input { position: absolute; opacity: 0; width: 16px; height: 16px; margin: 0; cursor: inherit; }
+.atk-radio-ring {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  border: 1px solid var(--text-muted);
+  border-radius: var(--radius-round);
+  background: var(--surface-page);
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.atk-radio:hover .atk-radio-ring { border-color: var(--text-primary); }
+.atk-radio-input:focus-visible + .atk-radio-ring { outline: 2px solid var(--accent-focus); outline-offset: 2px; }
+.atk-radio-dot { display: none; width: 8px; height: 8px; border-radius: var(--radius-round); background: var(--surface-page); }
+.atk-radio-input:checked + .atk-radio-ring { background: var(--accent-primary); border-color: var(--accent-primary); }
+.atk-radio-input:checked + .atk-radio-ring .atk-radio-dot { display: block; }
+.atk-radio-input:disabled ~ * { opacity: 0.5; }
+.atk-radio-text { display: flex; flex-direction: column; gap: 2px; }
+.atk-radio-label { color: var(--text-primary); font: var(--text-ui); }
+.atk-radio-desc { color: var(--text-muted); font: var(--text-body-sm); }
+
+/* ── progress ── */
+/* Progress */
+.atk-progress { display: flex; flex-direction: column; gap: var(--space-nudge); }
+.atk-progress-row { display: flex; justify-content: space-between; gap: var(--space-3); }
+.atk-progress-label { color: var(--text-primary); font: var(--text-ui); }
+.atk-progress-detail { color: var(--text-muted); font: var(--text-body-sm); text-align: right; font-variant-numeric: tabular-nums; }
+.atk-progress-track {
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunken);
+}
+.atk-progress-fill {
+  height: 100%;
+  width: 0;
+  border-radius: var(--radius-pill);
+  background: var(--accent-primary);
+  transition: width 150ms ease;
+}
+.atk-progress--success .atk-progress-fill { background: var(--accent-success); }
+.atk-progress--alert .atk-progress-fill { background: var(--accent-alert); }
+/* Indeterminate is the one moving thing in the system: it says work is going on. */
+.atk-progress.is-indeterminate .atk-progress-fill { width: 30%; animation: atk-progress-slide 1.2s ease-in-out infinite; }
+@keyframes atk-progress-slide { from { margin-left: -30%; } to { margin-left: 100%; } }
+@media (prefers-reduced-motion: reduce) {
+  .atk-progress.is-indeterminate .atk-progress-fill { animation: none; margin-left: 0; width: 100%; opacity: 0.4; }
+}
+
+/* ── stat-grid ── */
+/* StatGrid */
+.atk-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--space-3);
+}
+.atk-stat {
+  padding: var(--space-3);
+  background: var(--surface-sunken);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+.atk-stat__value {
+  display: block;
+  font: var(--text-h3);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.atk-stat__label {
+  display: block;
+  margin-top: var(--space-1);
+  font: var(--text-caption);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ── status-log ── */
+/* StatusLog. Green = success, grey = message, orange = warning, red = error.
+   Contrast on --surface-sunken (Light / Dark / Dawn / Dusk): success 4.29 / 7.78 / 3.66 / 8.11,
+   message 10.79 / 10.03 / 7.14 / 8.36, error 4.72 / 4.03 / 2.76 / 4.21, warning 3.34 / 4.86 / 2.98 / 5.07.
+   Dawn's error and warning fall short of 4.5:1; they are the system's own colours, recorded not changed. */
+.atk-log { margin-top: var(--space-3); }
+.atk-log__summary {
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: var(--space-2) 0;
+}
+.atk-log__body {
+  margin-top: var(--space-2);
+  font: var(--text-body-sm);
+  font-family: var(--font-mono);
+  background: var(--surface-sunken);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  max-height: 240px;
+  overflow-y: auto;
+}
+.atk-log__line { padding: 2px 0; color: var(--text-secondary); line-height: 1.3; }
+.atk-log__line.is-success { color: var(--accent-success); }
+.atk-log__line.is-warning { color: var(--accent-alert); }
+.atk-log__line.is-error   { color: var(--accent-private); }
+.atk-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ── footer ── */
+.atk-footer {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-3) var(--space-8);
+  border-top: 1px solid var(--border-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+}
+.atk-footer__title { margin: 0; font: var(--text-ui-strong); color: var(--text-heading); }
+.atk-footer p { margin: 0; max-width: 60em; }
+.atk-footer a { color: inherit; }
+.atk-footer a:hover { color: var(--text-primary); }
+
+/* ── busy ── */
+/* A gentle pulse for "working on it" text: 1 -> 0.5 -> 1 over six seconds. Add class atk-busy to any element.
+   The auth panel's info line is always a progress message ("Checking token…", "Loading your channels…"), so it pulses too. */
+@keyframes atk-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+.atk-busy, .atk-auth .atk-status--info { animation: atk-pulse 6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .atk-busy, .atk-auth .atk-status--info { animation: none; }
+}

@@ -1,0 +1,24 @@
+<!-- @dsCard group="Feedback" height=330 -->
+<!doctype html>
+<html>
+<head><style>
+  body { margin: 0; padding: 20px; background: var(--surface-page); font-family: var(--font-sans); display: flex; flex-direction: column; gap: 15px; }
+  #root { display: flex; flex-direction: column; gap: 16px; align-items: stretch; }
+</style></head>
+<body>
+<div id="root"></div>
+<script>
+  var atk = window.ArenaToolkit;
+  var root = document.getElementById('root');
+  root.appendChild(atk.Progress({ value: 16, max: 20, label: 'Merging blocks', detail: '16 of 20' }));
+  root.appendChild(atk.Progress({ label: 'Reading channels…' }));
+  root.appendChild(atk.Progress({ value: 1, max: 1, label: 'Transfer complete', variant: 'success' }));
+  root.appendChild(atk.Progress({ value: 7, max: 20, label: 'Stopped', detail: '7 of 20', variant: 'alert' }));
+  var live = atk.Progress({ label: 'Starting…' });
+  root.appendChild(live);
+  var n = 0;
+  setInterval(function () { n = (n + 1) % 11; live.update(n === 0 ? { value: null, label: 'Starting…', detail: '' } : { value: n, max: 10, label: 'Working', detail: n + ' of 10' }); }, 900);
+  var pulse = document.createElement('p'); pulse.className = 'atk-busy'; pulse.textContent = 'Loading your channels…'; root.appendChild(pulse);
+</script>
+</body>
+</html>
