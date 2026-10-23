@@ -134,7 +134,7 @@ Add every block from one channel into another in one go. For tidying up your own
 - Optional remove-from-source, to make it a move rather than a copy
 - Needs a personal access token with **write** access. The token stays in your browser
 
-**File:** `arena-merge/index.html` — standalone single file.
+**Source:** `arena-merge/src/`, built by `node build.js` into `arena-merge/dist/arena-merge.html` (a standalone single file, also copied to `docs/arena-merge.html`).
 
 ---
 
