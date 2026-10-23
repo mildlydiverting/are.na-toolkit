@@ -8,7 +8,11 @@
 <body>
 <div id="root"></div>
 <script>
+  // ThemeChooser applies a theme to <html> as soon as it is created. In this card, keep the theme
+  // the page is showing; choosing from the menu still switches it.
+  var shown = document.documentElement.getAttribute('data-theme');
   document.getElementById('root').appendChild(window.ArenaToolkit.ThemeChooser());
+  if (shown) document.documentElement.setAttribute('data-theme', shown);
 </script>
 </body>
 </html>

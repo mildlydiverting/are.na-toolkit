@@ -35,7 +35,7 @@ Dawn private (3.2 on the bar, 2.7 on the badge) and Dawn public badge (3.5) are 
 - `visibility` — `'public'`, `'closed'` or `'private'`. Sets the colour and the badge text.
 - `count` — shown after the name, muted by the bar ink. Pass a string; format large numbers yourself (`'10k'`).
 - `metadataCount` — shown as a small badge after the count. `0` is shown; leave it out to hide the badge.
-- `owner` — right-aligned, e.g. `'@kim-plowright'`.
+- `owner` — right-aligned. Pass the person's **display name** (`'Kim Plowright'`), without an `@` and not the slug.
 - `open` — start open.
 - `children` — the panel contents. The panel is a two-column grid (2fr / 3fr) that stacks under 700px, so pass two nodes: metadata first, details second.
 
@@ -47,7 +47,7 @@ list.appendChild(ArenaToolkit.ChannelRow({
   visibility: 'public',
   count: '516',
   metadataCount: 2,
-  owner: '@brannon-wellington',
+  owner: 'Brannon Wellington',
   children: [metadataNode, detailsNode]
 }));
 ```
