@@ -1092,3 +1092,50 @@
 @media (prefers-reduced-motion: reduce) {
   .atk-busy, .atk-auth .atk-status--info { animation: none; }
 }
+
+/* ────────────────────────────────────────────────────────────
+   Notice (in the flow) and Toast (in the corner)
+   ──────────────────────────────────────────────────────────── */
+.atk-notice {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--accent-primary); /* same pairing as the primary button */
+  color: var(--surface-page);
+  font: var(--text-body);
+}
+.atk-notice__body { flex: 1; min-width: 0; }
+.atk-notice__icon { flex: none; }
+.atk-notice__close {
+  flex: none;
+  border: 0;
+  background: none;
+  padding: 0 var(--space-1);
+  color: inherit;
+  font: var(--text-ui);
+  cursor: pointer;
+  opacity: 0.8;
+}
+.atk-notice__close:hover { opacity: 1; }
+.atk-notice__close:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+
+.atk-toast-stack {
+  position: fixed;
+  bottom: var(--space-3);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: min(360px, calc(100vw - 2 * var(--space-3)));
+}
+.atk-toast-stack[data-side="left"] { left: var(--space-3); }
+.atk-toast-stack[data-side="right"] { right: var(--space-3); }
+.atk-toast {
+  box-shadow: var(--shadow-soft);
+  animation: atk-toast-in 150ms ease;
+}
+.atk-toast.is-leaving { opacity: 0; transition: opacity 150ms ease; }
+@keyframes atk-toast-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .atk-toast { animation: none; } }

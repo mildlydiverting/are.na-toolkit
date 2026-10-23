@@ -22,7 +22,7 @@ All six steps are built and have been tried live by Kim against her test channel
 | Orphans and undo history (localStorage) | `src/history.js` |
 | Done: summary, orphan URLs, report JSON | `src/done.js` |
 | Shell, stepper, step wiring | `src/app.js`, `src/index.html`, `src/styles.css` |
-| Tool-local components: Checkbox, Radio, Progress, **Notice** (corner message; was "Toast") | `src/components/` |
+| (none: Checkbox, Radio, Progress, Toast and Notice are all in `shared/ui`) | |
 
 ## How it works (the parts that aren't obvious)
 
@@ -43,7 +43,7 @@ All six steps are built and have been tried live by Kim against her test channel
 - **`image.src` is are.na's own copy** (the URL contains the block id), so it can't identify duplicates. The only original address is `source.url`. `image.filename` is a file hash: shown as a hover hint, not used for matching.
 - **Write-scope check** is `DELETE /connections/0` (403 = read-only, 404 = can write), as in arena-merge.
 - **Source `.js` files are ES modules;** the build strips `import`/`export` and inlines everything into one global scope. Avoid top-level name clashes. macOS `sed` has no `\b`: use `perl -pi -e`.
-- **Design:** `shared/ui` is the one design language. Warnings use two patterns taken from are.na: a navy **Notice** at bottom left (dismissable) and a pale inline `.atk-note` box. Red = private channel only; orange = warning.
+- **Design:** `shared/ui` is the one design language. Warnings use two patterns taken from are.na: a navy **Toast** at bottom left (dismissable; now in `shared/ui`) and a pale inline `.atk-note` box. Red = private channel only; orange = warning.
 - Naming: "connection" means only are.na's connection object. The token step is "Connect to are.na".
 
 ## Next
@@ -51,7 +51,7 @@ All six steps are built and have been tried live by Kim against her test channel
 1. Kim to try the Done step and the unscanned-channel flow (e.g. blocks 39753062 and 39753053 with `teaching-tablescape` outside the scan).
 2. Error paths: auth failures mid-run, missing permissions, 429 during Resolve.
 3. Replace the preview jpg with a Review screenshot. After any change: `node arena-duplicate-finder/build.js --docs` (rule 5).
-4. Later: keyboard shortcut polish, promoting Radio/Notice/Checkbox into `shared/ui` (change the design-system artifact too, rule 8).
+4. Later: keyboard shortcut polish, keyboard shortcut polish.
 
 ## Ideas for later
 

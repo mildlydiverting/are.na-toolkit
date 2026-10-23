@@ -1,0 +1,20 @@
+<!-- @dsCard group="Feedback" height=320 -->
+<!doctype html>
+<html>
+<head><style>
+  body { margin: 0; padding: 20px; background: var(--surface-page); color: var(--text-primary); font-family: var(--font-sans); }
+  #root { display: flex; flex-direction: column; gap: 12px; max-width: 520px; }
+</style></head>
+<body>
+<div id="root"></div>
+<script>
+  var ATK = window.ArenaToolkit, root = document.getElementById('root');
+  root.append(
+    ATK.Notice({ variant: 'info', children: "You're viewing a private channel that has been shared with you. Some features have been disabled." }),
+    ATK.Notice({ variant: 'success', title: 'Merged', children: '42 blocks were added to the destination.' }),
+    ATK.Notice({ variant: 'warning', title: 'Write access needed', children: 'This tool adds and removes blocks, so a read-only token will not work.' }),
+    ATK.Notice({ variant: 'error', title: "Couldn't connect", children: "are.na didn't recognise that token.", onDismiss: function () {} })
+  );
+</script>
+</body>
+</html>

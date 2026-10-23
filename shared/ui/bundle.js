@@ -620,7 +620,7 @@
       ]);
 
       var kids = [];
-      if (state.writeMessage) kids.push(el('p', { className: 'atk-auth__message' }, state.writeMessage));
+      if (state.writeMessage) kids.push(Notice({ variant: 'warning', children: state.writeMessage }));
       kids.push(intro);
       if (panel) {
         var label = el('label', { className: 'atk-auth__label', 'for': 'arena-token' }, 'Personal access token');
@@ -827,6 +827,72 @@
   Progress.model = progressModel;
   Progress.spoken = spokenProgress;
 
+  /* ── Notice (in the flow) and Toast (in the corner): the same navy box as are.na's own message ── */
+  var NOTICE_VARIANTS = { info: 'info', success: 'success', warning: 'warning', error: 'error',
+                          'default': 'info', notification: 'info', alert: 'error' };
+  var NOTICE_ICONS = { success: '✓', warning: '⚠', error: '⚠' };
+
+  function Notice(opts) {
+    opts = opts || {};
+    var variant = NOTICE_VARIANTS[opts.variant] || 'info';
+    var kids = [];
+    if (NOTICE_ICONS[variant]) kids.push(el('span', { className: 'atk-notice__icon', 'aria-hidden': 'true' }, NOTICE_ICONS[variant]));
+    var body = [];
+    if (opts.title) body.push(el('strong', null, opts.title + '.'), ' ');
+    body = body.concat(opts.children == null ? [] : opts.children);
+    kids.push(el('div', { className: 'atk-notice__body' }, body));
+    if (opts.onDismiss) {
+      kids.push(el('button', { type: 'button', className: 'atk-notice__close', 'aria-label': 'Dismiss', onClick: opts.onDismiss }, '×'));
+    }
+    return el('div', {
+      className: 'atk-notice atk-notice--' + variant,
+      role: variant === 'error' ? 'alert' : 'status'
+    }, kids);
+  }
+
+  var toastStack = null;
+  var toastSide = 'left';
+  function toastParent() {
+    if (!toastStack || !toastStack.isConnected) {
+      toastStack = el('div', { className: 'atk-toast-stack' });
+      document.body.appendChild(toastStack);
+    }
+    toastStack.setAttribute('data-side', toastSide);
+    return toastStack;
+  }
+
+  var Toast = {
+    // Toast.show({ message, title?, variant: 'info'|'success'|'warning'|'error', duration: 4000 (0 = stay) })
+    show: function (o) {
+      o = o || {};
+      var duration = o.duration == null ? 4000 : o.duration;
+      var timer = null;
+      var node = null;
+      function dismiss() {
+        clearTimeout(timer);
+        if (!node.isConnected) return;
+        node.classList.add('is-leaving');
+        setTimeout(function () { node.remove(); }, 150);
+      }
+      function arm() { clearTimeout(timer); if (duration > 0) timer = setTimeout(dismiss, duration); }
+      node = Notice({ variant: o.variant, title: o.title, children: o.message, onDismiss: dismiss });
+      node.classList.add('atk-toast');
+      node.addEventListener('keydown', function (e) { if (e.key === 'Escape') dismiss(); });
+      node.addEventListener('mouseenter', function () { clearTimeout(timer); });
+      node.addEventListener('mouseleave', arm);
+      node.addEventListener('focusin', function () { clearTimeout(timer); });
+      node.addEventListener('focusout', arm);
+      toastParent().appendChild(node);
+      arm();
+      return { dismiss: dismiss };
+    },
+    dismissAll: function () { if (toastStack) toastStack.replaceChildren(); },
+    setPosition: function (side) {
+      toastSide = side === 'right' ? 'right' : 'left';
+      if (toastStack) toastStack.setAttribute('data-side', toastSide);
+    }
+  };
+
   window.ArenaToolkit = {
     Checkbox: Checkbox,
     Radio: Radio,
@@ -838,6 +904,8 @@
     ChannelList: ChannelList,
     ThemeChooser: ThemeChooser,
     StatusMessage: StatusMessage,
+    Notice: Notice,
+    Toast: Toast,
     AccountMenu: AccountMenu,
     AuthPanel: AuthPanel,
     Button: Button,

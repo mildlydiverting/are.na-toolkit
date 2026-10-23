@@ -1,6 +1,7 @@
 /* Arena Toolkit — generated from tokens.json */
 :root, [data-theme="light"] {
   --surface-page: #ffffff; /* Page background. are.na --colors-background / gray0. */
+  --background: #ffffff; /* Same colour as surface-page. The design-system app looks for a token with this name to paint behind component previews. */
   --surface-card: #f7f7f7; /* Content cards. Lifts above surface-page. are.na gray1. */
   --surface-media: #ededed; /* Behind thumbnails and image placeholders. are.na gray2. */
   --surface-sunken: #ededed; /* Inset or quiet panels. Shares gray2 with surface-media on purpose. */
@@ -31,6 +32,7 @@
 }
 [data-theme="dark"] {
   --surface-page: #000000;
+  --background: #000000; /* Same colour as surface-page. The design-system app looks for a token with this name to paint behind component previews. */
   --surface-card: #1a1a1a;
   --surface-media: #333333;
   --surface-sunken: #333333;
@@ -59,6 +61,7 @@
 }
 [data-theme="dawn"] {
   --surface-page: #f5f1f0;
+  --background: #f5f1f0; /* Same colour as surface-page. The design-system app looks for a token with this name to paint behind component previews. */
   --surface-card: #eae6e5;
   --surface-media: #e0dbda;
   --surface-sunken: #e0dbda;
@@ -87,6 +90,7 @@
 }
 [data-theme="dusk"] {
   --surface-page: #16171e;
+  --background: #16171e; /* Same colour as surface-page. The design-system app looks for a token with this name to paint behind component previews. */
   --surface-card: #24222c;
   --surface-media: #342e38;
   --surface-sunken: #342e38;

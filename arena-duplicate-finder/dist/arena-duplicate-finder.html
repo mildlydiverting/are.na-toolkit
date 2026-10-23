@@ -9,6 +9,7 @@
 /* Arena Toolkit — generated from tokens.json */
 :root, [data-theme="light"] {
   --surface-page: #ffffff; /* Page background. are.na --colors-background / gray0. */
+  --background: #ffffff; /* Same colour as surface-page. The design-system app looks for a token with this name to paint behind component previews. */
   --surface-card: #f7f7f7; /* Content cards. Lifts above surface-page. are.na gray1. */
   --surface-media: #ededed; /* Behind thumbnails and image placeholders. are.na gray2. */
   --surface-sunken: #ededed; /* Inset or quiet panels. Shares gray2 with surface-media on purpose. */
@@ -39,6 +40,7 @@
 }
 [data-theme="dark"] {
   --surface-page: #000000;
+  --background: #000000; /* Same colour as surface-page. The design-system app looks for a token with this name to paint behind component previews. */
   --surface-card: #1a1a1a;
   --surface-media: #333333;
   --surface-sunken: #333333;
@@ -67,6 +69,7 @@
 }
 [data-theme="dawn"] {
   --surface-page: #f5f1f0;
+  --background: #f5f1f0; /* Same colour as surface-page. The design-system app looks for a token with this name to paint behind component previews. */
   --surface-card: #eae6e5;
   --surface-media: #e0dbda;
   --surface-sunken: #e0dbda;
@@ -95,6 +98,7 @@
 }
 [data-theme="dusk"] {
   --surface-page: #16171e;
+  --background: #16171e; /* Same colour as surface-page. The design-system app looks for a token with this name to paint behind component previews. */
   --surface-card: #24222c;
   --surface-media: #342e38;
   --surface-sunken: #342e38;
@@ -1335,35 +1339,23 @@
   .atk-busy, .atk-auth .atk-status--info { animation: none; }
 }
 
-</style>
-<style>
-/* Notice */
-.atk-notice-stack {
-  position: fixed;
-  left: var(--space-3);
-  bottom: var(--space-3);
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  max-width: min(360px, calc(100vw - 2 * var(--space-3)));
-}
+/* ────────────────────────────────────────────────────────────
+   Notice (in the flow) and Toast (in the corner)
+   ──────────────────────────────────────────────────────────── */
 .atk-notice {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
-  border: 0;
   border-radius: var(--radius-sm);
-  background: var(--accent-primary); /* same pairing as the primary button, as on are.na's corner notice */
+  background: var(--accent-primary); /* same pairing as the primary button */
   color: var(--surface-page);
-  box-shadow: var(--shadow-soft);
   font: var(--text-body);
-  animation: atk-notice-in 150ms ease;
 }
-.atk-notice.is-leaving { opacity: 0; transition: opacity 150ms ease; }
-.atk-notice-message { flex: 1; min-width: 0; }
-.atk-notice-close {
+.atk-notice__body { flex: 1; min-width: 0; }
+.atk-notice__icon { flex: none; }
+.atk-notice__close {
+  flex: none;
   border: 0;
   background: none;
   padding: 0 var(--space-1);
@@ -1372,9 +1364,27 @@
   cursor: pointer;
   opacity: 0.8;
 }
-.atk-notice-close:hover { opacity: 1; }
-@keyframes atk-notice-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { .atk-notice { animation: none; } }
+.atk-notice__close:hover { opacity: 1; }
+.atk-notice__close:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+
+.atk-toast-stack {
+  position: fixed;
+  bottom: var(--space-3);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: min(360px, calc(100vw - 2 * var(--space-3)));
+}
+.atk-toast-stack[data-side="left"] { left: var(--space-3); }
+.atk-toast-stack[data-side="right"] { right: var(--space-3); }
+.atk-toast {
+  box-shadow: var(--shadow-soft);
+  animation: atk-toast-in 150ms ease;
+}
+.atk-toast.is-leaving { opacity: 0; transition: opacity 150ms ease; }
+@keyframes atk-toast-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .atk-toast { animation: none; } }
 
 </style>
 <style>
@@ -2216,7 +2226,7 @@ body {
       ]);
 
       var kids = [];
-      if (state.writeMessage) kids.push(el('p', { className: 'atk-auth__message' }, state.writeMessage));
+      if (state.writeMessage) kids.push(Notice({ variant: 'warning', children: state.writeMessage }));
       kids.push(intro);
       if (panel) {
         var label = el('label', { className: 'atk-auth__label', 'for': 'arena-token' }, 'Personal access token');
@@ -2423,6 +2433,72 @@ body {
   Progress.model = progressModel;
   Progress.spoken = spokenProgress;
 
+  /* ── Notice (in the flow) and Toast (in the corner): the same navy box as are.na's own message ── */
+  var NOTICE_VARIANTS = { info: 'info', success: 'success', warning: 'warning', error: 'error',
+                          'default': 'info', notification: 'info', alert: 'error' };
+  var NOTICE_ICONS = { success: '✓', warning: '⚠', error: '⚠' };
+
+  function Notice(opts) {
+    opts = opts || {};
+    var variant = NOTICE_VARIANTS[opts.variant] || 'info';
+    var kids = [];
+    if (NOTICE_ICONS[variant]) kids.push(el('span', { className: 'atk-notice__icon', 'aria-hidden': 'true' }, NOTICE_ICONS[variant]));
+    var body = [];
+    if (opts.title) body.push(el('strong', null, opts.title + '.'), ' ');
+    body = body.concat(opts.children == null ? [] : opts.children);
+    kids.push(el('div', { className: 'atk-notice__body' }, body));
+    if (opts.onDismiss) {
+      kids.push(el('button', { type: 'button', className: 'atk-notice__close', 'aria-label': 'Dismiss', onClick: opts.onDismiss }, '×'));
+    }
+    return el('div', {
+      className: 'atk-notice atk-notice--' + variant,
+      role: variant === 'error' ? 'alert' : 'status'
+    }, kids);
+  }
+
+  var toastStack = null;
+  var toastSide = 'left';
+  function toastParent() {
+    if (!toastStack || !toastStack.isConnected) {
+      toastStack = el('div', { className: 'atk-toast-stack' });
+      document.body.appendChild(toastStack);
+    }
+    toastStack.setAttribute('data-side', toastSide);
+    return toastStack;
+  }
+
+  var Toast = {
+    // Toast.show({ message, title?, variant: 'info'|'success'|'warning'|'error', duration: 4000 (0 = stay) })
+    show: function (o) {
+      o = o || {};
+      var duration = o.duration == null ? 4000 : o.duration;
+      var timer = null;
+      var node = null;
+      function dismiss() {
+        clearTimeout(timer);
+        if (!node.isConnected) return;
+        node.classList.add('is-leaving');
+        setTimeout(function () { node.remove(); }, 150);
+      }
+      function arm() { clearTimeout(timer); if (duration > 0) timer = setTimeout(dismiss, duration); }
+      node = Notice({ variant: o.variant, title: o.title, children: o.message, onDismiss: dismiss });
+      node.classList.add('atk-toast');
+      node.addEventListener('keydown', function (e) { if (e.key === 'Escape') dismiss(); });
+      node.addEventListener('mouseenter', function () { clearTimeout(timer); });
+      node.addEventListener('mouseleave', arm);
+      node.addEventListener('focusin', function () { clearTimeout(timer); });
+      node.addEventListener('focusout', arm);
+      toastParent().appendChild(node);
+      arm();
+      return { dismiss: dismiss };
+    },
+    dismissAll: function () { if (toastStack) toastStack.replaceChildren(); },
+    setPosition: function (side) {
+      toastSide = side === 'right' ? 'right' : 'left';
+      if (toastStack) toastStack.setAttribute('data-side', toastSide);
+    }
+  };
+
   window.ArenaToolkit = {
     Checkbox: Checkbox,
     Radio: Radio,
@@ -2434,6 +2510,8 @@ body {
     ChannelList: ChannelList,
     ThemeChooser: ThemeChooser,
     StatusMessage: StatusMessage,
+    Notice: Notice,
+    Toast: Toast,
     AccountMenu: AccountMenu,
     AuthPanel: AuthPanel,
     Button: Button,
@@ -2962,51 +3040,6 @@ function openChannelPicker({ channels, selected = [], title = 'Pick channels', c
   setTimeout(() => filter.focus(), 50);
   return { element: modal, close: done };
 }
-
-</script>
-<script>
-// Notice: a short message in a stack at the bottom left. Tool-local until promoted into shared/ui.
-//   Notice.show({ message, variant: 'default' | 'success' | 'alert' | 'notification', duration: 4000 (0 = stay), action: { label, onClick } })
-//   Notice.dismissAll()
-(function () {
-  const h = window.ArenaToolkit._el;
-  let stack = null;
-
-  function getStack() {
-    if (!stack || !stack.isConnected) {
-      stack = h('div', { className: 'atk-notice-stack' });
-      document.body.append(stack);
-    }
-    return stack;
-  }
-
-  function show({ message, variant = 'default', duration = 4000, action = null } = {}) {
-    const alert = variant === 'alert';
-    const notice = h('div', { className: `atk-notice atk-notice--${variant}`, role: alert ? 'alert' : 'status' });
-    let timer = null;
-    const dismiss = () => {
-      clearTimeout(timer);
-      if (!notice.isConnected) return;
-      notice.classList.add('is-leaving');
-      setTimeout(() => notice.remove(), 150);
-    };
-    notice.append(h('span', { className: 'atk-notice-message' }, message));
-    if (action) {
-      notice.append(window.ArenaToolkit.Button({ variant: 'ghost', size: 'sm', children: action.label, onClick: () => { action.onClick(); dismiss(); } }));
-    }
-    notice.append(h('button', { type: 'button', className: 'atk-notice-close', 'aria-label': 'Dismiss', onclick: dismiss }, '×'));
-    notice.addEventListener('keydown', (e) => { if (e.key === 'Escape') dismiss(); });
-    getStack().append(notice);
-    if (duration > 0) timer = setTimeout(dismiss, duration);
-    return { dismiss };
-  }
-
-  function dismissAll() {
-    if (stack) stack.replaceChildren();
-  }
-
-  window.ArenaToolkit.Notice = { show, dismissAll };
-})();
 
 </script>
 <script>
@@ -4017,7 +4050,7 @@ function pruneIds(ids, channels) {
   const h = (tag, attrs, kids) => ATK._el(tag, attrs, kids);
 
   const throttle = createThrottle({
-    onWait: (seconds) => ATK.Notice.show({ message: `are.na asked us to slow down. Waiting ${seconds}s, then carrying on.`, variant: 'notification', duration: seconds * 1000 }),
+    onWait: (seconds) => ATK.Toast.show({ message: `are.na asked us to slow down. Waiting ${seconds}s, then carrying on.`, variant: 'notification', duration: seconds * 1000 }),
   });
   const client = createArenaClient({ throttle });
 
@@ -4256,7 +4289,7 @@ function pruneIds(ids, channels) {
       scan.result.clusters = addUnscannedPlaces(scan.result.clusters, scan.connections);
       scan.status = 'done';
       for (const sk of scan.result.skipped) {
-        ATK.Notice.show({ message: `Couldn't read ${sk.channel.title || sk.channel.slug}, so it was skipped.`, variant: 'alert', duration: 8000 });
+        ATK.Toast.show({ message: `Couldn't read ${sk.channel.title || sk.channel.slug}, so it was skipped.`, variant: 'alert', duration: 8000 });
       }
     } catch (err) {
       scan.status = 'error';
@@ -4387,8 +4420,8 @@ function pruneIds(ids, channels) {
         ? h('div', { className: 'row' }, ATK.Button({
             variant: 'secondary', children: 'Copy all URLs',
             onClick: async () => {
-              try { await navigator.clipboard.writeText(orphanUrls(orphans).join('\n')); ATK.Notice.show({ message: `Copied ${plural(orphans.length, 'URL')}.`, variant: 'success' }); }
-              catch { ATK.Notice.show({ message: "Couldn't copy to the clipboard. Select the links below instead.", variant: 'alert', duration: 8000 }); }
+              try { await navigator.clipboard.writeText(orphanUrls(orphans).join('\n')); ATK.Toast.show({ message: `Copied ${plural(orphans.length, 'URL')}.`, variant: 'success' }); }
+              catch { ATK.Toast.show({ message: "Couldn't copy to the clipboard. Select the links below instead.", variant: 'alert', duration: 8000 }); }
             },
           }))
         : null,

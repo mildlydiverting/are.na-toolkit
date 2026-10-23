@@ -5,7 +5,7 @@
   const h = (tag, attrs, kids) => ATK._el(tag, attrs, kids);
 
   const throttle = createThrottle({
-    onWait: (seconds) => ATK.Notice.show({ message: `are.na asked us to slow down. Waiting ${seconds}s, then carrying on.`, variant: 'notification', duration: seconds * 1000 }),
+    onWait: (seconds) => ATK.Toast.show({ message: `are.na asked us to slow down. Waiting ${seconds}s, then carrying on.`, variant: 'notification', duration: seconds * 1000 }),
   });
   const client = createArenaClient({ throttle });
 
@@ -244,7 +244,7 @@
       scan.result.clusters = addUnscannedPlaces(scan.result.clusters, scan.connections);
       scan.status = 'done';
       for (const sk of scan.result.skipped) {
-        ATK.Notice.show({ message: `Couldn't read ${sk.channel.title || sk.channel.slug}, so it was skipped.`, variant: 'alert', duration: 8000 });
+        ATK.Toast.show({ message: `Couldn't read ${sk.channel.title || sk.channel.slug}, so it was skipped.`, variant: 'alert', duration: 8000 });
       }
     } catch (err) {
       scan.status = 'error';
@@ -375,8 +375,8 @@
         ? h('div', { className: 'row' }, ATK.Button({
             variant: 'secondary', children: 'Copy all URLs',
             onClick: async () => {
-              try { await navigator.clipboard.writeText(orphanUrls(orphans).join('\n')); ATK.Notice.show({ message: `Copied ${plural(orphans.length, 'URL')}.`, variant: 'success' }); }
-              catch { ATK.Notice.show({ message: "Couldn't copy to the clipboard. Select the links below instead.", variant: 'alert', duration: 8000 }); }
+              try { await navigator.clipboard.writeText(orphanUrls(orphans).join('\n')); ATK.Toast.show({ message: `Copied ${plural(orphans.length, 'URL')}.`, variant: 'success' }); }
+              catch { ATK.Toast.show({ message: "Couldn't copy to the clipboard. Select the links below instead.", variant: 'alert', duration: 8000 }); }
             },
           }))
         : null,

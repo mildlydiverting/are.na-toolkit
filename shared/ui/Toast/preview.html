@@ -1,0 +1,19 @@
+<!-- @dsCard group="Feedback" height=300 -->
+<!doctype html>
+<html>
+<head><style>
+  body { margin: 0; padding: 20px; background: var(--surface-page); color: var(--text-primary); font-family: var(--font-sans); min-height: 260px; }
+  #root { display: flex; gap: 10px; }
+</style></head>
+<body>
+<div id="root"></div>
+<script>
+  var ATK = window.ArenaToolkit, root = document.getElementById('root');
+  root.append(
+    ATK.Button({ variant: 'secondary', children: 'Show a toast', onClick: function () { ATK.Toast.show({ message: 'Copied 3 URLs.', variant: 'success' }); } })
+  );
+  ATK.Toast.show({ message: "You're viewing a private channel that has been shared with you.", duration: 0 });
+  ATK.Toast.show({ message: "Couldn't read that channel, so it was skipped.", variant: 'error', duration: 0 });
+</script>
+</body>
+</html>
