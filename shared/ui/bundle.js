@@ -208,21 +208,107 @@
     return backdrop;
   }
 
+  /* Select: a button that opens a styled list (the same look as Menu), not the browser's own list.
+     It returns a wrapper <div> that behaves like a <select> for callers: .value (get/set), .disabled,
+     .name, .id (goes to the button, so <label for> works) and a bubbling 'change' event. */
+  var selectCount = 0;
   function Select(opts) {
     opts = opts || {};
-    var attrs = {
-      className: 'atk-select',
-      name: opts.name || null,
-      disabled: opts.disabled || null,
-      onchange: opts.onChange
-    };
-    var options = (opts.options || []).map(function (o) {
-      if (typeof o === 'string') o = { value: o, label: o };
-      var optAttrs = { value: o.value };
-      if (o.value === opts.value) optAttrs.selected = '';
-      return el('option', optAttrs, o.label);
+    var items = (opts.options || []).map(function (o) {
+      return typeof o === 'string' ? { value: o, label: o } : o;
     });
-    return el('select', attrs, options);
+    var uid = 'atk-select-' + (++selectCount);
+    var current = null;
+    items.forEach(function (o) { if (o.value === opts.value) current = o; });
+    if (!current && items.length) current = items[0];
+
+    var button = el('button', {
+      type: 'button', className: 'atk-select', role: 'combobox',
+      'aria-haspopup': 'listbox', 'aria-expanded': 'false', 'aria-controls': uid + '-list'
+    }, current ? current.label : '');
+    var list = el('div', { className: 'atk-select__list', role: 'listbox', id: uid + '-list', hidden: true });
+    var optionEls = items.map(function (o, i) {
+      var opt = el('div', { className: 'atk-select__option', role: 'option', tabindex: '-1', id: uid + '-o' + i }, [
+        el('span', { className: 'atk-select__check', 'aria-hidden': 'true' }, '✓'),
+        el('span', { className: 'atk-select__text' }, o.label)
+      ]);
+      opt.addEventListener('click', function () { choose(i); });
+      opt.addEventListener('keydown', function (e) { optionKey(e, i); });
+      list.appendChild(opt);
+      return opt;
+    });
+    var wrap = el('div', { className: 'atk-select-wrap' }, [button, list]);
+    if (opts.name) wrap.setAttribute('data-name', opts.name);
+
+    function index() { return items.indexOf(current); }
+    function paint() {
+      button.textContent = current ? current.label : '';
+      optionEls.forEach(function (o, i) { o.setAttribute('aria-selected', items[i] === current ? 'true' : 'false'); });
+    }
+    function isOpen() { return !list.hidden; }
+    function open(focusIndex) {
+      if (button.disabled) return;
+      list.hidden = false;
+      button.setAttribute('aria-expanded', 'true');
+      var i = focusIndex == null ? Math.max(0, index()) : focusIndex;
+      if (optionEls[i]) optionEls[i].focus();
+    }
+    function close(refocus) {
+      list.hidden = true;
+      button.setAttribute('aria-expanded', 'false');
+      if (refocus) button.focus();
+    }
+    function choose(i) {
+      var changed = items[i] !== current;
+      current = items[i];
+      paint();
+      close(true);
+      if (changed) wrap.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    function optionKey(e, i) {
+      var k = e.key, n = optionEls.length, t = null;
+      if (k === 'ArrowDown') t = (i + 1) % n;
+      else if (k === 'ArrowUp') t = (i - 1 + n) % n;
+      else if (k === 'Home') t = 0;
+      else if (k === 'End') t = n - 1;
+      else if (k === 'Enter' || k === ' ') { e.preventDefault(); choose(i); return; }
+      else if (k === 'Escape') { e.preventDefault(); close(true); return; }
+      else if (k === 'Tab') { close(false); return; }
+      else if (k.length === 1) {
+        var low = k.toLowerCase();
+        for (var step = 1; step <= n; step++) {
+          var j = (i + step) % n;
+          if (items[j].label.toLowerCase().indexOf(low) === 0) { t = j; break; }
+        }
+      }
+      if (t != null) { e.preventDefault(); optionEls[t].focus(); }
+    }
+    button.addEventListener('click', function () { if (isOpen()) close(false); else open(); });
+    button.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); open(); }
+    });
+    document.addEventListener('mousedown', function (e) { if (isOpen() && !wrap.contains(e.target)) close(false); });
+    wrap.addEventListener('focusout', function (e) { if (isOpen() && e.relatedTarget && !wrap.contains(e.relatedTarget)) close(false); });
+
+    Object.defineProperty(wrap, 'value', {
+      get: function () { return current ? current.value : ''; },
+      set: function (v) {
+        for (var i = 0; i < items.length; i++) if (items[i].value === v) { current = items[i]; paint(); return; }
+      }
+    });
+    Object.defineProperty(wrap, 'disabled', {
+      get: function () { return button.disabled; },
+      set: function (v) { button.disabled = !!v; if (v) close(false); }
+    });
+    Object.defineProperty(wrap, 'id', {
+      get: function () { return button.id; },
+      set: function (v) { button.id = v; }
+    });
+    Object.defineProperty(wrap, 'name', { get: function () { return opts.name || ''; } });
+    if (opts.disabled) button.disabled = true;
+    if (opts.onChange) wrap.addEventListener('change', opts.onChange);
+    paint();
+    return wrap;
   }
 
   function Textarea(opts) {
@@ -426,16 +512,16 @@
   ThemeChooser.resolve = resolveTheme;
   ThemeChooser.choice = themeChoice;
 
-  /* ── ChannelRow / ChannelList ──────────────────────────────────
+  /* ── ConnectionListInfo / ConnectionList ──────────────────────────────────
      A channel as a coloured bar: badge, name, block count, metadata count,
      owner, caret. Opens (a <details>) to show whatever you pass as children.
-     ChannelList stacks rows and adds an optional sort menu; sorting itself
+     ConnectionList stacks rows and adds an optional sort menu; sorting itself
      is yours: re-order with list.setRows(). */
 
   var CHEVRON_SVG =
     '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>';
 
-  function ChannelRow(opts) {
+  function ConnectionListInfo(opts) {
     opts = opts || {};
     var visibility = opts.visibility || 'closed';
     var badgeVariant = { public: 'success', private: 'private' }[visibility] || 'default';
@@ -462,7 +548,7 @@
 
   var channelListCount = 0;
 
-  function ChannelList(opts) {
+  function ConnectionList(opts) {
     opts = opts || {};
     var root = el('div', { className: 'atk-channel-list' });
     var rowsEl = el('div', { className: 'atk-channel-list__rows' });
@@ -902,8 +988,8 @@
     StatGrid: StatGrid,
     StatusLog: StatusLog,
     Footer: Footer,
-    ChannelRow: ChannelRow,
-    ChannelList: ChannelList,
+    ConnectionListInfo: ConnectionListInfo,
+    ConnectionList: ConnectionList,
     ThemeChooser: ThemeChooser,
     StatusMessage: StatusMessage,
     Notice: Notice,

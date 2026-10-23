@@ -509,7 +509,7 @@
 }
 
 /* ────────────────────────────────────────────────────────────
-   ChannelRow / ChannelList — a channel as a coloured bar that opens
+   ConnectionListInfo / ConnectionList — a channel as a coloured bar that opens
    ──────────────────────────────────────────────────────────── */
 .atk-channel-row {
   --bar: var(--surface-card);
@@ -590,6 +590,7 @@
   font-weight: 700;
   color: var(--text-muted);
 }
+.atk-channel-list__toolbar .atk-select-wrap { width: auto; }
 .atk-channel-list__toolbar .atk-select { width: auto; min-width: 14em; }
 
 /* ────────────────────────────────────────────────────────────
@@ -670,6 +671,10 @@
           appearance: none;
   outline: none;
   cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M3 4.5 L6 7.5 L9 4.5' stroke='%23696969' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
   background-repeat: no-repeat;
   background-position: right 10px center;
@@ -679,6 +684,40 @@
 }
 .atk-select:hover { border-color: var(--border-strong); }
 .atk-select:focus { border-color: var(--accent-focus); }
+.atk-select-wrap { position: relative; display: block; width: 100%; }
+.atk-select__list {
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + var(--space-nudge));
+  left: 0;
+  min-width: 100%;
+  max-height: 280px;
+  overflow-y: auto;
+  box-sizing: border-box;
+  background: var(--surface-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-soft);
+  padding: var(--space-1) 0;
+  font-family: var(--font-sans);
+}
+.atk-select__list[hidden] { display: none; }
+.atk-select__option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-size: 14.4px;
+  font-weight: 700;
+  color: var(--text-primary);
+  cursor: pointer;
+  outline: none;
+  white-space: nowrap;
+}
+.atk-select__option:hover,
+.atk-select__option:focus-visible { background: var(--surface-sunken); }
+.atk-select__check { width: 1em; flex: none; visibility: hidden; color: var(--text-muted); }
+.atk-select__option[aria-selected="true"] .atk-select__check { visibility: visible; }
 .atk-select:disabled {
   color: var(--text-faint);
   background-color: var(--surface-sunken);

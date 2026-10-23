@@ -314,7 +314,7 @@
       ['Created', formatDate(ch.created_at)],
       ['Updated', formatDate(ch.updated_at)],
     ];
-    return ATK.ChannelRow({
+    return ATK.ConnectionListInfo({
       title: ch.title || ch.slug,
       visibility: ch.visibility || 'unknown',
       count: formatCount(counts.contents ?? counts.blocks),
@@ -328,7 +328,7 @@
     const channels = [];
     const rows = new Map();
     let mode = 'default';
-    const list = ATK.ChannelList({
+    const list = ATK.ConnectionList({
       sorts: CHANNEL_SORTS,
       onSort: (value) => { mode = value; list.setRows(sortChannels(channels, mode).map((ch) => rows.get(ch))); },
       rows: [h('p', { className: 'muted' }, 'Loading channels…')],

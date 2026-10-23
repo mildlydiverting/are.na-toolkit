@@ -16,7 +16,7 @@
   ];
   var rows = new Map();
   data.forEach(function (c) {
-    rows.set(c, atk.ChannelRow({
+    rows.set(c, atk.ConnectionListInfo({
       title: c.title, visibility: c.visibility, count: c.count >= 10000 ? '10k' : String(c.count),
       metadataCount: 0, owner: c.owner,
       children: [atk._el('p', null, 'No metadata set'), atk._el('p', null, 'Channel details go here.')]
@@ -27,7 +27,7 @@
     blocks: function (a, b) { return b.count - a.count; },
     title: function (a, b) { return a.title.localeCompare(b.title); }
   };
-  var list = atk.ChannelList({
+  var list = atk.ConnectionList({
     sorts: [{ value: 'default', label: 'Default order' }, { value: 'blocks', label: 'Most blocks' }, { value: 'title', label: 'Name A–Z' }],
     onSort: function (mode) { list.setRows(data.slice().sort(sorters[mode]).map(function (c) { return rows.get(c); })); }
   });

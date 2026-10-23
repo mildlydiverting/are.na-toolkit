@@ -67,7 +67,7 @@ See `CLAUDE.md`.
 The visual language for every tool. **The master is a claude.ai artifact**: <https://claude.ai/artifact/Ejq8nu3Z6tSKU8b4E8Cghn> (a "Design System" artifact type, edited live by Kim in the page and by Claude sessions). `shared/ui/` in this repo is a copy that tools include at build time.
 
 - `shared/ui/tokens.css` (four themes: light, dusk, dark, dawn; generated from the artifact's `tokens.json`), `bundle.css` and `bundle.js` (`window.ArenaToolkit`). `bundle.js` and `bundle.css` must stay **byte-identical** to the artifact's `project/components/` files; `tokens.css` must match `tokens.json`.
-- Components: Button, Input, Link, Card (unfilled by default; `variant: 'filled'`), Badge, Block, Modal, Menu, KeyChip, Select, Textarea, Tabs, Stepper, **ThemeChooser** (Light, Dusk, Dark, Dawn, System), **ChannelRow**, **ChannelList**. Docs and previews for the last three are in `shared/ui/<Component>/`; the others are documented in the artifact.
+- Components: Button, Input, Link, Card (unfilled by default; `variant: 'filled'`), Badge, Block, Modal, Menu, KeyChip, Select, Textarea, Tabs, Stepper, **ThemeChooser** (Light, Dusk, Dark, Dawn, System), **ConnectionListInfo**, **ConnectionList**. Docs and previews for the last three are in `shared/ui/<Component>/`; the others are documented in the artifact.
 - Colours follow are.na's own variables. The channel-row fills are tokens (`channel-bar-*`, `channel-badge-*`); the bars were verified against are.na's Light, Dawn, Dark and Dusk values.
 - **Changing it:** read `shared/ui/README.md` first. The short version: change the artifact and this folder together, never one alone, and never publish an old copy of a file over a newer one (Kim edits the artifact live).
 

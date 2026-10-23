@@ -1,4 +1,4 @@
-ChannelRow — a channel as a coloured bar that opens like an accordion.
+ConnectionListInfo (formerly ChannelRow) — a channel as a coloured bar that opens like an accordion.
 
 One line per channel: visibility badge, name, block count, metadata count, owner, and a caret at the end. Click to open; whatever you pass as `children` fills the panel. Built on a native `<details>`, so keyboard and screen readers work without extra code.
 
@@ -42,7 +42,7 @@ Dawn private (3.2 on the bar, 2.7 on the badge) and Dawn public badge (3.5) are 
 ## Usage
 
 ```js
-list.appendChild(ArenaToolkit.ChannelRow({
+list.appendChild(ArenaToolkit.ConnectionListInfo({
   title: 'Design',
   visibility: 'public',
   count: '516',
@@ -52,4 +52,4 @@ list.appendChild(ArenaToolkit.ChannelRow({
 }));
 ```
 
-Use inside a [ChannelList](../ChannelList/README.md) to get spacing and sorting.
+Use inside a [ConnectionList](../ConnectionList/README.md) to get spacing and sorting.
