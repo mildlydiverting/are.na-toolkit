@@ -1248,6 +1248,34 @@
 
 </style>
 <style>
+/* A gentle pulse for "working on it" text: 1 -> 0.5 -> 1 over six seconds. Add class atk-busy to any element.
+   The auth panel's info line is always a progress message ("Checking token…", "Loading your channels…"), so it pulses too. */
+@keyframes atk-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+.atk-busy, .atk-auth .atk-status--info { animation: atk-pulse 6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .atk-busy, .atk-auth .atk-status--info { animation: none; }
+}
+
+</style>
+<style>
+.atk-footer {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-3) var(--space-8);
+  border-top: 1px solid var(--border-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+}
+.atk-footer__title { margin: 0; font: var(--text-ui-strong); color: var(--text-heading); }
+.atk-footer p { margin: 0; max-width: 60em; }
+.atk-footer a { color: inherit; }
+.atk-footer a:hover { color: var(--text-primary); }
+
+</style>
+<style>
 /* Notice */
 .atk-notice-stack {
   position: fixed;
@@ -1501,6 +1529,8 @@ body {
       <section class="step-pane" id="step-pane" aria-live="polite"></section>
     </div>
   </main>
+
+  <footer id="footer"></footer>
 
 <script>
 /* ArenaToolkit — component bundle. Classic script, assigns window.ArenaToolkit. */
@@ -2578,10 +2608,12 @@ function blockCount(c) {
 
 // channels: [{ id, slug, title, visibility, counts }]; selected: [id]
 // onRefresh (optional): async () => fresh channels array. Adds a Refresh button that reloads the list and keeps the ticks.
+// disabledIds (optional): ids shown greyed out and unselectable.
 // multiple (default true): false makes it a pick-one list (radio buttons, no Clear); onConfirm still gets an array, of one id.
 // Returns { element, open(), close() }; the element is a Modal you append to document.body.
-function openChannelPicker({ channels, selected = [], title = 'Pick channels', confirmLabel = 'Use', multiple = true, onConfirm, onCancel = null, onRefresh = null }) {
+function openChannelPicker({ channels, selected = [], title = 'Pick channels', confirmLabel = 'Use', multiple = true, disabledIds = [], onConfirm, onCancel = null, onRefresh = null }) {
   const ATK = window.ArenaToolkit;
+  const disabledSet = new Set(disabledIds);
   let chosen = multiple ? [...selected] : selected.slice(0, 1);
   let query = '';
 
@@ -2612,33 +2644,31 @@ function openChannelPicker({ channels, selected = [], title = 'Pick channels', c
     updateConfirm();
   }
 
+  // Uses ArenaToolkit.Checkbox / Radio (shared/components), so the ticks match the rest of the toolkit.
   function row(c) {
-    const box = document.createElement('input');
-    box.type = multiple ? 'checkbox' : 'radio';
-    if (!multiple) box.name = 'atk-channel-pick';
-    box.checked = chosen.includes(c.id);
-    box.addEventListener('change', () => { chosen = selectId(chosen, c.id, multiple); updateConfirm(); });
-
     const n = blockCount(c);
-    const text = document.createElement('span');
-    Object.assign(text.style, { flex: '1', minWidth: '0' });
-    const name = document.createElement('span');
-    name.textContent = c.title || c.slug;
-    const meta = document.createElement('span');
-    meta.textContent = `${n ?? '?'} block${n === 1 ? '' : 's'} · ${c.slug}`;
-    Object.assign(meta.style, { display: 'block', color: 'var(--text-muted)', font: 'var(--text-body-sm)' });
-    text.append(name, meta);
+    const common = {
+      label: c.title || c.slug,
+      description: `${n ?? '?'} block${n === 1 ? '' : 's'} · ${c.slug}`,
+      checked: chosen.includes(c.id),
+      disabled: disabledSet.has(c.id),
+    };
+    const control = multiple
+      ? ATK.Checkbox({ ...common, onChange: () => { chosen = selectId(chosen, c.id, multiple); updateConfirm(); } })
+      : ATK.Radio({ ...common, name: 'atk-channel-pick', value: c.id, onChange: () => { chosen = selectId(chosen, c.id, multiple); updateConfirm(); } });
+    control.style.flex = '1';
+    control.style.minWidth = '0';
 
-    const label = document.createElement('label');
-    Object.assign(label.style, {
-      display: 'flex', alignItems: 'center', gap: 'var(--space-2)', cursor: 'pointer',
+    const line = document.createElement('div');
+    Object.assign(line.style, {
+      display: 'flex', alignItems: 'center', gap: 'var(--space-2)',
       padding: 'var(--space-2) var(--space-1)', borderBottom: '1px solid var(--border-card)',
     });
-    label.append(box, text);
+    line.append(control);
     if (c.visibility && c.visibility !== 'public') {
-      label.append(ATK.Badge({ variant: c.visibility === 'private' ? 'private' : 'default', children: c.visibility }));
+      line.append(ATK.Badge({ variant: c.visibility === 'private' ? 'private' : 'default', children: c.visibility }));
     }
-    return label;
+    return line;
   }
 
   const clear = ATK.Button({ variant: 'ghost', children: 'Clear', onClick: () => { chosen = []; renderList(); } });
@@ -2803,6 +2833,40 @@ if (typeof window !== 'undefined' && window.ArenaToolkit) {
     return root;
   };
 }
+
+</script>
+<script>
+// Footer: the shared "About" block for every tool. Lives in shared/components until promoted into shared/ui.
+//   Footer({ toolNote })   toolNote: optional string or node, shown first under the heading (what this tool does with your data, say).
+// Put <footer id="footer"></footer> in the page and call document.getElementById('footer').replaceWith(ArenaToolkit.Footer({...})).
+window.ArenaToolkit.Footer = function Footer({ toolNote = null } = {}) {
+  const h = window.ArenaToolkit._el;
+  const a = (href, text) => h('a', { href, target: '_blank', rel: 'noopener' }, text);
+  const REPO = 'https://github.com/mildlydiverting/are.na-toolkit';
+  return h('footer', { className: 'atk-footer' }, [
+    h('h2', { className: 'atk-footer__title' }, 'About'),
+    toolNote ? h('p', null, toolNote) : null,
+    h('p', null, ['Runs locally in your browser. Your data is only sent to ', a('https://www.are.na/developers', h('code', null, 'api.are.na')), '.']),
+    h('p', null, [
+      'Part of a collection of ', h('a', { href: '../index.html' }, 'Are.na Tools and Toys'),
+      ' built on the ', a('https://www.are.na/developers', 'are.na API'), ' by ', a('https://www.mildlydiverting.com', 'Kim Plowright'),
+      '. Not affiliated with or endorsed by ', a('https://www.are.na', 'are.na'), '.',
+    ]),
+    h('p', null, [
+      h('em', null, 'Vibe-coded.'),
+      " This tool was built with an AI assistant (and a slight sheepish sense of guilt). It works for me and is tested, but no guarantees the robot and I haven't fucked it up somehow: try it on something unimportant first, and use the dry run options to check it does what you expect. Source on ",
+      a(REPO, 'GitHub'), ' under the ', a(`${REPO}/blob/main/LICENSE`, 'MIT license'), '. Found a bug? Let me know in ',
+      a(`${REPO}/issues`, 'GitHub issues'), '. Be kind, I am a gentle soul.',
+    ]),
+    h('p', null, [
+      'Want to know more? Find me on ', a('https://www.are.na/kim-plowright', 'Are.na'), ', ',
+      a('https://www.instagram.com/mildlydiverting/', 'Instagram'), ', ',
+      a('https://bsky.app/profile/mildlydiverting.bsky.social', 'Bluesky'), ', get my ',
+      a('https://www.mildlydiverting.com/newsletter', 'newsletter'), ' or ',
+      a('https://www.mildlydiverting.com/classes-workshops-teaching', 'come to my drawing classes in Canterbury or Ramsgate, UK'), '.',
+    ]),
+  ].filter(Boolean));
+};
 
 </script>
 <script>
@@ -4274,5 +4338,6 @@ function pruneIds(ids, channels) {
 })();
 
 </script>
+  <script>document.getElementById('footer').replaceWith(ArenaToolkit.Footer({ toolNote: 'Resolving a group marks the duplicates in their description and unlinks them from your channels. The blocks themselves are never deleted.' }));</script>
 </body>
 </html>

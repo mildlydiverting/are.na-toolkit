@@ -23,6 +23,9 @@
   <!-- @include shared/components/progress.css -->
   <!-- @include shared/components/stat-grid.css -->
   <!-- @include shared/components/status-log.css -->
+  <!-- @include shared/components/busy.css -->
+  <!-- @include shared/components/footer.css -->
+  <!-- @include shared/widgets/channel-finder.css -->
   <!-- @include ./styles.css -->
 </head>
 <body>
@@ -33,7 +36,7 @@
   <main class="merge-main">
     <div class="page-title">
       <h1>Are.na Merge</h1>
-      <p class="lede">Copy every block from one channel into another, with a dry run first.</p>
+      <p class="lede" id="lede">Add every block from one <a href="https://www.are.na" target="_blank" rel="noopener">Are.na</a> channel into another, in one go.</p>
     </div>
 
     <p class="atk-status atk-status--info" id="notice" role="status" hidden></p>
@@ -44,23 +47,23 @@
     </div>
   </main>
 
-  <footer class="merge-footer">
-    <p>Runs in your browser. Your are.na access is only sent to <code>api.are.na</code>. Part of <a href="../index.html">Are.na Tools and Toys</a> by <a href="https://www.mildlydiverting.com/about">Kim Plowright</a>.</p>
-    <p><a href="https://github.com/mildlydiverting/are.na-toolkit">Source on GitHub</a></p>
-  </footer>
+  <footer id="footer"></footer>
 
   <!-- @include shared/ui/bundle.js -->
   <!-- @include shared/api/arena-client.js -->
   <!-- @include shared/api/throttle.js -->
   <!-- @include shared/widgets/auth-step.js -->
   <!-- @include shared/widgets/channel-picker.js -->
+  <!-- @include shared/widgets/channel-finder.js -->
   <!-- @include shared/components/checkbox.js -->
   <!-- @include shared/components/radio.js -->
   <!-- @include shared/components/progress.js -->
   <!-- @include shared/components/stat-grid.js -->
   <!-- @include shared/components/status-log.js -->
+  <!-- @include shared/components/footer.js -->
   <!-- @include ./helpers.js -->
   <!-- @include ./transfer.js -->
   <!-- @include ./app.js -->
+  <script>document.getElementById('footer').replaceWith(ArenaToolkit.Footer({ toolNote: 'Blocks are matched by their are.na id. Nothing is deleted: removing a block from the source only removes its connection to that channel.' }));</script>
 </body>
 </html>

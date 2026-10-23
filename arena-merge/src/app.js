@@ -22,6 +22,7 @@
     source: null, dest: null, // { id, slug, title, status, user, contents }
     opts: { deleteFromSource: false, quietMode: false },
     status: { source: null, dest: null }, // { tone, text }
+    typed: { source: '', dest: '' },
     run: null,
   };
 
@@ -41,20 +42,27 @@
     noticeTimer = setTimeout(() => { live.hidden = true; }, 6000);
   }
 
+  async function loadChannels(user = state.user) {
+    state.myChannels = (await client.getUserContents(user.id, { type: 'Channel' })).filter(c => c && c.state !== 'deleted');
+    return state.myChannels;
+  }
+
   /* ── Auth ─────────────────────────────────────────────────── */
   const auth = createAuthStep({
     client,
     requireWrite: true,
     panel: true,
     loadDetail: async (user) => {
-      state.myChannels = (await client.getUserContents(user.id, { type: 'Channel' })).filter(c => c && c.state !== 'deleted');
+      await loadChannels(user);
       const n = state.myChannels.length;
       return `${n} of your channel${n === 1 ? '' : 's'} loaded`;
     },
     onChange: (user) => {
       state.user = user;
+      account.setUser(user);
+      accountSlot.hidden = !user;
       if (!user) {
-        Object.assign(state, { furthest: 0, step: 0, myChannels: [], source: null, dest: null, run: null, status: { source: null, dest: null } });
+        Object.assign(state, { furthest: 0, step: 0, myChannels: [], source: null, dest: null, run: null, status: { source: null, dest: null }, typed: { source: '', dest: '' } });
       }
       render();
     },
@@ -109,7 +117,7 @@
   const ROLES = {
     source: {
       key: 'source', index: 1, title: 'Source channel', field: 'Source channel',
-      intro: [h('span', null, 'The channel you want to copy blocks '), h('strong', null, 'from'), h('span', null, '. Paste a slug or full are.na URL.')],
+      intro: [h('span', null, 'The channel you want to copy blocks '), h('strong', null, 'from'), h('span', null, '. Pick one of your channels, or paste a slug or full are.na URL.')],
       pickTitle: 'Pick the source channel',
     },
     dest: {
@@ -125,6 +133,7 @@
 
   // Loads a channel and its contents, then stores it as the source or destination.
   async function loadChannel(role, rawInput) {
+    state.typed[role] = rawInput;
     const slug = parseSlug(rawInput);
     if (!slug) { setStatus(role, 'error', 'Paste a slug or URL.'); return render(); }
     if (role === 'dest' && state.source && slug === state.source.slug) {
@@ -177,26 +186,18 @@
 
   function stepChannel(role) {
     const r = ROLES[role];
-    const input = ATK.Input({ placeholder: 'slug or https://www.are.na/user/channel', spellcheck: false });
-    input.setAttribute('aria-label', r.field);
-    input.value = state[role] ? state[role].slug : '';
-    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') loadChannel(role, input.value); });
-
-    const pick = h('button', { type: 'button', className: 'link-button' }, '↳ or pick from your channels');
-    pick.addEventListener('click', () => {
-      const other = state[role === 'source' ? 'dest' : 'source'];
-      openChannelPicker({
-        channels: state.myChannels.filter(c => !other || c.id !== other.id),
-        selected: state[role] ? [state[role].id] : [],
-        title: r.pickTitle,
-        confirmLabel: 'Use this channel',
-        multiple: false,
-        onConfirm: (ids) => {
-          const c = state.myChannels.find(x => x.id === ids[0]);
-          if (c) { input.value = c.slug; loadChannel(role, c.slug); }
-        },
-      });
+    const otherKey = role === 'source' ? 'dest' : 'source';
+    const finder = createChannelFinder({
+      channels: state.myChannels,
+      label: r.field,
+      // Once one channel is chosen, the other box can't pick it again.
+      disabled: (c) => state[otherKey] && c.id === state[otherKey].id
+        ? `Already chosen as the ${role === 'source' ? 'destination' : 'source'}` : '',
+      onRefresh: loadChannels,
+      onPick: (c) => loadChannel(role, c.slug),
+      onSubmit: (text) => loadChannel(role, text),
     });
+    finder.setValue(state.typed[role] || (state[role] ? state[role].slug : ''));
 
     const st = state.status[role];
     const ch = state[role];
@@ -206,8 +207,7 @@
       h('p', null, r.intro),
       h('div', { className: 'stack' }, [
         h('label', { className: 'field-label' }, r.field),
-        h('div', { className: 'row' }, [input, ATK.Button({ variant: 'secondary', children: 'Check', onClick: () => loadChannel(role, input.value) })]),
-        h('div', null, pick),
+        finder.element,
       ]),
       st ? ATK.StatusMessage({ tone: st.tone, children: st.text }) : null,
       ch ? channelCard(ch) : null,
@@ -380,13 +380,17 @@
     els.pane.replaceChildren(...kids);
   }
 
+  // Signed-in name and Disconnect, shown beside the theme chooser once connected.
+  const account = ATK.AccountMenu({ onDisconnect: () => auth.disconnect() });
+  const accountSlot = h('div', { className: 'account-slot', hidden: true }, account);
+
   function mountHeader() {
     const crumbs = h('nav', { className: 'crumbs', 'aria-label': 'Breadcrumb' },
       h('ol', null, [
         h('li', null, ATK.Link({ variant: 'muted', href: 'index.html', children: 'Are.na Tools' })),
         h('li', { 'aria-current': 'page' }, 'Are.na Merge'),
       ]));
-    els.header.append(crumbs, ATK.ThemeChooser());
+    els.header.append(crumbs, h('div', { className: 'header-tools' }, [accountSlot, ATK.ThemeChooser()]));
   }
 
   mountHeader();

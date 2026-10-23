@@ -10,6 +10,8 @@
   <!-- @include shared/components/checkbox.css -->
   <!-- @include shared/components/radio.css -->
   <!-- @include shared/components/progress.css -->
+  <!-- @include shared/components/busy.css -->
+  <!-- @include shared/components/footer.css -->
   <!-- @include ./components/notice.css -->
   <!-- @include ./styles.css -->
 </head>
@@ -30,6 +32,8 @@
     </div>
   </main>
 
+  <footer id="footer"></footer>
+
   <!-- @include shared/ui/bundle.js -->
   <!-- @include shared/api/arena-client.js -->
   <!-- @include shared/api/throttle.js -->
@@ -39,6 +43,7 @@
   <!-- @include shared/components/checkbox.js -->
   <!-- @include shared/components/radio.js -->
   <!-- @include shared/components/progress.js -->
+  <!-- @include shared/components/footer.js -->
   <!-- @include ./components/notice.js -->
   <!-- @include ./clustering.js -->
   <!-- @include ./scan.js -->
@@ -50,5 +55,6 @@
   <!-- @include ./review-view.js -->
   <!-- @include ./scan-sets.js -->
   <!-- @include ./app.js -->
+  <script>document.getElementById('footer').replaceWith(ArenaToolkit.Footer({ toolNote: 'Resolving a group marks the duplicates in their description and unlinks them from your channels. The blocks themselves are never deleted.' }));</script>
 </body>
 </html>

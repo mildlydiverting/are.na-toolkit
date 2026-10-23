@@ -1317,6 +1317,71 @@
 
 </style>
 <style>
+/* A gentle pulse for "working on it" text: 1 -> 0.5 -> 1 over six seconds. Add class atk-busy to any element.
+   The auth panel's info line is always a progress message ("Checking token…", "Loading your channels…"), so it pulses too. */
+@keyframes atk-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+.atk-busy, .atk-auth .atk-status--info { animation: atk-pulse 6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .atk-busy, .atk-auth .atk-status--info { animation: none; }
+}
+
+</style>
+<style>
+.atk-footer {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-3) var(--space-8);
+  border-top: 1px solid var(--border-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+}
+.atk-footer__title { margin: 0; font: var(--text-ui-strong); color: var(--text-heading); }
+.atk-footer p { margin: 0; max-width: 60em; }
+.atk-footer a { color: inherit; }
+.atk-footer a:hover { color: var(--text-primary); }
+
+</style>
+<style>
+.atk-finder { position: relative; }
+.atk-finder .atk-input { width: 100%; }
+.atk-finder__panel {
+  margin-top: var(--space-1);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm, 3px);
+  background: var(--surface-card);
+}
+.atk-finder__rows { max-height: 40vh; overflow-y: auto; display: flex; flex-direction: column; }
+.atk-finder__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border-card);
+  cursor: pointer;
+}
+.atk-finder__row:hover, .atk-finder__row.is-active { background: var(--surface-sunken); }
+.atk-finder__row.is-active { outline: 2px solid var(--accent-focus); outline-offset: -2px; }
+.atk-finder__row.is-disabled { opacity: 0.5; cursor: not-allowed; }
+.atk-finder__row.is-disabled:hover { background: none; }
+.atk-finder__text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.atk-finder__name { font: var(--text-ui); color: var(--text-primary); overflow-wrap: anywhere; }
+.atk-finder__meta { font: var(--text-body-sm); color: var(--text-muted); }
+.atk-finder__hint { margin: 0; padding: var(--space-3); color: var(--text-muted); font: var(--text-body-sm); }
+.atk-finder__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-top: 1px solid var(--border-card);
+}
+.atk-finder__status { margin: 0; color: var(--text-muted); font: var(--text-body-sm); }
+
+</style>
+<style>
 /* Tool-local layout only. Everything else comes from shared/ui. */
 * { box-sizing: border-box; }
 
@@ -1480,18 +1545,9 @@ body {
 
 #notice { max-width: 1100px; margin: 0 auto; padding: 0 var(--space-3); }
 
-.merge-footer {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: var(--space-5) var(--space-3) var(--space-8);
-  border-top: 1px solid var(--border-card);
-  font: var(--text-body-sm);
-  color: var(--text-muted);
-}
-.merge-footer p { margin: 0 0 var(--space-2); }
-.merge-footer a { color: inherit; }
-.atk-card__body > .card-meta + .row { margin-top: var(--space-3); }
-.atk-card__body > .card-meta + .action-hint { margin-top: var(--space-2); }
+.header-tools { display: flex; align-items: center; gap: var(--space-3); }
+.account-slot[hidden] { display: none; }
+.lede a { color: inherit; }
 
 </style>
 </head>
@@ -1503,7 +1559,7 @@ body {
   <main class="merge-main">
     <div class="page-title">
       <h1>Are.na Merge</h1>
-      <p class="lede">Copy every block from one channel into another, with a dry run first.</p>
+      <p class="lede" id="lede">Add every block from one <a href="https://www.are.na" target="_blank" rel="noopener">Are.na</a> channel into another, in one go.</p>
     </div>
 
     <p class="atk-status atk-status--info" id="notice" role="status" hidden></p>
@@ -1514,10 +1570,7 @@ body {
     </div>
   </main>
 
-  <footer class="merge-footer">
-    <p>Runs in your browser. Your are.na access is only sent to <code>api.are.na</code>. Part of <a href="../index.html">Are.na Tools and Toys</a> by <a href="https://www.mildlydiverting.com/about">Kim Plowright</a>.</p>
-    <p><a href="https://github.com/mildlydiverting/are.na-toolkit">Source on GitHub</a></p>
-  </footer>
+  <footer id="footer"></footer>
 
 <script>
 /* ArenaToolkit — component bundle. Classic script, assigns window.ArenaToolkit. */
@@ -2558,10 +2611,12 @@ function blockCount(c) {
 
 // channels: [{ id, slug, title, visibility, counts }]; selected: [id]
 // onRefresh (optional): async () => fresh channels array. Adds a Refresh button that reloads the list and keeps the ticks.
+// disabledIds (optional): ids shown greyed out and unselectable.
 // multiple (default true): false makes it a pick-one list (radio buttons, no Clear); onConfirm still gets an array, of one id.
 // Returns { element, open(), close() }; the element is a Modal you append to document.body.
-function openChannelPicker({ channels, selected = [], title = 'Pick channels', confirmLabel = 'Use', multiple = true, onConfirm, onCancel = null, onRefresh = null }) {
+function openChannelPicker({ channels, selected = [], title = 'Pick channels', confirmLabel = 'Use', multiple = true, disabledIds = [], onConfirm, onCancel = null, onRefresh = null }) {
   const ATK = window.ArenaToolkit;
+  const disabledSet = new Set(disabledIds);
   let chosen = multiple ? [...selected] : selected.slice(0, 1);
   let query = '';
 
@@ -2592,33 +2647,31 @@ function openChannelPicker({ channels, selected = [], title = 'Pick channels', c
     updateConfirm();
   }
 
+  // Uses ArenaToolkit.Checkbox / Radio (shared/components), so the ticks match the rest of the toolkit.
   function row(c) {
-    const box = document.createElement('input');
-    box.type = multiple ? 'checkbox' : 'radio';
-    if (!multiple) box.name = 'atk-channel-pick';
-    box.checked = chosen.includes(c.id);
-    box.addEventListener('change', () => { chosen = selectId(chosen, c.id, multiple); updateConfirm(); });
-
     const n = blockCount(c);
-    const text = document.createElement('span');
-    Object.assign(text.style, { flex: '1', minWidth: '0' });
-    const name = document.createElement('span');
-    name.textContent = c.title || c.slug;
-    const meta = document.createElement('span');
-    meta.textContent = `${n ?? '?'} block${n === 1 ? '' : 's'} · ${c.slug}`;
-    Object.assign(meta.style, { display: 'block', color: 'var(--text-muted)', font: 'var(--text-body-sm)' });
-    text.append(name, meta);
+    const common = {
+      label: c.title || c.slug,
+      description: `${n ?? '?'} block${n === 1 ? '' : 's'} · ${c.slug}`,
+      checked: chosen.includes(c.id),
+      disabled: disabledSet.has(c.id),
+    };
+    const control = multiple
+      ? ATK.Checkbox({ ...common, onChange: () => { chosen = selectId(chosen, c.id, multiple); updateConfirm(); } })
+      : ATK.Radio({ ...common, name: 'atk-channel-pick', value: c.id, onChange: () => { chosen = selectId(chosen, c.id, multiple); updateConfirm(); } });
+    control.style.flex = '1';
+    control.style.minWidth = '0';
 
-    const label = document.createElement('label');
-    Object.assign(label.style, {
-      display: 'flex', alignItems: 'center', gap: 'var(--space-2)', cursor: 'pointer',
+    const line = document.createElement('div');
+    Object.assign(line.style, {
+      display: 'flex', alignItems: 'center', gap: 'var(--space-2)',
       padding: 'var(--space-2) var(--space-1)', borderBottom: '1px solid var(--border-card)',
     });
-    label.append(box, text);
+    line.append(control);
     if (c.visibility && c.visibility !== 'public') {
-      label.append(ATK.Badge({ variant: c.visibility === 'private' ? 'private' : 'default', children: c.visibility }));
+      line.append(ATK.Badge({ variant: c.visibility === 'private' ? 'private' : 'default', children: c.visibility }));
     }
-    return label;
+    return line;
   }
 
   const clear = ATK.Button({ variant: 'ghost', children: 'Clear', onClick: () => { chosen = []; renderList(); } });
@@ -2671,6 +2724,163 @@ function openChannelPicker({ channels, selected = [], title = 'Pick channels', c
   document.body.append(modal);
   setTimeout(() => filter.focus(), 50);
   return { element: modal, close: done };
+}
+
+</script>
+<script>
+// Inline channel finder: a text box that opens your channels as a list right under it.
+// Click in and the list opens; type to filter it; paste a slug or are.na URL and press Enter (or paste) to load that instead.
+// Knows nothing about what the channel is for. Needs filterChannels from channel-picker.js and ArenaToolkit.Badge.
+
+// A pasted URL (or are.na path) is a reference to load, not a search to run.
+function looksLikeChannelRef(text) {
+  return /^https?:\/\//i.test(String(text || '').trim()) || /are\.na\//i.test(String(text || ''));
+}
+
+// Move the highlighted row by dir (+1 / -1), wrapping, skipping rows that cannot be chosen. -1 means none highlighted.
+function nextActive(current, enabled, dir) {
+  const n = enabled.length;
+  if (!n || !enabled.some(Boolean)) return -1;
+  let i = current;
+  for (let step = 0; step < n; step++) {
+    i = i < 0 ? (dir > 0 ? 0 : n - 1) : (i + dir + n) % n;
+    if (enabled[i]) return i;
+  }
+  return -1;
+}
+
+// channels: [{ id, slug, title, visibility, counts }]
+// onPick(channel): a row was chosen. onSubmit(text): Enter or paste on something that is not a list match (a slug or URL).
+// disabled(channel): returns a reason string to grey the row out and make it unselectable, or '' / null to allow it.
+// onRefresh(): async, returns a fresh channels array. staleAfterMs: refresh quietly on focus when the list is older than this.
+// Returns { element, input, setChannels(list), setValue(text), focus() }.
+function createChannelFinder({
+  channels = [], label = 'Channel', placeholder = 'Find one of your channels, or paste a slug or URL',
+  onPick, onSubmit = null, disabled = () => '', onRefresh = null, staleAfterMs = 5 * 60 * 1000,
+} = {}) {
+  const ATK = window.ArenaToolkit;
+  const h = ATK._el;
+  let list = channels;
+  let loadedAt = Date.now();
+  let open = false;
+  let active = -1;
+  let shown = []; // channels currently listed
+  const uid = 'atk-finder-' + Math.random().toString(36).slice(2, 8);
+
+  const input = ATK.Input({ placeholder, spellcheck: false, autocomplete: 'off' });
+  input.setAttribute('role', 'combobox');
+  input.setAttribute('aria-label', label);
+  input.setAttribute('aria-autocomplete', 'list');
+  input.setAttribute('aria-expanded', 'false');
+  input.setAttribute('aria-controls', uid);
+
+  const rows = h('div', { className: 'atk-finder__rows', role: 'listbox', id: uid, 'aria-label': `${label} suggestions` });
+  const status = h('p', { className: 'atk-finder__status', role: 'status' });
+  const refreshBtn = onRefresh ? ATK.Button({ variant: 'ghost', size: 'sm', children: 'Refresh', onClick: () => refresh() }) : null;
+  const foot = h('div', { className: 'atk-finder__foot' }, [status, refreshBtn].filter(Boolean));
+  const panel = h('div', { className: 'atk-finder__panel', hidden: true }, [rows, foot]);
+  const root = h('div', { className: 'atk-finder' }, [input, panel]);
+
+  const count = (c) => c.counts?.contents ?? c.counts?.blocks ?? c.length ?? null;
+
+  function render() {
+    const ref = looksLikeChannelRef(input.value);
+    shown = ref ? [] : filterChannels(list, input.value);
+    const enabled = shown.map(c => !disabled(c));
+    if (active >= shown.length || (active >= 0 && !enabled[active])) active = -1;
+    if (ref) {
+      rows.replaceChildren(h('p', { className: 'atk-finder__hint' }, 'Press Enter to load this channel.'));
+    } else if (!shown.length) {
+      rows.replaceChildren(h('p', { className: 'atk-finder__hint' }, input.value.trim() ? `No channel of yours matches “${input.value.trim()}”. Press Enter to try it as a slug.` : 'No channels to show.'));
+    } else {
+      rows.replaceChildren(...shown.map((c, i) => {
+        const why = disabled(c);
+        const n = count(c);
+        const row = h('div', {
+          className: 'atk-finder__row' + (i === active ? ' is-active' : '') + (why ? ' is-disabled' : ''),
+          role: 'option', id: `${uid}-${i}`, 'aria-selected': i === active ? 'true' : 'false', 'aria-disabled': why ? 'true' : null,
+        }, [
+          h('span', { className: 'atk-finder__text' }, [
+            h('span', { className: 'atk-finder__name' }, c.title || c.slug),
+            h('span', { className: 'atk-finder__meta' }, why || `${n ?? '?'} block${n === 1 ? '' : 's'} · ${c.slug}`),
+          ]),
+          c.visibility && c.visibility !== 'public' ? ATK.Badge({ variant: c.visibility === 'private' ? 'private' : 'default', children: c.visibility }) : null,
+        ].filter(Boolean));
+        // mousedown, not click: the input's blur would close the list before a click lands.
+        row.addEventListener('mousedown', (e) => { e.preventDefault(); if (!why) choose(c); });
+        return row;
+      }));
+    }
+    input.setAttribute('aria-activedescendant', active >= 0 ? `${uid}-${active}` : '');
+    status.textContent = `${list.length} channel${list.length === 1 ? '' : 's'}`;
+  }
+
+  function show() {
+    if (open) return;
+    open = true;
+    panel.hidden = false;
+    input.setAttribute('aria-expanded', 'true');
+    render();
+    if (onRefresh && Date.now() - loadedAt > staleAfterMs) refresh(true);
+  }
+  function hide() {
+    open = false;
+    panel.hidden = true;
+    active = -1;
+    input.setAttribute('aria-expanded', 'false');
+  }
+  function choose(c) {
+    input.value = c.slug;
+    hide();
+    onPick(c);
+  }
+  async function refresh(quiet = false) {
+    if (!onRefresh) return;
+    if (refreshBtn) { refreshBtn.disabled = true; refreshBtn.textContent = 'Refreshing…'; }
+    try {
+      list = await onRefresh();
+      loadedAt = Date.now();
+      if (open) render();
+      status.textContent = `${list.length} channel${list.length === 1 ? '' : 's'} loaded`;
+    } catch (err) {
+      if (!quiet) status.textContent = `Couldn't refresh: ${err?.message || err}`;
+    }
+    if (refreshBtn) { refreshBtn.disabled = false; refreshBtn.textContent = 'Refresh'; }
+  }
+
+  input.addEventListener('focus', show);
+  input.addEventListener('click', show);
+  input.addEventListener('input', () => { active = -1; show(); render(); });
+  input.addEventListener('paste', () => {
+    // Read the pasted value after the browser has put it in the box.
+    setTimeout(() => { if (looksLikeChannelRef(input.value) && onSubmit) { hide(); onSubmit(input.value); } }, 0);
+  });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      show();
+      active = nextActive(active, shown.map(c => !disabled(c)), e.key === 'ArrowDown' ? 1 : -1);
+      render();
+      rows.querySelector('.is-active')?.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (active >= 0 && shown[active]) choose(shown[active]);
+      else if (input.value.trim() && onSubmit) { hide(); onSubmit(input.value); }
+    } else if (e.key === 'Escape' && open) {
+      e.preventDefault();
+      hide();
+    }
+  });
+  root.addEventListener('focusout', (e) => { if (!root.contains(e.relatedTarget)) hide(); });
+  // The Refresh button is inside the root, so focus moving to it keeps the list open.
+
+  return {
+    element: root,
+    input,
+    setChannels(next) { list = next; loadedAt = Date.now(); if (open) render(); },
+    setValue(text) { input.value = text || ''; },
+    focus() { input.focus(); },
+  };
 }
 
 </script>
@@ -2823,6 +3033,40 @@ window.ArenaToolkit.StatusLog = function StatusLog({ label = 'Details', open = f
   };
   root.clear = () => body.replaceChildren();
   return root;
+};
+
+</script>
+<script>
+// Footer: the shared "About" block for every tool. Lives in shared/components until promoted into shared/ui.
+//   Footer({ toolNote })   toolNote: optional string or node, shown first under the heading (what this tool does with your data, say).
+// Put <footer id="footer"></footer> in the page and call document.getElementById('footer').replaceWith(ArenaToolkit.Footer({...})).
+window.ArenaToolkit.Footer = function Footer({ toolNote = null } = {}) {
+  const h = window.ArenaToolkit._el;
+  const a = (href, text) => h('a', { href, target: '_blank', rel: 'noopener' }, text);
+  const REPO = 'https://github.com/mildlydiverting/are.na-toolkit';
+  return h('footer', { className: 'atk-footer' }, [
+    h('h2', { className: 'atk-footer__title' }, 'About'),
+    toolNote ? h('p', null, toolNote) : null,
+    h('p', null, ['Runs locally in your browser. Your data is only sent to ', a('https://www.are.na/developers', h('code', null, 'api.are.na')), '.']),
+    h('p', null, [
+      'Part of a collection of ', h('a', { href: '../index.html' }, 'Are.na Tools and Toys'),
+      ' built on the ', a('https://www.are.na/developers', 'are.na API'), ' by ', a('https://www.mildlydiverting.com', 'Kim Plowright'),
+      '. Not affiliated with or endorsed by ', a('https://www.are.na', 'are.na'), '.',
+    ]),
+    h('p', null, [
+      h('em', null, 'Vibe-coded.'),
+      " This tool was built with an AI assistant (and a slight sheepish sense of guilt). It works for me and is tested, but no guarantees the robot and I haven't fucked it up somehow: try it on something unimportant first, and use the dry run options to check it does what you expect. Source on ",
+      a(REPO, 'GitHub'), ' under the ', a(`${REPO}/blob/main/LICENSE`, 'MIT license'), '. Found a bug? Let me know in ',
+      a(`${REPO}/issues`, 'GitHub issues'), '. Be kind, I am a gentle soul.',
+    ]),
+    h('p', null, [
+      'Want to know more? Find me on ', a('https://www.are.na/kim-plowright', 'Are.na'), ', ',
+      a('https://www.instagram.com/mildlydiverting/', 'Instagram'), ', ',
+      a('https://bsky.app/profile/mildlydiverting.bsky.social', 'Bluesky'), ', get my ',
+      a('https://www.mildlydiverting.com/newsletter', 'newsletter'), ' or ',
+      a('https://www.mildlydiverting.com/classes-workshops-teaching', 'come to my drawing classes in Canterbury or Ramsgate, UK'), '.',
+    ]),
+  ].filter(Boolean));
 };
 
 </script>
@@ -3021,6 +3265,7 @@ async function runMerge({ client, source, dest, contents, destIds, opts = {}, dr
     source: null, dest: null, // { id, slug, title, status, user, contents }
     opts: { deleteFromSource: false, quietMode: false },
     status: { source: null, dest: null }, // { tone, text }
+    typed: { source: '', dest: '' },
     run: null,
   };
 
@@ -3040,20 +3285,27 @@ async function runMerge({ client, source, dest, contents, destIds, opts = {}, dr
     noticeTimer = setTimeout(() => { live.hidden = true; }, 6000);
   }
 
+  async function loadChannels(user = state.user) {
+    state.myChannels = (await client.getUserContents(user.id, { type: 'Channel' })).filter(c => c && c.state !== 'deleted');
+    return state.myChannels;
+  }
+
   /* ── Auth ─────────────────────────────────────────────────── */
   const auth = createAuthStep({
     client,
     requireWrite: true,
     panel: true,
     loadDetail: async (user) => {
-      state.myChannels = (await client.getUserContents(user.id, { type: 'Channel' })).filter(c => c && c.state !== 'deleted');
+      await loadChannels(user);
       const n = state.myChannels.length;
       return `${n} of your channel${n === 1 ? '' : 's'} loaded`;
     },
     onChange: (user) => {
       state.user = user;
+      account.setUser(user);
+      accountSlot.hidden = !user;
       if (!user) {
-        Object.assign(state, { furthest: 0, step: 0, myChannels: [], source: null, dest: null, run: null, status: { source: null, dest: null } });
+        Object.assign(state, { furthest: 0, step: 0, myChannels: [], source: null, dest: null, run: null, status: { source: null, dest: null }, typed: { source: '', dest: '' } });
       }
       render();
     },
@@ -3108,7 +3360,7 @@ async function runMerge({ client, source, dest, contents, destIds, opts = {}, dr
   const ROLES = {
     source: {
       key: 'source', index: 1, title: 'Source channel', field: 'Source channel',
-      intro: [h('span', null, 'The channel you want to copy blocks '), h('strong', null, 'from'), h('span', null, '. Paste a slug or full are.na URL.')],
+      intro: [h('span', null, 'The channel you want to copy blocks '), h('strong', null, 'from'), h('span', null, '. Pick one of your channels, or paste a slug or full are.na URL.')],
       pickTitle: 'Pick the source channel',
     },
     dest: {
@@ -3124,6 +3376,7 @@ async function runMerge({ client, source, dest, contents, destIds, opts = {}, dr
 
   // Loads a channel and its contents, then stores it as the source or destination.
   async function loadChannel(role, rawInput) {
+    state.typed[role] = rawInput;
     const slug = parseSlug(rawInput);
     if (!slug) { setStatus(role, 'error', 'Paste a slug or URL.'); return render(); }
     if (role === 'dest' && state.source && slug === state.source.slug) {
@@ -3176,26 +3429,18 @@ async function runMerge({ client, source, dest, contents, destIds, opts = {}, dr
 
   function stepChannel(role) {
     const r = ROLES[role];
-    const input = ATK.Input({ placeholder: 'slug or https://www.are.na/user/channel', spellcheck: false });
-    input.setAttribute('aria-label', r.field);
-    input.value = state[role] ? state[role].slug : '';
-    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') loadChannel(role, input.value); });
-
-    const pick = h('button', { type: 'button', className: 'link-button' }, '↳ or pick from your channels');
-    pick.addEventListener('click', () => {
-      const other = state[role === 'source' ? 'dest' : 'source'];
-      openChannelPicker({
-        channels: state.myChannels.filter(c => !other || c.id !== other.id),
-        selected: state[role] ? [state[role].id] : [],
-        title: r.pickTitle,
-        confirmLabel: 'Use this channel',
-        multiple: false,
-        onConfirm: (ids) => {
-          const c = state.myChannels.find(x => x.id === ids[0]);
-          if (c) { input.value = c.slug; loadChannel(role, c.slug); }
-        },
-      });
+    const otherKey = role === 'source' ? 'dest' : 'source';
+    const finder = createChannelFinder({
+      channels: state.myChannels,
+      label: r.field,
+      // Once one channel is chosen, the other box can't pick it again.
+      disabled: (c) => state[otherKey] && c.id === state[otherKey].id
+        ? `Already chosen as the ${role === 'source' ? 'destination' : 'source'}` : '',
+      onRefresh: loadChannels,
+      onPick: (c) => loadChannel(role, c.slug),
+      onSubmit: (text) => loadChannel(role, text),
     });
+    finder.setValue(state.typed[role] || (state[role] ? state[role].slug : ''));
 
     const st = state.status[role];
     const ch = state[role];
@@ -3205,8 +3450,7 @@ async function runMerge({ client, source, dest, contents, destIds, opts = {}, dr
       h('p', null, r.intro),
       h('div', { className: 'stack' }, [
         h('label', { className: 'field-label' }, r.field),
-        h('div', { className: 'row' }, [input, ATK.Button({ variant: 'secondary', children: 'Check', onClick: () => loadChannel(role, input.value) })]),
-        h('div', null, pick),
+        finder.element,
       ]),
       st ? ATK.StatusMessage({ tone: st.tone, children: st.text }) : null,
       ch ? channelCard(ch) : null,
@@ -3379,13 +3623,17 @@ async function runMerge({ client, source, dest, contents, destIds, opts = {}, dr
     els.pane.replaceChildren(...kids);
   }
 
+  // Signed-in name and Disconnect, shown beside the theme chooser once connected.
+  const account = ATK.AccountMenu({ onDisconnect: () => auth.disconnect() });
+  const accountSlot = h('div', { className: 'account-slot', hidden: true }, account);
+
   function mountHeader() {
     const crumbs = h('nav', { className: 'crumbs', 'aria-label': 'Breadcrumb' },
       h('ol', null, [
         h('li', null, ATK.Link({ variant: 'muted', href: 'index.html', children: 'Are.na Tools' })),
         h('li', { 'aria-current': 'page' }, 'Are.na Merge'),
       ]));
-    els.header.append(crumbs, ATK.ThemeChooser());
+    els.header.append(crumbs, h('div', { className: 'header-tools' }, [accountSlot, ATK.ThemeChooser()]));
   }
 
   mountHeader();
@@ -3394,5 +3642,6 @@ async function runMerge({ client, source, dest, contents, destIds, opts = {}, dr
 })();
 
 </script>
+  <script>document.getElementById('footer').replaceWith(ArenaToolkit.Footer({ toolNote: 'Blocks are matched by their are.na id. Nothing is deleted: removing a block from the source only removes its connection to that channel.' }));</script>
 </body>
 </html>
