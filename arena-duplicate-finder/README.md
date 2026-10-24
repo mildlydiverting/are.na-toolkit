@@ -1,4 +1,8 @@
-# Duplicate finder
+# Are.na Duplicate Finder
+
+![The Are.na Duplicate Finder, showing its six steps and the Connect to are.na screen](../docs/arena-duplicate-finder-preview.jpg)
+
+**[Try it](https://mildlydiverting.github.io/are.na-toolkit/arena-duplicate-finder.html)**. It needs a personal access token that can write.
 
 Finds blocks you've saved more than once, such as the same Pinterest or Instagram image imported again and again, across your are.na channels. For each group you choose the block to keep, and the finder moves everything onto it and tidies the rest.
 

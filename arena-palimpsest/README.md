@@ -1,5 +1,7 @@
 # Are.na Palimpsest
 
+![Screenshot from Are.na Palimpsest showing a block's fields, its metadata, and the channel it is connected to](../docs/arena-palimpsest-preview.jpg)
+
 Paste an are.na block URL or ID and see everything the API knows about it: the block's own fields, its custom metadata, and the channels it is connected to (with each channel's metadata). For blocks you own, you can edit the custom metadata.
 
 **[Try it](https://mildlydiverting.github.io/are.na-toolkit/arena-palimpsest.html)**

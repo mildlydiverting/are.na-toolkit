@@ -75,7 +75,7 @@ The visual language for every tool. **The master is a claude.ai artifact**: <htt
 
 ## 6. Where to read next
 
-1. `README.md` — tool-by-tool user-facing reference, keyboard shortcuts, setup
+1. `README.md` — the tool list and what they share. Each tool's own `README.md` (in its folder) has the user-facing detail: setup, keyboard shortcuts, how to build
 2. Each tool's own folder — `README.md`, plus `NOTES.md` or `CONTEXT.md` where relevant
 3. `arena-uploader/handoff - pinterest scraper are.na migration tool.md` — Python tool state
 4. `CLAUDE.md` — the hard rules

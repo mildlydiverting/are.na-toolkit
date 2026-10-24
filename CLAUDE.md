@@ -16,4 +16,4 @@
 
 - Current state of play, tool status, open work → `AGENTS.md`
 - A specific tool → that tool's folder (`README.md` + `NOTES.md`/`CONTEXT.md`)
-- User-facing docs → `README.md`
+- User-facing docs → `README.md` (tool list) and each tool's own `README.md`

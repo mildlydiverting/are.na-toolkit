@@ -1,6 +1,6 @@
 # arena-hypernormalisation — notes
 
-Internal notes for the Hypernormalisation slideshow. For user-facing docs see the root `README.md`; this file holds the state architecture and deferred items.
+Internal notes for the Hypernormalisation slideshow. For user-facing docs see `README.md` in this folder; this file holds the state architecture, technical details and deferred items.
 
 Extracted from HANDOFF.md (May 2026) during the October 2026 docs tidy-up.
 
@@ -59,7 +59,7 @@ let audioMode        = 'none'; // 'sc' | 'local' | 'none'
 - The slide timer acts as a natural API throttle — top-ups happen ~every 4 minutes at default 10s/slide.
 - "↻ Fetch fresh" in the Info panel resets `channelPageState`, clears per-page cache, re-fetches from page 1.
 
-Cache keys are per-page: `ahyp2_chan_{slug}_p1`, `ahyp2_chan_{slug}_p2`, etc. 24-hour TTL.
+Cache keys are per-page: `ahyp2_chan_{slug}_p1`, `ahyp2_chan_{slug}_p2`, etc. 24-hour TTL. Stale entries are deleted on read. Search queries are cached per query string, same TTL. Prefs (channels, blocklist, API key and so on) are stored separately in `localStorage` and never expire. The Info panel's "Clear all cache" wipes every cached entry; the next Go re-fetches.
 
 ---
 
@@ -68,7 +68,7 @@ Cache keys are per-page: `ahyp2_chan_{slug}_p1`, `ahyp2_chan_{slug}_p2`, etc. 24
 - `fetchArena(url)` wraps `fetch()` with 429 retry and backoff.
 - `FETCH_PAGE_DELAY = 150ms` — pause between page requests within a single channel fetch.
 - `RETRY_DELAYS = [2000, 4000, 8000]` — backoff schedule. Reads `Retry-After` header if present.
-- Shows "Rate limited — retrying in Xs…" in the status bar during the wait.
+- Shows "Rate limited — retrying in Xs…" in the status bar during the wait. After three retries it makes one final attempt and then fails.
 
 ---
 
@@ -79,6 +79,9 @@ Cache keys are per-page: `ahyp2_chan_{slug}_p1`, `ahyp2_chan_{slug}_p2`, etc. 24
 - Muted by default on Go — user must press ♪ Music to start playback.
 - When exhausted, playlist reshuffles (guaranteed different order).
 - Direct MP3/OGG URL or local file plays via a standard `<audio>` element at 50% volume, looping.
+- The default audio is a hardcoded SoundCloud playlist (`soundcloud.com/mildlydiverting/sets/are-na-hypernormalisation`); a SoundCloud playlist URL, a direct MP3/OGG URL or a local file overrides it.
+- The SoundCloud widget loads in a hidden 1×1px iframe and the SC Widget API controls playback. On load it fetches every track in the playlist and shuffles them; the widget prefetches and cues the first track on Go but does not auto-play.
+- The ♪ Music button toggles mute/unmute and is hidden if no audio is configured. Returning to Setup pauses audio.
 
 ---
 
@@ -92,6 +95,8 @@ Cache keys are per-page: `ahyp2_chan_{slug}_p1`, `ahyp2_chan_{slug}_p2`, etc. 24
 4. `"Image from are.na"` as fallback
 
 `extractImages` maps `{ url, alt, source }`. History entries carry `imageAlt`. `showEntry` sets `canvas.aria-label` to `"[alt] — [caption text]"` on each slide render.
+
+Other accessibility work: all form inputs are associated with visible `<label>` elements; dynamic regions (`#status`, `#error-area`, `#audio-status`) use `aria-live`; toggle buttons use `aria-pressed`; chip remove buttons have descriptive `aria-label` values.
 
 ---
 
