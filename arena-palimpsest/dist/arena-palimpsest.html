@@ -3126,8 +3126,9 @@ function webUrl(text) {
 }
 
 // Embedded user -> "@slug", or "(unknown)" when the API gave us nothing.
-function userHandle(user) {
-  return user?.slug ? `@${user.slug}` : '(unknown)';
+// A person's display name, falling back to their slug. No "@": it is a name, not a handle.
+function userName(user) {
+  return user?.name || user?.slug || '(unknown)';
 }
 
 function userUrl(user) {
@@ -3141,7 +3142,7 @@ function blockUrl(id) {
 // Channel owners can be users or groups. Groups have no profile page we can link to safely.
 function ownerLabel(owner) {
   if (!owner) return '(unknown)';
-  return owner.type === 'Group' ? `${owner.name || owner.slug} (group)` : userHandle(owner);
+  return owner.type === 'Group' ? `${owner.name || owner.slug} (group)` : userName(owner);
 }
 
 function ownerUrl(owner) {
@@ -4195,7 +4196,7 @@ function createMetadataEditor({ block, client, renderView, requestWrite, onSaved
 
   function userLink(user) {
     const href = userUrl(user);
-    return href ? extLink(userHandle(user), href) : userHandle(user);
+    return href ? extLink(userName(user), href) : userName(user);
   }
 
   function copyLink(text) {

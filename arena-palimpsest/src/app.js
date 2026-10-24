@@ -198,7 +198,7 @@
 
   function userLink(user) {
     const href = userUrl(user);
-    return href ? extLink(userHandle(user), href) : userHandle(user);
+    return href ? extLink(userName(user), href) : userName(user);
   }
 
   function copyLink(text) {

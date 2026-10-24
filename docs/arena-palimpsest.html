@@ -9,6 +9,7 @@
 /* Arena Toolkit — generated from tokens.json */
 :root, [data-theme="light"] {
   --surface-page: #ffffff; /* Page background. are.na --colors-background / gray0. */
+  --background: #ffffff; /* Same colour as surface-page. The design-system app looks for a token with this name to paint behind component previews. */
   --surface-card: #f7f7f7; /* Content cards. Lifts above surface-page. are.na gray1. */
   --surface-media: #ededed; /* Behind thumbnails and image placeholders. are.na gray2. */
   --surface-sunken: #ededed; /* Inset or quiet panels. Shares gray2 with surface-media on purpose. */
@@ -39,6 +40,7 @@
 }
 [data-theme="dark"] {
   --surface-page: #000000;
+  --background: #000000; /* Same colour as surface-page. The design-system app looks for a token with this name to paint behind component previews. */
   --surface-card: #1a1a1a;
   --surface-media: #333333;
   --surface-sunken: #333333;
@@ -67,6 +69,7 @@
 }
 [data-theme="dawn"] {
   --surface-page: #f5f1f0;
+  --background: #f5f1f0; /* Same colour as surface-page. The design-system app looks for a token with this name to paint behind component previews. */
   --surface-card: #eae6e5;
   --surface-media: #e0dbda;
   --surface-sunken: #e0dbda;
@@ -95,6 +98,7 @@
 }
 [data-theme="dusk"] {
   --surface-page: #16171e;
+  --background: #16171e; /* Same colour as surface-page. The design-system app looks for a token with this name to paint behind component previews. */
   --surface-card: #24222c;
   --surface-media: #342e38;
   --surface-sunken: #342e38;
@@ -314,7 +318,7 @@
   transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 .atk-input:hover { border-color: var(--border-strong); }
-.atk-input:focus { border-color: var(--border-focus); }
+.atk-input:focus { border-color: var(--accent-focus); }
 .atk-input::placeholder { color: var(--text-faint); }
 .atk-input:disabled {
   color: var(--text-faint);
@@ -555,7 +559,9 @@
   pointer-events: none;
 }
 
-/* Actions row — hover-revealed. Mirrors are.na's .c-hRIxJA pattern. */
+/* Actions row — hover-revealed. Mirrors are.na's .c-hRIxJA pattern.
+   Two buttons split the row 50/50; one button fills it. Gap is the margin
+   between them, and the row's padding is the margin to the block edge. */
 .atk-block__actions {
   position: absolute;
   left: 0;
@@ -579,10 +585,13 @@
   pointer-events: auto;
 }
 
-/* Individual action button — same size as a toolkit Button (md), but bare until hovered */
+/* Individual action button — equal-width (flex: 1 1 0), translucent-card base.
+   Hover thickens the border and makes the fill fully opaque. */
 .atk-block__action {
   all: unset;
   box-sizing: border-box;
+  flex: 1 1 0;                 /* equal split with siblings; a lone child fills */
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -594,7 +603,7 @@
   font-weight: 700;            /* matches .atk-btn */
   line-height: 1;              /* matches .atk-btn */
   color: var(--text-primary);
-  background: transparent;
+  background: color-mix(in oklab, var(--surface-card) 70%, transparent);
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -603,15 +612,20 @@
 }
 .atk-block__action:hover {
   border-color: var(--border-strong);
-  background: var(--surface-card);
+  background: var(--surface-card);      /* opaque, stronger */
 }
 .atk-block__action:focus-visible {
   border-color: var(--border-focus);
   outline: none;
 }
-/* A lone action fills the row — e.g. a block that only offers "Connect →" */
-.atk-block__actions .atk-block__action:only-child {
-  flex: 1;
+/* Greyed-out state — e.g. "Following" on a channel you already follow. */
+.atk-block__action[aria-disabled="true"],
+.atk-block__action:disabled {
+  color: var(--text-faint);
+  background: color-mix(in oklab, var(--surface-sunken) 70%, transparent);
+  border-color: transparent;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 /* Badge — filled brand & nsfw variants (NEW / BETA / API / NSFW chips) */
@@ -741,7 +755,7 @@
 }
 
 /* ────────────────────────────────────────────────────────────
-   ChannelRow / ChannelList — a channel as a coloured bar that opens
+   ConnectionListInfo / ConnectionList — a channel as a coloured bar that opens
    ──────────────────────────────────────────────────────────── */
 .atk-channel-row {
   --bar: var(--surface-card);
@@ -822,6 +836,7 @@
   font-weight: 700;
   color: var(--text-muted);
 }
+.atk-channel-list__toolbar .atk-select-wrap { width: auto; }
 .atk-channel-list__toolbar .atk-select { width: auto; min-width: 14em; }
 
 /* ────────────────────────────────────────────────────────────
@@ -902,6 +917,10 @@
           appearance: none;
   outline: none;
   cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M3 4.5 L6 7.5 L9 4.5' stroke='%23696969' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
   background-repeat: no-repeat;
   background-position: right 10px center;
@@ -910,7 +929,41 @@
   transition: border-color 120ms ease;
 }
 .atk-select:hover { border-color: var(--border-strong); }
-.atk-select:focus { border-color: var(--border-focus); }
+.atk-select:focus { border-color: var(--accent-focus); }
+.atk-select-wrap { position: relative; display: block; width: 100%; }
+.atk-select__list {
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + var(--space-nudge));
+  left: 0;
+  min-width: 100%;
+  max-height: 280px;
+  overflow-y: auto;
+  box-sizing: border-box;
+  background: var(--surface-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-soft);
+  padding: var(--space-1) 0;
+  font-family: var(--font-sans);
+}
+.atk-select__list[hidden] { display: none; }
+.atk-select__option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-size: 14.4px;
+  font-weight: 700;
+  color: var(--text-primary);
+  cursor: pointer;
+  outline: none;
+  white-space: nowrap;
+}
+.atk-select__option:hover,
+.atk-select__option:focus-visible { background: var(--surface-sunken); }
+.atk-select__check { width: 1em; flex: none; visibility: hidden; color: var(--text-muted); }
+.atk-select__option[aria-selected="true"] .atk-select__check { visibility: visible; }
 .atk-select:disabled {
   color: var(--text-faint);
   background-color: var(--surface-sunken);
@@ -938,7 +991,7 @@
   transition: border-color 120ms ease;
 }
 .atk-textarea:hover { border-color: var(--border-strong); }
-.atk-textarea:focus { border-color: var(--border-focus); }
+.atk-textarea:focus { border-color: var(--accent-focus); }
 .atk-textarea::placeholder { color: var(--text-faint); }
 .atk-textarea:disabled {
   color: var(--text-faint);
@@ -1137,6 +1190,240 @@
   color: var(--text-secondary);
 }
 .atk-auth__who strong { color: var(--text-primary); }
+
+/* ── checkbox ── */
+/* Checkbox. The resting border is --text-muted, not --border-input: the latter is 1.35:1 on the page in Light,
+   and a control's edge needs 3:1 (WCAG 1.4.11). --text-muted clears 3:1 in all four themes (3.82 in Dawn, 4.69+ elsewhere). */
+.atk-checkbox {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+.atk-checkbox-input {
+  position: absolute;
+  opacity: 0;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: inherit;
+}
+.atk-checkbox-box {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  border: 1px solid var(--text-muted);
+  border-radius: var(--radius-sm);
+  background: var(--surface-page);
+  color: var(--surface-page); /* same pairing as the primary button: dark on pale accents, light on navy */
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.atk-checkbox:hover .atk-checkbox-box { border-color: var(--text-primary); }
+.atk-checkbox-input:focus-visible + .atk-checkbox-box { outline: 2px solid var(--accent-focus); outline-offset: 2px; }
+.atk-checkbox-input:checked + .atk-checkbox-box,
+.atk-checkbox-input:indeterminate + .atk-checkbox-box {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+.atk-checkbox-tick, .atk-checkbox-bar { display: none; }
+.atk-checkbox-input:checked + .atk-checkbox-box .atk-checkbox-tick { display: block; }
+.atk-checkbox-input:indeterminate + .atk-checkbox-box .atk-checkbox-tick { display: none; }
+.atk-checkbox-input:indeterminate + .atk-checkbox-box .atk-checkbox-bar { display: block; width: 8px; height: 2px; background: currentColor; }
+.atk-checkbox-input:disabled ~ * { opacity: 0.5; }
+.atk-checkbox-input:disabled + .atk-checkbox-box { cursor: not-allowed; }
+.atk-checkbox-text { display: flex; flex-direction: column; gap: 2px; }
+.atk-checkbox-label { color: var(--text-primary); font: var(--text-ui); }
+.atk-checkbox-desc { color: var(--text-muted); font: var(--text-body-sm); }
+
+/* ── radio ── */
+/* Radio. Resting border is --text-muted for 3:1 contrast, as in Checkbox. */
+.atk-radio { display: inline-flex; align-items: flex-start; gap: var(--space-2); cursor: pointer; }
+.atk-radio-input { position: absolute; opacity: 0; width: 16px; height: 16px; margin: 0; cursor: inherit; }
+.atk-radio-ring {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  border: 1px solid var(--text-muted);
+  border-radius: var(--radius-round);
+  background: var(--surface-page);
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.atk-radio:hover .atk-radio-ring { border-color: var(--text-primary); }
+.atk-radio-input:focus-visible + .atk-radio-ring { outline: 2px solid var(--accent-focus); outline-offset: 2px; }
+.atk-radio-dot { display: none; width: 8px; height: 8px; border-radius: var(--radius-round); background: var(--surface-page); }
+.atk-radio-input:checked + .atk-radio-ring { background: var(--accent-primary); border-color: var(--accent-primary); }
+.atk-radio-input:checked + .atk-radio-ring .atk-radio-dot { display: block; }
+.atk-radio-input:disabled ~ * { opacity: 0.5; }
+.atk-radio-text { display: flex; flex-direction: column; gap: 2px; }
+.atk-radio-label { color: var(--text-primary); font: var(--text-ui); }
+.atk-radio-desc { color: var(--text-muted); font: var(--text-body-sm); }
+
+/* ── progress ── */
+/* Progress */
+.atk-progress { display: flex; flex-direction: column; gap: var(--space-nudge); }
+.atk-progress-row { display: flex; justify-content: space-between; gap: var(--space-3); }
+.atk-progress-label { color: var(--text-primary); font: var(--text-ui); }
+.atk-progress-detail { color: var(--text-muted); font: var(--text-body-sm); text-align: right; font-variant-numeric: tabular-nums; }
+.atk-progress-track {
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunken);
+}
+.atk-progress-fill {
+  height: 100%;
+  width: 0;
+  border-radius: var(--radius-pill);
+  background: var(--accent-primary);
+  transition: width 150ms ease;
+}
+.atk-progress--success .atk-progress-fill { background: var(--accent-success); }
+.atk-progress--alert .atk-progress-fill { background: var(--accent-alert); }
+/* Indeterminate is the one moving thing in the system: it says work is going on. */
+.atk-progress.is-indeterminate .atk-progress-fill { width: 30%; animation: atk-progress-slide 1.2s ease-in-out infinite; }
+@keyframes atk-progress-slide { from { margin-left: -30%; } to { margin-left: 100%; } }
+@media (prefers-reduced-motion: reduce) {
+  .atk-progress.is-indeterminate .atk-progress-fill { animation: none; margin-left: 0; width: 100%; opacity: 0.4; }
+}
+
+/* ── stat-grid ── */
+/* StatGrid */
+.atk-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--space-3);
+}
+.atk-stat {
+  padding: var(--space-3);
+  background: var(--surface-sunken);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+.atk-stat__value {
+  display: block;
+  font: var(--text-h3);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.atk-stat__label {
+  display: block;
+  margin-top: var(--space-1);
+  font: var(--text-caption);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ── status-log ── */
+/* StatusLog. Green = success, grey = message, orange = warning, red = error.
+   Contrast on --surface-sunken (Light / Dark / Dawn / Dusk): success 4.29 / 7.78 / 3.66 / 8.11,
+   message 10.79 / 10.03 / 7.14 / 8.36, error 4.72 / 4.03 / 2.76 / 4.21, warning 3.34 / 4.86 / 2.98 / 5.07.
+   Dawn's error and warning fall short of 4.5:1; they are the system's own colours, recorded not changed. */
+.atk-log { margin-top: var(--space-3); }
+.atk-log__summary {
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: var(--space-2) 0;
+}
+.atk-log__body {
+  margin-top: var(--space-2);
+  font: var(--text-body-sm);
+  font-family: var(--font-mono);
+  background: var(--surface-sunken);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  max-height: 240px;
+  overflow-y: auto;
+}
+.atk-log__line { padding: 2px 0; color: var(--text-secondary); line-height: 1.3; }
+.atk-log__line.is-success { color: var(--accent-success); }
+.atk-log__line.is-warning { color: var(--accent-alert); }
+.atk-log__line.is-error   { color: var(--accent-private); }
+.atk-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ── footer ── */
+.atk-footer {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-3) var(--space-8);
+  border-top: 1px solid var(--border-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+}
+.atk-footer__title { margin: 0; font: var(--text-ui-strong); color: var(--text-heading); }
+.atk-footer p { margin: 0; max-width: 60em; }
+.atk-footer a { color: inherit; }
+.atk-footer a:hover { color: var(--text-primary); }
+
+/* ── busy ── */
+/* A gentle pulse for "working on it" text: 1 -> 0.5 -> 1 over six seconds. Add class atk-busy to any element.
+   The auth panel's info line is always a progress message ("Checking token…", "Loading your channels…"), so it pulses too. */
+@keyframes atk-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+.atk-busy, .atk-auth .atk-status--info { animation: atk-pulse 6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .atk-busy, .atk-auth .atk-status--info { animation: none; }
+}
+
+/* ────────────────────────────────────────────────────────────
+   Notice (in the flow) and Toast (in the corner)
+   ──────────────────────────────────────────────────────────── */
+.atk-notice {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--accent-primary); /* same pairing as the primary button */
+  color: var(--surface-page);
+  font: var(--text-body);
+}
+.atk-notice__body { flex: 1; min-width: 0; }
+.atk-notice__icon { flex: none; }
+.atk-notice__close {
+  flex: none;
+  border: 0;
+  background: none;
+  padding: 0 var(--space-1);
+  color: inherit;
+  font: var(--text-ui);
+  cursor: pointer;
+  opacity: 0.8;
+}
+.atk-notice__close:hover { opacity: 1; }
+.atk-notice__close:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+
+.atk-toast-stack {
+  position: fixed;
+  bottom: var(--space-3);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: min(360px, calc(100vw - 2 * var(--space-3)));
+}
+.atk-toast-stack[data-side="left"] { left: var(--space-3); }
+.atk-toast-stack[data-side="right"] { right: var(--space-3); }
+.atk-toast {
+  box-shadow: var(--shadow-soft);
+  animation: atk-toast-in 150ms ease;
+}
+.atk-toast.is-leaving { opacity: 0; transition: opacity 150ms ease; }
+@keyframes atk-toast-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .atk-toast { animation: none; } }
 
 </style>
 <style>
@@ -1571,9 +1858,11 @@ body {
         var tag = a.href ? 'a' : 'button';
         var attrs = {
           className: 'atk-block__action',
-          href: a.href || null,
+          href: a.disabled ? null : (a.href || null),
           type: a.href ? null : 'button',
-          onclick: a.onClick
+          disabled: (!a.href && a.disabled) ? '' : null,
+          'aria-disabled': a.disabled ? 'true' : null,
+          onclick: a.disabled ? null : a.onClick
         };
         return el(tag, attrs, a.label);
       });
@@ -1651,21 +1940,107 @@ body {
     return backdrop;
   }
 
+  /* Select: a button that opens a styled list (the same look as Menu), not the browser's own list.
+     It returns a wrapper <div> that behaves like a <select> for callers: .value (get/set), .disabled,
+     .name, .id (goes to the button, so <label for> works) and a bubbling 'change' event. */
+  var selectCount = 0;
   function Select(opts) {
     opts = opts || {};
-    var attrs = {
-      className: 'atk-select',
-      name: opts.name || null,
-      disabled: opts.disabled || null,
-      onchange: opts.onChange
-    };
-    var options = (opts.options || []).map(function (o) {
-      if (typeof o === 'string') o = { value: o, label: o };
-      var optAttrs = { value: o.value };
-      if (o.value === opts.value) optAttrs.selected = '';
-      return el('option', optAttrs, o.label);
+    var items = (opts.options || []).map(function (o) {
+      return typeof o === 'string' ? { value: o, label: o } : o;
     });
-    return el('select', attrs, options);
+    var uid = 'atk-select-' + (++selectCount);
+    var current = null;
+    items.forEach(function (o) { if (o.value === opts.value) current = o; });
+    if (!current && items.length) current = items[0];
+
+    var button = el('button', {
+      type: 'button', className: 'atk-select', role: 'combobox',
+      'aria-haspopup': 'listbox', 'aria-expanded': 'false', 'aria-controls': uid + '-list'
+    }, current ? current.label : '');
+    var list = el('div', { className: 'atk-select__list', role: 'listbox', id: uid + '-list', hidden: true });
+    var optionEls = items.map(function (o, i) {
+      var opt = el('div', { className: 'atk-select__option', role: 'option', tabindex: '-1', id: uid + '-o' + i }, [
+        el('span', { className: 'atk-select__check', 'aria-hidden': 'true' }, '✓'),
+        el('span', { className: 'atk-select__text' }, o.label)
+      ]);
+      opt.addEventListener('click', function () { choose(i); });
+      opt.addEventListener('keydown', function (e) { optionKey(e, i); });
+      list.appendChild(opt);
+      return opt;
+    });
+    var wrap = el('div', { className: 'atk-select-wrap' }, [button, list]);
+    if (opts.name) wrap.setAttribute('data-name', opts.name);
+
+    function index() { return items.indexOf(current); }
+    function paint() {
+      button.textContent = current ? current.label : '';
+      optionEls.forEach(function (o, i) { o.setAttribute('aria-selected', items[i] === current ? 'true' : 'false'); });
+    }
+    function isOpen() { return !list.hidden; }
+    function open(focusIndex) {
+      if (button.disabled) return;
+      list.hidden = false;
+      button.setAttribute('aria-expanded', 'true');
+      var i = focusIndex == null ? Math.max(0, index()) : focusIndex;
+      if (optionEls[i]) optionEls[i].focus();
+    }
+    function close(refocus) {
+      list.hidden = true;
+      button.setAttribute('aria-expanded', 'false');
+      if (refocus) button.focus();
+    }
+    function choose(i) {
+      var changed = items[i] !== current;
+      current = items[i];
+      paint();
+      close(true);
+      if (changed) wrap.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    function optionKey(e, i) {
+      var k = e.key, n = optionEls.length, t = null;
+      if (k === 'ArrowDown') t = (i + 1) % n;
+      else if (k === 'ArrowUp') t = (i - 1 + n) % n;
+      else if (k === 'Home') t = 0;
+      else if (k === 'End') t = n - 1;
+      else if (k === 'Enter' || k === ' ') { e.preventDefault(); choose(i); return; }
+      else if (k === 'Escape') { e.preventDefault(); close(true); return; }
+      else if (k === 'Tab') { close(false); return; }
+      else if (k.length === 1) {
+        var low = k.toLowerCase();
+        for (var step = 1; step <= n; step++) {
+          var j = (i + step) % n;
+          if (items[j].label.toLowerCase().indexOf(low) === 0) { t = j; break; }
+        }
+      }
+      if (t != null) { e.preventDefault(); optionEls[t].focus(); }
+    }
+    button.addEventListener('click', function () { if (isOpen()) close(false); else open(); });
+    button.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); open(); }
+    });
+    document.addEventListener('mousedown', function (e) { if (isOpen() && !wrap.contains(e.target)) close(false); });
+    wrap.addEventListener('focusout', function (e) { if (isOpen() && e.relatedTarget && !wrap.contains(e.relatedTarget)) close(false); });
+
+    Object.defineProperty(wrap, 'value', {
+      get: function () { return current ? current.value : ''; },
+      set: function (v) {
+        for (var i = 0; i < items.length; i++) if (items[i].value === v) { current = items[i]; paint(); return; }
+      }
+    });
+    Object.defineProperty(wrap, 'disabled', {
+      get: function () { return button.disabled; },
+      set: function (v) { button.disabled = !!v; if (v) close(false); }
+    });
+    Object.defineProperty(wrap, 'id', {
+      get: function () { return button.id; },
+      set: function (v) { button.id = v; }
+    });
+    Object.defineProperty(wrap, 'name', { get: function () { return opts.name || ''; } });
+    if (opts.disabled) button.disabled = true;
+    if (opts.onChange) wrap.addEventListener('change', opts.onChange);
+    paint();
+    return wrap;
   }
 
   function Textarea(opts) {
@@ -1869,16 +2244,16 @@ body {
   ThemeChooser.resolve = resolveTheme;
   ThemeChooser.choice = themeChoice;
 
-  /* ── ChannelRow / ChannelList ──────────────────────────────────
+  /* ── ConnectionListInfo / ConnectionList ──────────────────────────────────
      A channel as a coloured bar: badge, name, block count, metadata count,
      owner, caret. Opens (a <details>) to show whatever you pass as children.
-     ChannelList stacks rows and adds an optional sort menu; sorting itself
+     ConnectionList stacks rows and adds an optional sort menu; sorting itself
      is yours: re-order with list.setRows(). */
 
   var CHEVRON_SVG =
     '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>';
 
-  function ChannelRow(opts) {
+  function ConnectionListInfo(opts) {
     opts = opts || {};
     var visibility = opts.visibility || 'closed';
     var badgeVariant = { public: 'success', private: 'private' }[visibility] || 'default';
@@ -1905,7 +2280,7 @@ body {
 
   var channelListCount = 0;
 
-  function ChannelList(opts) {
+  function ConnectionList(opts) {
     opts = opts || {};
     var root = el('div', { className: 'atk-channel-list' });
     var rowsEl = el('div', { className: 'atk-channel-list__rows' });
@@ -2005,7 +2380,9 @@ body {
     var root = el('div', { className: 'atk-auth' });
 
     function status(s) {
-      return s ? StatusMessage({ tone: s.tone, label: s.label, children: s.message }) : null;
+      if (!s) return null;
+      if (s.tone === 'error') return Notice({ variant: 'error', title: s.label, children: s.message });
+      return StatusMessage({ tone: s.tone, label: s.label, children: s.message });
     }
 
     function rememberCheck() {
@@ -2063,7 +2440,7 @@ body {
       ]);
 
       var kids = [];
-      if (state.writeMessage) kids.push(el('p', { className: 'atk-auth__message' }, state.writeMessage));
+      if (state.writeMessage) kids.push(Notice({ variant: 'warning', children: state.writeMessage }));
       kids.push(intro);
       if (panel) {
         var label = el('label', { className: 'atk-auth__label', 'for': 'arena-token' }, 'Personal access token');
@@ -2099,11 +2476,256 @@ body {
     return root;
   }
 
+  /* ── Checkbox, Radio, Progress, StatGrid, StatusLog, Footer ── */
+
+  // (which means publishing it to the design-system artifact, so it needs Kim's go-ahead).
+  // A native input sits inside the label, so keyboard, focus and screen readers behave as usual.
+  function Checkbox({ label, description, checked = false, disabled = false, indeterminate = false, name, id, onChange } = {}) {
+    const h = el;
+    const input = h('input', { type: 'checkbox', className: 'atk-checkbox-input', checked, disabled });
+    if (name) input.name = name;
+    if (id) input.id = id;
+    input.indeterminate = indeterminate;
+    if (onChange) input.addEventListener('change', () => onChange(input.checked));
+
+    const box = h('span', { className: 'atk-checkbox-box', 'aria-hidden': 'true' });
+    box.innerHTML = '<svg class="atk-checkbox-tick" viewBox="0 0 12 12" width="12" height="12"><path d="M2.5 6.5l2.5 2.5 4.5-5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="atk-checkbox-bar"></span>';
+
+    const text = h('span', { className: 'atk-checkbox-text' }, [
+      h('span', { className: 'atk-checkbox-label' }, label),
+      description ? h('span', { className: 'atk-checkbox-desc' }, description) : null,
+    ].filter(Boolean));
+
+    return h('label', { className: 'atk-checkbox' }, [input, box, text]);
+  }
+
+  // A native radio input sits inside the label, so arrow keys, focus and screen readers behave as usual.
+  function Radio({ label, description, value, name, checked = false, disabled = false, onChange } = {}) {
+    const h = el;
+    const input = h('input', { type: 'radio', className: 'atk-radio-input', checked, disabled, name, value });
+    if (onChange) input.addEventListener('change', () => { if (input.checked) onChange(value); });
+
+    const ring = h('span', { className: 'atk-radio-ring', 'aria-hidden': 'true' }, h('span', { className: 'atk-radio-dot' }));
+    const text = h('span', { className: 'atk-radio-text' }, [
+      h('span', { className: 'atk-radio-label' }, label),
+      description ? h('span', { className: 'atk-radio-desc' }, description) : null,
+    ].filter(Boolean));
+    return h('label', { className: 'atk-radio' }, [input, ring, text]);
+  }
+
+  //   StatGrid({ items: [{ key, label, value = 0 }] })
+  //   grid.update({ added: 3, failed: 0 })   changes the named counts in place
+  function StatGrid({ items = [] } = {}) {
+    const h = el;
+    const values = {};
+    const root = h('div', { className: 'atk-stats' });
+    items.forEach(({ key, label, value = 0 }) => {
+      values[key] = h('span', { className: 'atk-stat__value' }, String(value));
+      root.appendChild(h('div', { className: 'atk-stat' }, [values[key], h('span', { className: 'atk-stat__label' }, label)]));
+    });
+    root.update = (next = {}) => {
+      Object.keys(next).forEach(k => { if (values[k]) values[k].textContent = String(next[k]); });
+    };
+    return root;
+  }
+
+  //   StatusLog({ label = 'Details', open = false })
+  //   log.add('success' | 'message' | 'warning' | 'error', text)     log.clear()
+  // Colour is never the only signal: success, warning and error lines carry a spoken prefix for screen readers.
+  function StatusLog({ label = 'Details', open = false } = {}) {
+    const h = el;
+    const SPOKEN = { success: 'Success: ', warning: 'Warning: ', error: 'Error: ' };   // 'message' has none
+    const body = h('div', { className: 'atk-log__body', role: 'log' });
+    const root = h('details', { className: 'atk-log', open }, [h('summary', { className: 'atk-log__summary' }, label), body]);
+    root.add = (tone, text) => {
+      const line = h('div', { className: 'atk-log__line is-' + tone });
+      if (SPOKEN[tone]) line.appendChild(h('span', { className: 'atk-sr' }, SPOKEN[tone]));
+      line.appendChild(document.createTextNode(text));
+      body.appendChild(line);
+      body.scrollTop = body.scrollHeight;
+    };
+    root.clear = () => body.replaceChildren();
+    return root;
+  }
+
+  //   Footer({ toolNote, homeHref })   toolNote: optional string or node, shown first under the heading. homeHref: the collection's index page.
+  // Put <footer id="footer"></footer> in the page and call document.getElementById('footer').replaceWith(ArenaToolkit.Footer({...})).
+  function Footer({ toolNote = null, homeHref = '../index.html' } = {}) {
+    const h = el;
+    const a = (href, text) => h('a', { href, target: '_blank', rel: 'noopener' }, text);
+    const REPO = 'https://github.com/mildlydiverting/are.na-toolkit';
+    return h('footer', { className: 'atk-footer' }, [
+      h('h2', { className: 'atk-footer__title' }, 'About'),
+      toolNote ? h('p', null, toolNote) : null,
+      h('p', null, ['Runs locally in your browser. Your data is only sent to ', a('https://www.are.na/developers', h('code', null, 'api.are.na')), '.']),
+      h('p', null, [
+        'Part of a collection of ', h('a', { href: homeHref }, 'Are.na Tools and Toys'),
+        ' built on the ', a('https://www.are.na/developers', 'are.na API'), ' by ', a('https://www.mildlydiverting.com', 'Kim Plowright'),
+        '. Not affiliated with or endorsed by ', a('https://www.are.na', 'are.na'), '.',
+      ]),
+      h('p', null, [
+        h('em', null, 'Vibe-coded.'),
+        " This tool was built with an AI assistant (and a slight sheepish sense of guilt). It works for me and is tested, but no guarantees the robot and I haven't fucked it up somehow: try it on something unimportant first, and use the dry run options to check it does what you expect. Source on ",
+        a(REPO, 'GitHub'), ' under the ', a(`${REPO}/blob/main/LICENSE`, 'MIT license'), '. Found a bug? Let me know in ',
+        a(`${REPO}/issues`, 'GitHub issues'), '. Be kind, I am a gentle soul.',
+      ]),
+      h('p', null, [
+        'Want to know more? Find me on ', a('https://www.are.na/kim-plowright', 'Are.na'), ', ',
+        a('https://www.instagram.com/mildlydiverting/', 'Instagram'), ', ',
+        a('https://bsky.app/profile/mildlydiverting.bsky.social', 'Bluesky'), ', get my ',
+        a('https://www.mildlydiverting.com/newsletter', 'newsletter'), ' or ',
+        a('https://www.mildlydiverting.com/classes-workshops-teaching', 'come to my drawing classes in Canterbury or Ramsgate, UK'), '.',
+      ]),
+    ].filter(Boolean));
+  }
+
+  // Progress: a thin bar with a label row.
+  // Finite (value and max > 0) or indeterminate (no value, or no usable max): update() can switch between them at any time.
+  //   Progress({ value, max, label, detail, variant })   variant: 'default' | 'success' | 'alert'
+  //   bar.update({ value, max, label, detail, variant })  changes only the keys you pass
+  // detail is text or a node. aria-valuetext is built from label + detail, so a screen reader says
+  // "Dry run: merging, 16 of 20" rather than just "80%".
+
+  // Pure: what the bar should show for a value and a max.
+  function progressModel({ value = null, max = 100 } = {}) {
+    const finite = value != null && Number.isFinite(value) && Number.isFinite(max) && max > 0;
+    if (!finite) return { indeterminate: true, pct: null, now: null, max: null };
+    const now = Math.min(max, Math.max(0, value));
+    return { indeterminate: false, pct: (now / max) * 100, now, max };
+  }
+
+  // Pure: the text a node or string contributes to a spoken description.
+  function plainText(x) {
+    if (x == null) return '';
+    return typeof x === 'string' ? x : String(x.textContent ?? '');
+  }
+
+  // Pure: "label, detail" for aria-valuetext.
+  function spokenProgress({ label = '', detail = '' } = {}) {
+    return [plainText(label), plainText(detail)].filter(Boolean).join(', ');
+  }
+
+  function Progress(initial = {}) {
+    const h = el;
+    const state = { value: null, max: 100, label: '', detail: '', variant: 'default', ...initial };
+    const labelEl = h('span', { className: 'atk-progress-label' });
+    const detailEl = h('span', { className: 'atk-progress-detail' });
+    const fill = h('div', { className: 'atk-progress-fill' });
+    const track = h('div', { className: 'atk-progress-track', role: 'progressbar', 'aria-valuemin': '0' }, fill);
+    const root = h('div', { className: 'atk-progress' }, [
+      h('div', { className: 'atk-progress-row' }, [labelEl, detailEl]),
+      track,
+    ]);
+
+    function render() {
+      const m = progressModel(state);
+      root.className = `atk-progress atk-progress--${state.variant}${m.indeterminate ? ' is-indeterminate' : ''}`;
+      labelEl.textContent = state.label;
+      if (typeof state.detail === 'string' || state.detail == null) detailEl.textContent = state.detail ?? '';
+      else detailEl.replaceChildren(state.detail);
+      if (m.indeterminate) {
+        track.removeAttribute('aria-valuenow');
+        track.removeAttribute('aria-valuemax');
+        fill.style.width = '';
+      } else {
+        track.setAttribute('aria-valuemax', String(m.max));
+        track.setAttribute('aria-valuenow', String(m.now));
+        fill.style.width = `${m.pct}%`;
+      }
+      track.setAttribute('aria-label', plainText(state.label) || 'Progress');
+      const spoken = spokenProgress(state);
+      if (spoken) track.setAttribute('aria-valuetext', spoken); else track.removeAttribute('aria-valuetext');
+    }
+
+    root.update = function update(next = {}) {
+      for (const k of ['value', 'max', 'label', 'detail', 'variant']) if (k in next) state[k] = next[k];
+      render();
+    };
+    render();
+    return root;
+  }
+  Progress.model = progressModel;
+  Progress.spoken = spokenProgress;
+
+  /* ── Notice (in the flow) and Toast (in the corner): the same navy box as are.na's own message ── */
+  var NOTICE_VARIANTS = { info: 'info', success: 'success', warning: 'warning', error: 'error',
+                          'default': 'info', notification: 'info', alert: 'error' };
+  var NOTICE_ICONS = { success: '✓', warning: '⚠', error: '⚠' };
+
+  function Notice(opts) {
+    opts = opts || {};
+    var variant = NOTICE_VARIANTS[opts.variant] || 'info';
+    var kids = [];
+    if (NOTICE_ICONS[variant]) kids.push(el('span', { className: 'atk-notice__icon', 'aria-hidden': 'true' }, NOTICE_ICONS[variant]));
+    var body = [];
+    if (opts.title) body.push(el('strong', null, opts.title + '.'), ' ');
+    body = body.concat(opts.children == null ? [] : opts.children);
+    kids.push(el('div', { className: 'atk-notice__body' }, body));
+    if (opts.onDismiss) {
+      kids.push(el('button', { type: 'button', className: 'atk-notice__close', 'aria-label': 'Dismiss', onClick: opts.onDismiss }, '×'));
+    }
+    return el('div', {
+      className: 'atk-notice atk-notice--' + variant,
+      role: variant === 'error' ? 'alert' : 'status'
+    }, kids);
+  }
+
+  var toastStack = null;
+  var toastSide = 'right';
+  function toastParent() {
+    if (!toastStack || !toastStack.isConnected) {
+      toastStack = el('div', { className: 'atk-toast-stack' });
+      document.body.appendChild(toastStack);
+    }
+    toastStack.setAttribute('data-side', toastSide);
+    return toastStack;
+  }
+
+  var Toast = {
+    // Toast.show({ message, title?, variant: 'info'|'success'|'warning'|'error', duration: 4000 (0 = stay) })
+    show: function (o) {
+      o = o || {};
+      var duration = o.duration == null ? 4000 : o.duration;
+      var timer = null;
+      var node = null;
+      function dismiss() {
+        clearTimeout(timer);
+        if (!node.isConnected) return;
+        node.classList.add('is-leaving');
+        setTimeout(function () { node.remove(); }, 150);
+      }
+      function arm() { clearTimeout(timer); if (duration > 0) timer = setTimeout(dismiss, duration); }
+      node = Notice({ variant: o.variant, title: o.title, children: o.message, onDismiss: dismiss });
+      node.classList.add('atk-toast');
+      node.addEventListener('keydown', function (e) { if (e.key === 'Escape') dismiss(); });
+      node.addEventListener('mouseenter', function () { clearTimeout(timer); });
+      node.addEventListener('mouseleave', arm);
+      node.addEventListener('focusin', function () { clearTimeout(timer); });
+      node.addEventListener('focusout', arm);
+      toastParent().appendChild(node);
+      arm();
+      return { dismiss: dismiss };
+    },
+    dismissAll: function () { if (toastStack) toastStack.replaceChildren(); },
+    setPosition: function (side) {
+      toastSide = side === 'right' ? 'right' : 'left';
+      if (toastStack) toastStack.setAttribute('data-side', toastSide);
+    }
+  };
+
   window.ArenaToolkit = {
-    ChannelRow: ChannelRow,
-    ChannelList: ChannelList,
+    Checkbox: Checkbox,
+    Radio: Radio,
+    Progress: Progress,
+    StatGrid: StatGrid,
+    StatusLog: StatusLog,
+    Footer: Footer,
+    ConnectionListInfo: ConnectionListInfo,
+    ConnectionList: ConnectionList,
     ThemeChooser: ThemeChooser,
     StatusMessage: StatusMessage,
+    Notice: Notice,
+    Toast: Toast,
     AccountMenu: AccountMenu,
     AuthPanel: AuthPanel,
     Button: Button,
@@ -2159,7 +2781,7 @@ function createArenaClient({ token = null, fetchImpl = (...a) => globalThis.fetc
       credentials: 'omit',
       referrerPolicy: 'no-referrer',
     });
-    const res = throttle ? await throttle(doFetch) : await doFetch();
+    const res = throttle ? await throttle(doFetch, { write: method !== 'GET' }) : await doFetch();
 
     const text = await res.text();
     let data = null;
@@ -2215,6 +2837,8 @@ function createArenaClient({ token = null, fetchImpl = (...a) => globalThis.fetc
       });
       return res?.data || [];
     },
+    // fields: any of title, description, status ('public' | 'closed' | 'private'). Owner or collaborator.
+    updateChannel: (idOrSlug, fields) => request(`/channels/${encodeURIComponent(idOrSlug)}`, {}, { method: 'PUT', body: fields }),
     // Takes the *connection* id (from a channel's contents, or createConnection), not a block id.
     // Removes the block from that channel only; the block itself stays. Resolves to null (204).
     deleteConnection: connectionId => request(`/connections/${encodeURIComponent(connectionId)}`, {}, { method: 'DELETE' }),
@@ -2229,8 +2853,11 @@ const THROTTLE_GAP_MS = 150;
 const THROTTLE_BACKOFF_S = [2, 4, 8];
 
 // onWait(seconds, attempt) is called before each backoff sleep, so the UI can say so.
+// writeGap (default: same as gap) is the pause after a write, for tools that want to be gentler when
+// changing an account. Call throttled(doFetch, { write: true }) for writes; everything else is a read.
 function createThrottle({
   gap = THROTTLE_GAP_MS,
+  writeGap = gap,
   backoff = THROTTLE_BACKOFF_S,
   sleep = ms => new Promise(r => setTimeout(r, ms)),
   now = () => Date.now(),
@@ -2239,16 +2866,16 @@ function createThrottle({
   let nextSlot = 0;
 
   // Reserve the next start time synchronously, so concurrent callers queue up in order.
-  async function takeSlot() {
+  async function takeSlot(spacing) {
     const start = Math.max(now(), nextSlot);
-    nextSlot = start + gap;
+    nextSlot = start + spacing;
     const wait = start - now();
     if (wait > 0) await sleep(wait);
   }
 
-  return async function throttled(doFetch) {
+  return async function throttled(doFetch, { write = false } = {}) {
     for (let attempt = 0; ; attempt++) {
-      await takeSlot();
+      await takeSlot(write ? writeGap : gap);
       const res = await doFetch();
       if (res.status !== 429 || attempt >= backoff.length) return res;
       const retryAfter = Number(res.headers?.get?.('retry-after'));
@@ -2499,8 +3126,9 @@ function webUrl(text) {
 }
 
 // Embedded user -> "@slug", or "(unknown)" when the API gave us nothing.
-function userHandle(user) {
-  return user?.slug ? `@${user.slug}` : '(unknown)';
+// A person's display name, falling back to their slug. No "@": it is a name, not a handle.
+function userName(user) {
+  return user?.name || user?.slug || '(unknown)';
 }
 
 function userUrl(user) {
@@ -2514,7 +3142,7 @@ function blockUrl(id) {
 // Channel owners can be users or groups. Groups have no profile page we can link to safely.
 function ownerLabel(owner) {
   if (!owner) return '(unknown)';
-  return owner.type === 'Group' ? `${owner.name || owner.slug} (group)` : userHandle(owner);
+  return owner.type === 'Group' ? `${owner.name || owner.slug} (group)` : userName(owner);
 }
 
 function ownerUrl(owner) {
@@ -3568,7 +4196,7 @@ function createMetadataEditor({ block, client, renderView, requestWrite, onSaved
 
   function userLink(user) {
     const href = userUrl(user);
-    return href ? extLink(userHandle(user), href) : userHandle(user);
+    return href ? extLink(userName(user), href) : userName(user);
   }
 
   function copyLink(text) {
@@ -3684,7 +4312,7 @@ function createMetadataEditor({ block, client, renderView, requestWrite, onSaved
       ['Created', formatDate(ch.created_at)],
       ['Updated', formatDate(ch.updated_at)],
     ];
-    return ATK.ChannelRow({
+    return ATK.ConnectionListInfo({
       title: ch.title || ch.slug,
       visibility: ch.visibility || 'unknown',
       count: formatCount(counts.contents ?? counts.blocks),
@@ -3698,7 +4326,7 @@ function createMetadataEditor({ block, client, renderView, requestWrite, onSaved
     const channels = [];
     const rows = new Map();
     let mode = 'default';
-    const list = ATK.ChannelList({
+    const list = ATK.ConnectionList({
       sorts: CHANNEL_SORTS,
       onSort: (value) => { mode = value; list.setRows(sortChannels(channels, mode).map((ch) => rows.get(ch))); },
       rows: [h('p', { className: 'muted' }, 'Loading channels…')],

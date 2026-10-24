@@ -25,8 +25,9 @@ export function webUrl(text) {
 }
 
 // Embedded user -> "@slug", or "(unknown)" when the API gave us nothing.
-export function userHandle(user) {
-  return user?.slug ? `@${user.slug}` : '(unknown)';
+// A person's display name, falling back to their slug. No "@": it is a name, not a handle.
+export function userName(user) {
+  return user?.name || user?.slug || '(unknown)';
 }
 
 export function userUrl(user) {
@@ -40,7 +41,7 @@ export function blockUrl(id) {
 // Channel owners can be users or groups. Groups have no profile page we can link to safely.
 export function ownerLabel(owner) {
   if (!owner) return '(unknown)';
-  return owner.type === 'Group' ? `${owner.name || owner.slug} (group)` : userHandle(owner);
+  return owner.type === 'Group' ? `${owner.name || owner.slug} (group)` : userName(owner);
 }
 
 export function ownerUrl(owner) {

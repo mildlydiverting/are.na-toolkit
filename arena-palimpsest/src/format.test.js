@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  formatDate, metadataEntries, userHandle, userUrl, blockUrl,
+  formatDate, metadataEntries, userName, userUrl, blockUrl,
   ownerLabel, ownerUrl, channelUrl, formatCount, webUrl, sortChannels,
 } from './format.js';
 
@@ -25,12 +25,13 @@ describe('metadataEntries', () => {
 });
 
 describe('users and urls', () => {
-  it('formats a handle and profile url', () => {
-    expect(userHandle({ slug: 'kim-plowright' })).toBe('@kim-plowright');
+  it('names a user and builds a profile url', () => {
+    expect(userName({ name: 'Kim Plowright', slug: 'kim-plowright' })).toBe('Kim Plowright');
+    expect(userName({ slug: 'kim-plowright' })).toBe('kim-plowright');
     expect(userUrl({ slug: 'kim-plowright' })).toBe('https://www.are.na/kim-plowright');
   });
   it('copes with a missing user', () => {
-    expect(userHandle(null)).toBe('(unknown)');
+    expect(userName(null)).toBe('(unknown)');
     expect(userUrl(undefined)).toBeNull();
   });
   it('builds a block url', () => expect(blockUrl(13857023)).toBe('https://www.are.na/block/13857023'));
@@ -41,7 +42,7 @@ describe('channels and owners', () => {
   const group = { type: 'Group', slug: 'a-group', name: 'A Group' };
 
   it('labels users and groups', () => {
-    expect(ownerLabel(kim)).toBe('@kim-plowright');
+    expect(ownerLabel(kim)).toBe('Kim Plowright');
     expect(ownerLabel(group)).toBe('A Group (group)');
     expect(ownerLabel(null)).toBe('(unknown)');
   });
