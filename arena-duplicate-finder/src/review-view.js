@@ -19,7 +19,7 @@ function fitCardsToWindow(cards) {
   requestAnimationFrame(fit);
 }
 
-function createReviewView({ items, decisions, onFinish, onResolve, onUndo, connectionInfo = null, myUserId = null }) {
+function createReviewView({ items, decisions, onFinish, onResolve, onUndo, connectionInfo = null, myUserId = null, onEnterCluster = () => {} }) {
   const ATK = window.ArenaToolkit;
   const h = (tag, attrs, kids) => ATK._el(tag, attrs, kids);
 
@@ -30,6 +30,7 @@ function createReviewView({ items, decisions, onFinish, onResolve, onUndo, conne
   let busy = false;
   let report = null; // { dry, lines, notes, failed } for the group on screen
 
+  let lastEnteredIndex = -1;
   const root = h('div', { className: 'review' });
   const live = h('p', { className: 'visually-hidden', role: 'status', 'aria-live': 'polite' });
 
@@ -209,6 +210,11 @@ function createReviewView({ items, decisions, onFinish, onResolve, onUndo, conne
       h('div', { className: 'row' }, [finishNow, ATK.Button({ variant: 'ghost', size: 'sm', children: 'Keyboard shortcuts (?)', onClick: openHelp })]),
       live,
     ].filter(Boolean));
+
+    if (index !== lastEnteredIndex) {
+      lastEnteredIndex = index;
+      onEnterCluster(items[index]);
+    }
   }
 
   /* ── Actions ───────────────────────────────────────────────── */
@@ -364,5 +370,5 @@ function createReviewView({ items, decisions, onFinish, onResolve, onUndo, conne
   }
 
   render();
-  return { element: root, handleKey, destroy: closeHelp };
+  return { element: root, handleKey, destroy: closeHelp, rerender: render };
 }

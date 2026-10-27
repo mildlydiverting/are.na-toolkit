@@ -235,13 +235,6 @@
           detail: `${p.blocksFetched} blocks fetched · ${p.clusterCount} group${p.clusterCount === 1 ? '' : 's'} so far`,
         }),
       });
-      progress.update({ value: 0, max: 1, label: 'Checking where each block is connected', detail: '' });
-      const inGroups = scan.result.clusters.flatMap(c => c.blocks);
-      scan.connections = await lookupAll(client, inGroups, {
-        control,
-        onProgress: ({ done, count }) => progress.update({ value: done, max: count, label: 'Checking where each block is connected', detail: `${done} of ${count} blocks` }),
-      });
-      scan.result.clusters = addUnscannedPlaces(scan.result.clusters, scan.connections);
       scan.status = 'done';
       for (const sk of scan.result.skipped) {
         ATK.Toast.show({ message: `Couldn't read ${sk.channel.title || sk.channel.slug}, so it was skipped.`, variant: 'alert', duration: 8000 });
@@ -319,6 +312,55 @@
     return out;
   }
 
+  // Lazy enrichment: fetch "where each block lives" per cluster, on demand.
+  // Caches results on scan.connections, mutates each cluster's places/channelIds in place
+  // as info arrives, and asks the view to re-render after every block resolves.
+  function createEnricher(scan, client, { onUpdate }) {
+    const connections = scan.connections = new Map();
+    const enriched = new Set();
+    const inflight = new Map();
+
+    function decorate(cluster) {
+      const channelIds = new Set(cluster.channelIds);
+      for (const b of cluster.blocks) {
+        const known = cluster.places[b.id] || [];
+        const seen = new Set(known.map(p => p.channelId));
+        const extra = (connections.get(b.id)?.own || [])
+          .filter(ch => !seen.has(ch.id))
+          .map(ch => ({ channelId: ch.id, channelSlug: ch.slug, channelTitle: ch.title, connectionId: null, unscanned: true }));
+        extra.forEach(p => channelIds.add(p.channelId));
+        cluster.places[b.id] = [...known, ...extra];
+      }
+      cluster.channelIds = [...channelIds];
+    }
+
+    async function enrichCluster(cluster) {
+      if (enriched.has(cluster.id)) return;
+      if (inflight.has(cluster.id)) return inflight.get(cluster.id);
+      const p = (async () => {
+        const unique = [...new Map(cluster.blocks.map(b => [b.id, b])).values()];
+        for (const b of unique) {
+          if (connections.has(b.id)) continue;
+          if (scan.control?.isCancelled?.()) break;
+          try {
+            await scan.control?.checkpoint?.();
+            connections.set(b.id, await lookupBlockConnections(client, b.id));
+          } catch (err) {
+            connections.set(b.id, { error: err?.message || 'lookup failed' });
+          }
+          decorate(cluster);
+          onUpdate();
+        }
+        enriched.add(cluster.id);
+        inflight.delete(cluster.id);
+      })();
+      inflight.set(cluster.id, p);
+      return p;
+    }
+
+    return { enrichCluster };
+  }
+
   /* Review: decide, group by group. */
   function stepReview() {
     const scan = state.scan;
@@ -326,11 +368,18 @@
     if (!scan.review) {
       scan.decisions = {};
       scan.items = orderClusters(scan.result.clusters);
+      const enricher = createEnricher(scan, client, { onUpdate: () => scan.review?.rerender() });
       scan.review = createReviewView({
         items: scan.items, decisions: scan.decisions, onFinish: advance,
         onResolve: resolveCluster, onUndo: undoCluster,
         connectionInfo: (id) => scan.connections?.get(id),
         myUserId: state.user?.id ?? null,
+        onEnterCluster: (item) => {
+          enricher.enrichCluster(item.cluster);
+          const idx = scan.items.indexOf(item);
+          const next = scan.items[idx + 1];
+          if (next) enricher.enrichCluster(next.cluster);
+        },
       });
     }
     return [scan.review.element, nav({ next: null })];
