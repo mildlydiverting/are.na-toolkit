@@ -53,8 +53,9 @@ node_modules/
 *.sublime-workspace
 
 
-# ─── Claude Code worktrees ───
+# ─── Claude Code worktrees + local permissions ───
 .claude/worktrees/
+.claude/settings.local.json
 
 
 

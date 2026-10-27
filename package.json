@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build-all.js",
+    "build:docs": "node scripts/build-all.js --docs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui"
