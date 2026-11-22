@@ -2846,7 +2846,7 @@ function selectImage(idx) {
   img.onerror = () => {
     imageArea.innerHTML = `<div class="empty-image" role="alert">could not load image (CORS)</div>`;
   };
-  img.src = currentImageObj.original + '?t=' + Date.now();
+  img.src = currentImageObj.original;
 }
 
 // Update the image column h2 with a graceful opacity transition
