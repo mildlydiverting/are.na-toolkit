@@ -265,6 +265,7 @@ function renderImageGrid(images) {
 let currentPalette    = null;
 let currentImageObj   = null;
 let currentImageEl    = null;
+const imageCache      = createImageCache(loadImageElement);
 let currentColorNames = {};
 let lastNamedHexKey   = '';
 
@@ -288,17 +289,16 @@ function selectImage(idx) {
   imageArea.innerHTML = `<div class="empty-image" role="status"><span class="analyse-spinner" aria-hidden="true"></span>loading…</div>`;
   analysisArea.innerHTML = `<div class="empty-analysis" role="status"><span class="analyse-spinner" aria-hidden="true"></span>extracting palette…</div>`;
 
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.onload = () => {
+  const chosen = currentImageObj;
+  imageCache.get(chosen.original).then(img => {
+    if (currentImageObj !== chosen) return; // another thumbnail was clicked meanwhile
     currentImageEl = img;
-    renderImagePanel(currentImageObj);
+    renderImagePanel(chosen);
     runExtraction();
-  };
-  img.onerror = () => {
+  }, () => {
+    if (currentImageObj !== chosen) return;
     imageArea.innerHTML = `<div class="empty-image" role="alert">could not load image (CORS)</div>`;
-  };
-  img.src = currentImageObj.original;
+  });
 }
 
 // Update the image column h2 with a graceful opacity transition
