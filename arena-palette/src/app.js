@@ -428,14 +428,14 @@ function patchColorLabels(paletteData, nameMap) {
     if (!el) return;
     const hex  = rgbToHex(d.rgb);
     const pct  = Math.round(d.proportion * 100);
-    const name = nameMap[hex.slice(1).toLowerCase()];
+    const name = nameFor(nameMap, hex);
     el.innerHTML = buildLabelHtml(i, hex, pct, name);
   });
 
   // Also patch the extracted colours legend items
   document.querySelectorAll('.semantic-legend-item[data-hex]').forEach(btn => {
     const hex  = btn.dataset.hex;
-    const name = nameMap[hex.slice(1).toLowerCase()];
+    const name = nameFor(nameMap, hex);
     const label = btn.querySelector('.palette-legend-label');
     if (label) label.textContent = name ? `${name} · ${hex}` : hex;
     btn.setAttribute('aria-label', `Copy ${name ? name + ' ' : ''}${hex} to clipboard`);
@@ -501,7 +501,7 @@ function renderAnalysis(paletteData, swatchMap, nameMap) {
     }).join('');
     const legend = paletteData.map(({ rgb }) => {
       const hex  = rgbToHex(rgb);
-      const name = nameMap[hex.slice(1).toLowerCase()];
+      const name = nameFor(nameMap, hex);
       return `<button class="semantic-legend-item"
         data-hex="${hex}"
         onclick="navigator.clipboard.writeText('${hex}').catch(()=>{})"
@@ -523,7 +523,7 @@ function renderAnalysis(paletteData, swatchMap, nameMap) {
     const allSwatches = [...tints, rgb, ...shades];
     const pct  = Math.round(proportion * 100);
     const hex  = rgbToHex(rgb);
-    const name = nameMap[hex.toLowerCase()];
+    const name = nameFor(nameMap, hex);
 
     const swatchHtml = allSwatches.map((c, si) => {
       const ch     = rgbToHex(c);

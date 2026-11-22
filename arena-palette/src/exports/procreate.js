@@ -1,5 +1,5 @@
 // exports/procreate.js: Procreate .palette export.
-
+import { nameFor } from '../names.js';
 import { rgbToHex, hexToRgb, makeTintsShades, TINT_STEPS } from '../colour.js';
 import { swatchLabel, exportContext, exportSlug, downloadText } from './text.js';
 
@@ -35,7 +35,7 @@ export function buildProcreatePalette(ctx) {
   // 1. Base colours
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const name = nameFor(ctx.names, hex);
     const pct  = Math.round((ctx.proportions[i] ?? 0) * 100);
     swatches.push(makeEntry(rgb, swatchLabel(hex, name, pct || null)));
   });
@@ -49,7 +49,7 @@ export function buildProcreatePalette(ctx) {
   // 3. Tints & shades per colour
   palette.forEach((rgb) => {
     const hex  = rgbToHex(rgb);
-    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const name = nameFor(ctx.names, hex);
     const { tints, shades } = makeTintsShades(rgb);
 
     tints.forEach((c, ti) => {

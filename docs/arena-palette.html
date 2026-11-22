@@ -1410,21 +1410,38 @@ const NAME_LISTS = {
   thesaurus:           'Thesaurus',
 };
 
+// One key format everywhere: lower-case hex without the #.
+function nameKey(hex) {
+  return String(hex).replace('#', '').toLowerCase();
+}
+
+function nameFor(nameMap, hex) {
+  return nameMap[nameKey(hex)];
+}
+
+// Every requested hex gets an entry: its name, or '' if color.pizza had none for it.
+// '' means "looked up, no name"; undefined (no entry) means "not looked up yet", which shows the loading dots.
+function buildNameMap(hexArray, colors = []) {
+  const map = {};
+  hexArray.forEach(h => { map[nameKey(h)] = ''; });
+  colors.forEach(c => {
+    if (c.requestedHex && c.name) map[nameKey(c.requestedHex)] = c.name;
+  });
+  return map;
+}
+
 // ── COLOUR NAME API ───────────────────────────────────────────────────────────
-async function fetchColorNames(hexArray, list) {
+// If color.pizza is down or answers badly, every colour is simply left without a name.
+async function fetchColorNames(hexArray, list, fetchImpl = (...a) => globalThis.fetch(...a)) {
   try {
-    const values = hexArray.map(h => h.replace('#', '')).join(',');
+    const values = hexArray.map(nameKey).join(',');
     const params = new URLSearchParams({ values, list });
-    const res = await fetch(`${COLOR_NAME_API}?${params}`);
-    if (!res.ok) return {};
+    const res = await fetchImpl(`${COLOR_NAME_API}?${params}`);
+    if (!res.ok) return buildNameMap(hexArray);
     const data = await res.json();
-    const map = {};
-    (data.colors || []).forEach(c => {
-      if (c.requestedHex && c.name) map[c.requestedHex.replace('#', '').toLowerCase()] = c.name;
-    });
-    return map;
+    return buildNameMap(hexArray, data.colors);
   } catch(e) {
-    return {};
+    return buildNameMap(hexArray);
   }
 }
 
@@ -1611,7 +1628,6 @@ function applyFloor(items, minProp) {
 <script>
 // exports/text.js: filenames, labels and the text exports (hex, RGB, HSL, CSS, SCP, GPL).
 
-
 // ── EXPORTS ───────────────────────────────────────────────────────────────────
 function downloadText(content, filename) {
   const a = document.createElement('a');
@@ -1635,7 +1651,7 @@ function exportSlug() {
 }
 
 function colourTitle(index, hex) {
-  const name = currentColorNames[hex.slice(1).toLowerCase()];
+  const name = nameFor(currentColorNames, hex);
   return name
     ? `Colour ${index + 1} — ${hex} — ${name}`
     : `Colour ${index + 1} — ${hex}`;
@@ -1675,7 +1691,7 @@ function buildHex(ctx) {
   out.push('/* Palette */\n');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const name = nameFor(ctx.names, hex);
     const pct  = Math.round((ctx.proportions[i] ?? 0) * 100);
     out.push(`/* ${swatchLabel(hex, name, pct || null)} */\n${hex}\n`);
   });
@@ -1693,7 +1709,7 @@ function buildHex(ctx) {
   out.push('/* Tints and Shades */\n');
   palette.forEach((rgb) => {
     const hex  = rgbToHex(rgb);
-    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const name = nameFor(ctx.names, hex);
     const { tints, shades } = makeTintsShades(rgb);
     out.push(`/* ${swatchLabel(hex, name)} */`); // block header
     tints.forEach((c, ti) => {
@@ -1719,7 +1735,7 @@ function buildRgb(ctx) {
   out.push('/* Palette */\n');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const name = nameFor(ctx.names, hex);
     const pct  = Math.round((ctx.proportions[i] ?? 0) * 100);
     out.push(`/* ${swatchLabel(hex, name, pct || null)} */\nrgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})\n`);
   });
@@ -1738,7 +1754,7 @@ function buildRgb(ctx) {
   out.push('/* Tints and Shades */\n');
   palette.forEach((rgb) => {
     const hex  = rgbToHex(rgb);
-    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const name = nameFor(ctx.names, hex);
     const { tints, shades } = makeTintsShades(rgb);
     out.push(`/* ${swatchLabel(hex, name)} */`);
     tints.forEach((c, ti) => {
@@ -1764,7 +1780,7 @@ function buildHsl(ctx) {
   out.push('/* Palette */\n');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const name = nameFor(ctx.names, hex);
     const pct  = Math.round((ctx.proportions[i] ?? 0) * 100);
     const [h,s,l] = rgbToHsl(rgb);
     out.push(`/* ${swatchLabel(hex, name, pct || null)} */\nhsl(${h}, ${s}%, ${l}%)\n`);
@@ -1785,7 +1801,7 @@ function buildHsl(ctx) {
   out.push('/* Tints and Shades */\n');
   palette.forEach((rgb) => {
     const hex  = rgbToHex(rgb);
-    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const name = nameFor(ctx.names, hex);
     const { tints, shades } = makeTintsShades(rgb);
     out.push(`/* ${swatchLabel(hex, name)} */`);
     tints.forEach((c, ti) => {
@@ -1815,7 +1831,7 @@ function buildCss(ctx) {
   varLines.push('  /* Palette */');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const name = nameFor(ctx.names, hex);
     const slug = cssSlug(name, `color-${i + 1}`);
     const pct  = Math.round((ctx.proportions[i] ?? 0) * 100);
     const [h,s,l] = rgbToHsl(rgb);
@@ -1840,7 +1856,7 @@ function buildCss(ctx) {
   varLines.push('  /* Tints & shades */');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const name = nameFor(ctx.names, hex);
     const slug = cssSlug(name, `color-${i + 1}`);
     const { tints, shades } = makeTintsShades(rgb);
     tints.forEach((c, ti) => {
@@ -1867,7 +1883,7 @@ function buildScp(ctx) {
   const palette = ctx.palette;
   const paletteEntries = palette.map((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const name = nameFor(ctx.names, hex);
     const pct  = Math.round((ctx.proportions[i] ?? 0) * 100);
     return { hex, ...(name ? { name } : {}), ...(pct ? { proportion: pct / 100 } : {}) };
   });
@@ -1879,7 +1895,7 @@ function buildScp(ctx) {
 
   const tintsShades = palette.map((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const name = nameFor(ctx.names, hex);
     const { tints, shades } = makeTintsShades(rgb);
     return {
       hex,
@@ -1914,7 +1930,7 @@ function buildGpl(ctx) {
   lines.push('# Base colours');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const name = nameFor(ctx.names, hex);
     const pct  = Math.round((ctx.proportions[i] ?? 0) * 100);
     lines.push(`${rgb[0]}\t${rgb[1]}\t${rgb[2]}\t${swatchLabel(hex, name, pct || null)}`);
   });
@@ -1932,7 +1948,7 @@ function buildGpl(ctx) {
   // 3. Tints & shades per colour
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const name = nameFor(ctx.names, hex);
     const pct  = Math.round((ctx.proportions[i] ?? 0) * 100);
     lines.push(`# ${swatchLabel(hex, name, pct || null)}`);
     const { tints, shades } = makeTintsShades(rgb);
@@ -1992,7 +2008,6 @@ function exportGpl(palette) {
 </script>
 <script>
 // exports/ase.js: binary download helper and Adobe Swatch Exchange export.
-
 
 function downloadBinary(buffer, filename) {
   const blob = new Blob([buffer], { type: 'application/octet-stream' });
@@ -2069,7 +2084,7 @@ function buildAse(ctx) {
   blockCount++;
   palette.forEach((rgb, i) => {
     const baseHex = rgbToHex(rgb);
-    const name    = ctx.names[baseHex.slice(1).toLowerCase()];
+    const name    = nameFor(ctx.names, baseHex);
     const pct     = Math.round((ctx.proportions[i] ?? 0) * 100);
     blocks.push(...colourBlock(swatchLabel(baseHex, name, pct || null), rgb));
     blockCount++;
@@ -2093,7 +2108,7 @@ function buildAse(ctx) {
   // 3. Tints & shades per colour
   palette.forEach((rgb, i) => {
     const baseHex = rgbToHex(rgb);
-    const name    = ctx.names[baseHex.slice(1).toLowerCase()];
+    const name    = nameFor(ctx.names, baseHex);
     const pct     = Math.round((ctx.proportions[i] ?? 0) * 100);
 
     blocks.push(...groupStartBlock(swatchLabel(baseHex, name)));
@@ -2146,7 +2161,6 @@ function exportAse(palette) {
 <script>
 // exports/procreate.js: Procreate .palette export.
 
-
 // ── EXPORT — Procreate .palette ───────────────────────────────────────────────
 function buildProcreatePalette(ctx) {
   const palette = ctx.palette;
@@ -2179,7 +2193,7 @@ function buildProcreatePalette(ctx) {
   // 1. Base colours
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const name = nameFor(ctx.names, hex);
     const pct  = Math.round((ctx.proportions[i] ?? 0) * 100);
     swatches.push(makeEntry(rgb, swatchLabel(hex, name, pct || null)));
   });
@@ -2193,7 +2207,7 @@ function buildProcreatePalette(ctx) {
   // 3. Tints & shades per colour
   palette.forEach((rgb) => {
     const hex  = rgbToHex(rgb);
-    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const name = nameFor(ctx.names, hex);
     const { tints, shades } = makeTintsShades(rgb);
 
     tints.forEach((c, ti) => {
@@ -2962,14 +2976,14 @@ function patchColorLabels(paletteData, nameMap) {
     if (!el) return;
     const hex  = rgbToHex(d.rgb);
     const pct  = Math.round(d.proportion * 100);
-    const name = nameMap[hex.slice(1).toLowerCase()];
+    const name = nameFor(nameMap, hex);
     el.innerHTML = buildLabelHtml(i, hex, pct, name);
   });
 
   // Also patch the extracted colours legend items
   document.querySelectorAll('.semantic-legend-item[data-hex]').forEach(btn => {
     const hex  = btn.dataset.hex;
-    const name = nameMap[hex.slice(1).toLowerCase()];
+    const name = nameFor(nameMap, hex);
     const label = btn.querySelector('.palette-legend-label');
     if (label) label.textContent = name ? `${name} · ${hex}` : hex;
     btn.setAttribute('aria-label', `Copy ${name ? name + ' ' : ''}${hex} to clipboard`);
@@ -3035,7 +3049,7 @@ function renderAnalysis(paletteData, swatchMap, nameMap) {
     }).join('');
     const legend = paletteData.map(({ rgb }) => {
       const hex  = rgbToHex(rgb);
-      const name = nameMap[hex.slice(1).toLowerCase()];
+      const name = nameFor(nameMap, hex);
       return `<button class="semantic-legend-item"
         data-hex="${hex}"
         onclick="navigator.clipboard.writeText('${hex}').catch(()=>{})"
@@ -3057,7 +3071,7 @@ function renderAnalysis(paletteData, swatchMap, nameMap) {
     const allSwatches = [...tints, rgb, ...shades];
     const pct  = Math.round(proportion * 100);
     const hex  = rgbToHex(rgb);
-    const name = nameMap[hex.toLowerCase()];
+    const name = nameFor(nameMap, hex);
 
     const swatchHtml = allSwatches.map((c, si) => {
       const ch     = rgbToHex(c);

@@ -1,5 +1,5 @@
 // exports/ase.js: binary download helper and Adobe Swatch Exchange export.
-
+import { nameFor } from '../names.js';
 import { rgbToHex, hexToRgb, makeTintsShades, TINT_STEPS } from '../colour.js';
 import { swatchLabel, exportContext, exportSlug } from './text.js';
 
@@ -78,7 +78,7 @@ export function buildAse(ctx) {
   blockCount++;
   palette.forEach((rgb, i) => {
     const baseHex = rgbToHex(rgb);
-    const name    = ctx.names[baseHex.slice(1).toLowerCase()];
+    const name    = nameFor(ctx.names, baseHex);
     const pct     = Math.round((ctx.proportions[i] ?? 0) * 100);
     blocks.push(...colourBlock(swatchLabel(baseHex, name, pct || null), rgb));
     blockCount++;
@@ -102,7 +102,7 @@ export function buildAse(ctx) {
   // 3. Tints & shades per colour
   palette.forEach((rgb, i) => {
     const baseHex = rgbToHex(rgb);
-    const name    = ctx.names[baseHex.slice(1).toLowerCase()];
+    const name    = nameFor(ctx.names, baseHex);
     const pct     = Math.round((ctx.proportions[i] ?? 0) * 100);
 
     blocks.push(...groupStartBlock(swatchLabel(baseHex, name)));

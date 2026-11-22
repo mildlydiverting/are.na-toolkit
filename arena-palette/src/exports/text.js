@@ -1,5 +1,5 @@
 // exports/text.js: filenames, labels and the text exports (hex, RGB, HSL, CSS, SCP, GPL).
-
+import { nameFor } from '../names.js';
 import { rgbToHex, hexToRgb, rgbToHsl, makeTintsShades, TINT_STEPS, SHADE_STEPS } from '../colour.js';
 
 // ── EXPORTS ───────────────────────────────────────────────────────────────────
@@ -25,7 +25,7 @@ export function exportSlug() {
 }
 
 export function colourTitle(index, hex) {
-  const name = currentColorNames[hex.slice(1).toLowerCase()];
+  const name = nameFor(currentColorNames, hex);
   return name
     ? `Colour ${index + 1} — ${hex} — ${name}`
     : `Colour ${index + 1} — ${hex}`;
@@ -65,7 +65,7 @@ export function buildHex(ctx) {
   out.push('/* Palette */\n');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const name = nameFor(ctx.names, hex);
     const pct  = Math.round((ctx.proportions[i] ?? 0) * 100);
     out.push(`/* ${swatchLabel(hex, name, pct || null)} */\n${hex}\n`);
   });
@@ -83,7 +83,7 @@ export function buildHex(ctx) {
   out.push('/* Tints and Shades */\n');
   palette.forEach((rgb) => {
     const hex  = rgbToHex(rgb);
-    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const name = nameFor(ctx.names, hex);
     const { tints, shades } = makeTintsShades(rgb);
     out.push(`/* ${swatchLabel(hex, name)} */`); // block header
     tints.forEach((c, ti) => {
@@ -109,7 +109,7 @@ export function buildRgb(ctx) {
   out.push('/* Palette */\n');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const name = nameFor(ctx.names, hex);
     const pct  = Math.round((ctx.proportions[i] ?? 0) * 100);
     out.push(`/* ${swatchLabel(hex, name, pct || null)} */\nrgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})\n`);
   });
@@ -128,7 +128,7 @@ export function buildRgb(ctx) {
   out.push('/* Tints and Shades */\n');
   palette.forEach((rgb) => {
     const hex  = rgbToHex(rgb);
-    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const name = nameFor(ctx.names, hex);
     const { tints, shades } = makeTintsShades(rgb);
     out.push(`/* ${swatchLabel(hex, name)} */`);
     tints.forEach((c, ti) => {
@@ -154,7 +154,7 @@ export function buildHsl(ctx) {
   out.push('/* Palette */\n');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const name = nameFor(ctx.names, hex);
     const pct  = Math.round((ctx.proportions[i] ?? 0) * 100);
     const [h,s,l] = rgbToHsl(rgb);
     out.push(`/* ${swatchLabel(hex, name, pct || null)} */\nhsl(${h}, ${s}%, ${l}%)\n`);
@@ -175,7 +175,7 @@ export function buildHsl(ctx) {
   out.push('/* Tints and Shades */\n');
   palette.forEach((rgb) => {
     const hex  = rgbToHex(rgb);
-    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const name = nameFor(ctx.names, hex);
     const { tints, shades } = makeTintsShades(rgb);
     out.push(`/* ${swatchLabel(hex, name)} */`);
     tints.forEach((c, ti) => {
@@ -205,7 +205,7 @@ export function buildCss(ctx) {
   varLines.push('  /* Palette */');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const name = nameFor(ctx.names, hex);
     const slug = cssSlug(name, `color-${i + 1}`);
     const pct  = Math.round((ctx.proportions[i] ?? 0) * 100);
     const [h,s,l] = rgbToHsl(rgb);
@@ -230,7 +230,7 @@ export function buildCss(ctx) {
   varLines.push('  /* Tints & shades */');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const name = nameFor(ctx.names, hex);
     const slug = cssSlug(name, `color-${i + 1}`);
     const { tints, shades } = makeTintsShades(rgb);
     tints.forEach((c, ti) => {
@@ -257,7 +257,7 @@ export function buildScp(ctx) {
   const palette = ctx.palette;
   const paletteEntries = palette.map((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const name = nameFor(ctx.names, hex);
     const pct  = Math.round((ctx.proportions[i] ?? 0) * 100);
     return { hex, ...(name ? { name } : {}), ...(pct ? { proportion: pct / 100 } : {}) };
   });
@@ -269,7 +269,7 @@ export function buildScp(ctx) {
 
   const tintsShades = palette.map((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const name = nameFor(ctx.names, hex);
     const { tints, shades } = makeTintsShades(rgb);
     return {
       hex,
@@ -304,7 +304,7 @@ export function buildGpl(ctx) {
   lines.push('# Base colours');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const name = nameFor(ctx.names, hex);
     const pct  = Math.round((ctx.proportions[i] ?? 0) * 100);
     lines.push(`${rgb[0]}\t${rgb[1]}\t${rgb[2]}\t${swatchLabel(hex, name, pct || null)}`);
   });
@@ -322,7 +322,7 @@ export function buildGpl(ctx) {
   // 3. Tints & shades per colour
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const name = nameFor(ctx.names, hex);
     const pct  = Math.round((ctx.proportions[i] ?? 0) * 100);
     lines.push(`# ${swatchLabel(hex, name, pct || null)}`);
     const { tints, shades } = makeTintsShades(rgb);
