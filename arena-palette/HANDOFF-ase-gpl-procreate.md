@@ -1,5 +1,7 @@
 # Handoff: arena-palette — Add ASE, GPL, and Procreate .palette export
 
+> **Superseded (22 November 2026).** The ASE, GPL and Procreate exports were applied in v1.24, and the code has since moved to `src/exports/` (see `CONTEXT.md`). Kept for history; Kim decides whether to archive it to Dropbox.
+
 ## Context
 - **Repo**: https://github.com/mildlydiverting/are.na-toolkit
 - **File(s) being worked on**: `arena-palette/src/main.js`, `arena-palette/src/index.html` (export bar only)

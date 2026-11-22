@@ -1,28 +1,31 @@
 # arena-palette — context note for new chat
 
+*Corrected 22 November 2026 during the v2.0 migration (branch `arena-palette-v2`). Plan: `_claude/arena-palette-v2-build-plan.md`. This file becomes `NOTES.md` when v2.0 ships.*
+
 ## What we're working on
 
 `arena-palette` is a local single-file HTML tool that fetches images from up to 4 Are.na channels, extracts a colour palette from a selected image, and displays tints/shades plus a semantic palette. It's part of a planned suite of local Are.na browser tools called `are.na-toolkit`, which lives at `~/Development/are.na-toolkit/`.
 
 The repo is public at `https://github.com/mildlydiverting/are.na-toolkit`.
 
-The current built file is `arena-palette.html` (v1.29), located at:
+The current built file is `arena-palette.html` (v1.31), located at:
 `~/Development/are.na-toolkit/arena-palette/dist/arena-palette.html`
 
-Source files are split into:
-- `arena-palette/src/main.js`
-- `arena-palette/src/style.css`
-- `arena-palette/src/template.html`
+Source files (ES modules, inlined into one page by `@include` markers in `src/index.html`):
+- `arena-palette/src/app.js` (state, DOM wiring, rendering), `parse-input.js`, `colour.js`, `arena-fetch.js`, `names.js`, `storage.js` (not yet wired), `image-cache.js`, `extract.js`
+- `arena-palette/src/exports/` — `text.js`, `ase.js`, `procreate.js`, `png.js`
+- `arena-palette/src/style.css`, `arena-palette/src/third_party/color-thief.js` (Color Thief 3.5.0, MIT)
+- Tests sit beside the code (`*.test.js`; run `npm test` from the repo root)
 
-Built via `arena-palette/build.py` (Python concat script, no npm).
+Built with `node arena-palette/build.js --docs` (`--watch` rebuilds on save). `build.py`, `template.html` and `main.js` were retired in commit 3370224 and are in git history.
 
 ---
 
-## Current file state (v1.29)
+## Current file state (v1.31)
 
 **Key dependencies:**
-- Color Thief v3 (unpkg CDN) — MMCQ palette + swatch extraction
-- JSZip 3.10.1 (cdnjs) — zip export
+- Color Thief 3.5.0, inlined from `src/third_party/` — MMCQ palette + swatch extraction
+- (JSZip was loaded but never used; removed)
 - Karla + Courier Prime (Google Fonts)
 
 **Architecture — must preserve:**
@@ -62,11 +65,10 @@ function blurhashDominantColor(blurhash) {
 Token stored in localStorage under `STORAGE_KEY` alongside channel slugs, via `saveState()`. Settings stored separately under `SETTINGS_KEY`. Safe for public static deployment — each visitor's browser has isolated localStorage.
 
 **Colour name API:**
-- `https://api.color.pizza/v1/` — fetched on every extraction, batched as comma-separated hex values (WITHOUT `#`)
+- `https://api.color.pizza/v1/` — fetched when the colours change, batched as comma-separated hex values (WITHOUT `#`)
 - Multiple name vocabularies selectable in settings
-- Names cached in `currentColorNames` map — keyed by `requestedHex.toLowerCase()` where `requestedHex` IS returned WITH `#` by color.pizza (e.g. `'#ff0000'`)
-- `rgbToHex()` also returns `#ff0000`, so name lookups use `hex.toLowerCase()` directly — no slicing needed
-- `patchColorLabels(paletteData, nameMap)` should update both colour row labels (`colour-label-N`) AND extracted colours legend items (`[data-hex]`). In v1.29 this is broken — see deferred.
+- Names are cached in the `currentColorNames` map, keyed **without** the `#`, lower-case (`'ff0000'`). Always look names up with `nameFor(nameMap, hex)` from `names.js`, never by hand. Every requested hex has an entry: the name, or `''` if there is none; no entry (`undefined`) means "not looked up yet" and shows the loading dots.
+- `patchColorLabels(paletteData, nameMap)` updates both the colour row labels (`colour-label-N`) and the extracted colours legend items (`[data-hex]`).
 
 **CSS system (style.css):**
 - `font-size: 62.5%` on `:root` so `1rem = 10px`
@@ -107,7 +109,7 @@ Export order everywhere: 1. Base colours, 2. Semantic palette, 3. Tints & shades
 | png: dots | `exportPngDots(false)` | 1200×1200 PNG |
 | png: dots + bg | `exportPngDots(true)` | 1200×1200 PNG |
 
-### PNG renderers (integrated into main.js)
+### PNG renderers (`src/exports/png.js`)
 
 - `buildRendererData()` — maps globals to renderer data shape; reverses tints/shades (Color Thief lightest-first → renderers want darkest-first)
 - `renderBars(canvas, data)` — bars layout, transparent background
@@ -144,15 +146,14 @@ Two renderer test harnesses (`bars2-renderer.html`, `dots1-renderer.html`) integ
 
 ## Deferred / known issues
 
-- **11-image fetch bug** — `GRID_SIZE=12`, `MAX_RETRIES=12`. If a slot exhausts retries (sparse image channel), it silently drops. Quick fix: raise `MAX_RETRIES` to 20–25. Proper fix: track failures and retry from a different channel. See fetch logic around line 200.
+- **11-image fetch bug** — `GRID_SIZE=12`, `MAX_RETRIES=12` (`arena-fetch.js`). Fetching now goes through the shared throttle (150 ms gap, 429 backoff) and stops on a 429. If a slot exhausts retries (sparse image channel), it silently drops. Quick fix: raise `MAX_RETRIES` to 20–25. Proper fix: track failures and retry from a different channel.
 - **Colour sort** — hue-order sort before rendering, not yet implemented
 - **PNG metadata** — tEXt/iTXt chunk embedding not implemented
-- **Cache-bust** — repeated thumbnail clicks may hit cached image; fix TBD
 - **`shared/arena-api.js` extraction** — Are.na API calls could be pulled into a shared module for the toolkit
 - **Bars renderer background** — currently transparent; intentional for now
 - **ASE/GPL/Procreate labelling** — swatch names could be further refined; semantic role names in labels TBD
 - **CORS test for PNG export** — verify `canvas.toBlob()` works when served from a real public origin (not just `file://`)
-- **v1.29 colour name regression** — changing `hex.toLowerCase()` to `hex.slice(1).toLowerCase()` in `patchColorLabels` (and in `paletteSectionHtml` initial render) was wrong. `currentColorNames` keys ARE stored with `#` prefix (color.pizza returns `requestedHex` with `#`). The change broke existing colour row name display. Fix: revert key lookups to `hex.toLowerCase()` everywhere. The real issue with the palette legend was never a key mismatch — it was simply that `patchColorLabels` didn't update those DOM nodes. Fix: keep keys as-is; just extend `patchColorLabels` to also update `[data-hex]` legend items using `btn.dataset.hex` (which has `#`) directly against the unchanged `nameMap`.
+- **Colour names stuck on "…"** — fixed 22 November 2026. Row labels looked names up with the `#`; the map is keyed without it, and re-rendering with unchanged colours skipped the patch step. All lookups now use `nameFor`; unnamed colours and failed lookups end up unnamed rather than loading forever.
 - **`.channel-tag` CSS** — two rules remain in style.css after the HTML element was removed in v1.29; harmless dead code, can be cleaned up
 
 ---
@@ -160,9 +161,9 @@ Two renderer test harnesses (`bars2-renderer.html`, `dots1-renderer.html`) integ
 ## Working approach
 
 - Iterative, targeted changes — not large rewrites unless necessary
-- Version bump + changelog entry in `template.html` header on each change; project notes in this file
+- Version bump + changelog entry in the `src/index.html` header on each change; project notes in this file
 - CSS CUBE methodology: https://cube.fyi
 - British English
 - Karla + Courier Prime (Google Fonts) — already loaded in the tool
-- No build step dependencies; Python concat build only (`build.py`)
+- No npm runtime dependencies; third-party libraries are copied into `src/third_party/` and inlined. Dev tooling (Vitest) is fine
 - Ask before making changes to code
