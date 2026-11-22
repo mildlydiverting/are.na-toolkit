@@ -1,0 +1,449 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`text exports (v1.31 output) > css 1`] = `
+"/*
+ * arena-palette export
+ * Test image
+ * https://www.are.na/block/123
+ */
+
+:root {
+  /* Palette */
+  --red: hsl(0, 100%, 50%); /* #ff0000 (60%) */
+  --color-2: hsl(210, 50%, 8%); /* #0a141e (30%) */
+  --mustard: hsl(49, 50%, 57%); /* #c8b45a (10%) */
+
+  /* Semantic palette */
+  --semantic-vibrant: hsl(0, 100%, 50%); /* #ff0000 (70%) */
+  --semantic-dark-muted: hsl(210, 50%, 8%); /* #0a141e (30%) */
+
+  /* Tints & shades */
+  --red-tint-3: hsl(0, 100%, 84%); /* #ffacac */
+  --red-tint-2: hsl(0, 100%, 73%); /* #ff7373 */
+  --red-tint-1: hsl(0, 100%, 61%); /* #ff3939 */
+  --red-base: hsl(0, 100%, 50%); /* #ff0000 */
+  --red-shade-1: hsl(0, 100%, 37%); /* #bf0000 */
+  --red-shade-2: hsl(0, 100%, 25%); /* #800000 */
+  --red-shade-3: hsl(0, 100%, 13%); /* #400000 */
+
+  --color-2-tint-3: hsl(210, 50%, 73%); /* #99bbdd */
+  --color-2-tint-2: hsl(210, 50%, 51%); /* #4583c1 */
+  --color-2-tint-1: hsl(210, 50%, 30%); /* #264c72 */
+  --color-2-base: hsl(210, 50%, 8%); /* #0a141e */
+  --color-2-shade-1: hsl(212, 48%, 6%); /* #080f17 */
+  --color-2-shade-2: hsl(208, 52%, 5%); /* #060d13 */
+  --color-2-shade-3: hsl(208, 52%, 5%); /* #060d13 */
+
+  --mustard-tint-3: hsl(49, 51%, 86%); /* #ede6c8 */
+  --mustard-tint-2: hsl(49, 50%, 76%); /* #e0d5a3 */
+  --mustard-tint-1: hsl(49, 50%, 66%); /* #d4c57f */
+  --mustard-base: hsl(49, 50%, 57%); /* #c8b45a */
+  --mustard-shade-1: hsl(49, 50%, 43%); /* #a49037 */
+  --mustard-shade-2: hsl(49, 50%, 28%); /* #6d6024 */
+  --mustard-shade-3: hsl(49, 51%, 14%); /* #373012 */
+}"
+`;
+
+exports[`text exports (v1.31 output) > gpl 1`] = `
+"GIMP Palette
+Name: Test image
+Columns: 7
+#
+# Base colours
+255	0	0	#ff0000 Red (60%)
+10	20	30	#0a141e (30%)
+200	180	90	#c8b45a Mustard (10%)
+# Semantic palette
+255	0	0	#ff0000 Vibrant (70%)
+10	20	30	#0a141e DarkMuted (30%)
+# #ff0000 Red (60%)
+255	172	172	#ffacac Red tint 3
+255	115	115	#ff7373 Red tint 2
+255	57	57	#ff3939 Red tint 1
+255	0	0	#ff0000 Red
+191	0	0	#bf0000 Red shade 1
+128	0	0	#800000 Red shade 2
+64	0	0	#400000 Red shade 3
+# #0a141e (30%)
+153	187	221	#99bbdd tint 3
+69	131	193	#4583c1 tint 2
+38	76	114	#264c72 tint 1
+10	20	30	#0a141e
+8	15	23	#080f17 shade 1
+6	13	19	#060d13 shade 2
+6	13	19	#060d13 shade 3
+# #c8b45a Mustard (10%)
+237	230	200	#ede6c8 Mustard tint 3
+224	213	163	#e0d5a3 Mustard tint 2
+212	197	127	#d4c57f Mustard tint 1
+200	180	90	#c8b45a Mustard
+164	144	55	#a49037 Mustard shade 1
+109	96	36	#6d6024 Mustard shade 2
+55	48	18	#373012 Mustard shade 3"
+`;
+
+exports[`text exports (v1.31 output) > hex 1`] = `
+"arena-palette export
+Image:  Test image
+Source: https://www.are.na/block/123
+---
+
+
+/* Palette */
+
+/* #ff0000 Red (60%) */
+#ff0000
+
+/* #0a141e (30%) */
+#0a141e
+
+/* #c8b45a Mustard (10%) */
+#c8b45a
+
+/* Semantic palette */
+
+/* #ff0000 Vibrant (70%) */
+#ff0000
+
+/* #0a141e DarkMuted (30%) */
+#0a141e
+
+/* Tints and Shades */
+
+/* #ff0000 Red */
+/* #ffacac Red tint 3 */
+#ffacac
+/* #ff7373 Red tint 2 */
+#ff7373
+/* #ff3939 Red tint 1 */
+#ff3939
+/* #ff0000 Red */
+#ff0000
+/* #bf0000 Red shade 1 */
+#bf0000
+/* #800000 Red shade 2 */
+#800000
+/* #400000 Red shade 3 */
+#400000
+
+/* #0a141e */
+/* #99bbdd tint 3 */
+#99bbdd
+/* #4583c1 tint 2 */
+#4583c1
+/* #264c72 tint 1 */
+#264c72
+/* #0a141e */
+#0a141e
+/* #080f17 shade 1 */
+#080f17
+/* #060d13 shade 2 */
+#060d13
+/* #060d13 shade 3 */
+#060d13
+
+/* #c8b45a Mustard */
+/* #ede6c8 Mustard tint 3 */
+#ede6c8
+/* #e0d5a3 Mustard tint 2 */
+#e0d5a3
+/* #d4c57f Mustard tint 1 */
+#d4c57f
+/* #c8b45a Mustard */
+#c8b45a
+/* #a49037 Mustard shade 1 */
+#a49037
+/* #6d6024 Mustard shade 2 */
+#6d6024
+/* #373012 Mustard shade 3 */
+#373012
+"
+`;
+
+exports[`text exports (v1.31 output) > hsl 1`] = `
+"arena-palette export
+Image:  Test image
+Source: https://www.are.na/block/123
+---
+
+
+/* Palette */
+
+/* #ff0000 Red (60%) */
+hsl(0, 100%, 50%)
+
+/* #0a141e (30%) */
+hsl(210, 50%, 8%)
+
+/* #c8b45a Mustard (10%) */
+hsl(49, 50%, 57%)
+
+/* Semantic palette */
+
+/* #ff0000 Vibrant (70%) */
+hsl(0, 100%, 50%)
+
+/* #0a141e DarkMuted (30%) */
+hsl(210, 50%, 8%)
+
+/* Tints and Shades */
+
+/* #ff0000 Red */
+/* #ffacac Red tint 3 */
+hsl(0, 100%, 84%)
+/* #ff7373 Red tint 2 */
+hsl(0, 100%, 73%)
+/* #ff3939 Red tint 1 */
+hsl(0, 100%, 61%)
+/* #ff0000 Red */
+hsl(0, 100%, 50%)
+/* #bf0000 Red shade 1 */
+hsl(0, 100%, 37%)
+/* #800000 Red shade 2 */
+hsl(0, 100%, 25%)
+/* #400000 Red shade 3 */
+hsl(0, 100%, 13%)
+
+/* #0a141e */
+/* #99bbdd tint 3 */
+hsl(210, 50%, 73%)
+/* #4583c1 tint 2 */
+hsl(210, 50%, 51%)
+/* #264c72 tint 1 */
+hsl(210, 50%, 30%)
+/* #0a141e */
+hsl(210, 50%, 8%)
+/* #080f17 shade 1 */
+hsl(212, 48%, 6%)
+/* #060d13 shade 2 */
+hsl(208, 52%, 5%)
+/* #060d13 shade 3 */
+hsl(208, 52%, 5%)
+
+/* #c8b45a Mustard */
+/* #ede6c8 Mustard tint 3 */
+hsl(49, 51%, 86%)
+/* #e0d5a3 Mustard tint 2 */
+hsl(49, 50%, 76%)
+/* #d4c57f Mustard tint 1 */
+hsl(49, 50%, 66%)
+/* #c8b45a Mustard */
+hsl(49, 50%, 57%)
+/* #a49037 Mustard shade 1 */
+hsl(49, 50%, 43%)
+/* #6d6024 Mustard shade 2 */
+hsl(49, 50%, 28%)
+/* #373012 Mustard shade 3 */
+hsl(49, 51%, 14%)
+"
+`;
+
+exports[`text exports (v1.31 output) > rgb 1`] = `
+"arena-palette export
+Image:  Test image
+Source: https://www.are.na/block/123
+---
+
+
+/* Palette */
+
+/* #ff0000 Red (60%) */
+rgb(255, 0, 0)
+
+/* #0a141e (30%) */
+rgb(10, 20, 30)
+
+/* #c8b45a Mustard (10%) */
+rgb(200, 180, 90)
+
+/* Semantic palette */
+
+/* #ff0000 Vibrant (70%) */
+rgb(255, 0, 0)
+
+/* #0a141e DarkMuted (30%) */
+rgb(10, 20, 30)
+
+/* Tints and Shades */
+
+/* #ff0000 Red */
+/* #ffacac Red tint 3 */
+rgb(255, 172, 172)
+/* #ff7373 Red tint 2 */
+rgb(255, 115, 115)
+/* #ff3939 Red tint 1 */
+rgb(255, 57, 57)
+/* #ff0000 Red */
+rgb(255, 0, 0)
+/* #bf0000 Red shade 1 */
+rgb(191, 0, 0)
+/* #800000 Red shade 2 */
+rgb(128, 0, 0)
+/* #400000 Red shade 3 */
+rgb(64, 0, 0)
+
+/* #0a141e */
+/* #99bbdd tint 3 */
+rgb(153, 187, 221)
+/* #4583c1 tint 2 */
+rgb(69, 131, 193)
+/* #264c72 tint 1 */
+rgb(38, 76, 114)
+/* #0a141e */
+rgb(10, 20, 30)
+/* #080f17 shade 1 */
+rgb(8, 15, 23)
+/* #060d13 shade 2 */
+rgb(6, 13, 19)
+/* #060d13 shade 3 */
+rgb(6, 13, 19)
+
+/* #c8b45a Mustard */
+/* #ede6c8 Mustard tint 3 */
+rgb(237, 230, 200)
+/* #e0d5a3 Mustard tint 2 */
+rgb(224, 213, 163)
+/* #d4c57f Mustard tint 1 */
+rgb(212, 197, 127)
+/* #c8b45a Mustard */
+rgb(200, 180, 90)
+/* #a49037 Mustard shade 1 */
+rgb(164, 144, 55)
+/* #6d6024 Mustard shade 2 */
+rgb(109, 96, 36)
+/* #373012 Mustard shade 3 */
+rgb(55, 48, 18)
+"
+`;
+
+exports[`text exports (v1.31 output) > scp 1`] = `
+"{
+  "name": "Test image",
+  "sourceUrl": "https://www.are.na/block/123",
+  "palette": [
+    {
+      "hex": "#ff0000",
+      "name": "Red",
+      "proportion": 0.6
+    },
+    {
+      "hex": "#0a141e",
+      "proportion": 0.3
+    },
+    {
+      "hex": "#c8b45a",
+      "name": "Mustard",
+      "proportion": 0.1
+    }
+  ],
+  "semantic": [
+    {
+      "role": "Vibrant",
+      "hex": "#ff0000",
+      "proportion": 0.7
+    },
+    {
+      "role": "DarkMuted",
+      "hex": "#0a141e",
+      "proportion": 0.3
+    }
+  ],
+  "tintsShades": [
+    {
+      "hex": "#ff0000",
+      "name": "Red",
+      "tints": [
+        {
+          "hex": "#ffacac",
+          "label": "tint 3"
+        },
+        {
+          "hex": "#ff7373",
+          "label": "tint 2"
+        },
+        {
+          "hex": "#ff3939",
+          "label": "tint 1"
+        }
+      ],
+      "shades": [
+        {
+          "hex": "#bf0000",
+          "label": "shade 1"
+        },
+        {
+          "hex": "#800000",
+          "label": "shade 2"
+        },
+        {
+          "hex": "#400000",
+          "label": "shade 3"
+        }
+      ]
+    },
+    {
+      "hex": "#0a141e",
+      "tints": [
+        {
+          "hex": "#99bbdd",
+          "label": "tint 3"
+        },
+        {
+          "hex": "#4583c1",
+          "label": "tint 2"
+        },
+        {
+          "hex": "#264c72",
+          "label": "tint 1"
+        }
+      ],
+      "shades": [
+        {
+          "hex": "#080f17",
+          "label": "shade 1"
+        },
+        {
+          "hex": "#060d13",
+          "label": "shade 2"
+        },
+        {
+          "hex": "#060d13",
+          "label": "shade 3"
+        }
+      ]
+    },
+    {
+      "hex": "#c8b45a",
+      "name": "Mustard",
+      "tints": [
+        {
+          "hex": "#ede6c8",
+          "label": "tint 3"
+        },
+        {
+          "hex": "#e0d5a3",
+          "label": "tint 2"
+        },
+        {
+          "hex": "#d4c57f",
+          "label": "tint 1"
+        }
+      ],
+      "shades": [
+        {
+          "hex": "#a49037",
+          "label": "shade 1"
+        },
+        {
+          "hex": "#6d6024",
+          "label": "shade 2"
+        },
+        {
+          "hex": "#373012",
+          "label": "shade 3"
+        }
+      ]
+    }
+  ]
+}"
+`;

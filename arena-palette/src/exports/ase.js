@@ -1,5 +1,8 @@
 // exports/ase.js: binary download helper and Adobe Swatch Exchange export.
 
+import { rgbToHex, hexToRgb, makeTintsShades, TINT_STEPS } from '../colour.js';
+import { swatchLabel, exportContext, exportSlug } from './text.js';
+
 export function downloadBinary(buffer, filename) {
   const blob = new Blob([buffer], { type: 'application/octet-stream' });
   const a = document.createElement('a');
@@ -10,7 +13,8 @@ export function downloadBinary(buffer, filename) {
 }
 
 // ── EXPORT — ASE (Adobe Swatch Exchange) ──────────────────────────────────────
-export function exportAse(palette) {
+export function buildAse(ctx) {
+  const palette = ctx.palette;
   // ASE binary format — big-endian throughout
   // Spec: https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/
 
@@ -74,8 +78,8 @@ export function exportAse(palette) {
   blockCount++;
   palette.forEach((rgb, i) => {
     const baseHex = rgbToHex(rgb);
-    const name    = currentColorNames[baseHex.slice(1).toLowerCase()];
-    const pct     = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
+    const name    = ctx.names[baseHex.slice(1).toLowerCase()];
+    const pct     = Math.round((ctx.proportions[i] ?? 0) * 100);
     blocks.push(...colourBlock(swatchLabel(baseHex, name, pct || null), rgb));
     blockCount++;
   });
@@ -83,10 +87,10 @@ export function exportAse(palette) {
   blockCount++;
 
   // 2. Semantic group
-  if (currentSwatchData.length) {
+  if (ctx.semantic.length) {
     blocks.push(...groupStartBlock('Semantic palette'));
     blockCount++;
-    currentSwatchData.forEach(({ role, hex, proportion }) => {
+    ctx.semantic.forEach(({ role, hex, proportion }) => {
       const pct = Math.round((proportion ?? 0) * 100);
       blocks.push(...colourBlock(swatchLabel(hex, role, pct || null), hexToRgb(hex)));
       blockCount++;
@@ -98,8 +102,8 @@ export function exportAse(palette) {
   // 3. Tints & shades per colour
   palette.forEach((rgb, i) => {
     const baseHex = rgbToHex(rgb);
-    const name    = currentColorNames[baseHex.slice(1).toLowerCase()];
-    const pct     = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
+    const name    = ctx.names[baseHex.slice(1).toLowerCase()];
+    const pct     = Math.round((ctx.proportions[i] ?? 0) * 100);
 
     blocks.push(...groupStartBlock(swatchLabel(baseHex, name)));
     blockCount++;
@@ -140,5 +144,9 @@ export function exportAse(palette) {
     offset += b.byteLength;
   });
 
-  downloadBinary(out.buffer, `${exportSlug()}.ase`);
+  return out.buffer;
+}
+
+export function exportAse(palette) {
+  downloadBinary(buildAse(exportContext(palette)), `${exportSlug()}.ase`);
 }

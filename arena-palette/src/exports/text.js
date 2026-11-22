@@ -1,5 +1,7 @@
 // exports/text.js: filenames, labels and the text exports (hex, RGB, HSL, CSS, SCP, GPL).
 
+import { rgbToHex, hexToRgb, rgbToHsl, makeTintsShades, TINT_STEPS, SHADE_STEPS } from '../colour.js';
+
 // ── EXPORTS ───────────────────────────────────────────────────────────────────
 export function downloadText(content, filename) {
   const a = document.createElement('a');
@@ -45,9 +47,9 @@ export function cssSlug(name, fallback) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || fallback;
 }
 
-export function exportHeader() {
-  const title = currentImageObj?.title || '';
-  const url   = currentImageObj?.blockUrl || '';
+export function exportHeader(ctx) {
+  const title = ctx.title;
+  const url   = ctx.blockUrl;
   const lines = ['arena-palette export'];
   if (title) lines.push(`Image:  ${title}`);
   if (url)   lines.push(`Source: ${url}`);
@@ -55,22 +57,23 @@ export function exportHeader() {
   return lines.join('\n') + '\n\n';
 }
 
-export function exportHex(palette) {
-  const out = [exportHeader()];
+export function buildHex(ctx) {
+  const palette = ctx.palette;
+  const out = [exportHeader(ctx)];
 
   // 1. Palette
   out.push('/* Palette */\n');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.slice(1).toLowerCase()];
-    const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
+    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const pct  = Math.round((ctx.proportions[i] ?? 0) * 100);
     out.push(`/* ${swatchLabel(hex, name, pct || null)} */\n${hex}\n`);
   });
 
   // 2. Semantic palette
-  if (currentSwatchData.length) {
+  if (ctx.semantic.length) {
     out.push('/* Semantic palette */\n');
-    currentSwatchData.forEach(({ role, hex, proportion }) => {
+    ctx.semantic.forEach(({ role, hex, proportion }) => {
       const pct = Math.round((proportion ?? 0) * 100);
       out.push(`/* ${swatchLabel(hex, role, pct || null)} */\n${hex}\n`);
     });
@@ -80,7 +83,7 @@ export function exportHex(palette) {
   out.push('/* Tints and Shades */\n');
   palette.forEach((rgb) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.slice(1).toLowerCase()];
+    const name = ctx.names[hex.slice(1).toLowerCase()];
     const { tints, shades } = makeTintsShades(rgb);
     out.push(`/* ${swatchLabel(hex, name)} */`); // block header
     tints.forEach((c, ti) => {
@@ -95,25 +98,26 @@ export function exportHex(palette) {
     out.push('');
   });
 
-  downloadText(out.join('\n'), `${exportSlug()}-hex.txt`);
+  return out.join('\n');
 }
 
-export function exportRgb(palette) {
-  const out = [exportHeader()];
+export function buildRgb(ctx) {
+  const palette = ctx.palette;
+  const out = [exportHeader(ctx)];
 
   // 1. Palette
   out.push('/* Palette */\n');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.slice(1).toLowerCase()];
-    const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
+    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const pct  = Math.round((ctx.proportions[i] ?? 0) * 100);
     out.push(`/* ${swatchLabel(hex, name, pct || null)} */\nrgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})\n`);
   });
 
   // 2. Semantic palette
-  if (currentSwatchData.length) {
+  if (ctx.semantic.length) {
     out.push('/* Semantic palette */\n');
-    currentSwatchData.forEach(({ role, hex, proportion }) => {
+    ctx.semantic.forEach(({ role, hex, proportion }) => {
       const rgb = hexToRgb(hex);
       const pct = Math.round((proportion ?? 0) * 100);
       out.push(`/* ${swatchLabel(hex, role, pct || null)} */\nrgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})\n`);
@@ -124,7 +128,7 @@ export function exportRgb(palette) {
   out.push('/* Tints and Shades */\n');
   palette.forEach((rgb) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.slice(1).toLowerCase()];
+    const name = ctx.names[hex.slice(1).toLowerCase()];
     const { tints, shades } = makeTintsShades(rgb);
     out.push(`/* ${swatchLabel(hex, name)} */`);
     tints.forEach((c, ti) => {
@@ -139,26 +143,27 @@ export function exportRgb(palette) {
     out.push('');
   });
 
-  downloadText(out.join('\n'), `${exportSlug()}-rgb.txt`);
+  return out.join('\n');
 }
 
-export function exportHsl(palette) {
-  const out = [exportHeader()];
+export function buildHsl(ctx) {
+  const palette = ctx.palette;
+  const out = [exportHeader(ctx)];
 
   // 1. Palette
   out.push('/* Palette */\n');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.slice(1).toLowerCase()];
-    const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
+    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const pct  = Math.round((ctx.proportions[i] ?? 0) * 100);
     const [h,s,l] = rgbToHsl(rgb);
     out.push(`/* ${swatchLabel(hex, name, pct || null)} */\nhsl(${h}, ${s}%, ${l}%)\n`);
   });
 
   // 2. Semantic palette
-  if (currentSwatchData.length) {
+  if (ctx.semantic.length) {
     out.push('/* Semantic palette */\n');
-    currentSwatchData.forEach(({ role, hex, proportion }) => {
+    ctx.semantic.forEach(({ role, hex, proportion }) => {
       const rgb = hexToRgb(hex);
       const [h,s,l] = rgbToHsl(rgb);
       const pct = Math.round((proportion ?? 0) * 100);
@@ -170,7 +175,7 @@ export function exportHsl(palette) {
   out.push('/* Tints and Shades */\n');
   palette.forEach((rgb) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.slice(1).toLowerCase()];
+    const name = ctx.names[hex.slice(1).toLowerCase()];
     const { tints, shades } = makeTintsShades(rgb);
     out.push(`/* ${swatchLabel(hex, name)} */`);
     tints.forEach((c, ti) => {
@@ -188,29 +193,30 @@ export function exportHsl(palette) {
     out.push('');
   });
 
-  downloadText(out.join('\n'), `${exportSlug()}-hsl.txt`);
+  return out.join('\n');
 }
 
-export function exportCss(palette) {
-  const header = `/*\n * arena-palette export\n * ${currentImageObj?.title || ''}\n * ${currentImageObj?.blockUrl || ''}\n */\n\n`;
+export function buildCss(ctx) {
+  const palette = ctx.palette;
+  const header = `/*\n * arena-palette export\n * ${ctx.title}\n * ${ctx.blockUrl}\n */\n\n`;
   const varLines = [];
 
   // 1. Palette — one var per base colour, named by slug
   varLines.push('  /* Palette */');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.slice(1).toLowerCase()];
+    const name = ctx.names[hex.slice(1).toLowerCase()];
     const slug = cssSlug(name, `color-${i + 1}`);
-    const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
+    const pct  = Math.round((ctx.proportions[i] ?? 0) * 100);
     const [h,s,l] = rgbToHsl(rgb);
     varLines.push(`  --${slug}: hsl(${h}, ${s}%, ${l}%); /* ${swatchLabel(hex, null, pct || null)} */`);
   });
   varLines.push('');
 
   // 2. Semantic palette
-  if (currentSwatchData.length) {
+  if (ctx.semantic.length) {
     varLines.push('  /* Semantic palette */');
-    currentSwatchData.forEach(({ role, hex, proportion }) => {
+    ctx.semantic.forEach(({ role, hex, proportion }) => {
       const rgb = hexToRgb(hex);
       const [h,s,l] = rgbToHsl(rgb);
       const pct = Math.round((proportion ?? 0) * 100);
@@ -224,7 +230,7 @@ export function exportCss(palette) {
   varLines.push('  /* Tints & shades */');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.slice(1).toLowerCase()];
+    const name = ctx.names[hex.slice(1).toLowerCase()];
     const slug = cssSlug(name, `color-${i + 1}`);
     const { tints, shades } = makeTintsShades(rgb);
     tints.forEach((c, ti) => {
@@ -244,25 +250,26 @@ export function exportCss(palette) {
 
   while (varLines[varLines.length - 1] === '') varLines.pop();
 
-  downloadText(header + `:root {\n${varLines.join('\n')}\n}`, `${exportSlug()}-vars.css`);
+  return header + `:root {\n${varLines.join('\n')}\n}`;
 }
 
-export function exportScp(palette) {
+export function buildScp(ctx) {
+  const palette = ctx.palette;
   const paletteEntries = palette.map((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.slice(1).toLowerCase()];
-    const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
+    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const pct  = Math.round((ctx.proportions[i] ?? 0) * 100);
     return { hex, ...(name ? { name } : {}), ...(pct ? { proportion: pct / 100 } : {}) };
   });
 
-  const semanticEntries = currentSwatchData.map(({ role, hex, proportion }) => {
+  const semanticEntries = ctx.semantic.map(({ role, hex, proportion }) => {
     const pct = Math.round((proportion ?? 0) * 100);
     return { role, hex, ...(pct ? { proportion: pct / 100 } : {}) };
   });
 
   const tintsShades = palette.map((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.slice(1).toLowerCase()];
+    const name = ctx.names[hex.slice(1).toLowerCase()];
     const { tints, shades } = makeTintsShades(rgb);
     return {
       hex,
@@ -273,18 +280,19 @@ export function exportScp(palette) {
   });
 
   const payload = {
-    name:        currentImageObj?.title || slugName(),
-    sourceUrl:   currentImageObj?.blockUrl || '',
+    name:        ctx.title || ctx.channel,
+    sourceUrl:   ctx.blockUrl,
     palette:     paletteEntries,
     semantic:    semanticEntries,
     tintsShades,
   };
-  downloadText(JSON.stringify(payload, null, 2), `${exportSlug()}.color-palette`);
+  return JSON.stringify(payload, null, 2);
 }
 
 // ── EXPORT — GPL (GIMP palette) ───────────────────────────────────────────────
-export function exportGpl(palette) {
-  const title = currentImageObj?.title || exportSlug();
+export function buildGpl(ctx) {
+  const palette = ctx.palette;
+  const title = ctx.title || ctx.slug;
   const lines = [
     'GIMP Palette',
     `Name: ${title}`,
@@ -296,15 +304,15 @@ export function exportGpl(palette) {
   lines.push('# Base colours');
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.slice(1).toLowerCase()];
-    const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
+    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const pct  = Math.round((ctx.proportions[i] ?? 0) * 100);
     lines.push(`${rgb[0]}\t${rgb[1]}\t${rgb[2]}\t${swatchLabel(hex, name, pct || null)}`);
   });
 
   // 2. Semantic palette
-  if (currentSwatchData.length) {
+  if (ctx.semantic.length) {
     lines.push('# Semantic palette');
-    currentSwatchData.forEach(({ role, hex, proportion }) => {
+    ctx.semantic.forEach(({ role, hex, proportion }) => {
       const rgb = hexToRgb(hex);
       const pct = Math.round((proportion ?? 0) * 100);
       lines.push(`${rgb[0]}\t${rgb[1]}\t${rgb[2]}\t${swatchLabel(hex, role, pct || null)}`);
@@ -314,8 +322,8 @@ export function exportGpl(palette) {
   // 3. Tints & shades per colour
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.slice(1).toLowerCase()];
-    const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
+    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const pct  = Math.round((ctx.proportions[i] ?? 0) * 100);
     lines.push(`# ${swatchLabel(hex, name, pct || null)}`);
     const { tints, shades } = makeTintsShades(rgb);
     tints.forEach((c, ti) => {
@@ -329,5 +337,44 @@ export function exportGpl(palette) {
     });
   });
 
-  downloadText(lines.join('\n'), `${exportSlug()}.gpl`);
+  return lines.join('\n');
+}
+
+// Everything the builders need, gathered from the page's globals. Builders take this
+// and return the file contents, so they stay pure and testable.
+export function exportContext(palette) {
+  return {
+    palette,
+    proportions: (currentPalette || []).map(p => p.proportion),
+    names:       currentColorNames,
+    semantic:    currentSwatchData,
+    title:       currentImageObj?.title || '',
+    blockUrl:    currentImageObj?.blockUrl || '',
+    channel:     slugName(),
+    slug:        exportSlug(),
+  };
+}
+
+export function exportHex(palette) {
+  downloadText(buildHex(exportContext(palette)), `${exportSlug()}-hex.txt`);
+}
+
+export function exportRgb(palette) {
+  downloadText(buildRgb(exportContext(palette)), `${exportSlug()}-rgb.txt`);
+}
+
+export function exportHsl(palette) {
+  downloadText(buildHsl(exportContext(palette)), `${exportSlug()}-hsl.txt`);
+}
+
+export function exportCss(palette) {
+  downloadText(buildCss(exportContext(palette)), `${exportSlug()}-vars.css`);
+}
+
+export function exportScp(palette) {
+  downloadText(buildScp(exportContext(palette)), `${exportSlug()}.color-palette`);
+}
+
+export function exportGpl(palette) {
+  downloadText(buildGpl(exportContext(palette)), `${exportSlug()}.gpl`);
 }

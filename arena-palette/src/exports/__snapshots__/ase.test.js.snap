@@ -1,0 +1,32 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`buildAse > names the colours (record of v1.31 naming, to review later) 1`] = `
+[
+  "#ff0000 Red (60%)",
+  "#0a141e (30%)",
+  "#c8b45a Mustard (10%)",
+  "#ff0000 Vibrant (70%)",
+  "#0a141e DarkMuted (30%)",
+  "#ffacac Red tint 3",
+  "#ff7373 Red tint 2",
+  "#ff3939 Red tint 1",
+  "#ff0000 Red (60%)",
+  "#bf0000 Red shade 1",
+  "#800000 Red shade 2",
+  "#400000 Red shade 3",
+  "#99bbdd tint 3",
+  "#4583c1 tint 2",
+  "#264c72 tint 1",
+  "#0a141e (30%)",
+  "#080f17 shade 1",
+  "#060d13 shade 2",
+  "#060d13 shade 3",
+  "#ede6c8 Mustard tint 3",
+  "#e0d5a3 Mustard tint 2",
+  "#d4c57f Mustard tint 1",
+  "#c8b45a Mustard (10%)",
+  "#a49037 Mustard shade 1",
+  "#6d6024 Mustard shade 2",
+  "#373012 Mustard shade 3",
+]
+`;

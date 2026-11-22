@@ -1,7 +1,11 @@
 // exports/procreate.js: Procreate .palette export.
 
+import { rgbToHex, hexToRgb, makeTintsShades, TINT_STEPS } from '../colour.js';
+import { swatchLabel, exportContext, exportSlug, downloadText } from './text.js';
+
 // ── EXPORT — Procreate .palette ───────────────────────────────────────────────
-export function exportProcreatePalette(palette) {
+export function buildProcreatePalette(ctx) {
+  const palette = ctx.palette;
   // Procreate palette JSON: array of up to 30 colour objects
   // Each: { name, hue, saturation, brightness, alpha } — all floats 0–1 (HSB)
   // Unfilled slots must be null
@@ -31,13 +35,13 @@ export function exportProcreatePalette(palette) {
   // 1. Base colours
   palette.forEach((rgb, i) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.slice(1).toLowerCase()];
-    const pct  = Math.round((currentPalette[i]?.proportion ?? 0) * 100);
+    const name = ctx.names[hex.slice(1).toLowerCase()];
+    const pct  = Math.round((ctx.proportions[i] ?? 0) * 100);
     swatches.push(makeEntry(rgb, swatchLabel(hex, name, pct || null)));
   });
 
   // 2. Semantic palette
-  currentSwatchData.forEach(({ role, hex, proportion }) => {
+  ctx.semantic.forEach(({ role, hex, proportion }) => {
     const pct = Math.round((proportion ?? 0) * 100);
     swatches.push(makeEntry(hexToRgb(hex), swatchLabel(hex, role, pct || null)));
   });
@@ -45,7 +49,7 @@ export function exportProcreatePalette(palette) {
   // 3. Tints & shades per colour
   palette.forEach((rgb) => {
     const hex  = rgbToHex(rgb);
-    const name = currentColorNames[hex.slice(1).toLowerCase()];
+    const name = ctx.names[hex.slice(1).toLowerCase()];
     const { tints, shades } = makeTintsShades(rgb);
 
     tints.forEach((c, ti) => {
@@ -64,5 +68,9 @@ export function exportProcreatePalette(palette) {
   const trimmed = swatches.slice(0, MAX);
   while (trimmed.length < MAX) trimmed.push(null);
 
-  downloadText(JSON.stringify(trimmed, null, 2), `${exportSlug()}.palette`);
+  return JSON.stringify(trimmed, null, 2);
+}
+
+export function exportProcreatePalette(palette) {
+  downloadText(buildProcreatePalette(exportContext(palette)), `${exportSlug()}.palette`);
 }
