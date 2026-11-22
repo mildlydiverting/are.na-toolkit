@@ -48,7 +48,6 @@ npm test                               # Vitest: pure logic and shared code
 node arena-palimpsest/build.js         # src/ → dist/ (also arena-merge, arena-duplicate-finder)
 node arena-palimpsest/build.js --docs  # …and copy to docs/ for GitHub Pages
 node scripts/build-all.js --docs       # every tool that has a build.js
-python3 arena-palette/build.py         # Palette only; copy dist/arena-palette.html to docs/
 ```
 
 `docs/` is the GitHub Pages root, so copy a tool's built file there after any change.
@@ -61,7 +60,7 @@ python3 arena-palette/build.py         # Palette only; copy dist/arena-palette.h
 are.na-toolkit/
 ├── docs/                          # GitHub Pages: the live tools, screenshots, index.html
 ├── arena-hypernormalisation/      # single-file tool (+ README, NOTES)
-├── arena-palette/                 # src/, dist/, build.py
+├── arena-palette/                 # src/, dist/, build.js
 ├── arena-picks-ref/               # reference copy of Picks (source: the are.na-picks repo)
 ├── arena-merge/                   # src/, dist/, build.js
 ├── arena-palimpsest/              # src/, dist/, build.js

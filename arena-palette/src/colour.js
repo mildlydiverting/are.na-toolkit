@@ -9,7 +9,6 @@ export function rgbToHex([r,g,b]) {
 }
 
 // ── HELPER — needed for rgb+hsl and css exports ───────────────────────────────
-// (only add this if hexToRgb doesn't already exist in main.js)
 export function hexToRgb(hex) {
   const h = hex.replace('#','');
   return [

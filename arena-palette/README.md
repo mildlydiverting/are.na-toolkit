@@ -19,12 +19,11 @@ Extract colour palettes from images in your are.na channels. Click an image to p
 
 ## Building
 
-The source is in `src/`: `template.html`, `main.js` and `style.css`. This tool uses a small Python script, not the Node build the newer tools use.
+The source is in `src/`: `index.html` (with `@include` markers), the JavaScript modules, `style.css` and `third_party/` (Color Thief, inlined). It uses the same Node build as the newer tools.
 
 ```bash
-python3 arena-palette/build.py
-# → arena-palette/dist/arena-palette.html
-cp arena-palette/dist/arena-palette.html docs/arena-palette.html   # for GitHub Pages
+node arena-palette/build.js --docs   # src/ → dist/arena-palette.html, and copy to docs/ for GitHub Pages
+node arena-palette/build.js --watch  # rebuild on save
 ```
 
 ## More
