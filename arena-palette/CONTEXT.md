@@ -1,6 +1,6 @@
 # arena-palette — context note for new chat
 
-*Corrected 22 November 2026 during the v2.0 migration (branch `arena-palette-v2`). Plan: `_claude/arena-palette-v2-build-plan.md`. This file becomes `NOTES.md` when v2.0 ships.*
+*Corrected 22 November 2026 during the v2.0 migration (branch `arena-palette-v2`). Plan: `_notes/arena-palette-notes/arena-palette-v2-build-plan.md`. This file becomes `NOTES.md` when v2.0 ships.*
 
 ## What we're working on
 
