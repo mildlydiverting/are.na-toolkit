@@ -117,6 +117,37 @@
   --channel-badge-closed: #443f50;
   --channel-badge-private: #393544;
 }
+[data-theme="neutral"] {
+  /* Neutral: perceptual mid-grey (CIE L* 50) for judging colour work. All greys are R=G=B so nothing tints the work.
+     Only pure black meets AA (4.5:1) on #777777; ratios are recorded below rather than forced. */
+  --surface-page: #777777;
+  --background: #777777; /* Same colour as surface-page. The design-system app looks for a token with this name to paint behind component previews. */
+  --surface-card: #7e7e7e; /* 1.1:1 */
+  --surface-media: #6b6b6b; /* 1.2:1 */
+  --surface-sunken: #6b6b6b;
+  --border-card: #6b6b6b; /* 1.2:1 */
+  --border-input: #5c5c5c; /* 1.5:1 */
+  --border-strong: #333333; /* 2.8:1 */
+  --border-focus: #000000; /* 4.7:1 */
+  --text-primary: #000000; /* 4.7:1, AA */
+  --text-secondary: #000000; /* black: nothing lighter meets AA here */
+  --text-muted: #262626; /* 3.4:1, below AA */
+  --text-faint: #4a4a4a; /* 2.0:1 */
+  --text-heading: #000000;
+  --accent-primary: #000000; /* white text on it 21:1 */
+  --accent-focus: #ffffff; /* 4.5:1 */
+  --accent-success: #d2f5c8; /* 3.8:1. Pale accents: dark ones turn muddy and fall below 3:1 on mid-grey */
+  --accent-notification: #f0d6c4; /* 3.2:1 */
+  --accent-private: #ffd6d6; /* 3.4:1 */
+  --accent-alert: #ffd2b8; /* 3.2:1 */
+  --channel-open: #5f7a5e;
+  --channel-private: #8a6a6a;
+  --channel-bar-open: #747d73;
+  --channel-bar-private: #7f7474;
+  --channel-badge-open: #6e786d;
+  --channel-badge-closed: #6e6e6e;
+  --channel-badge-private: #7a6d6d;
+}
 :root {
   --space-nudge: 2px; /* Micro adjustment. Code chip vertical padding, 2px baseline shifts. Not step zero — a named special-purpose value in are.na. */
   --space-1: 5px; /* Tight spacing within a related group. Gap between inline elements. */

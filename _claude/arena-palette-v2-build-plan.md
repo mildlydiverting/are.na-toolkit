@@ -155,7 +155,7 @@ Module convention (as settled in palimpsest — see `arena-palimpsest/NOTES.md`)
 
 ## 5. Stepped UI — six steps
 
-Mount `ArenaToolkit.Stepper` in the left rail; steps clickable backwards; forward enabled when the step's precondition holds. Theme picker is `ArenaToolkit.ThemeChooser()` (Light, Dusk, Dark, Dawn, System) in the header, as `arena-duplicate-finder/src/app.js` does it. Use the shared Checkbox, Radio, Toast, Notice and Progress components where they fit.
+Mount `ArenaToolkit.Stepper` in the left rail; steps clickable backwards; forward enabled when the step's precondition holds. Theme picker is `ArenaToolkit.ThemeChooser()` in the header, as `arena-duplicate-finder/src/app.js` does it, but passing a `themes` list that adds **Neutral** (`[data-theme="neutral"]`, page `#777777`, perceptual mid-grey L\* 50 — added to `shared/ui/tokens.css` on 22 November 2026 for judging colour work). Neutral is palette-only for now, so it is not in ThemeChooser's default list. It replaces v1's "Mid" theme; ask Kim whether it should be the palette's default. Use the shared Checkbox, Radio, Toast, Notice and Progress components where they fit.
 
 ### 1. Source
 - `Input` accepting a channel slug, a full are.na channel URL, or a block URL (`parse-input.js` — auto-strip of full URLs already shipped in v1; extend to block URLs, which was a TODO)
@@ -304,7 +304,7 @@ Git hygiene: `_claude/` and `.claude/` are untracked by choice — never sweep t
 ### Phase 2 — stepper
 11. Replace the single-screen layout with the rail + pane and `ArenaToolkit.Stepper`; port existing UI into steps 1, 2, 3, 6 (Edit and Ramps empty). Swap bespoke CSS for design-system components as you go; keep `styles.css` to layout only
 12. Per-slot refresh + lock on step 2
-13. `ThemeChooser` in the header; commit
+13. `ThemeChooser` in the header, with Neutral added to its `themes` list (§5); remove v1's Dark / Mid / Light toggle and `arena-palette-theme-v1` key; commit
 
 ### Phase 3 — Ramps
 14. `ramps.js` + tests, green before UI
@@ -319,7 +319,7 @@ Git hygiene: `_claude/` and `.claude/` are untracked by choice — never sweep t
 21. Step 4 Edit: swatch popover, add/remove, reorder buttons, lock, reset; commit
 
 ### Phase 5 — ship
-22. Breakpoint pass (the "spacing funkiness" TODO) — narrow viewport, four themes
+22. Breakpoint pass (the "spacing funkiness" TODO) — narrow viewport, all five themes (including Neutral)
 23. `node arena-palette/build.js --docs` → `docs/arena-palette.html`; new screenshot `docs/arena-palette-preview.jpg`; version string v2.0 in the page
 24. `README.md` update; write `NOTES.md` (§15); update `TODO.taskpaper` (strike done, add v2.1); update `AGENTS.md` tool table
 25. Commit, push, check GitHub Pages
@@ -330,7 +330,7 @@ Git hygiene: `_claude/` and `.claude/` are untracked by choice — never sweep t
 
 **Vitest** (`npm run test` from repo root): `parse-input`, `colour`, `ramps`, `exports/text`, `exports/ase`, `exports/procreate`, `exports/search-links`. Target: every file that has no DOM.
 
-**Manual**: the four themes; a channel with mixed image/text blocks (text blocks must be filtered from the grid); a private channel with token; an image whose palette is mostly pale (marker should land low on the ramp); an image with a near-black colour (chroma clamp should not produce a muddy ramp); open each export in its target app — ASE in Illustrator or Affinity, GPL in Inkscape, Procreate on iPad, SCP in whatever it's for.
+**Manual**: all five themes, including Neutral; a channel with mixed image/text blocks (text blocks must be filtered from the grid); a private channel with token; an image whose palette is mostly pale (marker should land low on the ramp); an image with a near-black colour (chroma clamp should not produce a muddy ramp); open each export in its target app — ASE in Illustrator or Affinity, GPL in Inkscape, Procreate on iPad, SCP in whatever it's for.
 
 ---
 
