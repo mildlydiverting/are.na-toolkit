@@ -37,6 +37,7 @@ Colour picking and editing:
 	- https://img-colors.com/ - INVESTIGATE OTHER algorithms for colour picking.
 	- https://img-colors.com/docs
 	- any ideas for improving code from here? https://dev.to/linmingren/building-a-browser-based-image-color-palette-extractor-a-deep-dive-into-pure-frontend-2gap
+	- https://anyalitica.dev/blog/2026-10-31-colour-extraction-app — compares k-means (seeded, deterministic), weighted histogram and population-aware median cut; LAB filtering of near-duplicates with backfill @date(2026-11-22)
 		
 Export:
 		- does https://gist.github.com/eip/3837dfdaeb0326d44cf60c65f59e74c2 give us enough JS to create CLR files?

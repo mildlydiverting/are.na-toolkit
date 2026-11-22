@@ -1096,6 +1096,147 @@
 <canvas id="scratchCanvas" style="display:none" aria-hidden="true"></canvas>
 
 <script>
+// are.na v3 client. Endpoints checked against https://api.are.na/v3/openapi.json.
+// Writes (updateBlock, createConnection, deleteConnection) need a token with write scope.
+const ARENA_API_BASE = 'https://api.are.na/v3';
+
+class ArenaError extends Error {
+  constructor(status, message, body) {
+    super(message);
+    this.name = 'ArenaError';
+    this.status = status;
+    this.body = body;
+  }
+}
+
+// throttle: the function from createThrottle(); omit in tests to call fetch directly.
+function createArenaClient({ token = null, fetchImpl = (...a) => globalThis.fetch(...a), throttle = null, base = ARENA_API_BASE } = {}) {
+  let currentToken = token;
+
+  // params go in the query string; opts.body (if any) is sent as JSON.
+  async function request(path, params = {}, { method = 'GET', body = null } = {}) {
+    const url = new URL(base + path);
+    for (const [k, v] of Object.entries(params)) {
+      if (v != null) url.searchParams.set(k, String(v));
+    }
+    const doFetch = () => fetchImpl(url.toString(), {
+      method,
+      headers: {
+        Accept: 'application/json',
+        ...(body ? { 'Content-Type': 'application/json' } : {}),
+        ...(currentToken ? { Authorization: `Bearer ${currentToken}` } : {}),
+      },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+      credentials: 'omit',
+      referrerPolicy: 'no-referrer',
+    });
+    const res = throttle ? await throttle(doFetch, { write: method !== 'GET' }) : await doFetch();
+
+    const text = await res.text();
+    let data = null;
+    try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+
+    if (!res.ok) {
+      const msg = data?.details?.message || data?.error || `are.na error ${res.status}`;
+      throw new ArenaError(res.status, msg, data);
+    }
+    return data;
+  }
+
+  // Follows meta.has_more_pages and returns every item in `data`. onPage(items, meta) fires per page.
+  async function paginate(path, params = {}, { per = 100, onPage = null } = {}) {
+    const all = [];
+    for (let page = 1; ; page++) {
+      const body = await request(path, { ...params, page, per });
+      const items = body?.data || [];
+      all.push(...items);
+      if (onPage) onPage(items, body?.meta);
+      if (!body?.meta?.has_more_pages) return all;
+    }
+  }
+
+  return {
+    setToken(t) { currentToken = t || null; },
+    request,
+    paginate,
+    getCurrentUser: () => request('/me'),
+    getBlock: id => request(`/blocks/${encodeURIComponent(id)}`),
+    getBlockConnections: (id, opts = {}) => paginate(`/blocks/${encodeURIComponent(id)}/connections`, {}, opts),
+    getChannel: idOrSlug => request(`/channels/${encodeURIComponent(idOrSlug)}`),
+    // Every block/channel in a channel. Each item carries `connection.id`, which deleteConnection needs.
+    // params: { type } filters to Text, Image, Link, Attachment, Embed, Channel or Block.
+    getChannelContents: (idOrSlug, params = {}, opts = {}) => paginate(`/channels/${encodeURIComponent(idOrSlug)}/contents`, params, opts),
+
+    // A user's own contents (as arena-merge does it). params: { type: 'Channel' } for just their channels.
+    getUserContents: (userId, params = {}, opts = {}) => paginate(`/users/${encodeURIComponent(userId)}/contents`, params, opts),
+
+    // fields: any of title, description, alt_text (Image blocks), metadata (merged; null deletes a key).
+    // Owner only.
+    updateBlock: (id, fields) => request(`/blocks/${encodeURIComponent(id)}`, {}, { method: 'PUT', body: fields }),
+    // Connects a block (or channel) into one or more channels. Resolves to the created Connection[].
+    // channels: ids or slugs, or { id, position?, metadata? } objects.
+    createConnection: async ({ id, type = 'Block', channels }) => {
+      const res = await request('/connections', {}, {
+        method: 'POST',
+        body: {
+          connectable_id: id,
+          connectable_type: type,
+          channels: channels.map(c => (typeof c === 'object' ? c : { id: c })),
+        },
+      });
+      return res?.data || [];
+    },
+    // fields: any of title, description, status ('public' | 'closed' | 'private'). Owner or collaborator.
+    updateChannel: (idOrSlug, fields) => request(`/channels/${encodeURIComponent(idOrSlug)}`, {}, { method: 'PUT', body: fields }),
+    // Takes the *connection* id (from a channel's contents, or createConnection), not a block id.
+    // Removes the block from that channel only; the block itself stays. Resolves to null (204).
+    deleteConnection: connectionId => request(`/connections/${encodeURIComponent(connectionId)}`, {}, { method: 'DELETE' }),
+  };
+}
+
+</script>
+<script>
+// Polite pacing for are.na: 150 ms between requests, and on 429 back off [2, 4, 8] s,
+// honouring Retry-After. Wraps a function that returns a fetch Response.
+const THROTTLE_GAP_MS = 150;
+const THROTTLE_BACKOFF_S = [2, 4, 8];
+
+// onWait(seconds, attempt) is called before each backoff sleep, so the UI can say so.
+// writeGap (default: same as gap) is the pause after a write, for tools that want to be gentler when
+// changing an account. Call throttled(doFetch, { write: true }) for writes; everything else is a read.
+function createThrottle({
+  gap = THROTTLE_GAP_MS,
+  writeGap = gap,
+  backoff = THROTTLE_BACKOFF_S,
+  sleep = ms => new Promise(r => setTimeout(r, ms)),
+  now = () => Date.now(),
+  onWait = null,
+} = {}) {
+  let nextSlot = 0;
+
+  // Reserve the next start time synchronously, so concurrent callers queue up in order.
+  async function takeSlot(spacing) {
+    const start = Math.max(now(), nextSlot);
+    nextSlot = start + spacing;
+    const wait = start - now();
+    if (wait > 0) await sleep(wait);
+  }
+
+  return async function throttled(doFetch, { write = false } = {}) {
+    for (let attempt = 0; ; attempt++) {
+      await takeSlot(write ? writeGap : gap);
+      const res = await doFetch();
+      if (res.status !== 429 || attempt >= backoff.length) return res;
+      const retryAfter = Number(res.headers?.get?.('retry-after'));
+      const seconds = retryAfter > 0 ? retryAfter : backoff[attempt];
+      if (onWait) onWait(seconds, attempt + 1);
+      await sleep(seconds * 1000);
+    }
+  };
+}
+
+</script>
+<script>
 // parse-input.js: channel slug from a pasted are.na URL (pure).
 
 // Extract slug from a full are.na URL, e.g. https://www.are.na/user/channel-slug → channel-slug
@@ -1174,36 +1315,40 @@ function textColour(rgb) {
 </script>
 <script>
 // arena-fetch.js: are.na v3 channel reads — meta, block at page, random image blocks.
+// Every request goes through a client from createArenaClient({ throttle }) (shared/api), which
+// paces them 150 ms apart and backs off on 429.
 
-// Are.na API v3 — https://www.are.na/developers/explore
-const API_BASE = 'https://api.are.na/v3';
 const MAX_RETRIES = 12;
+const FETCH_RATE_LIMIT_MESSAGE = 'are.na is asking us to slow down. Wait a minute, then try again.';
+
+// Keeps v1's wording. Rate limiting (still 429 after the throttle's backoffs) gets its own message.
+function fetchFailure(err, fallback) {
+  if (!(err instanceof ArenaError)) return err;
+  if (err.status === 429) return Object.assign(new Error(FETCH_RATE_LIMIT_MESSAGE), { status: 429 });
+  return Object.assign(new Error(err.body?.details?.message || fallback(err.status)), { status: err.status });
+}
 
 // ── ARE.NA API v3 ─────────────────────────────────────────────────────────────
-async function fetchChannelMeta(slug, headers) {
-  const res = await fetch(`${API_BASE}/channels/${encodeURIComponent(slug)}`, { headers });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.details?.message || `Channel "${slug}" not found (${res.status})`);
+async function fetchChannelMeta(client, slug) {
+  try {
+    return await client.getChannel(slug);
+  } catch (err) {
+    throw fetchFailure(err, status => `Channel "${slug}" not found (${status})`);
   }
-  return res.json();
 }
 
-async function fetchBlockAtPage(slug, page, headers) {
-  const res = await fetch(
-    `${API_BASE}/channels/${encodeURIComponent(slug)}/contents?per=1&page=${page}`,
-    { headers }
-  );
-  if (!res.ok) throw new Error(`Fetch failed for "${slug}" page ${page} (${res.status})`);
-  const data = await res.json();
-  return data.data?.[0] || null;
+async function fetchBlockAtPage(client, slug, page) {
+  try {
+    const data = await client.request(`/channels/${encodeURIComponent(slug)}/contents`, { per: 1, page });
+    return data?.data?.[0] || null;
+  } catch (err) {
+    throw fetchFailure(err, status => `Fetch failed for "${slug}" page ${page} (${status})`);
+  }
 }
 
-async function fetchChannelImages(slug, token, slotsNeeded) {
-  const headers = {};
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-
-  const meta = await fetchChannelMeta(slug, headers);
+// rng is injectable so tests can choose the pages.
+async function fetchChannelImages(client, slug, slotsNeeded, { rng = Math.random } = {}) {
+  const meta = await fetchChannelMeta(client, slug);
   const total = meta.counts?.contents ?? 0;
   if (!total) throw new Error(`Channel "${slug}" appears to be empty`);
 
@@ -1214,12 +1359,12 @@ async function fetchChannelImages(slug, token, slotsNeeded) {
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       let page, tries = 0;
       do {
-        page = Math.floor(Math.random() * total) + 1;
+        page = Math.floor(rng() * total) + 1;
         tries++;
       } while (usedPages.has(page) && tries < 20);
       usedPages.add(page);
 
-      const block = await fetchBlockAtPage(slug, page, headers);
+      const block = await fetchBlockAtPage(client, slug, page);
       if (block && block.type === 'Image' && block.image) {
         results.push({
           url:         block.image.small?.src || block.image.src,
@@ -2448,6 +2593,12 @@ const channelsBody   = document.getElementById('channelsBody');
 const scratch        = document.getElementById('scratchCanvas');
 const ctx            = scratch.getContext('2d', { willReadFrequently: true });
 
+// One throttled are.na client for every API read (150 ms apart; backs off on 429).
+const arenaThrottle = createThrottle({
+  onWait: seconds => setStatus(`<span class="analyse-spinner" aria-hidden="true"></span>are.na asked us to slow down. Waiting ${seconds}s, then carrying on.`),
+});
+const arenaClient = createArenaClient({ throttle: arenaThrottle });
+
 // ── CHANNELS TOGGLE ───────────────────────────────────────────────────────────
 channelsToggle.addEventListener('click', () => {
   const isOpen = channelsToggle.getAttribute('aria-expanded') === 'true';
@@ -2582,7 +2733,7 @@ btnFetch.addEventListener('click', async () => {
   setStatus('<span class="analyse-spinner" aria-hidden="true"></span>fetching…');
   persistState();
 
-  const token = tokenInput.value.trim();
+  arenaClient.setToken(tokenInput.value.trim());
   let allImages = [];
   const errors = [];
 
@@ -2593,10 +2744,11 @@ btnFetch.addEventListener('click', async () => {
   for (let i = 0; i < slugs.length; i++) {
     const slotsNeeded = baseSlots + (i < extraSlots ? 1 : 0);
     try {
-      const imgs = await fetchChannelImages(slugs[i], token, slotsNeeded);
+      const imgs = await fetchChannelImages(arenaClient, slugs[i], slotsNeeded);
       allImages = allImages.concat(imgs);
     } catch(e) {
       errors.push(e.message);
+      if (e.status === 429) break; // still rate limited after the backoffs: stop, don't hammer
     }
   }
 

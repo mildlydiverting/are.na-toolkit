@@ -59,6 +59,12 @@ const channelsBody   = document.getElementById('channelsBody');
 const scratch        = document.getElementById('scratchCanvas');
 const ctx            = scratch.getContext('2d', { willReadFrequently: true });
 
+// One throttled are.na client for every API read (150 ms apart; backs off on 429).
+const arenaThrottle = createThrottle({
+  onWait: seconds => setStatus(`<span class="analyse-spinner" aria-hidden="true"></span>are.na asked us to slow down. Waiting ${seconds}s, then carrying on.`),
+});
+const arenaClient = createArenaClient({ throttle: arenaThrottle });
+
 // ── CHANNELS TOGGLE ───────────────────────────────────────────────────────────
 channelsToggle.addEventListener('click', () => {
   const isOpen = channelsToggle.getAttribute('aria-expanded') === 'true';
@@ -193,7 +199,7 @@ btnFetch.addEventListener('click', async () => {
   setStatus('<span class="analyse-spinner" aria-hidden="true"></span>fetching…');
   persistState();
 
-  const token = tokenInput.value.trim();
+  arenaClient.setToken(tokenInput.value.trim());
   let allImages = [];
   const errors = [];
 
@@ -204,10 +210,11 @@ btnFetch.addEventListener('click', async () => {
   for (let i = 0; i < slugs.length; i++) {
     const slotsNeeded = baseSlots + (i < extraSlots ? 1 : 0);
     try {
-      const imgs = await fetchChannelImages(slugs[i], token, slotsNeeded);
+      const imgs = await fetchChannelImages(arenaClient, slugs[i], slotsNeeded);
       allImages = allImages.concat(imgs);
     } catch(e) {
       errors.push(e.message);
+      if (e.status === 429) break; // still rate limited after the backoffs: stop, don't hammer
     }
   }
 
