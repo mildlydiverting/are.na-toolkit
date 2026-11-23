@@ -16,9 +16,12 @@
 <meta name="twitter:description" content="Generate colour palettes from images pulled from your favourite are.na channels. Export as hex, .ase, CSS, GIMP or Procreate palettes, or fancy PNGs.">
 <meta name="twitter:image"       content="https://mildlydiverting.github.io/are.na-toolkit/arena-palette.jpg">
 <!--
-  arena-palette v1.31
+  arena-palette v1.32
   ──────────────────────────────────────────────────────────────────
   Changelog:
+
+    v1.32 (2026-11-23) — Security: escape block titles, colour names and addresses
+                         before they go into the page; only http(s) links.
 
     v1.31 (2026-05-27) — Fix colour name lookup in all export functions (#-prefix
                          mismatch). Move theme toggle to fixed top-right corner.
@@ -83,7 +86,7 @@
 
     <div class="sidebar-branding">
       <h1>are.na palette</h1>
-      <span class="version" aria-label="Version 1.31">v1.31</span>
+      <span class="version" aria-label="Version 1.32">v1.32</span>
     </div>
     <p class="sidebar-tagline">Extract colour palettes from are.na image blocks. <a href="https://mildlydiverting.github.io/are.na-toolkit/">More tools</a> by <a href="https://www.are.na/kim-plowright/channels">Kim Plowright</a>. Found a bug? <a href="https://github.com/mildlydiverting/are.na-toolkit">GitHub</a>.</p>
 
