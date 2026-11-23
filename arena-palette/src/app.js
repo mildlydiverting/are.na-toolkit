@@ -89,7 +89,7 @@ function renderChannels() {
         id="channel-input-${i}"
         name="channel-${i}"
         placeholder="URL or slug"
-        value="${slug}"
+        value="${escapeHtml(slug)}"
         data-idx="${i}"
         aria-label="Channel ${humanN} slug"
         autocomplete="off"
@@ -250,8 +250,8 @@ function renderImageGrid(images) {
     thumb.setAttribute('tabindex', '0');
     thumb.setAttribute('aria-label', `Extract palette from ${img.title || 'image'} (${img.channel})`);
     thumb.innerHTML = `
-      <img src="${img.url}" crossorigin="anonymous" loading="lazy"
-        alt="${img.title ? img.title + ' from ' + img.channel : 'Image from ' + img.channel}" />
+      <img src="${escapeHtml(safeUrl(img.url))}" crossorigin="anonymous" loading="lazy"
+        alt="${escapeHtml(img.title ? img.title + ' from ' + img.channel : 'Image from ' + img.channel)}" />
     `;
     thumb.addEventListener('click', () => selectImage(i));
     thumb.addEventListener('keydown', e => {
@@ -333,7 +333,7 @@ function renderImagePanel(imgObj) {
   const sourceHtml = hasSource ? `
     <div class="image-meta-row">
       <span class="image-meta-label">source</span>
-      <a href="${imgObj.sourceUrl}" target="_blank" rel="noopener">${escapeHtml(imgObj.sourceTitle)}</a>
+      <a href="${escapeHtml(safeUrl(imgObj.sourceUrl))}" target="_blank" rel="noopener">${escapeHtml(imgObj.sourceTitle)}</a>
       ${createdDate ? `<span class="image-meta-label">accessed ${createdDate}</span>` : ''}
     </div>
   ` : createdDate ? `
@@ -346,7 +346,7 @@ function renderImagePanel(imgObj) {
   const viaHtml = hasUser ? `
     <div class="image-meta-row">
       <span class="image-meta-label">via</span>
-      <a href="https://www.are.na/${imgObj.userSlug}" target="_blank" rel="noopener"
+      <a href="https://www.are.na/${encodeURIComponent(imgObj.userSlug)}" target="_blank" rel="noopener"
         aria-label="View ${escapeHtml(imgObj.userName)}'s Are.na profile">
         ${escapeHtml(imgObj.userName)}
       </a>
@@ -356,7 +356,7 @@ function renderImagePanel(imgObj) {
   imageArea.innerHTML = `
     <figure class="image-figure">
       <div class="selected-image-wrap">
-        <img src="${currentImageEl.src}"
+        <img src="${escapeHtml(safeUrl(currentImageEl.src))}"
           alt="${imgObj.title ? escapeHtml(imgObj.title) : 'Selected image'}"
           crossorigin="anonymous" />
       </div>
@@ -366,7 +366,7 @@ function renderImagePanel(imgObj) {
         ${sourceHtml}
         ${viaHtml}
         <div class="image-meta-row">
-          <a href="${imgObj.blockUrl}" target="_blank" rel="noopener"
+          <a href="${escapeHtml(safeUrl(imgObj.blockUrl))}" target="_blank" rel="noopener"
             aria-label="View ${imgObj.title ? escapeHtml(imgObj.title) : 'this image'} on Are.na (opens in new tab)">
             view on are.na ↗
           </a>
@@ -386,14 +386,6 @@ function renderImagePanel(imgObj) {
       btnShowMore.textContent = isExpanded ? 'show more ↓' : 'show less ↑';
     });
   }
-}
-
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }
 
 // ── EXTRACTION ────────────────────────────────────────────────────────────────
@@ -447,7 +439,7 @@ function buildLabelHtml(index, hex, pct, name) {
   const namePart = name === undefined
     ? `<span class="colour-name-loading" aria-label="loading colour name">…</span>`
     : name
-      ? `<span class="colour-name">${name}</span>`
+      ? `<span class="colour-name">${escapeHtml(name)}</span>`
       : '';
   return `${num} · <span class="colour-hex">${hex}</span>${namePart ? ' · ' + namePart : ''} · ${pct}%`;
 }
@@ -505,9 +497,9 @@ function renderAnalysis(paletteData, swatchMap, nameMap) {
       return `<button class="semantic-legend-item"
         data-hex="${hex}"
         onclick="navigator.clipboard.writeText('${hex}').catch(()=>{})"
-        aria-label="Copy ${name ? name + ' ' : ''}${hex} to clipboard">
+        aria-label="Copy ${name ? escapeHtml(name) + ' ' : ''}${hex} to clipboard">
         <span class="semantic-legend-dot" style="background:${hex}" aria-hidden="true"></span>
-        <span class="palette-legend-label">${name ? `${name} · ${hex}` : hex}</span>
+        <span class="palette-legend-label">${name ? `${escapeHtml(name)} · ${hex}` : hex}</span>
       </button>`;
     }).join('');
     return `<div class="semantic-section">
@@ -532,7 +524,7 @@ function renderAnalysis(paletteData, swatchMap, nameMap) {
       const label  = si < TINT_STEPS
         ? `Tint ${TINT_STEPS - si} of colour ${i+1}: ${ch}`
         : isBase
-          ? `Base colour ${i+1}: ${ch}${name ? ' (' + name + ')' : ''}`
+          ? `Base colour ${i+1}: ${ch}${name ? ' (' + escapeHtml(name) + ')' : ''}`
           : `Shade ${si - TINT_STEPS} of colour ${i+1}: ${ch}`;
       return `<div class="swatch${isBase ? ' base' : ''}"
         style="background:${ch};color:${ch}"
