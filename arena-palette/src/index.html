@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB" data-theme="neutral">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,9 +16,13 @@
 <meta name="twitter:description" content="Generate colour palettes from images pulled from your favourite are.na channels. Export as hex, .ase, CSS, GIMP or Procreate palettes, or fancy PNGs.">
 <meta name="twitter:image"       content="https://mildlydiverting.github.io/are.na-toolkit/arena-palette.jpg">
 <!--
-  arena-palette v1.31
+  arena-palette v2.0 (in progress)
   ──────────────────────────────────────────────────────────────────
   Changelog:
+
+    v2.0 (in progress) — Rebuilt as a six-step wizard (Source, Pick image, Base palette,
+                         Edit, Ramps, Export) on the toolkit design system. Plan:
+                         _notes/arena-palette-notes/arena-palette-v2-build-plan.md
 
     v1.31 (2026-05-27) — Fix colour name lookup in all export functions (#-prefix
                          mismatch). Move theme toggle to fixed top-right corner.
@@ -70,126 +74,46 @@
   Dependencies: Color Thief 3.5.0 (inlined from src/third_party/), Karla + Courier Prime
   ──────────────────────────────────────────────────────────────────
 -->
-<!-- @include ./third_party/color-thief.js -->
-<!-- @include ./style.css -->
+<!-- @include shared/ui/tokens.css -->
+<!-- @include shared/ui/bundle.css -->
+<!-- @include ./styles.css -->
 </head>
 <body>
+  <header class="palette-header" id="header">
+    <!-- breadcrumb and theme chooser mount here -->
+  </header>
 
-<div class="layout">
-
-  <!-- COLUMN 1: SIDEBAR -->
-  <aside class="sidebar" aria-label="Channels and images">
-
-    <div class="sidebar-branding">
-      <h1>are.na palette</h1>
-      <span class="version" aria-label="Version 1.31">v1.31</span>
+  <main class="palette-main">
+    <div class="page-title">
+      <h1>Are.na Palette</h1>
+      <p class="lede">Pick an image from your are.na channels, extract its colours, and export them as a palette.</p>
     </div>
-    <p class="sidebar-tagline">Extract colour palettes from are.na image blocks. <a href="https://mildlydiverting.github.io/are.na-toolkit/">More tools</a> by <a href="https://www.are.na/kim-plowright/channels">Kim Plowright</a>. Found a bug? <a href="https://github.com/mildlydiverting/are.na-toolkit">GitHub</a>.</p>
 
-    <!-- Channels — collapsible, open by default, auto-closes on image load -->
-    <section class="channels-section" aria-labelledby="channels-heading">
-      <button
-        class="section-toggle"
-        id="channelsToggle"
-        aria-expanded="true"
-        aria-controls="channelsBody"
-      >
-        <h2 id="channels-heading">Channels</h2>
-        <span class="caret" aria-hidden="true">&#x25BE;</span>
-      </button>
-      <div class="section-body" id="channelsBody">
-        
-        <div class="channel-list" id="channelList" role="list"></div>
-        <button class="btn-add" id="btnAddChannel" aria-label="Add another channel">
-          + add channel
-        </button>
-        <div class="token-row">
-          <label for="tokenInput">Are.na Access token</label>
-          <input
-            type="password"
-            id="tokenInput"
-            name="arena-token"
-            placeholder="leave blank for public channels"
-            autocomplete="off"
-            aria-describedby="tokenHint"
-          />
-          <span id="tokenHint">Only needed for private channels. Only needs READ access, and is stored in your browser's local storage. <a href="https://www.are.na/developers/personal-access-tokens">Get one on are.na</a></span>
-        </div>
-        <div class="fetch-row">
-          <button class="btn-fetch" id="btnFetch">Fetch images</button>
-          <div class="status-msg" id="statusMsg" role="status" aria-live="polite"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Image thumbnails -->
-    <section class="sidebar-images" aria-labelledby="images-heading">
-      <h2 id="images-heading">Images</h2>
-      <div
-        class="placeholder-grid"
-        id="imageGrid"
-        role="list"
-        aria-label="Fetched images — click to extract palette"
-      >
-        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
-        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
-        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
-        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
-        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
-        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
-        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
-        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
-        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
-        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
-        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
-        <div class="placeholder-cell" role="listitem" aria-hidden="true"></div>
-      </div>
-    </section>
-
-  </aside>
-
-  <!-- COLUMN 2: IMAGE -->
-  <section class="image-col" aria-labelledby="image-col-heading">
-    <h2 class="col-heading" id="image-col-heading">Image</h2>
-    <div id="imageArea">
-      <div class="empty-image" role="status">← add channels to get random images</div>
+    <div class="palette-layout">
+      <aside class="step-rail" id="step-rail" aria-label="Steps"></aside>
+      <section class="step-pane" id="step-pane" aria-live="polite"></section>
     </div>
-  </section>
+  </main>
 
-  <!-- COLUMN 3: PALETTE -->
-  <section class="palette-col" aria-labelledby="palette-col-heading">
-    <h2 class="col-heading" id="palette-col-heading">Palette analysis</h2>
-    <div id="analysisArea">
-      <div class="empty-analysis" role="status">← select an image to extract its palette</div>
-    </div>
-  </section>
+  <footer id="footer"></footer>
 
-</div>
-
-<!-- Theme toggle — fixed top-right -->
-<div class="theme-toggle-row" aria-label="Colour theme">
-  <button class="theme-btn" id="theme-dark"  onclick="setTheme('dark')"     title="Dark theme">Dark</button>
-  <button class="theme-btn active" id="theme-mid" onclick="setTheme('mid')" title="Midtone theme (default)">Mid</button>
-  <button class="theme-btn" id="theme-light" onclick="setTheme('light')"    title="Light theme">Light</button>
-</div>
-
-<!-- Hidden canvas for colour extraction — display:none is functional, not presentational -->
-<canvas id="scratchCanvas" style="display:none" aria-hidden="true"></canvas>
-
-<!-- @include shared/api/arena-client.js -->
-<!-- @include shared/api/throttle.js -->
-<!-- @include ./escape.js -->
-<!-- @include ./parse-input.js -->
-<!-- @include ./colour.js -->
-<!-- @include ./arena-fetch.js -->
-<!-- @include ./names.js -->
-<!-- @include ./storage.js -->
-<!-- @include ./image-cache.js -->
-<!-- @include ./extract.js -->
-<!-- @include ./exports/text.js -->
-<!-- @include ./exports/ase.js -->
-<!-- @include ./exports/procreate.js -->
-<!-- @include ./exports/png.js -->
-<!-- @include ./app.js -->
+  <!-- @include shared/ui/bundle.js -->
+  <!-- @include ./third_party/color-thief.js -->
+  <!-- @include shared/api/arena-client.js -->
+  <!-- @include shared/api/throttle.js -->
+  <!-- @include ./escape.js -->
+  <!-- @include ./parse-input.js -->
+  <!-- @include ./colour.js -->
+  <!-- @include ./arena-fetch.js -->
+  <!-- @include ./names.js -->
+  <!-- @include ./storage.js -->
+  <!-- @include ./image-cache.js -->
+  <!-- @include ./extract.js -->
+  <!-- @include ./exports/text.js -->
+  <!-- @include ./exports/ase.js -->
+  <!-- @include ./exports/procreate.js -->
+  <!-- @include ./exports/png.js -->
+  <!-- @include ./app.js -->
+  <script>document.getElementById('footer').replaceWith(ArenaToolkit.Footer({ toolNote: 'Palette only reads from are.na: public channels, or private ones with a read token. Nothing is written back.' }));</script>
 </body>
 </html>
