@@ -1,4 +1,4 @@
-// storage.js: localStorage keys and the one-time v1 → v2 migration. Not wired into the page until Phase 2.
+// storage.js: localStorage keys, the one-time v1 → v2 migration, and saving the v2 keys.
 // The mapping is pure (migrateV1Storage); loadPaletteStorage is the thin part that touches storage.
 import { NAME_LISTS } from './names.js';
 
@@ -7,6 +7,7 @@ export const STORE_V1_SETTINGS_KEY = 'arena-palette-settings-v1';
 export const STORE_V1_THEME_KEY    = 'arena-palette-theme-v1';
 export const STORE_V2_STATE_KEY    = 'arena-palette-v2';
 export const STORE_V2_SETTINGS_KEY = 'arena-palette-settings-v2';
+export const STORE_V2_THEME_KEY    = 'arena-palette-theme-v2';   // ThemeChooser's storageKey for this tool
 
 export const STORE_MAX_SOURCES = 4;
 export const STORE_DEFAULT_SOURCES = ['chromatic-vwdupl8d0lk'];
@@ -102,4 +103,17 @@ export function loadPaletteStorage(storage) {
     set(STORE_V2_SETTINGS_KEY, out.settings);
   }
   return { ...out, migrated: hadV1 };
+}
+
+// Writes the v2 keys. The token is only stored while "Remember token" is ticked; unticking clears it.
+// Never throws: a blocked localStorage just means nothing is remembered.
+export function savePaletteStorage(storage, { sources = [], token = '', rememberToken = true, extract = {} } = {}) {
+  const set = (k, v) => { try { storage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+  const inputs = sources.map(s => String(s ?? '').trim()).filter(Boolean).slice(0, STORE_MAX_SOURCES);
+  set(STORE_V2_STATE_KEY, {
+    sources: inputs.length ? inputs : [...STORE_DEFAULT_SOURCES],
+    token: rememberToken ? String(token ?? '') : '',
+    rememberToken: !!rememberToken,
+  });
+  set(STORE_V2_SETTINGS_KEY, { extract: { ...STORE_DEFAULT_EXTRACT, ...extract } });
 }

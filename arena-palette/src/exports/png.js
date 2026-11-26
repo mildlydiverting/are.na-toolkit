@@ -32,14 +32,16 @@ export function loadImageForCanvas(url) {
   });
 }
 
-// Map current extraction globals to the renderer data shape.
+// Map the page's state to the renderer data shape. `state` = { image, imageEl, palette, semantic }:
+// the v1-shaped image, its loaded element, S.palette ([{ hex, … }]) and S.semantic ([{ role, hex, … }]).
 // makeTintsShades returns tints lightest→darkest (t3 first) and shades
 // lightest→darkest (s1 first). Renderers want tints t1→t3 (lightest last)
 // and shades s3→s1 (darkest first), so both arrays are reversed.
-export function buildRendererData() {
-  if (!currentPalette || !currentImageObj) return null;
+export function buildRendererData(state) {
+  if (!state?.palette?.length || !state.image) return null;
 
-  const palette = currentPalette.map(({ rgb }) => {
+  const palette = state.palette.map(({ hex }) => {
+    const rgb = hexToRgb(hex);
     const { tints, shades } = makeTintsShades(rgb);
     return {
       base:   rgbToHex(rgb),
@@ -48,9 +50,9 @@ export function buildRendererData() {
     };
   });
 
-  // Build semantic map from currentSwatchData (roles: Vibrant, DarkVibrant, etc.)
+  // Build semantic map from the semantic colours (roles: Vibrant, DarkVibrant, etc.)
   const semMap = {};
-  currentSwatchData.forEach(({ role, hex }) => { semMap[role] = hex; });
+  (state.semantic || []).forEach(({ role, hex }) => { semMap[role] = hex; });
   const semantic = {
     darkVibrant:  semMap['DarkVibrant']  || null,
     vibrant:      semMap['Vibrant']      || null,
@@ -61,12 +63,12 @@ export function buildRendererData() {
   };
 
   // blockUrl: strip protocol and www  e.g. "are.na/block/12345678"
-  const rawUrl = currentImageObj.blockUrl || '';
+  const rawUrl = state.image.blockUrl || '';
   const blockUrl = rawUrl.replace(/^https?:\/\/(www\.)?/, '');
 
   return {
     blockUrl,
-    imageUrl: currentImageObj.original || currentImageEl?.src || '',
+    imageUrl: state.image.original || state.imageEl?.src || '',
     palette,
     semantic,
   };
@@ -286,23 +288,23 @@ export function triggerCanvasDownload(canvas, filename) {
   });
 }
 
-export async function exportPngBars() {
-  const data = buildRendererData();
+export async function exportPngBars(state) {
+  const data = buildRendererData(state);
   if (!data) return;
   const c = document.createElement('canvas');
   c.width = 1200; c.height = 1200;
   await document.fonts.ready;
   await renderBars(c, data);
-  triggerCanvasDownload(c, `${exportSlug()}-bars.png`);
+  triggerCanvasDownload(c, `${exportSlug(state.image)}-bars.png`);
 }
 
-export async function exportPngDots(withBackground) {
-  const data = buildRendererData();
+export async function exportPngDots(state, withBackground) {
+  const data = buildRendererData(state);
   if (!data) return;
   const c = document.createElement('canvas');
   c.width = 1200; c.height = 1200;
   await document.fonts.ready;
   await renderDots(c, data, withBackground);
   const suffix = withBackground ? 'dots-bg' : 'dots';
-  triggerCanvasDownload(c, `${exportSlug()}-${suffix}.png`);
+  triggerCanvasDownload(c, `${exportSlug(state.image)}-${suffix}.png`);
 }

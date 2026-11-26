@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  migrateV1Storage, loadPaletteStorage, storeCleanExtract, storeMigrateTheme,
+  migrateV1Storage, loadPaletteStorage, savePaletteStorage, storeCleanExtract, storeMigrateTheme,
   STORE_V1_STATE_KEY, STORE_V1_SETTINGS_KEY, STORE_V1_THEME_KEY, STORE_V2_STATE_KEY, STORE_V2_SETTINGS_KEY,
 } from './storage.js';
 
@@ -113,5 +113,37 @@ describe('loadPaletteStorage', () => {
   it('survives storage that throws', () => {
     const broken = { getItem() { throw new Error('blocked'); }, setItem() { throw new Error('blocked'); } };
     expect(loadPaletteStorage(broken).state.sources).toEqual(['chromatic-vwdupl8d0lk']);
+  });
+});
+
+describe('savePaletteStorage', () => {
+  const extract = { count: 8, quality: 'hi', colorSpace: 'rgb', ignoreWhite: false, minSaturation: 0.1, nameVocabulary: 'werner' };
+
+  it('round-trips through loadPaletteStorage', () => {
+    const storage = fakeStorage();
+    savePaletteStorage(storage, { sources: ['one', 'two'], token: 'tok', rememberToken: true, extract });
+    const out = loadPaletteStorage(storage);
+    expect(out.state).toEqual({ sources: ['one', 'two'], token: 'tok', rememberToken: true });
+    expect(out.settings.extract).toEqual(extract);
+  });
+
+  it('does not store the token when remember is off', () => {
+    const storage = fakeStorage();
+    savePaletteStorage(storage, { sources: ['one'], token: 'secret', rememberToken: false });
+    expect(storage.data.get(STORE_V2_STATE_KEY)).not.toContain('secret');
+    expect(loadPaletteStorage(storage).state).toMatchObject({ token: '', rememberToken: false });
+  });
+
+  it('drops blank sources, caps at four and falls back to the default', () => {
+    const storage = fakeStorage();
+    savePaletteStorage(storage, { sources: [' a ', '', 'b', 'c', 'd', 'e'] });
+    expect(loadPaletteStorage(storage).state.sources).toEqual(['a', 'b', 'c', 'd']);
+    savePaletteStorage(storage, { sources: ['', '  '] });
+    expect(loadPaletteStorage(storage).state.sources).toEqual(['chromatic-vwdupl8d0lk']);
+  });
+
+  it('survives storage that throws', () => {
+    const broken = { getItem() { return null; }, setItem() { throw new Error('blocked'); } };
+    expect(() => savePaletteStorage(broken, { sources: ['a'] })).not.toThrow();
   });
 });

@@ -1,14 +1,15 @@
 // extract.js: Color Thief wrapper — base palette, semantic swatches, proportion floor.
+import { STORE_DEFAULT_EXTRACT } from './storage.js';
 
 export function qualityValue(q) {
   return q === 'hi' ? 1 : q === 'lo' ? 30 : 10;
 }
 
 // ── COLOUR EXTRACTION ────────────────────────────────────────────────────────
-export function extractPalette(imgEl) {
-  const s = extractionSettings;
+// `s` is S.extract: { count, quality, colorSpace, ignoreWhite, minSaturation, … }.
+export function extractPalette(imgEl, s = STORE_DEFAULT_EXTRACT) {
   const colors = ColorThief.getPaletteSync(imgEl, {
-    colorCount:    s.colorCount,
+    colorCount:    s.count,
     quality:       qualityValue(s.quality),
     colorSpace:    s.colorSpace,
     ignoreWhite:   s.ignoreWhite,

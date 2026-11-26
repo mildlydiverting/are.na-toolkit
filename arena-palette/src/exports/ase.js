@@ -1,7 +1,7 @@
 // exports/ase.js: binary download helper and Adobe Swatch Exchange export.
 import { nameFor } from '../names.js';
 import { rgbToHex, hexToRgb, makeTintsShades, TINT_STEPS } from '../colour.js';
-import { swatchLabel, exportContext, exportSlug } from './text.js';
+import { swatchLabel } from './text.js';
 
 export function downloadBinary(buffer, filename) {
   const blob = new Blob([buffer], { type: 'application/octet-stream' });
@@ -147,6 +147,6 @@ export function buildAse(ctx) {
   return out.buffer;
 }
 
-export function exportAse(palette) {
-  downloadBinary(buildAse(exportContext(palette)), `${exportSlug()}.ase`);
+export function exportAse(ctx) {
+  downloadBinary(buildAse(ctx), `${ctx.slug}.ase`);
 }

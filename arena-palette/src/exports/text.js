@@ -1,5 +1,5 @@
 // exports/text.js: filenames, labels and the text exports (hex, RGB, HSL, CSS, SCP, GPL).
-import { nameFor } from '../names.js';
+import { nameFor, nameKey } from '../names.js';
 import { rgbToHex, hexToRgb, rgbToHsl, makeTintsShades, TINT_STEPS, SHADE_STEPS } from '../colour.js';
 
 // ── EXPORTS ───────────────────────────────────────────────────────────────────
@@ -10,25 +10,21 @@ export function downloadText(content, filename) {
   a.click();
 }
 
-export function slugName() {
-  return currentImageObj ? currentImageObj.channel : 'palette';
+// `image` is the v1-shaped image the palette came from (see imageFromBlock in arena-fetch.js).
+export function slugName(image) {
+  return image ? image.channel : 'palette';
 }
 
 // Export filename base: strip the Are.na hash suffix from the channel slug
 // and append the block id. e.g. "chromatic-vwdupl8d0lk" + id 44858120
 // => "chromatic-block-44858120"
-export function exportSlug() {
-  if (!currentImageObj) return 'palette';
-  const channel = currentImageObj.channel.replace(/-(?=[a-z0-9]{7,}$)[a-z0-9]*[0-9][a-z0-9]*$/i, '');
-  const id = currentImageObj.id || '';
+export function exportSlug(image) {
+  if (!image) return 'palette';
+  const channel = image.channel.replace(/-(?=[a-z0-9]{7,}$)[a-z0-9]*[0-9][a-z0-9]*$/i, '');
+  const id = image.id || '';
+  // A block pasted directly has no channel, so its name is just the block.
+  if (!channel) return id ? `block-${id}` : 'palette';
   return id ? `${channel}-block-${id}` : channel;
-}
-
-export function colourTitle(index, hex) {
-  const name = nameFor(currentColorNames, hex);
-  return name
-    ? `Colour ${index + 1} — ${hex} — ${name}`
-    : `Colour ${index + 1} — ${hex}`;
 }
 
 // Consistent label: #hex [Name] [(xx%)] [tint N / shade N]
@@ -340,41 +336,46 @@ export function buildGpl(ctx) {
   return lines.join('\n');
 }
 
-// Everything the builders need, gathered from the page's globals. Builders take this
-// and return the file contents, so they stay pure and testable.
-export function exportContext(palette) {
+// Everything the builders need, from the page's state. Builders take this and return the file
+// contents, so they stay pure and testable.
+//   image    the v1-shaped image (title, blockUrl, channel, id)
+//   palette  S.palette: [{ hex, name, proportion }]
+//   semantic S.semantic ([] to leave the semantic colours out): [{ role, hex, proportion }]
+export function buildExportContext({ image, palette, semantic = [] }) {
+  const names = {};
+  [...palette, ...semantic].forEach(c => { if (c.name) names[nameKey(c.hex)] = c.name; });
   return {
-    palette,
-    proportions: (currentPalette || []).map(p => p.proportion),
-    names:       currentColorNames,
-    semantic:    currentSwatchData,
-    title:       currentImageObj?.title || '',
-    blockUrl:    currentImageObj?.blockUrl || '',
-    channel:     slugName(),
-    slug:        exportSlug(),
+    palette:     palette.map(c => hexToRgb(c.hex)),
+    proportions: palette.map(c => c.proportion),
+    names,
+    semantic:    semantic.map(({ role, hex, proportion }) => ({ role, hex, proportion })),
+    title:       image?.title || '',
+    blockUrl:    image?.blockUrl || '',
+    channel:     slugName(image),
+    slug:        exportSlug(image),
   };
 }
 
-export function exportHex(palette) {
-  downloadText(buildHex(exportContext(palette)), `${exportSlug()}-hex.txt`);
+export function exportHex(ctx) {
+  downloadText(buildHex(ctx), `${ctx.slug}-hex.txt`);
 }
 
-export function exportRgb(palette) {
-  downloadText(buildRgb(exportContext(palette)), `${exportSlug()}-rgb.txt`);
+export function exportRgb(ctx) {
+  downloadText(buildRgb(ctx), `${ctx.slug}-rgb.txt`);
 }
 
-export function exportHsl(palette) {
-  downloadText(buildHsl(exportContext(palette)), `${exportSlug()}-hsl.txt`);
+export function exportHsl(ctx) {
+  downloadText(buildHsl(ctx), `${ctx.slug}-hsl.txt`);
 }
 
-export function exportCss(palette) {
-  downloadText(buildCss(exportContext(palette)), `${exportSlug()}-vars.css`);
+export function exportCss(ctx) {
+  downloadText(buildCss(ctx), `${ctx.slug}-vars.css`);
 }
 
-export function exportScp(palette) {
-  downloadText(buildScp(exportContext(palette)), `${exportSlug()}.color-palette`);
+export function exportScp(ctx) {
+  downloadText(buildScp(ctx), `${ctx.slug}.color-palette`);
 }
 
-export function exportGpl(palette) {
-  downloadText(buildGpl(exportContext(palette)), `${exportSlug()}.gpl`);
+export function exportGpl(ctx) {
+  downloadText(buildGpl(ctx), `${ctx.slug}.gpl`);
 }

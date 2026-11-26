@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   swatchLabel, cssSlug, exportHeader, buildHex, buildRgb, buildHsl, buildCss, buildScp, buildGpl,
+  buildExportContext, exportSlug,
 } from './text.js';
 import { fixtureCtx } from './export-fixture.js';
 
@@ -73,5 +74,44 @@ describe('text exports, structure', () => {
     expect(css).toContain('--color-2:');
     expect(css).toContain('--mustard-tint-3:');
     expect(css).toContain('--semantic-dark-muted:');
+  });
+});
+
+describe('buildExportContext', () => {
+  const image = { title: 'Test image', channel: 'chromatic-vwdupl8d0lk', id: 123, blockUrl: 'https://www.are.na/block/123' };
+  const palette = [
+    { hex: '#ff0000', name: 'Red', proportion: 0.6 },
+    { hex: '#0a141e', name: undefined, proportion: 0.3 },
+    { hex: '#c8b45a', name: 'Mustard', proportion: 0.1 },
+  ];
+  const semantic = [
+    { role: 'Vibrant', hex: '#ff0000', name: 'Red', proportion: 0.7 },
+    { role: 'DarkMuted', hex: '#0a141e', name: '', proportion: 0.3 },
+  ];
+
+  it('gives the shape the builders (and their fixture) expect', () => {
+    expect(buildExportContext({ image, palette, semantic })).toEqual(fixtureCtx);
+  });
+
+  it('leaves the semantic colours out when none are passed', () => {
+    expect(buildExportContext({ image, palette }).semantic).toEqual([]);
+  });
+
+  it('skips colours with no name yet or no name at all', () => {
+    expect(Object.keys(buildExportContext({ image, palette, semantic }).names).sort()).toEqual(['c8b45a', 'ff0000']);
+  });
+});
+
+describe('exportSlug', () => {
+  it('drops the are.na hash from a channel slug and adds the block id', () => {
+    expect(exportSlug({ channel: 'chromatic-vwdupl8d0lk', id: 44858120 })).toBe('chromatic-block-44858120');
+  });
+
+  it('names a block pasted on its own after the block', () => {
+    expect(exportSlug({ channel: '', id: 44858120 })).toBe('block-44858120');
+  });
+
+  it('falls back to palette with no image', () => {
+    expect(exportSlug(null)).toBe('palette');
   });
 });

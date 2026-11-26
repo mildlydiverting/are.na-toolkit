@@ -22,6 +22,18 @@ export async function fetchChannelMeta(client, slug) {
   }
 }
 
+// One block by id (a block URL in the Source step). Palette needs an image block.
+export async function fetchBlock(client, id) {
+  let block;
+  try {
+    block = await client.getBlock(id);
+  } catch (err) {
+    throw fetchFailure(err, status => `Block ${id} not found (${status})`);
+  }
+  if (!block || block.type !== 'Image' || !block.image) throw new Error(`Block ${id} is not an image`);
+  return block;
+}
+
 export async function fetchBlockAtPage(client, slug, page) {
   try {
     const data = await client.request(`/channels/${encodeURIComponent(slug)}/contents`, { per: 1, page });
@@ -31,9 +43,32 @@ export async function fetchBlockAtPage(client, slug, page) {
   }
 }
 
-// rng is injectable so tests can choose the pages.
-export async function fetchChannelImages(client, slug, slotsNeeded, { rng = Math.random } = {}) {
-  const meta = await fetchChannelMeta(client, slug);
+// The image shape the rest of palette uses (v1's, kept), from an are.na image block. `channel` is the
+// slug the block came from, or '' for a block that was pasted directly.
+export function imageFromBlock(block, channel = '') {
+  return {
+    url:         block.image.small?.src || block.image.src,
+    original:    block.image.src,
+    title:       block.title || '',
+    description: block.description?.plain || block.description?.markdown || (typeof block.description === 'string' ? block.description : '') || '',
+    channel,
+    id:          block.id,
+    blockUrl:    `https://www.are.na/block/${block.id}`,
+    // Source info
+    sourceUrl:   block.source?.url   || '',
+    sourceTitle: block.source?.title || '',
+    // User who added the block
+    userName:    block.user?.full_name || block.user?.slug || '',
+    userSlug:    block.user?.slug      || '',
+    // Date
+    createdAt:   block.created_at || '',
+  };
+}
+
+// rng is injectable so tests can choose the pages. `meta` (a channel already fetched) saves a request;
+// `exclude` is a Set of block ids not to return again (refreshing one slot).
+export async function fetchChannelImages(client, slug, slotsNeeded, { rng = Math.random, meta: knownMeta = null, exclude = null } = {}) {
+  const meta = knownMeta || await fetchChannelMeta(client, slug);
   const total = meta.counts?.contents ?? 0;
   if (!total) throw new Error(`Channel "${slug}" appears to be empty`);
 
@@ -50,24 +85,8 @@ export async function fetchChannelImages(client, slug, slotsNeeded, { rng = Math
       usedPages.add(page);
 
       const block = await fetchBlockAtPage(client, slug, page);
-      if (block && block.type === 'Image' && block.image) {
-        results.push({
-          url:         block.image.small?.src || block.image.src,
-          original:    block.image.src,
-          title:       block.title || '',
-          description: block.description?.plain || block.description?.markdown || (typeof block.description === 'string' ? block.description : '') || '',
-          channel:     slug,
-          id:          block.id,
-          blockUrl:    `https://www.are.na/block/${block.id}`,
-          // Source info
-          sourceUrl:   block.source?.url   || '',
-          sourceTitle: block.source?.title || '',
-          // User who added the block
-          userName:    block.user?.full_name || block.user?.slug || '',
-          userSlug:    block.user?.slug      || '',
-          // Date
-          createdAt:   block.created_at || '',
-        });
+      if (block && block.type === 'Image' && block.image && !exclude?.has(block.id)) {
+        results.push(imageFromBlock(block, slug));
         break;
       }
     }

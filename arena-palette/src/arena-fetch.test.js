@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { ArenaError, createArenaClient } from '../../shared/api/arena-client.js';
 import { createThrottle } from '../../shared/api/throttle.js';
-import { fetchChannelImages, fetchChannelMeta, fetchBlockAtPage, MAX_RETRIES, FETCH_RATE_LIMIT_MESSAGE } from './arena-fetch.js';
+import { fetchChannelImages, fetchChannelMeta, fetchBlockAtPage, fetchBlock, imageFromBlock, MAX_RETRIES, FETCH_RATE_LIMIT_MESSAGE } from './arena-fetch.js';
 
 const image = (id, extra = {}) => ({
   type: 'Image', id, title: `Image ${id}`,
@@ -158,5 +158,46 @@ describe('with the real throttle and client', () => {
     expect(err.status).toBe(429);
     expect(waits).toEqual([2, 4, 8]);
     expect(fetches).toBe(4);
+  });
+});
+
+describe('fetchBlock', () => {
+  it('returns an image block', async () => {
+    const client = { getBlock: async id => image(id) };
+    expect((await fetchBlock(client, 5)).id).toBe(5);
+  });
+
+  it('rejects a block that is not an image', async () => {
+    const client = { getBlock: async id => ({ type: 'Text', id }) };
+    await expect(fetchBlock(client, 9)).rejects.toThrow('Block 9 is not an image');
+  });
+
+  it('reports a missing block with its status', async () => {
+    const client = { getBlock: async () => { throw new ArenaError(404, 'nope', null); } };
+    await expect(fetchBlock(client, 3)).rejects.toMatchObject({ message: 'Block 3 not found (404)', status: 404 });
+  });
+});
+
+describe('imageFromBlock', () => {
+  it('maps a block to the image shape, with the channel label', () => {
+    expect(imageFromBlock(image(4), 'my-channel')).toMatchObject({ id: 4, channel: 'my-channel', original: 'https://img/4.jpg', url: 'https://img/4-s.jpg', blockUrl: 'https://www.are.na/block/4' });
+  });
+
+  it('leaves the channel empty for a pasted block', () => {
+    expect(imageFromBlock(image(4)).channel).toBe('');
+  });
+});
+
+describe('fetchChannelImages options', () => {
+  it('uses a channel already fetched, without asking again', async () => {
+    const client = fakeClient({ blocks: [image(1)] });
+    await fetchChannelImages(client, 'c', 1, { rng: () => 0, meta: { counts: { contents: 1 } } });
+    expect(client.calls.some(c => c[0] === 'getChannel')).toBe(false);
+  });
+
+  it('skips excluded ids and tries another page', async () => {
+    const client = fakeClient({ blocks: [image(1), image(2)] });
+    const out = await fetchChannelImages(client, 'c', 1, { rng: stepRng(2), exclude: new Set([1]) });
+    expect(out.map(i => i.id)).toEqual([2]);
   });
 });

@@ -89,6 +89,73 @@ body {
 .stack { display: flex; flex-direction: column; gap: var(--space-2); }
 .stack--loose { gap: var(--space-4); }
 
+.source-row { display: flex; gap: var(--space-2); align-items: center; }
+.source-row .atk-input { flex: 1; min-width: 0; }
+
+.pick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--space-2);
+}
+.pick-grid .atk-block { min-width: 0; }
+.pick-grid .atk-block.is-selected { outline: 3px solid var(--accent-focus); outline-offset: 2px; }
+.pick-grid .atk-block.is-busy { opacity: 0.5; }
+.pick-select { position: absolute; inset: 0; padding: 0; border: 0; background: none; cursor: pointer; }
+.pick-select:focus-visible { outline: 3px solid var(--accent-focus); outline-offset: -3px; }
+/* Only the Refresh and Lock buttons take clicks; the rest of the row lets them through to the image. */
+.pick-grid .atk-block .atk-block__actions { pointer-events: none; }
+.pick-grid .atk-block__action:not([aria-disabled="true"]) { pointer-events: auto; }
+@media (hover: none) {
+  .pick-grid .atk-block__actions { opacity: 1; visibility: visible; transform: none; }
+}
+.pick-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+
+.pick-chosen {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: var(--space-4);
+  margin: 0;
+  align-items: start;
+}
+.pick-chosen img { width: 100%; height: auto; display: block; background: var(--surface-media); }
+.credit { display: flex; flex-direction: column; gap: var(--space-1); overflow-wrap: anywhere; }
+.credit-row { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); }
+.credit-description p { margin: var(--space-1) 0 0; white-space: pre-line; }
+
+.base-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+.base-image { width: 100%; height: auto; display: block; background: var(--surface-media); }
+
+.settings > summary { cursor: pointer; font: var(--text-ui-strong); color: var(--text-heading); margin-bottom: var(--space-2); }
+.field { display: flex; flex-direction: column; gap: var(--space-1); }
+.field label { font: var(--text-ui-strong); }
+.range { width: 100%; accent-color: var(--accent-primary); }
+
+.prop-bar { display: flex; height: 64px; overflow: hidden; }
+.prop-bar > span { min-width: 2px; }
+
+.swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--space-2); }
+.swatch-card {
+  display: flex; flex-direction: column; gap: var(--space-1);
+  padding: 0; border: 0; background: none; color: inherit;
+  font: inherit; text-align: left; cursor: pointer;
+}
+.swatch-card__chip { display: block; height: 64px; }
+.swatch-card:hover .swatch-card__chip { outline: 2px solid var(--text-muted); outline-offset: 1px; }
+.swatch-card:focus-visible { outline: 3px solid var(--accent-focus); outline-offset: 2px; }
+.swatch-card__name { font: var(--text-ui-strong); color: var(--text-heading); min-height: 1.4em; }
+.swatch-card__meta { font-size: 13px; }
+
+.export-group { display: flex; flex-direction: column; gap: var(--space-2); }
+.export-group h3 { margin: 0; font: var(--text-ui-strong); color: var(--text-heading); }
+.export-buttons { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
 @media (max-width: 760px) {
   .palette-layout { grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
+  .pick-chosen { grid-template-columns: minmax(0, 1fr); }
+  .base-layout { grid-template-columns: minmax(0, 1fr); }
 }

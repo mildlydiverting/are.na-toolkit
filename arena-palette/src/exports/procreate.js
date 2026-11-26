@@ -1,7 +1,7 @@
 // exports/procreate.js: Procreate .palette export.
 import { nameFor } from '../names.js';
 import { rgbToHex, hexToRgb, makeTintsShades, TINT_STEPS } from '../colour.js';
-import { swatchLabel, exportContext, exportSlug, downloadText } from './text.js';
+import { swatchLabel, downloadText } from './text.js';
 
 // ── EXPORT — Procreate .palette ───────────────────────────────────────────────
 export function buildProcreatePalette(ctx) {
@@ -71,6 +71,6 @@ export function buildProcreatePalette(ctx) {
   return JSON.stringify(trimmed, null, 2);
 }
 
-export function exportProcreatePalette(palette) {
-  downloadText(buildProcreatePalette(exportContext(palette)), `${exportSlug()}.palette`);
+export function exportProcreatePalette(ctx) {
+  downloadText(buildProcreatePalette(ctx), `${ctx.slug}.palette`);
 }
