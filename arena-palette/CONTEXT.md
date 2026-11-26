@@ -1,49 +1,68 @@
-# arena-palette — context note for new chat
+# arena-palette: context note for new chat
 
-*Corrected 22 November 2026 during the v2.0 migration (branch `arena-palette-v2`). Plan: `_notes/arena-palette-notes/arena-palette-v2-build-plan.md`. This file becomes `NOTES.md` when v2.0 ships.*
+*Rewritten 26 November 2026 mid-way through the v2.0 migration (branch `arena-palette-v2`). Plan: `_notes/arena-palette-notes/arena-palette-v2-build-plan.md`. This file becomes `NOTES.md` when v2.0 ships.*
 
-## What we're working on
+## What this is
 
-`arena-palette` is a local single-file HTML tool that fetches images from up to 4 Are.na channels, extracts a colour palette from a selected image, and displays tints/shades plus a semantic palette. It's part of a planned suite of local Are.na browser tools called `are.na-toolkit`, which lives at `~/Development/are.na-toolkit/`.
+`arena-palette` is a browser tool that draws images from up to four are.na channels (or single blocks), lets you pick one, extracts a colour palette from it, and exports the result. It is part of `are.na-toolkit` (`~/Development/are.na-toolkit/`, public at <https://github.com/mildlydiverting/are.na-toolkit>).
 
-The repo is public at `https://github.com/mildlydiverting/are.na-toolkit`.
+v2.0 is a **six-step wizard** in the same shape as arena-merge and arena-duplicate-finder: **Source, Pick image, Base palette, Edit, Ramps, Export**. The layout follows the Arena Toolkit design system; none of v1's page layout survives. The live site (`docs/arena-palette.html`) is still v1.31 until v2.0 ships.
 
-The current built file is `arena-palette.html` (v1.31), located at:
-`~/Development/are.na-toolkit/arena-palette/dist/arena-palette.html`
+## State of the build
 
-Source files (ES modules, inlined into one page by `@include` markers in `src/index.html`):
-- `arena-palette/src/app.js` (state, DOM wiring, rendering), `parse-input.js`, `colour.js`, `arena-fetch.js`, `names.js`, `storage.js` (not yet wired), `image-cache.js`, `extract.js`
-- `arena-palette/src/exports/` — `text.js`, `ase.js`, `procreate.js`, `png.js`
-- `arena-palette/src/style.css`, `arena-palette/src/third_party/color-thief.js` (Color Thief 3.5.0, MIT)
-- Tests sit beside the code (`*.test.js`; run `npm test` from the repo root)
+| Step | Status |
+|---|---|
+| 1 Source | Built. Up to four inputs (channel slug, channel link or block link), optional token with "Remember token". Fetch resolves each one. |
+| 2 Pick image | Built. Grid of 12 (a pasted block takes one slot, channels share the rest), per-slot Refresh and Lock, Refresh all (keeps locked), credit panel. A lone pasted block skips straight past this step. |
+| 3 Base palette | Built. Extraction settings, proportion bar, base swatches with colour names, read-only semantic palette. Click a swatch to copy its hex. |
+| 4 Edit | Placeholder. Phase 4. |
+| 5 Ramps | Placeholder. Phase 3. |
+| 6 Export | Built with v1's formats (hex, RGB, HSL, CSS, ASE, GPL, Procreate, Simple Colour Palette JSON, three PNGs, Copy all hex) and an "Include the semantic palette" tickbox. Tints and shades are always included for now. |
 
-Built with `node arena-palette/build.js --docs` (`--watch` rebuilds on save). `build.py`, `template.html` and `main.js` were retired in commit 3370224 and are in git history.
+Saved in localStorage: sources, token (only while "Remember token" is ticked), extraction settings, and the theme (Neutral by default). v1's saved values are migrated once. Nothing about the palette itself is saved.
 
----
+## Files (`arena-palette/src/`, ES modules inlined by `@include` markers in `index.html`)
 
-## Current file state (v1.31)
+- `app.js`: the wizard. State lives in one object `S` (sources, token, grid, image, extract, palette, semantic, ramps, export, step, furthest); each step has a `step…()` function that returns its DOM, and `render()` rebuilds the rail and pane. Step 3 redraws only its results panel so the settings controls keep focus.
+- `parse-input.js`: `parseSourceInput` (channel / block / invalid) and v1's `parseArenaSlug`
+- `arena-fetch.js`: are.na v3 reads: `fetchChannelMeta`, `fetchBlock`, `fetchBlockAtPage`, `fetchChannelImages`, `imageFromBlock`
+- `grid.js`: `planGridSlots`, how the 12 slots are shared between sources
+- `image-cache.js`: each image loads once
+- `extract.js`: Color Thief wrapper (`extractPalette(img, settings)`, `extractSwatches`, `swatchProportions`, `applyFloor`)
+- `colour.js`: hex / RGB / HSL conversion, HSL tints and shades, text colour
+- `names.js`: color.pizza lookup (`fetchColorNames`, `nameFor`, `nameKey`)
+- `storage.js`: keys, `loadPaletteStorage` (with the v1 migration), `savePaletteStorage`
+- `escape.js`: `escapeHtml`, `safeUrl`
+- `exports/`: `text.js` (hex, RGB, HSL, CSS, SCP, GPL, and `buildExportContext`), `ase.js`, `procreate.js`, `png.js`
+- `styles.css`: layout only. `third_party/color-thief.js`: Color Thief 3.5.0 (MIT)
+- Tests sit beside the code (`*.test.js`; `npm test` from the repo root)
 
-**Key dependencies:**
-- Color Thief 3.5.0, inlined from `src/third_party/` — MMCQ palette + swatch extraction
-- (JSZip was loaded but never used; removed)
-- Karla + Courier Prime (Google Fonts)
+Top-level names must be unique across all files, because the include resolver inlines them into one script. Build with `node arena-palette/build.js` (`--watch` rebuilds on save, `--docs` also copies to `docs/`). Preview with `python3 -m http.server 8000 --directory arena-palette/dist`.
 
-**Architecture — must preserve:**
-- USE Are.na API v3 (`https://api.are.na/v3`). NEVER v2.
-- Image URLs: `image.src` (original), `image.small.src` (thumbnail)
-- Two-step random fetch: channel meta for total count → `per=1&page={random}` with up to 12 retries to land on an Image block
-- `currentImageEl` caches the loaded `HTMLImageElement` — settings changes call `runExtraction()` directly, never `selectImage()`, so no unnecessary API hits
-- Color Thief v3: use `c.array()` for `[r,g,b]`, not `.rgb` or `._r._g._b`
-- `applyFloor(items, minProp)` shared helper normalises proportions (1% floor for bars, 5% for semantic bar)
-- `currentSwatchData` global caches the semantic palette (array of `{role, hex, tc, proportion}`) — populated in `runExtraction()` via `swatchProportions()`, used by exports. Declared at module scope.
-- `currentBlock` / `currentImageObj` global caches the current Are.na block object (has `.id`, `.title`, `.source.url`, `.user.username`, `.channel`, `.original`, etc.)
-- `currentImageEl` caches the loaded HTMLImageElement — also used by PNG export to draw the image onto canvas
+## What's left (see the plan, section 10)
 
-### Are.na v3 API — confirmed image fields (from live block response)
+- **Phase 3, Ramps:** `ramps.js` (OKLCH tone ladders with the extracted colour marked), the Ramps step, `buildExportContext` taking "Base only / Base + ramps".
+- **Phase 4:** Edit step (swatch editing, add, remove, reorder, lock), PNG renderers for any ramp length, PNG preview, colour-search links.
+- **Phase 5:** breakpoint pass, v2.0 version string and screenshot, README and NOTES.md, update `AGENTS.md`, push.
+- Native range sliders are used for two extraction settings because the design system has no Slider; propose one to the artifact before shipping.
+- The layout of the extraction settings panel is a "revisit later".
 
-`image.blurhash` — present and confirmed in v3
-`dominant_color` — not present in v3 (earlier sources claiming this were wrong)
-Image variants available: `small`, `medium`, `large`, `square`, `src` (original) — all served from `images.are.na` CDN. Thumbnail URLs are base64-encoded resize parameter objects, not signed paths.
+## Architecture facts worth keeping
+
+- Are.na API v3 only (`https://api.are.na/v3`). Never v2.
+- Every read goes through the shared throttle (150 ms gap, 429 backoff of 2, 4 and 8 s) via `createArenaClient({ throttle })`; stop on a persistent 429.
+- Image URLs: `image.src` (original), `image.small.src` (thumbnail). Colour extraction loads the original with `crossOrigin = 'anonymous'`.
+- Random fetch: channel meta for the total count, then `per=1&page={random}` with up to 12 retries to land on an Image block.
+- Color Thief v3: use `c.array()` for `[r,g,b]`, not `.rgb` or `._r._g._b`.
+- `applyFloor(items, minProp)` normalises proportions (1% floor for the bar, 5% for the semantic roles).
+- A palette entry is `{ hex, name, proportion, locked, source }`. `name` is `undefined` until looked up and `''` when color.pizza has no name.
+- **Colour names:** `https://api.color.pizza/v1/`, batched as comma-separated hex values without `#`. Maps are keyed lower-case without the `#`; always use `nameFor(nameMap, hex)` and `nameKey(hex)`.
+- Exporters take a context from `buildExportContext({ image, palette, semantic })`; builders (`buildHex`, `buildAse`, …) are pure and snapshot-tested. PNG renderers take `buildRendererData({ image, imageEl, palette, semantic })`.
+- `exportSlug(image)` strips the are.na hash from the channel slug and adds the block id, e.g. `chromatic-block-44858120`; a pasted block is `block-<id>`.
+
+### Are.na v3 API, confirmed image fields
+
+`image.blurhash` is present in v3. `dominant_color` is not (earlier sources claiming it were wrong). Variants: `small`, `medium`, `large`, `square`, `src` (original), all served from the `images.are.na` CDN. Thumbnail URLs are base64-encoded resize parameter objects, not signed paths.
 
 ### BlurHash — average colour extraction
 
@@ -59,66 +78,6 @@ function blurhashDominantColor(blurhash) {
   return [(val >> 16) & 0xff, (val >> 8) & 0xff, val & 0xff]; // [r, g, b]
 }
 ```
-
-### Security / public deployment
-
-Token stored in localStorage under `STORAGE_KEY` alongside channel slugs, via `saveState()`. Settings stored separately under `SETTINGS_KEY`. Safe for public static deployment — each visitor's browser has isolated localStorage.
-
-**Colour name API:**
-- `https://api.color.pizza/v1/` — fetched when the colours change, batched as comma-separated hex values (WITHOUT `#`)
-- Multiple name vocabularies selectable in settings
-- Names are cached in the `currentColorNames` map, keyed **without** the `#`, lower-case (`'ff0000'`). Always look names up with `nameFor(nameMap, hex)` from `names.js`, never by hand. Every requested hex has an entry: the name, or `''` if there is none; no entry (`undefined`) means "not looked up yet" and shows the loading dots.
-- `patchColorLabels(paletteData, nameMap)` updates both the colour row labels (`colour-label-N`) and the extracted colours legend items (`[data-hex]`).
-
-**CSS system (style.css):**
-- `font-size: 62.5%` on `:root` so `1rem = 10px`
-- Colour tokens: `--bg: #8e8e8e`, `--surface: #686868`, `--surface2: #5a5a5a`, `--border: #4a4a4a`, `--text: #000000`, `--muted: #1a1a1a`, `--surface-text: #e8e8e8`, `--surface-muted: #b0b0b0`, `--input-bg: #e8e8e8`, `--accent: #000000`, `--accent-text: #f0f0f0`
-- Fonts: Karla (`--font`, `--font-sans`) for UI; Courier Prime (`--font-mono`) for hex/code output only
-
-### Layout — three columns
-
-1. **Sidebar** — channels section (collapsible), token input, fetch button, image thumbnail grid
-2. **Image column** — selected image + credit block below
-3. **Palette column** — extracted colours bar + legend, semantic palette bar + legend, export buttons, tints/shades rows
-
-### Credit block order (`renderImagePanel`)
-
-title (bold) → description (collapsed, conditional) → source/accessed (conditional) → via [username] (conditional) → "view on are.na ↗" (always, own row)
-
-### Palette column order (`renderAnalysis`)
-
-Settings panel → extracted colours section → semantic palette section → export buttons → tints & shades label → colour rows
-
-### Export functions
-
-All exports use `swatchLabel(hex, name, pct, suffix)` for unified label format: `#hex [Name] [(xx%)] [tint/shade N]`
-CSS vars use `cssSlug(name, fallback)` for name-slugged var names (e.g. `--cinnabar-base`, `--cinnabar-tint-3`).
-Export order everywhere: 1. Base colours, 2. Semantic palette, 3. Tints & shades
-
-| Button | Function | Format |
-|---|---|---|
-| export hex | `exportHex` | `.txt` |
-| export rgb | `exportRgb` | `-rgb.txt` |
-| export hsl | `exportHsl` | `-hsl.txt` |
-| export css vars | `exportCss` | `.css` |
-| export .color-palette | `exportScp` | JSON |
-| export .ase | `exportAse` | binary |
-| export .gpl | `exportGpl` | plain text |
-| export .palette | `exportProcreatePalette` | JSON, 30 HSB slots |
-| png: bars | `exportPngBars` | 1200×1200 PNG |
-| png: dots | `exportPngDots(false)` | 1200×1200 PNG |
-| png: dots + bg | `exportPngDots(true)` | 1200×1200 PNG |
-
-### PNG renderers (`src/exports/png.js`)
-
-- `buildRendererData()` — maps globals to renderer data shape; reverses tints/shades (Color Thief lightest-first → renderers want darkest-first)
-- `renderBars(canvas, data)` — bars layout, transparent background
-- `renderDots(canvas, data, withBackground)` — dots layout; blurred bg via multi-pass downscale + ping-pong (3× 40px↔100px)
-- `exportSlug()` — strips Are.na hash suffix, appends block id (e.g. `chromatic-block-44858120`)
-
-### Channel input URL parsing
-
-`parseArenaSlug(val)` — extracts slug from full URL (`https://www.are.na/user/channel-slug` → `channel-slug`). Applied on `paste` (immediate transform) and `blur` (normalise if URL was typed).
 
 ---
 
@@ -144,26 +103,22 @@ Two renderer test harnesses (`bars2-renderer.html`, `dots1-renderer.html`) integ
 
 ---
 
+---
+
 ## Deferred / known issues
 
-- **11-image fetch bug** — `GRID_SIZE=12`, `MAX_RETRIES=12` (`arena-fetch.js`). Fetching now goes through the shared throttle (150 ms gap, 429 backoff) and stops on a 429. If a slot exhausts retries (sparse image channel), it silently drops. Quick fix: raise `MAX_RETRIES` to 20–25. Proper fix: track failures and retry from a different channel.
-- **Colour sort** — hue-order sort before rendering, not yet implemented
-- **PNG metadata** — tEXt/iTXt chunk embedding not implemented
-- **`shared/arena-api.js` extraction** — Are.na API calls could be pulled into a shared module for the toolkit
-- **Bars renderer background** — currently transparent; intentional for now
-- **ASE/GPL/Procreate labelling** — swatch names could be further refined; semantic role names in labels TBD
-- **CORS test for PNG export** — verify `canvas.toBlob()` works when served from a real public origin (not just `file://`)
-- **Colour names stuck on "…"** — fixed 22 November 2026. Row labels looked names up with the `#`; the map is keyed without it, and re-rendering with unchanged colours skipped the patch step. All lookups now use `nameFor`; unnamed colours and failed lookups end up unnamed rather than loading forever.
-- **`.channel-tag` CSS** — two rules remain in style.css after the HTML element was removed in v1.29; harmless dead code, can be cleaned up
+- **Colour sort:** hue-order sort before export, not implemented.
+- **PNG metadata:** tEXt/iTXt chunk embedding not implemented.
+- **Bars renderer background:** transparent, on purpose for now.
+- **ASE / GPL / Procreate labelling:** swatch names could be refined; semantic role names in labels TBD.
+- **CORS for PNG export:** some image hosts block cross-origin canvas reads. The Pick step and the PNG export report this; check from a real public origin as well as localhost.
+- **`shared/` extraction:** `arena-fetch.js` and `parse-input.js` are ready to move to `shared/api/` the day another tool (picks) needs them.
 
 ---
 
 ## Working approach
 
-- Iterative, targeted changes — not large rewrites unless necessary
-- Version bump + changelog entry in the `src/index.html` header on each change; project notes in this file
-- CSS CUBE methodology: https://cube.fyi
-- British English
-- Karla + Courier Prime (Google Fonts) — already loaded in the tool
-- No npm runtime dependencies; third-party libraries are copied into `src/third_party/` and inlined. Dev tooling (Vitest) is fine
-- Ask before making changes to code
+- Iterative, targeted changes, not large rewrites unless necessary.
+- Ask before making changes to code. Commit in small steps; never commit `_claude/` or `.claude/`.
+- British English in UI copy. CSS CUBE methodology: <https://cube.fyi>.
+- No npm runtime dependencies; third-party libraries are copied into `src/third_party/` and inlined. Dev tooling (Vitest) is fine.

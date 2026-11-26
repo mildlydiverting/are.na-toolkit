@@ -1,5 +1,5 @@
-// app.js: six-step wizard for arena-palette v2.0. Steps 1 (Source), 2 (Pick image, with per-slot refresh and lock), 3 (Base palette) and 6 (Export, v1's formats) are built until
-// they are ported from legacy-app.js (build plan, Phase 2); Edit and Ramps arrive in Phases 3–4.
+// app.js: six-step wizard for arena-palette v2.0. Steps 1 (Source), 2 (Pick image, with per-slot refresh and lock), 3 (Base palette) and 6 (Export, v1's formats) are built.
+// Edit and Ramps are placeholders until Phases 3–4.
 // Plain DOM, built from ArenaToolkit components. No framework.
 (function () {
   const ATK = window.ArenaToolkit;
