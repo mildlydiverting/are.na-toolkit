@@ -71,7 +71,7 @@
 
   API: Are.na REST API v3 — https://www.are.na/developers/explore
   Colour naming: api.color.pizza v1 — https://github.com/meodai/color-name-api
-  Dependencies: Color Thief 3.5.0 (inlined from src/third_party/), Karla + Courier Prime
+  Dependencies: Color Thief 3.5.0, culori 4.0.2 (both inlined from src/third_party/), Karla + Courier Prime
   ──────────────────────────────────────────────────────────────────
 -->
 <!-- @include shared/ui/tokens.css -->
@@ -99,11 +99,13 @@
 
   <!-- @include shared/ui/bundle.js -->
   <!-- @include ./third_party/color-thief.js -->
+  <!-- @include ./third_party/culori.min.js -->
   <!-- @include shared/api/arena-client.js -->
   <!-- @include shared/api/throttle.js -->
   <!-- @include ./escape.js -->
   <!-- @include ./parse-input.js -->
   <!-- @include ./colour.js -->
+  <!-- @include ./ramps.js -->
   <!-- @include ./arena-fetch.js -->
   <!-- @include ./grid.js -->
   <!-- @include ./names.js -->
