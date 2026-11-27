@@ -1,6 +1,6 @@
 // exports/text.js: filenames, labels and the text exports (hex, RGB, HSL, CSS, SCP, GPL).
 import { nameFor, nameKey } from '../names.js';
-import { rgbToHex, hexToRgb, rgbToHsl, makeTintsShades, TINT_STEPS, SHADE_STEPS } from '../colour.js';
+import { rgbToHex, hexToRgb, rgbToHsl } from '../colour.js';
 
 // ── EXPORTS ───────────────────────────────────────────────────────────────────
 export function downloadText(content, filename) {
@@ -43,6 +43,17 @@ export function cssSlug(name, fallback) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || fallback;
 }
 
+// A ramp as an ordered list, light to dark: the tints (numbered counting away from the base), the base itself,
+// then the shades. The base sits wherever the extracted colour fell, so ramps can be any length.
+export function rampLayout(ramp) {
+  const m = ramp.markerIndex;
+  return ramp.steps.map((hex, i) => {
+    if (i < m) return { hex, kind: 'tint', label: `tint ${m - i}`, key: `tint-${m - i}` };
+    if (i > m) return { hex, kind: 'shade', label: `shade ${i - m}`, key: `shade-${i - m}` };
+    return { hex, kind: 'base', label: null, key: 'base' };
+  });
+}
+
 export function exportHeader(ctx) {
   const title = ctx.title;
   const url   = ctx.blockUrl;
@@ -75,24 +86,18 @@ export function buildHex(ctx) {
     });
   }
 
-  // 3. Tints and Shades
-  out.push('/* Tints and Shades */\n');
-  palette.forEach((rgb) => {
-    const hex  = rgbToHex(rgb);
-    const name = nameFor(ctx.names, hex);
-    const { tints, shades } = makeTintsShades(rgb);
-    out.push(`/* ${swatchLabel(hex, name)} */`); // block header
-    tints.forEach((c, ti) => {
-      const th = rgbToHex(c);
-      out.push(`/* ${swatchLabel(th, name, null, `tint ${TINT_STEPS - ti}`)} */\n${th}`);
+  // 3. Tints and shades, when ramps are included
+  if (ctx.ramps) {
+    out.push('/* Tints and Shades */\n');
+    palette.forEach((rgb, i) => {
+      const ramp = ctx.ramps[i];
+      if (!ramp) return;
+      const name = nameFor(ctx.names, rgbToHex(rgb));
+      out.push(`/* ${swatchLabel(rgbToHex(rgb), name)} */`); // block header
+      rampLayout(ramp).forEach(step => out.push(`/* ${swatchLabel(step.hex, name, null, step.label)} */\n${step.hex}`));
+      out.push('');
     });
-    out.push(`/* ${swatchLabel(hex, name)} */\n${hex}`);
-    shades.forEach((c, si) => {
-      const sh = rgbToHex(c);
-      out.push(`/* ${swatchLabel(sh, name, null, `shade ${si + 1}`)} */\n${sh}`);
-    });
-    out.push('');
-  });
+  }
 
   return out.join('\n');
 }
@@ -120,24 +125,21 @@ export function buildRgb(ctx) {
     });
   }
 
-  // 3. Tints and Shades
-  out.push('/* Tints and Shades */\n');
-  palette.forEach((rgb) => {
-    const hex  = rgbToHex(rgb);
-    const name = nameFor(ctx.names, hex);
-    const { tints, shades } = makeTintsShades(rgb);
-    out.push(`/* ${swatchLabel(hex, name)} */`);
-    tints.forEach((c, ti) => {
-      const th = rgbToHex(c);
-      out.push(`/* ${swatchLabel(th, name, null, `tint ${TINT_STEPS - ti}`)} */\nrgb(${c[0]}, ${c[1]}, ${c[2]})`);
+  // 3. Tints and shades, when ramps are included
+  if (ctx.ramps) {
+    out.push('/* Tints and Shades */\n');
+    palette.forEach((rgb, i) => {
+      const ramp = ctx.ramps[i];
+      if (!ramp) return;
+      const name = nameFor(ctx.names, rgbToHex(rgb));
+      out.push(`/* ${swatchLabel(rgbToHex(rgb), name)} */`);
+      rampLayout(ramp).forEach(step => {
+        const [r, g, b] = hexToRgb(step.hex);
+        out.push(`/* ${swatchLabel(step.hex, name, null, step.label)} */\nrgb(${r}, ${g}, ${b})`);
+      });
+      out.push('');
     });
-    out.push(`/* ${swatchLabel(hex, name)} */\nrgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`);
-    shades.forEach((c, si) => {
-      const sh = rgbToHex(c);
-      out.push(`/* ${swatchLabel(sh, name, null, `shade ${si + 1}`)} */\nrgb(${c[0]}, ${c[1]}, ${c[2]})`);
-    });
-    out.push('');
-  });
+  }
 
   return out.join('\n');
 }
@@ -167,27 +169,21 @@ export function buildHsl(ctx) {
     });
   }
 
-  // 3. Tints and Shades
-  out.push('/* Tints and Shades */\n');
-  palette.forEach((rgb) => {
-    const hex  = rgbToHex(rgb);
-    const name = nameFor(ctx.names, hex);
-    const { tints, shades } = makeTintsShades(rgb);
-    out.push(`/* ${swatchLabel(hex, name)} */`);
-    tints.forEach((c, ti) => {
-      const th = rgbToHex(c);
-      const [h,s,l] = rgbToHsl(c);
-      out.push(`/* ${swatchLabel(th, name, null, `tint ${TINT_STEPS - ti}`)} */\nhsl(${h}, ${s}%, ${l}%)`);
+  // 3. Tints and shades, when ramps are included
+  if (ctx.ramps) {
+    out.push('/* Tints and Shades */\n');
+    palette.forEach((rgb, i) => {
+      const ramp = ctx.ramps[i];
+      if (!ramp) return;
+      const name = nameFor(ctx.names, rgbToHex(rgb));
+      out.push(`/* ${swatchLabel(rgbToHex(rgb), name)} */`);
+      rampLayout(ramp).forEach(step => {
+        const [h, s, l] = rgbToHsl(hexToRgb(step.hex));
+        out.push(`/* ${swatchLabel(step.hex, name, null, step.label)} */\nhsl(${h}, ${s}%, ${l}%)`);
+      });
+      out.push('');
     });
-    const [bh,bs,bl] = rgbToHsl(rgb);
-    out.push(`/* ${swatchLabel(hex, name)} */\nhsl(${bh}, ${bs}%, ${bl}%)`);
-    shades.forEach((c, si) => {
-      const sh = rgbToHex(c);
-      const [h,s,l] = rgbToHsl(c);
-      out.push(`/* ${swatchLabel(sh, name, null, `shade ${si + 1}`)} */\nhsl(${h}, ${s}%, ${l}%)`);
-    });
-    out.push('');
-  });
+  }
 
   return out.join('\n');
 }
@@ -222,27 +218,20 @@ export function buildCss(ctx) {
     varLines.push('');
   }
 
-  // 3. Tints & shades — --slug-tint-N / --slug-base / --slug-shade-N
-  varLines.push('  /* Tints & shades */');
-  palette.forEach((rgb, i) => {
-    const hex  = rgbToHex(rgb);
-    const name = nameFor(ctx.names, hex);
-    const slug = cssSlug(name, `color-${i + 1}`);
-    const { tints, shades } = makeTintsShades(rgb);
-    tints.forEach((c, ti) => {
-      const th = rgbToHex(c);
-      const [h,s,l] = rgbToHsl(c);
-      varLines.push(`  --${slug}-tint-${TINT_STEPS - ti}: hsl(${h}, ${s}%, ${l}%); /* ${th} */`);
+  // 3. Tints & shades, when ramps are included: --slug-tint-N / --slug-base / --slug-shade-N
+  if (ctx.ramps) {
+    varLines.push('  /* Tints & shades */');
+    palette.forEach((rgb, i) => {
+      const ramp = ctx.ramps[i];
+      if (!ramp) return;
+      const slug = cssSlug(nameFor(ctx.names, rgbToHex(rgb)), `color-${i + 1}`);
+      rampLayout(ramp).forEach(step => {
+        const [h, s, l] = rgbToHsl(hexToRgb(step.hex));
+        varLines.push(`  --${slug}-${step.key}: hsl(${h}, ${s}%, ${l}%); /* ${step.hex} */`);
+      });
+      varLines.push('');
     });
-    const [bh,bs,bl] = rgbToHsl(rgb);
-    varLines.push(`  --${slug}-base: hsl(${bh}, ${bs}%, ${bl}%); /* ${hex} */`);
-    shades.forEach((c, si) => {
-      const sh = rgbToHex(c);
-      const [h,s,l] = rgbToHsl(c);
-      varLines.push(`  --${slug}-shade-${si + 1}: hsl(${h}, ${s}%, ${l}%); /* ${sh} */`);
-    });
-    varLines.push('');
-  });
+  }
 
   while (varLines[varLines.length - 1] === '') varLines.pop();
 
@@ -263,24 +252,22 @@ export function buildScp(ctx) {
     return { role, hex, ...(pct ? { proportion: pct / 100 } : {}) };
   });
 
-  const tintsShades = palette.map((rgb, i) => {
+  const tintsShades = ctx.ramps ? palette.flatMap((rgb, i) => {
+    const ramp = ctx.ramps[i];
+    if (!ramp) return [];
     const hex  = rgbToHex(rgb);
     const name = nameFor(ctx.names, hex);
-    const { tints, shades } = makeTintsShades(rgb);
-    return {
-      hex,
-      ...(name ? { name } : {}),
-      tints:  tints.map((c, ti) => ({ hex: rgbToHex(c), label: `tint ${TINT_STEPS - ti}` })),
-      shades: shades.map((c, si) => ({ hex: rgbToHex(c), label: `shade ${si + 1}` })),
-    };
-  });
+    const steps = rampLayout(ramp);
+    const pick = kind => steps.filter(s => s.kind === kind).map(({ hex: h, label }) => ({ hex: h, label }));
+    return [{ hex, ...(name ? { name } : {}), tints: pick('tint'), shades: pick('shade') }];
+  }) : null;
 
   const payload = {
     name:        ctx.title || ctx.channel,
     sourceUrl:   ctx.blockUrl,
     palette:     paletteEntries,
     semantic:    semanticEntries,
-    tintsShades,
+    ...(tintsShades ? { tintsShades } : {}),
   };
   return JSON.stringify(payload, null, 2);
 }
@@ -292,7 +279,7 @@ export function buildGpl(ctx) {
   const lines = [
     'GIMP Palette',
     `Name: ${title}`,
-    `Columns: ${1 + TINT_STEPS + SHADE_STEPS}`,
+    `Columns: ${ctx.ramps?.length ? ctx.ramps[0].steps.length : Math.max(palette.length, 1)}`,
     '#',
   ];
 
@@ -315,21 +302,17 @@ export function buildGpl(ctx) {
     });
   }
 
-  // 3. Tints & shades per colour
-  palette.forEach((rgb, i) => {
+  // 3. Tints & shades per colour, when ramps are included
+  if (ctx.ramps) palette.forEach((rgb, i) => {
+    const ramp = ctx.ramps[i];
+    if (!ramp) return;
     const hex  = rgbToHex(rgb);
     const name = nameFor(ctx.names, hex);
     const pct  = Math.round((ctx.proportions[i] ?? 0) * 100);
     lines.push(`# ${swatchLabel(hex, name, pct || null)}`);
-    const { tints, shades } = makeTintsShades(rgb);
-    tints.forEach((c, ti) => {
-      const th = rgbToHex(c);
-      lines.push(`${c[0]}\t${c[1]}\t${c[2]}\t${swatchLabel(th, name, null, `tint ${TINT_STEPS - ti}`)}`);
-    });
-    lines.push(`${rgb[0]}\t${rgb[1]}\t${rgb[2]}\t${swatchLabel(hex, name)}`);
-    shades.forEach((c, si) => {
-      const sh = rgbToHex(c);
-      lines.push(`${c[0]}\t${c[1]}\t${c[2]}\t${swatchLabel(sh, name, null, `shade ${si + 1}`)}`);
+    rampLayout(ramp).forEach(step => {
+      const [r, g, b] = hexToRgb(step.hex);
+      lines.push(`${r}\t${g}\t${b}\t${swatchLabel(step.hex, name, null, step.label)}`);
     });
   });
 
@@ -341,7 +324,8 @@ export function buildGpl(ctx) {
 //   image    the v1-shaped image (title, blockUrl, channel, id)
 //   palette  S.palette: [{ hex, name, proportion }]
 //   semantic S.semantic ([] to leave the semantic colours out): [{ role, hex, proportion }]
-export function buildExportContext({ image, palette, semantic = [] }) {
+//   ramps    one { steps, markerIndex } per palette colour (see ramps.js), or null for base colours only
+export function buildExportContext({ image, palette, semantic = [], ramps = null }) {
   const names = {};
   [...palette, ...semantic].forEach(c => { if (c.name) names[nameKey(c.hex)] = c.name; });
   return {
@@ -349,6 +333,7 @@ export function buildExportContext({ image, palette, semantic = [] }) {
     proportions: palette.map(c => c.proportion),
     names,
     semantic:    semantic.map(({ role, hex, proportion }) => ({ role, hex, proportion })),
+    ramps:       ramps ? ramps.map(r => ({ steps: [...r.steps], markerIndex: r.markerIndex })) : null,
     title:       image?.title || '',
     blockUrl:    image?.blockUrl || '',
     channel:     slugName(image),

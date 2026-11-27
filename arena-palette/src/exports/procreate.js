@@ -1,7 +1,14 @@
 // exports/procreate.js: Procreate .palette export.
 import { nameFor } from '../names.js';
-import { rgbToHex, hexToRgb, makeTintsShades, TINT_STEPS } from '../colour.js';
-import { swatchLabel, downloadText } from './text.js';
+import { rgbToHex, hexToRgb } from '../colour.js';
+import { swatchLabel, rampLayout, downloadText } from './text.js';
+
+export const PROCREATE_SLOTS = 30;
+
+// How many swatches the file would hold before Procreate's limit: base, then semantic, then ramps.
+export function countProcreateSwatches(ctx) {
+  return ctx.palette.length + ctx.semantic.length + (ctx.ramps ? ctx.ramps.reduce((n, r) => n + r.steps.length, 0) : 0);
+}
 
 // ── EXPORT — Procreate .palette ───────────────────────────────────────────────
 export function buildProcreatePalette(ctx) {
@@ -46,25 +53,16 @@ export function buildProcreatePalette(ctx) {
     swatches.push(makeEntry(hexToRgb(hex), swatchLabel(hex, role, pct || null)));
   });
 
-  // 3. Tints & shades per colour
-  palette.forEach((rgb) => {
-    const hex  = rgbToHex(rgb);
-    const name = nameFor(ctx.names, hex);
-    const { tints, shades } = makeTintsShades(rgb);
-
-    tints.forEach((c, ti) => {
-      const th = rgbToHex(c);
-      swatches.push(makeEntry(c, swatchLabel(th, name, null, `tint ${TINT_STEPS - ti}`)));
-    });
-    swatches.push(makeEntry(rgb, swatchLabel(hex, name)));
-    shades.forEach((c, si) => {
-      const sh = rgbToHex(c);
-      swatches.push(makeEntry(c, swatchLabel(sh, name, null, `shade ${si + 1}`)));
-    });
+  // 3. Tints & shades per colour, when ramps are included
+  if (ctx.ramps) palette.forEach((rgb, i) => {
+    const ramp = ctx.ramps[i];
+    if (!ramp) return;
+    const name = nameFor(ctx.names, rgbToHex(rgb));
+    rampLayout(ramp).forEach(step => swatches.push(makeEntry(hexToRgb(step.hex), swatchLabel(step.hex, name, null, step.label))));
   });
 
   // Pad or truncate to exactly 30
-  const MAX = 30;
+  const MAX = PROCREATE_SLOTS;
   const trimmed = swatches.slice(0, MAX);
   while (trimmed.length < MAX) trimmed.push(null);
 

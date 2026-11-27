@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { buildProcreatePalette } from './procreate.js';
-import { fixtureCtx } from './export-fixture.js';
+import { buildProcreatePalette, countProcreateSwatches, PROCREATE_SLOTS } from './procreate.js';
+import { fixtureCtx, hslRamps } from './export-fixture.js';
 
 describe('buildProcreatePalette', () => {
   const slots = JSON.parse(buildProcreatePalette(fixtureCtx));
@@ -29,9 +29,22 @@ describe('buildProcreatePalette', () => {
   });
 
   it('silently drops anything past 30 (v1.31 behaviour)', () => {
-    const many = { ...fixtureCtx, palette: Array.from({ length: 6 }, (_, i) => [i * 40, 100, 50]), proportions: [] };
+    const palette = Array.from({ length: 6 }, (_, i) => [i * 40, 100, 50]);
+    const many = { ...fixtureCtx, palette, proportions: [], ramps: hslRamps(palette) };
     const out = JSON.parse(buildProcreatePalette(many));
     expect(out).toHaveLength(30);
     expect(out.every(Boolean)).toBe(true);
+  });
+
+  it('holds only base and semantic colours when ramps are left out', () => {
+    const base = JSON.parse(buildProcreatePalette({ ...fixtureCtx, ramps: null }));
+    expect(base.filter(Boolean)).toHaveLength(5);
+  });
+
+  it('counts what would be written, so the page can warn about overflow', () => {
+    expect(countProcreateSwatches(fixtureCtx)).toBe(26);
+    expect(countProcreateSwatches({ ...fixtureCtx, ramps: null })).toBe(5);
+    const palette = Array.from({ length: 6 }, (_, i) => [i * 40, 100, 50]);
+    expect(countProcreateSwatches({ ...fixtureCtx, palette, ramps: hslRamps(palette) })).toBeGreaterThan(PROCREATE_SLOTS);
   });
 });

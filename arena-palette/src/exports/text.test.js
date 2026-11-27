@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   swatchLabel, cssSlug, exportHeader, buildHex, buildRgb, buildHsl, buildCss, buildScp, buildGpl,
-  buildExportContext, exportSlug,
+  buildExportContext, exportSlug, rampLayout,
 } from './text.js';
 import { fixtureCtx } from './export-fixture.js';
 
@@ -90,7 +90,11 @@ describe('buildExportContext', () => {
   ];
 
   it('gives the shape the builders (and their fixture) expect', () => {
-    expect(buildExportContext({ image, palette, semantic })).toEqual(fixtureCtx);
+    expect(buildExportContext({ image, palette, semantic, ramps: fixtureCtx.ramps })).toEqual(fixtureCtx);
+  });
+
+  it('carries no ramps unless they are passed', () => {
+    expect(buildExportContext({ image, palette, semantic }).ramps).toBeNull();
   });
 
   it('leaves the semantic colours out when none are passed', () => {
@@ -99,6 +103,51 @@ describe('buildExportContext', () => {
 
   it('skips colours with no name yet or no name at all', () => {
     expect(Object.keys(buildExportContext({ image, palette, semantic }).names).sort()).toEqual(['c8b45a', 'ff0000']);
+  });
+});
+
+describe('rampLayout', () => {
+  const ramp = { steps: ['#eee', '#ccc', '#aaa', '#888', '#555'], markerIndex: 2 };
+  it('numbers tints and shades away from the base, which keeps no label', () => {
+    expect(rampLayout(ramp).map(s => s.label)).toEqual(['tint 2', 'tint 1', null, 'shade 1', 'shade 2']);
+    expect(rampLayout(ramp).map(s => s.key)).toEqual(['tint-2', 'tint-1', 'base', 'shade-1', 'shade-2']);
+  });
+  it('copes with the base at either end', () => {
+    expect(rampLayout({ steps: ['#aaa', '#888'], markerIndex: 0 }).map(s => s.kind)).toEqual(['base', 'shade']);
+    expect(rampLayout({ steps: ['#eee', '#aaa'], markerIndex: 1 }).map(s => s.kind)).toEqual(['tint', 'base']);
+  });
+});
+
+describe('text exports, base colours only', () => {
+  const base = { ...fixtureCtx, ramps: null };
+  it('leave out tints and shades everywhere', () => {
+    for (const out of [buildHex(base), buildRgb(base), buildHsl(base)]) expect(out).not.toContain('Tints and Shades');
+    expect(buildCss(base)).not.toContain('tint');
+    expect(buildGpl(base)).not.toContain('tint');
+    expect(Object.keys(JSON.parse(buildScp(base)))).toEqual(['name', 'sourceUrl', 'palette', 'semantic']);
+  });
+  it('gpl columns follow the palette length', () => {
+    expect(buildGpl(base).split('\n')[2]).toBe('Columns: 3');
+  });
+});
+
+describe('text exports, ramps of any length', () => {
+  const five = { ...fixtureCtx, ramps: fixtureCtx.palette.map(() => ({ steps: ['#eeeeee', '#cccccc', '#aaaaaa', '#888888', '#555555'], markerIndex: 2 })) };
+  it('gpl columns follow the ramp length', () => {
+    expect(buildGpl(five).split('\n')[2]).toBe('Columns: 5');
+  });
+  it('css names every step from the base outwards', () => {
+    const css = buildCss(five);
+    for (const v of ['--red-tint-2:', '--red-tint-1:', '--red-base:', '--red-shade-1:', '--red-shade-2:']) expect(css).toContain(v);
+    expect(css).not.toContain('--red-tint-3');
+  });
+  it('scp lists tints and shades from the ramp', () => {
+    const scp = JSON.parse(buildScp(five));
+    expect(scp.tintsShades[0].tints.map(t => t.label)).toEqual(['tint 2', 'tint 1']);
+    expect(scp.tintsShades[0].shades.map(t => t.label)).toEqual(['shade 1', 'shade 2']);
+  });
+  it('hex lists all five steps under each colour', () => {
+    expect(buildHex(five)).toContain('/* #eeeeee Red tint 2 */\n#eeeeee');
   });
 });
 

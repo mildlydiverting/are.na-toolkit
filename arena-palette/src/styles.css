@@ -150,6 +150,15 @@ body {
 .swatch-card__name { font: var(--text-ui-strong); color: var(--text-heading); min-height: 1.4em; }
 .swatch-card__meta { font-size: 13px; }
 
+.ramp-row { display: flex; flex-direction: column; gap: var(--space-1); }
+.ramp-row__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2); }
+.ramp-row__name { font: var(--text-ui-strong); color: var(--text-heading); }
+.ramp-strip { display: flex; height: 56px; overflow: hidden; }
+.ramp-step { flex: 1 1 0; min-width: 0; padding: 0; border: 0; cursor: pointer; position: relative; }
+.ramp-step.is-marker::after { content: ''; position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: currentColor; }
+.ramp-step:hover { outline: 2px solid var(--text-muted); outline-offset: -2px; }
+.ramp-step:focus-visible { outline: 3px solid var(--accent-focus); outline-offset: -3px; }
+
 .export-group { display: flex; flex-direction: column; gap: var(--space-2); }
 .export-group h3 { margin: 0; font: var(--text-ui-strong); color: var(--text-heading); }
 .export-buttons { display: flex; flex-wrap: wrap; gap: var(--space-2); }

@@ -1,7 +1,7 @@
 // exports/ase.js: binary download helper and Adobe Swatch Exchange export.
 import { nameFor } from '../names.js';
-import { rgbToHex, hexToRgb, makeTintsShades, TINT_STEPS } from '../colour.js';
-import { swatchLabel } from './text.js';
+import { rgbToHex, hexToRgb } from '../colour.js';
+import { swatchLabel, rampLayout } from './text.js';
 
 export function downloadBinary(buffer, filename) {
   const blob = new Blob([buffer], { type: 'application/octet-stream' });
@@ -69,7 +69,7 @@ export function buildAse(ctx) {
     return [buf];
   }
 
-  // Assemble blocks — order: base colours, semantic palette, tints/shades per colour
+  // Assemble blocks — order: base colours, semantic palette, then tints/shades per colour if ramps are included
   const blocks = [];
   let blockCount = 0;
 
@@ -99,29 +99,21 @@ export function buildAse(ctx) {
     blockCount++;
   }
 
-  // 3. Tints & shades per colour
-  palette.forEach((rgb, i) => {
+  // 3. Tints & shades per colour, when ramps are included
+  if (ctx.ramps) palette.forEach((rgb, i) => {
+    const ramp = ctx.ramps[i];
+    if (!ramp) return;
     const baseHex = rgbToHex(rgb);
     const name    = nameFor(ctx.names, baseHex);
     const pct     = Math.round((ctx.proportions[i] ?? 0) * 100);
 
     blocks.push(...groupStartBlock(swatchLabel(baseHex, name)));
     blockCount++;
-
-    const { tints, shades } = makeTintsShades(rgb);
-    tints.forEach((c, ti) => {
-      const h = rgbToHex(c);
-      blocks.push(...colourBlock(swatchLabel(h, name, null, `tint ${TINT_STEPS - ti}`), c));
+    rampLayout(ramp).forEach(step => {
+      const label = step.kind === 'base' ? swatchLabel(step.hex, name, pct || null) : swatchLabel(step.hex, name, null, step.label);
+      blocks.push(...colourBlock(label, hexToRgb(step.hex)));
       blockCount++;
     });
-    blocks.push(...colourBlock(swatchLabel(baseHex, name, pct || null), rgb));
-    blockCount++;
-    shades.forEach((c, si) => {
-      const h = rgbToHex(c);
-      blocks.push(...colourBlock(swatchLabel(h, name, null, `shade ${si + 1}`), c));
-      blockCount++;
-    });
-
     blocks.push(...groupEndBlock());
     blockCount++;
   });

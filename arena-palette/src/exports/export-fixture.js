@@ -1,4 +1,15 @@
 // Shared fixture for the export tests: the context object exportContext() builds from the page.
+import { rgbToHex, makeTintsShades } from '../colour.js';
+
+// Ramps shaped like ramps.js output, built from the HSL tints and shades v1 used (3 + base + 3), so the
+// v1.31 snapshots still apply. Marker at index 3.
+export function hslRamps(palette) {
+  return palette.map(rgb => {
+    const { tints, shades } = makeTintsShades(rgb);
+    return { steps: [...tints, rgb, ...shades].map(rgbToHex), markerIndex: tints.length };
+  });
+}
+
 export const fixtureCtx = {
   palette:     [[255, 0, 0], [10, 20, 30], [200, 180, 90]],
   proportions: [0.6, 0.3, 0.1],
@@ -7,6 +18,7 @@ export const fixtureCtx = {
     { role: 'Vibrant',   hex: '#ff0000', proportion: 0.7 },
     { role: 'DarkMuted', hex: '#0a141e', proportion: 0.3 },
   ],
+  ramps:    hslRamps([[255, 0, 0], [10, 20, 30], [200, 180, 90]]),
   title:    'Test image',
   blockUrl: 'https://www.are.na/block/123',
   channel:  'chromatic-vwdupl8d0lk',

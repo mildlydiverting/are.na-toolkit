@@ -29,6 +29,14 @@ function readAse(buffer) {
   return { header, blocks, end: at };
 }
 
+describe('buildAse, base colours only', () => {
+  it('has just the base and semantic groups', () => {
+    const ase = readAse(buildAse({ ...fixtureCtx, ramps: null }));
+    expect(ase.header.count).toBe(9); // 5 base + 4 semantic
+    expect(ase.blocks.filter(b => b.type === 0xC001).map(b => b.name)).toEqual(['Base colours', 'Semantic palette']);
+  });
+});
+
 describe('buildAse', () => {
   const buf = buildAse(fixtureCtx);
   const ase = readAse(buf);

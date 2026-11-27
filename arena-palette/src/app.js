@@ -1,5 +1,5 @@
-// app.js: six-step wizard for arena-palette v2.0. Steps 1 (Source), 2 (Pick image, with per-slot refresh and lock), 3 (Base palette) and 6 (Export, v1's formats) are built.
-// Edit and Ramps are placeholders until Phases 3–4.
+// app.js: six-step wizard for arena-palette v2.0. Steps 1 (Source), 2 (Pick image, with per-slot refresh and lock), 3 (Base palette), 5 (Ramps) and 6 (Export) are built.
+// Edit is a placeholder until Phase 4.
 // Plain DOM, built from ArenaToolkit components. No framework.
 (function () {
   const ATK = window.ArenaToolkit;
@@ -598,10 +598,95 @@
     ];
   }
 
+  /* ── Step 5: Ramps ────────────────────────────────────────── */
+  // One ramp of tints and shades per base colour, in OKLCH (ramps.js). The extracted colour keeps its own tone.
+  let rampsEl = null;   // the ramps panel, redrawn without touching the controls
+
+  const rampOpts = () => ({ tones: S.ramps.tones, lMax: S.ramps.lMax, lMin: S.ramps.lMin, hueRotate: S.ramps.hueRotate });
+
+  function computeRamps() {
+    S.ramps.result = S.ramps.enabled && S.palette.length ? rampsFor(S.palette, rampOpts()) : null;
+  }
+
+  function rampRow(c, ramp) {
+    const total = ramp.steps.length;
+    const strip = h('div', { className: 'ramp-strip' }, ramp.steps.map((hex, i) => {
+      const isMarker = i === ramp.markerIndex;
+      return h('button', {
+        type: 'button',
+        className: 'ramp-step' + (isMarker ? ' is-marker' : ''),
+        style: { background: hex, color: textColour(hexToRgb(hex)) },
+        title: `${hex} · tone ${i + 1} of ${total}`,
+        'aria-label': `Copy ${hex}, tone ${i + 1} of ${total}${isMarker ? ', the extracted colour' : ''}`,
+        onclick: () => copyHex(hex),
+      });
+    }));
+    return h('div', { className: 'ramp-row' }, [
+      h('div', { className: 'ramp-row__head' }, [
+        h('span', { className: 'ramp-row__name' }, c.name || c.hex),
+        h('span', { className: 'muted' }, `${c.hex} · tone ${ramp.markerIndex + 1} of ${total}`),
+      ]),
+      strip,
+    ]);
+  }
+
+  function renderRamps() {
+    if (!rampsEl || !rampsEl.isConnected) return;
+    if (!S.ramps.enabled) {
+      return rampsEl.replaceChildren(ATK.StatusMessage({ tone: 'info', children: 'Ramps are off. The export will carry the base colours only.' }));
+    }
+    if (!S.palette.length) {
+      return rampsEl.replaceChildren(ATK.StatusMessage({ tone: 'info', children: 'There is no base palette yet. Go back to Base palette first.' }));
+    }
+    computeRamps();
+    rampsEl.replaceChildren(
+      h('p', { className: 'muted' }, 'Dot marks the colour taken from the image. Click any tone to copy its hex.'),
+      ...S.palette.map((c, i) => rampRow(c, S.ramps.result[i])),
+    );
+  }
+
+  function stepRamps() {
+    const r = S.ramps;
+    rampsEl = h('div', { className: 'stack stack--loose', 'aria-live': 'polite' });
+
+    const controls = h('details', { className: 'settings', open: true }, [
+      h('summary', null, 'Ramp settings'),
+      h('div', { className: 'stack' }, [
+        rangeField({ label: 'Tones per colour', min: 3, max: 11, step: 1, value: r.tones, format: String, onInput: (v) => { r.tones = v; renderRamps(); } }),
+        rangeField({ label: 'Lightest tone', min: 0.6, max: 1, step: 0.01, value: r.lMax, format: (v) => v.toFixed(2), onInput: (v) => { r.lMax = v; renderRamps(); } }),
+        rangeField({ label: 'Darkest tone', min: 0, max: 0.5, step: 0.01, value: r.lMin, format: (v) => v.toFixed(2), onInput: (v) => { r.lMin = v; renderRamps(); } }),
+        rangeField({ label: 'Hue rotation', min: -30, max: 30, step: 1, value: r.hueRotate, format: (v) => `${v > 0 ? '+' : ''}${v}°`, onInput: (v) => { r.hueRotate = v; renderRamps(); } }),
+      ]),
+    ]);
+
+    const toggle = ATK.Checkbox({
+      label: 'Generate tints and shades for each colour',
+      checked: r.enabled,
+      onChange: (checked) => {
+        r.enabled = checked;
+        S.export.scope = checked ? 'all' : 'base';
+        controls.hidden = !checked;
+        renderRamps();
+      },
+    });
+    controls.hidden = !r.enabled;
+
+    renderRamps();
+    return [
+      h('h2', null, 'Ramps'),
+      h('p', { className: 'muted' }, 'Optional. Each base colour gets a ramp from light to dark, with its hue kept and its own tone left exactly as extracted.'),
+      toggle,
+      controls,
+      rampsEl,
+      nav({ back: true, next: { label: 'Continue →', onClick: advance } }),
+    ];
+  }
+
   /* ── Step 6: Export ───────────────────────────────────────── */
-  // Text, swatch-file and PNG exports, as in v1. Base only / Base + ramps, the PNG preview and the colour-search
-  // links come with the Ramps step (Phase 3–4); for now tints and shades are always included, as in v1.
-  const exportCtx = () => buildExportContext({ image: S.image.block, palette: S.palette, semantic: S.export.semantic ? S.semantic : [] });
+  // Text, swatch-file and PNG exports. "Base colours and ramps" adds the OKLCH ramps from step 5 (when they are on).
+  // PNGs still draw v1's three tints and three shades; they follow the ramps in the Phase 4 PNG rework.
+  const exportRamps = () => (S.export.scope === 'all' && S.ramps.enabled ? rampsFor(S.palette, rampOpts()) : null);
+  const exportCtx = () => buildExportContext({ image: S.image.block, palette: S.palette, semantic: S.export.semantic ? S.semantic : [], ramps: exportRamps() });
   const pngState = () => ({ image: S.image.block, imageEl: S.image.img, palette: S.palette, semantic: S.export.semantic ? S.semantic : [] });
 
   async function runExport(label, fn) {
@@ -622,6 +707,17 @@
     ]);
   }
 
+  // Base colours only, or with the ramps from step 5. Only offered once ramps are switched on there.
+  function scopeControl() {
+    if (!S.ramps.enabled) {
+      return h('p', { className: 'muted' }, 'Files carry the base colours only. Turn on ramps in step 5 to add tints and shades.');
+    }
+    return selectField('What to include', [
+      { value: 'base', label: 'Base colours only' },
+      { value: 'all', label: 'Base colours and ramps' },
+    ], S.export.scope, (v) => { S.export.scope = v; render(); });
+  }
+
   function stepExport() {
     const hasPalette = S.palette.length > 0 && S.image;
     if (!hasPalette) {
@@ -636,7 +732,8 @@
         checked: S.export.semantic,
         onChange: (checked) => { S.export.semantic = checked; },
       }),
-      exportGroup('Text', 'Each file lists the colours, then their tints and shades.', [
+      scopeControl(),
+      exportGroup('Text', exportRamps() ? 'Each file lists the colours, then their tints and shades.' : 'Each file lists the colours.', [
         ['Hex', () => exportHex(exportCtx())],
         ['RGB', () => exportRgb(exportCtx())],
         ['HSL', () => exportHsl(exportCtx())],
@@ -645,10 +742,15 @@
       exportGroup('Palette files', 'For Adobe apps, GIMP and Inkscape, Procreate, and Simple Colour Palette (a JSON file).', [
         ['Adobe .ase', () => exportAse(exportCtx())],
         ['GIMP .gpl', () => exportGpl(exportCtx())],
-        ['Procreate .palette', () => exportProcreatePalette(exportCtx())],
+        ['Procreate .palette', () => {
+          const ctx = exportCtx();
+          exportProcreatePalette(ctx);
+          const left = countProcreateSwatches(ctx) - PROCREATE_SLOTS;
+          if (left > 0) ATK.Toast.show({ message: `Procreate holds ${PROCREATE_SLOTS} colours, so the last ${left} (the end of the ramps) were left out.`, variant: 'notification', duration: 8000 });
+        }],
         ['Simple Colour Palette (JSON)', () => exportScp(exportCtx())],
       ]),
-      exportGroup('PNG', 'A reference card, or a grid of dots.', [
+      exportGroup('PNG', 'A reference card, or a grid of dots. These always show three tints and three shades, whatever you chose above.', [
         ['Bars', () => exportPngBars(pngState())],
         ['Dots', () => exportPngDots(pngState(), false)],
         ['Dots with image background', () => exportPngDots(pngState(), true)],
@@ -668,13 +770,13 @@
     '',
     '',
     'Coming in a later phase: edit, add, remove, reorder and lock colours.',
-    'Coming in a later phase: tints and shades for each colour.',
+    '',
     '',
   ];
 
   function render() {
     renderRail();
-    els.pane.replaceChildren(...(S.step === 0 ? stepSource() : S.step === 1 ? stepPick() : S.step === 2 ? stepBase() : S.step === 5 ? stepExport() : stepPlaceholder(S.step, NOTES[S.step])));
+    els.pane.replaceChildren(...(S.step === 0 ? stepSource() : S.step === 1 ? stepPick() : S.step === 2 ? stepBase() : S.step === 4 ? stepRamps() : S.step === 5 ? stepExport() : stepPlaceholder(S.step, NOTES[S.step])));
   }
 
   /* ── Header ───────────────────────────────────────────────── */
